@@ -1,9 +1,8 @@
+//$Id$
 package vcc.model
 
 import scala.actors.Actor
 import scala.actors.Actor.loop
-
-//import vcc.model
 
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
   val health:HealthTracker= ctype match {
@@ -51,6 +50,23 @@ class Tracker(log:Actor) extends Actor {
             }
           } 
           uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
+        case actions.ClearCombatants(all) =>
+          if(all) {
+            _map=Map.empty[Symbol,TrackerCombatant]
+            _initSeq.clear
+          } else {
+            _map=_map.filter(p=>p._2.health.isInstanceOf[CharacterHealthTracker])
+            _initSeq.clear
+            for(c<-_map) _initSeq.add(c._2.id)
+          }
+        case actions.EndCombat() => {
+          for(p<-_map) {
+            var c=p._2
+            c.it=InitiativeTracker(0,InitiativeState.Reserve)
+            uia ! vcc.view.actor.SetInitiative(c.id,c.it)
+          }
+        }
+          
         // HEALTH Tracking
         case actions.ApplyDamage(InMap(c),amnt) =>
           c.health.applyDamage(amnt)

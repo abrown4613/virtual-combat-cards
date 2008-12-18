@@ -1,3 +1,4 @@
+//$Id$
 package vcc
 
 import scala.swing._
@@ -10,9 +11,6 @@ import scala.actors.Actor
 import scala.actors.Actor.{actor,loop,react}
 import view.{SequenceTable,ViewCombatant}
 
-case class GoToFirst() 
-
-
 class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
@@ -20,7 +18,7 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
     fileOpen.fileFilter=new javax.swing.filechooser.FileNameExtensionFilter("XML Files","xml")
     val result=fileOpen.showOpenDialog(this)
     if(result==FileChooser.Result.Approve) {
-      println("File choosen"+fileOpen.selectedFile)
+      println("Load party: "+fileOpen.selectedFile)
       var l=vcc.model.PartyLoader.loadFromFile(fileOpen.selectedFile)
       var id=0
       for(x<-l)  { 
@@ -30,17 +28,30 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
     }
   })
   val combatMenu = new Menu("Combat")
+  combatMenu.contents +=new MenuItem(new Action("Go to First"){
+    def apply():Unit={
+      uia ! vcc.view.actor.GoToFirst()
+    }
+    accelerator=Some(javax.swing.KeyStroke.getKeyStroke('F'.toInt,java.awt.Event.CTRL_MASK))
+  })
+  combatMenu.contents += new Separator
   combatMenu.contents += new MenuItem(Action("Start Combat") {
     val diag=new vcc.view.dialog.InitiativeDialog(tracker)
     diag.roster(uia.sequence) 
     diag.visible=true
-    //tracker ! vcc.model.actions.StartCombat(List(Symbol(1.toString),'A,Symbol(4.toString),'K,Symbol(5.toString),Symbol(6.toString)))
   })
-  combatMenu.contents +=new MenuItem(new Action("Go to First"){
-    def apply():Unit={
-      uia ! GoToFirst()
-    }
-    accelerator=Some(javax.swing.KeyStroke.getKeyStroke('F'.toInt,java.awt.Event.CTRL_MASK))
+  combatMenu.contents += new MenuItem(Action("End Combat") {
+    tracker ! vcc.model.actions.EndCombat()
+    tracker ! vcc.model.actions.Enumerate(uia)
+  })
+  combatMenu.contents += new Separator
+  combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
+    tracker ! vcc.model.actions.ClearCombatants(false)
+    tracker ! vcc.model.actions.Enumerate(uia)
+  })
+  combatMenu.contents +=new MenuItem(Action("Clear All"){
+    tracker ! vcc.model.actions.ClearCombatants(true)
+    tracker ! vcc.model.actions.Enumerate(uia)
   })
   
   contents+=fileMenu
@@ -64,7 +75,7 @@ object Main extends SimpleGUIApplication {
   
   
   def top = new MainFrame {
-    title = "Virtual Combat Card"
+    title = "Virtual Combat Cards"
     contents= new BorderPanel {
       add(commandPanel,BorderPanel.Position.East)
       add(seqTable,BorderPanel.Position.Center)

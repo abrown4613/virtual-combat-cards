@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<party>
+  <minion name="Goblin Cutter" init="5"></minion>
+  <monster name="Goblin Blackblade" hp="25" init="7"><defense ac="16" fortitude="12" reflex="14" will="11" /> </monster>
+  <minion name="Goblin Cutter" init="5"></minion>
+  <monster name="Goblin Blackblade" hp="25" init="7"><defense ac="16" fortitude="12" reflex="14" will="11" /> </monster>
+  <minion name="Goblin Cutter" init="5"></minion>
+  <minion name="Goblin Cutter" init="5"></minion>
+  <monster name="Goblin Cutter(SuperMiniton)" hp="2" init="5" />
+</party>

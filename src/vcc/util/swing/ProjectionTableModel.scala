@@ -1,3 +1,4 @@
+//$Id$
 package vcc.util.swing
 
 abstract class TableModelRowProjection[T] {
@@ -14,12 +15,12 @@ abstract class TableModelRowProjection[T] {
 
 class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax.swing.table.AbstractTableModel {
   var elem:Seq[T]=Nil
-  def getValueAt(row:Int,col:Int):java.lang.Object= if(elem.size>=row )proj(col,elem(row)) else null
+  def getValueAt(row:Int,col:Int):java.lang.Object= if(elem.size>row )proj(col,elem(row)) else null
   def getColumnCount():Int = proj.size
   def getRowCount():Int=elem.size
   override def getColumnName(col:Int)=proj.getColumnName(col)
   override def getColumnClass(col:Int)=proj.getColumnClass(col)
-  override def isCellEditable(row:Int,col:Int)=(elem.size>=row) && proj.isEditable(col,elem(row))
+  override def isCellEditable(row:Int,col:Int)=(elem.size>row) && proj.isEditable(col,elem(row))
   override def setValueAt(value:java.lang.Object,row:Int,col:Int)=proj.set(col,elem(row),value)
   
   def content_=(content:Seq[T])={elem=content; this.fireTableDataChanged}

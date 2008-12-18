@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view.actor
 
 case class Combatant(vc:ViewCombatant)
@@ -6,6 +7,7 @@ case class SetInitiative(id:Symbol, init:vcc.model.InitiativeTracker)
 case class SetSequence(seq:Seq[Symbol])
 case class SetInformation(id:Symbol,text:String)
 case class SetContext(id:Symbol)
+case class GoToFirst() 
 
 import scala.actors.Actor._
 import scala.actors.Actor
@@ -55,10 +57,10 @@ class UserInterface(tracker:Actor) extends Actor {
           var l=seq.filter(_map.contains(_)).map(_map(_))
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
-        case vcc.GoToFirst() =>
+        case GoToFirst() =>
           _ctx=Some(_first)
           signalContext(_ctx)
-        case s => println(s)
+        //case s => println("UserInterface: "+s)
       }
     }
   }

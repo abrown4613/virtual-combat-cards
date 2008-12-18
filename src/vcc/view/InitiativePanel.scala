@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view
 
 import scala.swing._
@@ -52,7 +53,7 @@ class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[
       delay_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.Delay)
       executeReady_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.ExecuteReady)
     } else {
-      for(x<-this.contents) { x.enabled=false;println(x)}
+      for(x<-this.contents) { x.enabled=false; }
     }
   }
   def updateSequence(seq:Seq[ViewCombatant]):Unit= {

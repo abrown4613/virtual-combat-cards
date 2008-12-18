@@ -1,3 +1,4 @@
+//$Id$
 package vcc.model.actions
 
 class TrackerAction {
@@ -7,6 +8,9 @@ class TrackerAction {
 // Builing the combat grid
 case class AddCombatant(id:Symbol,template:CombatantTemplate)
 case class Enumerate(peer:scala.actors.Actor)
+case class ClearCombatants(all:Boolean)
+case class StartCombat(order:Seq[Symbol])
+case class EndCombat()
 
 case class SetComment(to:Symbol,text:String)
 
@@ -15,7 +19,6 @@ case class SetTemporaryHP(to:Symbol,temphp:Int)
 case class HealDamage(to:Symbol,heal:Int)
 case class FailDeathSave(to:Symbol)
 
-case class StartCombat(order:Seq[Symbol])
 
 case class StartRound(who:Symbol)
 case class EndRound(who:Symbol)

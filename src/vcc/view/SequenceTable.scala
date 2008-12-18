@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view
 
 import scala.swing._
@@ -52,11 +53,13 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
   def updateSequence(seq:Seq[ViewCombatant]):Unit = { 
     trackerTable.content=seq
     table.selection.rows.clear
-    if(!trackerTable.content.isEmpty)
+    if(trackerTable.content.isEmpty)
+      uia ! actor.SetContext(null)
+    else
       table.selection.rows+=0
   }
   def changeContext(ctx:Option[ViewCombatant]) {
-    if(ctx.isDefined && (ctx.get == trackerTable.content(0))) {
+    if(ctx.isDefined && !trackerTable.content.isEmpty && (ctx.get == trackerTable.content(0))) {
       _doingContextChange=true;
       table.selection.rows.clear; 
       table.selection.rows+=0
