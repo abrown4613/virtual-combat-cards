@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="VCC" default="dist" basedir="..">
+
+  <property name="build"  value="bin"/>
+  <property name="version" value="0.10" />
+  <property name="distbase" value="dist" />
+  <property name="dist" value="${distbase}/vcc-${version}" />
+  <property name="scalajar" value="${distbase}/scalalib" />
+  <property name="jar.file1" value="${dist}/bin/vcc-0.10.jar" />
+    
+
+  <target name="dist" >
+	<mkdir dir="${dist}"/>
+	<mkdir dir="${dist}/bin"/>
+  	
+  	<jar jarfile="${jar.file1}" basedir="${build}" />
+        
+    <fileset id="jars2pack" dir="${dist}">
+        <include name="*.jar"/>
+    </fileset>
+  	<copy todir="${dist}/bin">
+  		<fileset dir="${scalajar}"/>
+  	</copy>
+  	<copy todir="${dist}">
+  	    <fileset dir="scripts"/>
+  	    <fileset dir="sample"/>
+  	</copy>
+  	<replace dir="${dist}" token="{VERSION}" value="${version}">
+  		<include name="vcc.bat" />
+  		<include name="vcc.sh" />
+  	</replace>
+  	<zip destfile="${dist}.zip" basedir="${dist}"></zip>
+  </target>
+  <target name="clean">
+  	<deltree dir="${dist}"/>
+  </target>
+</project>
