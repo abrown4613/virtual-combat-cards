@@ -14,7 +14,7 @@ class DamageCommandPanel(val controller:actors.Actor) extends GridPanel(2,3) wit
   val damage_btn= new Button("Damage")
   val heal_btn= new Button("Heal")
   val temp_btn= new Button("Set Temp HP")
-  val death_btn = new Button("Failed Death Save")
+  val death_btn = new Button("Fail Death Save")
   val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn)
 
   contents+= new Label("Damage:")

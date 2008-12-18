@@ -53,9 +53,17 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
     tracker ! vcc.model.actions.ClearCombatants(true)
     tracker ! vcc.model.actions.Enumerate(uia)
   })
+
+  var viewMenu= new Menu("View")
+  var hideDeadMenu=new CheckMenuItem("Hide Dead")
+  hideDeadMenu.action=Action("Hide Dead"){
+    uia ! vcc.view.actor.SetOption('HIDEDEAD,hideDeadMenu.peer.isSelected)
+  }
+  viewMenu.contents +=hideDeadMenu
   
   contents+=fileMenu
   contents+=combatMenu
+  contents+=viewMenu
 }
 
 object Main extends SimpleGUIApplication {

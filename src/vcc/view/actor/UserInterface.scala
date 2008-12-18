@@ -7,7 +7,8 @@ case class SetInitiative(id:Symbol, init:vcc.model.InitiativeTracker)
 case class SetSequence(seq:Seq[Symbol])
 case class SetInformation(id:Symbol,text:String)
 case class SetContext(id:Symbol)
-case class GoToFirst() 
+case class GoToFirst()
+case class SetOption(opt:Symbol,state:Boolean)
 
 import scala.actors.Actor._
 import scala.actors.Actor
@@ -16,6 +17,8 @@ class UserInterface(tracker:Actor) extends Actor {
   
   type T=ViewCombatant
   
+  private var _hidedead=false
+  private var _seq:Seq[T]=Nil
   private var _ctx:Option[T]=None
   private var seqAware:List[SequenceView[T]]=Nil
   private var ctxAware:List[ContextualView[T]]=Nil
@@ -55,12 +58,18 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetSequence(seq)=>
           //for(x<-_map) println(x)
           var l=seq.filter(_map.contains(_)).map(_map(_))
+          _seq=l // Save all elements irrespective of health, then filter health and proppagate
+          if(_hidedead) l=l.filter(x=>x.health.status!=vcc.model.HealthStatus.Dead)
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
         case GoToFirst() =>
           _ctx=Some(_first)
           signalContext(_ctx)
-        //case s => println("UserInterface: "+s)
+
+        //Set view options
+        case SetOption('HIDEDEAD,state) => 
+          _hidedead=state
+          this ! SetSequence(_seq.map(x=>x.id))
       }
     }
   }
