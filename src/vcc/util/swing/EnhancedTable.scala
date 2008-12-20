@@ -3,7 +3,7 @@ package vcc.util.swing
 import scala.swing._
 import scala.swing.event._
 
-class EnhancedTable extends scala.swing.Table {
+class EnhancedTable extends AlternativeTable {
   
   peer.getTableHeader().setReorderingAllowed(false)
 
