@@ -8,6 +8,7 @@ import scala.actors.Actor
 
 class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombatant] with SequenceView[ViewCombatant] {
   //Init
+  var cellFont=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN,14)
   val trackerTable=new vcc.util.swing.ProjectionTableModel[ViewCombatant](view.ViewCombatantProjection)
   val table = new EnhancedTable {
     model=trackerTable
@@ -20,18 +21,17 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
     setColumnWidth(4,50)
     setColumnWidth(5,70)
     peer.setRowHeight(24)
+
     
     override def rendererComponent(isSelected: Boolean,hasFocus: Boolean, row: Int, column: Int): Component= {
       var comp=super.rendererComponent(isSelected,hasFocus, row, column)
       if(comp.peer.isInstanceOf[javax.swing.JLabel]) {
-        comp.font=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN,14)
-        if(comp.peer.isInstanceOf[javax.swing.JLabel]) {
-          ViewCombatantTableColorer.colorLabel(
-            comp.peer.asInstanceOf[javax.swing.JLabel],
-            column,isSelected,
-            trackerTable.content(row)
-          )
-        }
+        comp.font=cellFont
+        ViewCombatantTableColorer.colorLabel(
+          comp.peer.asInstanceOf[javax.swing.JLabel],
+          column,isSelected,
+          trackerTable.content(row)
+        )
       }
       comp
     }
@@ -40,7 +40,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
   
   var _doingContextChange=false
   
-  listenTo(this,table.selection)
+  listenTo(table.selection)
   reactions += {
     case TableRowsSelected(t,rng,b) => 
       var l=table.selection.rows.toSeq

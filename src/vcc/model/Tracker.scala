@@ -145,26 +145,4 @@ class Tracker(log:Actor) extends Actor {
       uia ! vcc.view.actor.SetInitiative(cmb.id,cmb.it)
     }
   }
-/*  
-  def sendInitiativeState(cmb:TrackerCombatant) {
-    
-  }
-  
-  def endRound(cmb:TrackerCombatant) {
-    if(cmb.it.state==InitiativeState.Delaying) 
-      log ! "WARNING! "+cmb.id+" lost round due to delaying"
-      //TODO: Delay round has ended
-    if(cmb.it.transform.isDefinedAt(InitiativeTracker.actions.EndRound)) {
-      cmb.it= cmb.it.transform(InitiativeTracker.actions.EndRound)
-      sendInitiativeState(cmb)
-      //TODO: Round robin the Initsequence
-    }
-  }
-  def startRound(cmb:TrackerCombatant) {
-    if(cmb.it.transform.isDefinedAt(InitiativeTracker.actions.EndRound)) {
-      cmb.it= cmb.it.transform(InitiativeTracker.actions.EndRound)
-      sendInitiativeState(cmb)
-    }	
-  }
-  */
 }
