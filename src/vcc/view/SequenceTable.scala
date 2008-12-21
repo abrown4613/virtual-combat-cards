@@ -14,7 +14,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
     model=trackerTable
     autoResizeMode=Table.AutoResizeMode.Off
     selection.intervalMode=Table.IntervalMode.Single
-    setColumnWidth(0,20)
+    setColumnWidth(0,25)
     setColumnWidth(1,150)
     setColumnWidth(2,70)
     setColumnWidth(3,70)

@@ -38,7 +38,7 @@ class InitiativeTrackerTest extends TestCase {
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.Ready))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.ExecuteReady))
     assert(it.transform(true,InitiativeTracker.actions.StartRound)==InitiativeTracker(1,Acting))
-    assert(it.transform(true,InitiativeTracker.actions.Delay)==InitiativeTracker(0,Delaying))
+    assert(it.transform(true,InitiativeTracker.actions.Delay)==InitiativeTracker(1,Delaying))
 
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.StartRound))
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.EndRound))
@@ -54,11 +54,12 @@ class InitiativeTrackerTest extends TestCase {
     
     assert(it.transform.isDefinedAt(true,InitiativeTracker.actions.StartRound))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.EndRound))
-    assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.Delay))
+    assert(it.transform.isDefinedAt(true,InitiativeTracker.actions.Delay))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.MoveUp))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.Ready))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.ExecuteReady))
     assert(it.transform(true,InitiativeTracker.actions.StartRound)==InitiativeTracker(1,Acting))
+    assert(it.transform(true,InitiativeTracker.actions.Delay)==InitiativeTracker(1,Delaying))
 
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.StartRound))
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.EndRound))
@@ -99,7 +100,7 @@ class InitiativeTrackerTest extends TestCase {
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.MoveUp))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.Ready))
     assert(!it.transform.isDefinedAt(true,InitiativeTracker.actions.ExecuteReady))
-    assert(it.transform(true,InitiativeTracker.actions.EndRound)==InitiativeTracker(1,Waiting))
+    assert(it.transform(true,InitiativeTracker.actions.EndRound)==InitiativeTracker(0,Waiting))
     
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.StartRound))
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.EndRound))
@@ -107,7 +108,7 @@ class InitiativeTrackerTest extends TestCase {
     assert(it.transform.isDefinedAt(false,InitiativeTracker.actions.MoveUp))
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.Ready))
     assert(!it.transform.isDefinedAt(false,InitiativeTracker.actions.ExecuteReady))
-    assert(it.transform(false,InitiativeTracker.actions.MoveUp)==InitiativeTracker(1,Acting))
+    assert(it.transform(false,InitiativeTracker.actions.MoveUp)==InitiativeTracker(0,Acting))
   }
   
 

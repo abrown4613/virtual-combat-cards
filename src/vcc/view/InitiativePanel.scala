@@ -42,7 +42,7 @@ class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[
       var first=(nctx.get==_first)
       var state=nctx.get.initTracker.state
       startRound_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.StartRound)
-      ready_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.Ready)
+      ready_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.Ready) 
       endRound_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.EndRound)
       moveUp_btn.enabled=(
         itt.isDefinedAt(first,InitiativeTracker.actions.MoveUp) && (
@@ -51,7 +51,7 @@ class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[
           (state==InitiativeState.Reserve && (_first.initTracker.state!=InitiativeState.Acting))
           ));
       delay_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.Delay)
-      executeReady_btn.enabled=itt.isDefinedAt(first,InitiativeTracker.actions.ExecuteReady)
+      executeReady_btn.enabled=(itt.isDefinedAt(first,InitiativeTracker.actions.ExecuteReady)&& _first.initTracker.state==InitiativeState.Acting)
     } else {
       for(x<-this.contents) { x.enabled=false; }
     }

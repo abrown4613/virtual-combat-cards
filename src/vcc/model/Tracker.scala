@@ -106,6 +106,18 @@ class Tracker(log:Actor) extends Actor {
     }
   }
   
+  private def advanceToNext() {
+    // Auto advance dead guys
+    while(_map(_initSeq.sequence.head).health.status==HealthStatus.Dead) {
+      var dcmb=_map(_initSeq.sequence.head)
+      var dit=dcmb.it
+      dit=dit.transform(true,InitiativeTracker.actions.StartRound)
+      dit=dit.transform(true,InitiativeTracker.actions.EndRound)
+      dcmb.it=dit
+      _initSeq.rotate
+      uia ! vcc.view.actor.SetInitiative(dcmb.id,dcmb.it)
+    }
+  }
   def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value) {
     var itt=cmb.it.transform
     var firstp=_map(_initSeq.sequence.head).id==cmb.id
@@ -113,28 +125,21 @@ class Tracker(log:Actor) extends Actor {
       action match {
         case InitiativeTracker.actions.Delay => 
           _initSeq.moveDown(cmb.id)
+          advanceToNext
           uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case InitiativeTracker.actions.ExecuteReady => 
           _initSeq.moveDown(cmb.id)
           uia ! vcc.view.actor.SetSequence(_initSeq.sequence)            
         case InitiativeTracker.actions.EndRound =>
           // When delaying is up, end turn is end of previous
-          if(cmb.it.state!=InitiativeState.Delaying) {
+          if(cmb.it.state!=InitiativeState.Delaying) { 
             _initSeq.rotate
-            // Auto advance dead guys
-            while(_map(_initSeq.sequence.head).health.status==HealthStatus.Dead) {
-              var dcmb=_map(_initSeq.sequence.head)
-              var dit=dcmb.it
-              dit=dit.transform(true,InitiativeTracker.actions.StartRound)
-              dit=dit.transform(true,InitiativeTracker.actions.EndRound)
-              dcmb.it=dit
-              _initSeq.rotate
-              uia ! vcc.view.actor.SetInitiative(dcmb.id,dcmb.it)
-            }
-            uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
-          }	
+            advanceToNext()
+          }
+          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case InitiativeTracker.actions.Ready => 
           _initSeq.moveDown(cmb.id)
+          advanceToNext
           uia ! vcc.view.actor.SetSequence(_initSeq.sequence)            
         case InitiativeTracker.actions.MoveUp => 
           _initSeq.moveUp(cmb.id)
