@@ -2,11 +2,11 @@
 <project name="VCC" default="dist" basedir="..">
 
   <property name="build"  value="bin"/>
-  <property name="version" value="0.10" />
+  <property name="version" value="0.11" />
   <property name="distbase" value="dist" />
-  <property name="dist" value="${distbase}/vcc-${version}" />
+  <property name="dist" value="${distbase}/vcc" />
   <property name="scalajar" value="${distbase}/scalalib" />
-  <property name="jar.file1" value="${dist}/bin/vcc-0.10.jar" />
+  <property name="jar.file1" value="${dist}/bin/vcc.jar" />
     
 
   <target name="dist" >
@@ -25,11 +25,7 @@
   	    <fileset dir="scripts"/>
   	    <fileset dir="sample"/>
   	</copy>
-  	<replace dir="${dist}" token="{VERSION}" value="${version}">
-  		<include name="vcc.bat" />
-  		<include name="vcc.sh" />
-  	</replace>
-  	<zip destfile="${dist}.zip" basedir="${dist}"></zip>
+  	<zip destfile="${dist}-${version}.zip" basedir="${dist}"></zip>
   </target>
   <target name="clean">
   	<deltree dir="${dist}"/>
