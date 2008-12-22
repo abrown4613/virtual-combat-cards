@@ -28,3 +28,7 @@ case class MoveUp(who:Symbol)
 case class ExecuteReady(who:Symbol)
 
 case class LogError(msg:String)
+
+
+case class QueryCombatantMap[T](func:(TrackerCombatant=>T))
+

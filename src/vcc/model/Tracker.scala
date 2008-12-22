@@ -34,6 +34,7 @@ class Tracker(log:Actor) extends Actor {
           _initSeq add id
           _map=_map + (id -> nc)
         case actions.Enumerate(peer)=>
+          peer ! vcc.view.actor.ClearSequence()
           for(x<-_map.map(_._2)) { 
             peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init))
             peer ! vcc.view.actor.SetInitiative(x.id,x.it)
@@ -101,6 +102,10 @@ class Tracker(log:Actor) extends Actor {
           this.changeSequence(c,InitiativeTracker.actions.Ready)
         case actions.ExecuteReady(InMap(c)) =>
           this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
+          
+        case actions.QueryCombatantMap(func) =>
+          reply(_map.map(x=>func(x._2)).toList)
+          
         case s=>println("Tracker receive:"+s)
       }
     }

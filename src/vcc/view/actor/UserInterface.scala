@@ -9,6 +9,7 @@ case class SetInformation(id:Symbol,text:String)
 case class SetContext(id:Symbol)
 case class GoToFirst()
 case class SetOption(opt:Symbol,state:Boolean)
+case class ClearSequence()
 
 import scala.actors.Actor._
 import scala.actors.Actor
@@ -55,8 +56,13 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetInformation(InMap(o),text)=>
           o.info=text
           if(_ctx == Some(o)) signalContext(Some(o))
+          
+        case ClearSequence() => 
+          _map.clear
+          _ctx=None
+          signalContext(_ctx)
+          signalSequence(Nil)
         case SetSequence(seq)=>
-          //for(x<-_map) println(x)
           var l=seq.filter(_map.contains(_)).map(_map(_))
           _seq=l // Save all elements irrespective of health, then filter health and proppagate
           if(_hidedead) l=l.filter(x=>x.health.status!=vcc.model.HealthStatus.Dead)
@@ -70,8 +76,8 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetOption('HIDEDEAD,state) => 
           _hidedead=state
           this ! SetSequence(_seq.map(x=>x.id))
+        case s => println("Unhandled message:" + s)
       }
     }
   }
-  def sequence():Seq[ViewCombatant]=_map.map(x=>x._2).toSeq
 }

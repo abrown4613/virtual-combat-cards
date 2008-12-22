@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view.dialog
 
 
@@ -32,10 +33,18 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
       scala.util.Sorting.quickSort[InitiativeDialogEntry](l)(x=>x)
       tracker ! vcc.model.actions.StartCombat(l.map(x=>x.id).toSeq)
   }
+
+  // This will build my entries based on TrackerCombatant
+  def buildEntryFromCombatant(cmb:vcc.model.TrackerCombatant):InitiativeDialogEntry = {
+    new InitiativeDialogEntry(cmb.id,cmb.name,cmb.init,0,false)
+  }
   
-  def roster(seq:Seq[vcc.view.ViewCombatant]) =  {
-    var lst=seq map(c=>new InitiativeDialogEntry(c.id,c.name,c.init,0,false))
-    var arr=scala.util.Sorting.stableSort[InitiativeDialogEntry](lst,(a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name})
-    initTable.content = arr.toSeq
+  override def visible_=(state:Boolean) {
+    if(state) {
+      var resp=(tracker !? vcc.model.actions.QueryCombatantMap(buildEntryFromCombatant)).asInstanceOf[List[InitiativeDialogEntry]]
+      var arr=scala.util.Sorting.stableSort[InitiativeDialogEntry](resp,(a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name})
+      initTable.content = arr.toSeq
+    }
+    super.visible=state
   }
 }

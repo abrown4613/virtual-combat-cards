@@ -38,7 +38,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
 
     override def rendererComponentFix(isSelected: Boolean,hasFocus: Boolean, row: Int, column: Int): java.awt.Component= {
       var comp=super.rendererComponentFix(isSelected,hasFocus, row, column)
-      if(comp.isInstanceOf[javax.swing.JLabel]) {
+      if(comp.isInstanceOf[javax.swing.JLabel] && row<trackerTable.content.size) {
         comp.setFont(cellFont)
         ViewCombatantTableColorer.colorLabel(
           comp.asInstanceOf[javax.swing.JLabel],

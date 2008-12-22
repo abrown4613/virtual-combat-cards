@@ -1,4 +1,4 @@
-package vcc
+package test
 
 import swing._
 import swing.event._
@@ -40,27 +40,29 @@ object DialogTest extends SimpleGUIApplication {
         println(s); 
         var diag=map(s.text); 
         diag.pack
-        diag.peer.show
-        //diag.peer.setModalBlocked(null,true)
+        diag.visible=true
     }
   }
   
-  import scala.actors.Actor.{loop,react}
+  import scala.actors.Actor.{loop,react,reply}
   val echoer=scala.actors.Actor.actor{
+    var l=List(
+      new vcc.model.TrackerCombatant('A,"Aza",44,-1,vcc.model.CombatantType.Monster),
+      new vcc.model.TrackerCombatant('B,"Beta",43,3,vcc.model.CombatantType.Monster),
+      new vcc.model.TrackerCombatant('G,"Gamma",43,3,vcc.model.CombatantType.Monster),
+      new vcc.model.TrackerCombatant('D,"Delta",24,2,vcc.model.CombatantType.Monster),
+      new vcc.model.TrackerCombatant('F,"Fi",43,7,vcc.model.CombatantType.Monster)
+    )
     loop {
       react {
+        case vcc.model.actions.QueryCombatantMap(func) =>
+          println("Requested list of chars")
+          reply(l.map(func))
         case s => println("***Echoer: "+s)
       }
     }
   }
   var initDiag=new vcc.view.dialog.InitiativeDialog(echoer)
-  initDiag.roster(List(
-    new   ViewCombatant('A,"Aza",44,-1),
-    new vcc.view.ViewCombatant('B,"Beta",43,3),
-    new vcc.view.ViewCombatant('G,"Gamma",43,3),
-    new vcc.view.ViewCombatant('D,"Delta",24,2),
-    new vcc.view.ViewCombatant('F,"Fi",43,7)
-  ))
   dialogs=List(
     new MyDialog,
     initDiag

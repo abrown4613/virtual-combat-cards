@@ -37,7 +37,6 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
   combatMenu.contents += new Separator
   combatMenu.contents += new MenuItem(Action("Start Combat") {
     val diag=new vcc.view.dialog.InitiativeDialog(tracker)
-    diag.roster(uia.sequence) 
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
