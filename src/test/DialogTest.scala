@@ -65,7 +65,8 @@ object DialogTest extends SimpleGUIApplication {
   var initDiag=new vcc.view.dialog.InitiativeDialog(echoer)
   dialogs=List(
     new MyDialog,
-    initDiag
+    initDiag,
+    vcc.view.dialog.EncounterEditorDialog
   )
   var btns= dialogs map (x=>new Button(x.getClass.getCanonicalName))
   var map=collection.mutable.Map.empty[String,Frame]
