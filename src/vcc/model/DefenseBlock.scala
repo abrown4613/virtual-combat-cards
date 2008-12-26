@@ -1,3 +1,4 @@
+//$Id$
 package vcc.model
 
 case class DefenseBlock(ac:Int,fortitude:Int,reflex:Int,will:Int) {
