@@ -1,3 +1,4 @@
+//$Id$
 package test
 
 import junit.framework.TestCase
@@ -13,6 +14,7 @@ class TemplateLoaderTest extends TestCase {
     assert(tmpl.init==5)
     assert(tmpl.hp==1)
     assert(tmpl.id==null)
+    assert(tmpl.defense==null)
   }
   
   def testLoadMonster() {
@@ -34,6 +36,12 @@ class TemplateLoaderTest extends TestCase {
     assert(tmpl.init==5)
     assert(tmpl.hp==44)
     assert(tmpl.id=="K")
+    
+    assert(tmpl.defense!=null)
+    assert(tmpl.defense.ac==23)
+    assert(tmpl.defense.reflex==17)
+    assert(tmpl.defense.will==18)
+    assert(tmpl.defense.fortitude==18)
   }
   
   def testBadXML() {
@@ -77,4 +85,39 @@ class TemplateLoaderTest extends TestCase {
     assert((l filter(x=>x.name != "Goblin Cutter")).size==4)
   }
 
+  def testDefenseBlock {
+    var db=DefenseBlock(20,19,18,17)
+    assert(db.toXML == 
+      <defense ac="20" fortitude="19" reflex="18" will="17" />)
+    
+    db=DefenseBlock.fromXML(
+      <defense ac="22" />
+    )
+    assert(db.ac==22)
+    assert(db.fortitude==0)
+    assert(db.will==0)
+    assert(db.reflex==0)
+  }
+  
+  def testSaving() {
+    var chr=new CombatantTemplate("test1",50,3,CombatantType.Character)
+    chr.defense=DefenseBlock(20,19,18,17)
+    chr.id="A"
+    var xml=chr.toXML
+    var chrl=CombatantTemplate.fromXML(xml)
+    assert(chrl isSame chr)
+
+    chr=new CombatantTemplate("test2",55,4,CombatantType.Monster)
+    chr.defense=DefenseBlock(20,19,18,17)
+    xml=chr.toXML
+    chrl=CombatantTemplate.fromXML(xml)
+    assert(chrl isSame chr)
+
+    chr=new CombatantTemplate("test2",1,4,CombatantType.Minion)
+    xml=chr.toXML
+    println(xml)
+    chrl=CombatantTemplate.fromXML(xml)
+    assert(chrl isSame chr)
+  
+  }
 }
