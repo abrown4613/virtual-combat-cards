@@ -17,12 +17,13 @@ object EncounterEditorDialog extends Frame {
   val btnRemoveCombatant=new Button("Remove Combatant")
   val btnExpandSame=new Button("Expand Similar")
   val btnCompressSame=new Button("Compress Similar")
-  val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant,btnExpandSame,btnCompressSame)
+  val btnClearAll=new Button("Clear All")
+  val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant,btnExpandSame,btnCompressSame,btnClearAll)
   
   val table=new vcc.util.swing.EnhancedTable() {
     model=entries
     autoResizeMode=Table.AutoResizeMode.Off
-    for(i<-0 to 7)
+    for(i<-0 to 8)
       setColumnWidth(i,if(i!=2)35 else 150)
     override def rendererComponentFix(isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
       var c=super.rendererComponentFix(isSelected,hasFocus,row,column)
@@ -37,9 +38,11 @@ object EncounterEditorDialog extends Frame {
   val menuFile=new Menu("File")
   menuFile.contents+= new MenuItem(Action("Save..."){ doSave()})
   menuFile.contents+= new MenuItem(Action("Load..."){ doLoad()})
-  menuFile.contents+= new MenuItem(Action("Add to battle"){ doAddToBattle()}) {
+  /*
+   menuFile.contents+= new MenuItem(Action("Add to battle"){ doAddToBattle()}) {
     enabled=false // TODO:
   }
+   */
   menuFile.contents+= new Separator
   menuFile.contents+= new MenuItem(Action("Close"){ visible=false})
   menuBar.contents+=menuFile
@@ -51,7 +54,7 @@ object EncounterEditorDialog extends Frame {
         this.vGap=2
         this.hGap=2
         contents ++ btns
-        maximumSize=(new java.awt.Dimension(200,120))
+        maximumSize=(new java.awt.Dimension(200,210))
       }
       contents+=new Label("")
     },BorderPanel.Position.East)
@@ -80,6 +83,7 @@ object EncounterEditorDialog extends Frame {
     case ButtonClicked(this.btnAddCharacter) => addEntry(CombatantType.Character)
     case ButtonClicked(this.btnCompressSame) => entries.content=compressEntries(entries.content.toList)
     case ButtonClicked(this.btnExpandSame) => entries.content=expandEntries(entries.content.toList)
+    case ButtonClicked(this.btnClearAll) => entries.content=Nil
   }
   
   private def addEntry(ctype: CombatantType.Value) {
@@ -88,11 +92,11 @@ object EncounterEditorDialog extends Frame {
   }
   
   private def doSave() {
-    println("do Save")
     var file=FileChooserHelper.chooseSaveFile(table.peer,FileChooserHelper.partyFilter)
-    println("Your choice "+file)
     if(file.isDefined) {
-      println("Your choice: "+file.get.getAbsolutePath)
+      var cel= expandEntries(entries.content.toList).map(_.toSingleCombatantTemplate.toXML)
+      var doc=new scala.xml.Elem(null,"party",scala.xml.Null,scala.xml.TopScope,cel: _*)
+      scala.xml.XML.saveFull(file.get.getAbsolutePath,doc,"UTF-8",true,null)
     }
   }
   
@@ -105,6 +109,7 @@ object EncounterEditorDialog extends Frame {
   }
   
   private def doAddToBattle() {
+    //TODO: Think this out
     println("do addTobattle")
     
   }

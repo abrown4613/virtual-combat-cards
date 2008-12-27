@@ -1,10 +1,10 @@
 //$Id$
 package vcc.view.dialog
 
-import vcc.model.CombatantType
+import vcc.model.{CombatantType,CombatantTemplate,DefenseBlock}
 
 object EncounterEditorTableEntry {
-  def fromCombatantTemplate(ct:vcc.model.CombatantTemplate):EncounterEditorTableEntry = {
+  def fromCombatantTemplate(ct:CombatantTemplate):EncounterEditorTableEntry = {
     var eete=new EncounterEditorTableEntry(ct.ctype)
     eete.name=ct.name
     eete.init=ct.init
@@ -43,6 +43,19 @@ class EncounterEditorTableEntry(val ctype:CombatantType.Value) {
     nc.will=will
     nc.fortitude=fortitude
     nc
+  }
+  
+  /**
+   * Creates a single CombatantTemplate based on the entry, if qty is greater than one
+   * only a single combatant will be returned.
+   */
+  def toSingleCombatantTemplate():CombatantTemplate = {
+    var ct=new CombatantTemplate(name,hp,init,ctype)
+    if(id!=null && id!="") id=id
+    var db=DefenseBlock(ac,fortitude,reflex,will)
+    if(db!=DefenseBlock(0,0,0,0))
+      ct.defense=db
+    ct
   }
 }
 
