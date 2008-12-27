@@ -59,6 +59,10 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
     uia ! vcc.view.actor.SetOption('HIDEDEAD,hideDeadMenu.peer.isSelected)
   }
   viewMenu.contents +=hideDeadMenu
+  viewMenu.contents += new Separator
+  viewMenu.contents += new MenuItem(Action("Encounter/Party Editor..."){
+    vcc.view.dialog.EncounterEditorDialog.visible=true
+  })
   
   contents+=fileMenu
   contents+=combatMenu
