@@ -1,10 +1,10 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='UTF-8'?>
 <party>
-  <minion name="Goblin Cutter" init="5"></minion>
-  <monster name="Goblin Blackblade" hp="25" init="7"><defense ac="16" fortitude="12" reflex="14" will="11" /> </monster>
-  <minion name="Goblin Cutter" init="5"></minion>
-  <monster name="Goblin Blackblade" hp="25" init="7"><defense ac="16" fortitude="12" reflex="14" will="11" /> </monster>
-  <minion name="Goblin Cutter" init="5"></minion>
-  <minion name="Goblin Cutter" init="5"></minion>
-  <monster name="Goblin Cutter(Super Minion)" hp="2" init="5" />
+  <minion init="5" name="Goblin Cutter"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></minion>
+  <minion init="5" name="Goblin Cutter"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></minion>
+  <minion init="5" name="Goblin Cutter"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></minion>
+  <minion init="5" name="Goblin Cutter"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></minion>
+  <monster hp="25" init="7" name="Goblin Blackblade"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></monster>
+  <monster hp="25" init="7" name="Goblin Blackblade"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></monster>
+  <monster hp="2" init="5" name="Goblin Cutter (Super Minion)"><defense will="11" fortitude="12" reflex="14" ac="16"></defense></monster>
 </party>
