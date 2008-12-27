@@ -9,7 +9,7 @@ import vcc.model.{CombatantType,PartyLoader,CombatantTemplate}
 object EncounterEditorDialog extends Frame {
   title = "Party/Encounter Editor"
   
-  val entries=new vcc.util.swing.ProjectionTableModel[EncounterEditorTableEntry](EnconterEditorTableEntryProjection)
+  val entries=new vcc.util.swing.ProjectionTableModel[EncounterEditorTableEntry](EncounterEditorTableEntryProjection)
   //Buttons
   val btnAddMonster=new Button("Add Monster")
   val btnAddMinion=new Button("Add Minion")

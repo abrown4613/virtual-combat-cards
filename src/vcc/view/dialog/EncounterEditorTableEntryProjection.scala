@@ -3,7 +3,7 @@ package vcc.view.dialog
 
 import vcc.model.CombatantType
 
-object EnconterEditorTableEntryProjection extends vcc.util.swing.TableModelRowProjection[EncounterEditorTableEntry] {
+object EncounterEditorTableEntryProjection extends vcc.util.swing.TableModelRowProjection[EncounterEditorTableEntry] {
   val columns:List[(String,java.lang.Class[_])] = List(
     ("ID",classOf[String]),
     ("Qty",classOf[Integer]),
