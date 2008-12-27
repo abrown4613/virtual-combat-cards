@@ -1,6 +1,13 @@
 //$Id$
 package vcc.model
 
+/**
+ * A set of defense stats.
+ * @param ac Armor class
+ * @param fortitude Fortitude defense
+ * @param reflex Reflex defense
+ * @param will Will defense
+ */
 case class DefenseBlock(ac:Int,fortitude:Int,reflex:Int,will:Int) {
   def toXML = 
     <defense ac={ac.toString} fortitude={fortitude.toString} reflex={reflex.toString} will={will.toString} />
