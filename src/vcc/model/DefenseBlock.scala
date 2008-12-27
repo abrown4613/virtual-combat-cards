@@ -7,7 +7,7 @@ case class DefenseBlock(ac:Int,fortitude:Int,reflex:Int,will:Int) {
 }
 
 object DefenseBlock {
-  import LoaderUtilities._
+  import XMLLoaderUtilities._
   
   def fromXML(node: scala.xml.Node): DefenseBlock = 
     DefenseBlock(
