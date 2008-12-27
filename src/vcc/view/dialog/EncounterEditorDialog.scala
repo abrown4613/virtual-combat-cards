@@ -4,7 +4,7 @@ package vcc.view.dialog
 import scala.swing._
 import scala.swing.event._
 
-import vcc.model.CombatantType
+import vcc.model.{CombatantType,PartyLoader,CombatantTemplate}
 
 object EncounterEditorDialog extends Frame {
   title = "Party/Encounter Editor"
@@ -15,7 +15,9 @@ object EncounterEditorDialog extends Frame {
   val btnAddMinion=new Button("Add Minion")
   val btnAddCharacter=new Button("Add Character")
   val btnRemoveCombatant=new Button("Remove Combatant")
-  val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant)
+  val btnExpandSame=new Button("Expand Similar")
+  val btnCompressSame=new Button("Compress Similar")
+  val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant,btnExpandSame,btnCompressSame)
   
   val table=new vcc.util.swing.EnhancedTable() {
     model=entries
@@ -31,15 +33,21 @@ object EncounterEditorDialog extends Frame {
     }
   }
   
-  entries.content= List(
-    new EncounterEditorTableEntry(CombatantType.Character),
-    new EncounterEditorTableEntry(CombatantType.Minion),
-    new EncounterEditorTableEntry(CombatantType.Monster)
-  )
+  override val menuBar=new MenuBar
+  val menuFile=new Menu("File")
+  menuFile.contents+= new MenuItem(Action("Save..."){ doSave()})
+  menuFile.contents+= new MenuItem(Action("Load..."){ doLoad()})
+  menuFile.contents+= new MenuItem(Action("Add to battle"){ doAddToBattle()}) {
+    enabled=false // TODO:
+  }
+  menuFile.contents+= new Separator
+  menuFile.contents+= new MenuItem(Action("Close"){ visible=false})
+  menuBar.contents+=menuFile
+  
   contents = new BorderPanel {
     add(new BoxPanel(Orientation.Vertical) {
       border=javax.swing.BorderFactory.createTitledBorder("Operations")
-      contents+=new GridPanel(5,1) {
+      contents+=new GridPanel(7,1) {
         this.vGap=2
         this.hGap=2
         contents ++ btns
@@ -52,11 +60,11 @@ object EncounterEditorDialog extends Frame {
       this.peer.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
       contents=table
     }, BorderPanel.Position.Center)
-    add(new MenuBar {
-          contents+=(new Menu("File"))
-        },BorderPanel.Position.North)
+    add(menuBar,BorderPanel.Position.North)
   }
+  
   listenTo(btns: _*)
+  
   reactions += {
     case ButtonClicked(this.btnRemoveCombatant) =>
       var es=entries.content
@@ -70,10 +78,69 @@ object EncounterEditorDialog extends Frame {
     case ButtonClicked(this.btnAddMinion) => addEntry(CombatantType.Minion)
     case ButtonClicked(this.btnAddMonster) => addEntry(CombatantType.Monster)
     case ButtonClicked(this.btnAddCharacter) => addEntry(CombatantType.Character)
+    case ButtonClicked(this.btnCompressSame) => entries.content=compressEntries(entries.content.toList)
+    case ButtonClicked(this.btnExpandSame) => entries.content=expandEntries(entries.content.toList)
   }
   
   private def addEntry(ctype: CombatantType.Value) {
     var v=(new EncounterEditorTableEntry(ctype)) 
     entries.content = (Seq(v) ++ entries.content)
-  } 
+  }
+  
+  private def doSave() {
+    println("do Save")
+    var file=FileChooserHelper.chooseSaveFile(table.peer,FileChooserHelper.partyFilter)
+    println("Your choice "+file)
+    if(file.isDefined) {
+      println("Your choice: "+file.get.getAbsolutePath)
+    }
+  }
+  
+  private def doLoad() {
+    var file=FileChooserHelper.chooseOpenFile(table.peer,FileChooserHelper.partyFilter)
+    if(file.isDefined) {
+      var combs=PartyLoader.loadFromFile(file.get)
+      entries.content=compressEntries(combs map EncounterEditorTableEntry.fromCombatantTemplate)
+    }
+  }
+  
+  private def doAddToBattle() {
+    println("do addTobattle")
+    
+  }
+  private def compressEntries(cl:List[EncounterEditorTableEntry]):List[EncounterEditorTableEntry] = {
+    if(!cl.isEmpty) {
+      var nl=compressEntries_r(Nil,cl.head)
+      for(e<-cl.tail) { 
+        nl=compressEntries_r(nl,e)
+      }
+      nl
+    } else 
+      cl
+  }
+  
+  private def compressEntries_r(cl:List[EncounterEditorTableEntry],e:EncounterEditorTableEntry): List[EncounterEditorTableEntry] = {
+    cl match {
+      case Nil => List(e)
+      case he :: r if(he isSame e)=> he.qty += e.qty; he :: r
+      case h :: r => h :: compressEntries_r(r,e)
+    } 
+  }
+  
+  def compressEntries(cl:List[(Int,CombatantTemplate)],ne:CombatantTemplate):List[(Int,CombatantTemplate)] = {
+   cl match {
+     case Nil => List((1,ne))
+     case (hc,he) :: r if(he isSame ne)=> (hc+1,he) :: r
+     case h :: r => h :: compressEntries(r,ne)
+   } 
+  }
+
+  private def expandEntries(cl:List[EncounterEditorTableEntry]):List[EncounterEditorTableEntry] = {
+    cl match {
+      case Nil => Nil
+      case h :: r if(h.qty>1)=> ((1 to h.qty) map (x=>h.singleCopy)).toList ::: expandEntries(r)
+      case h :: r => h :: expandEntries(r)
+    }
+  }
+  
 }
