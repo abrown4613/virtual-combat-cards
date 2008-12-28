@@ -4,7 +4,7 @@ import swing._
 import swing.event._
 import javax.swing.BorderFactory
 
-import vcc.model.actions._
+import vcc.controller.actions._
 
 class DamageCommandPanel(val controller:actors.Actor) extends GridPanel(2,3) with ContextualView[ViewCombatant]{
   val damage=new TextField {

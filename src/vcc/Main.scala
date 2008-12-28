@@ -11,6 +11,7 @@ import scala.actors.Actor
 import scala.actors.Actor.{actor,loop,react}
 import view.{SequenceTable,ViewCombatant}
 import vcc.view.dialog.FileChooserHelper
+import vcc.controller._
 
 class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
   var fileMenu=new Menu("File");
@@ -20,9 +21,9 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
       var l=vcc.model.PartyLoader.loadFromFile(file.get)
       var id=0
       for(x<-l)  { 
-        tracker ! vcc.model.actions.AddCombatant(Symbol(if(x.id!=null)x.id else {id+=1; id.toString}),x)
+        tracker ! actions.AddCombatant(Symbol(if(x.id!=null)x.id else {id+=1; id.toString}),x)
       }
-      tracker ! vcc.model.actions.Enumerate(uia)
+      tracker ! actions.Enumerate(uia)
     }
   })
   val combatMenu = new Menu("Combat")
@@ -38,17 +39,17 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
-    tracker ! vcc.model.actions.EndCombat()
-    tracker ! vcc.model.actions.Enumerate(uia)
+    tracker ! vcc.controller.actions.EndCombat()
+    tracker ! actions.Enumerate(uia)
   })
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
-    tracker ! vcc.model.actions.ClearCombatants(false)
-    tracker ! vcc.model.actions.Enumerate(uia)
+    tracker ! actions.ClearCombatants(false)
+    tracker ! actions.Enumerate(uia)
   })
   combatMenu.contents +=new MenuItem(Action("Clear All"){
-    tracker ! vcc.model.actions.ClearCombatants(true)
-    tracker ! vcc.model.actions.Enumerate(uia)
+    tracker ! actions.ClearCombatants(true)
+    tracker ! actions.Enumerate(uia)
   })
 
   var viewMenu= new Menu("View")
@@ -75,7 +76,7 @@ object Main extends SimpleGUIApplication {
       }
     }
   }
-  val tracker=new vcc.model.Tracker(log)
+  val tracker=new vcc.controller.Tracker(log)
   var uia=new vcc.view.actor.UserInterface(tracker)
   tracker.setUserInterfaceActor(uia)
   

@@ -1,8 +1,10 @@
 //$Id$
-package vcc.model
+package vcc.controller
 
 import scala.actors.Actor
 import scala.actors.Actor.loop
+
+import vcc.model._
 
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
   val health:HealthTracker= ctype match {

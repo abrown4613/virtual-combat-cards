@@ -24,20 +24,20 @@ class CombatSetupTest extends junit.framework.TestCase {
       vcc.view.actor.SetHealth('K,HealthTrackerSummary(44,0,HealthStatus.Ok,0)),
       vcc.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
     )),self)
-    val logmock=new ExpectActor(1000,new ExpectingBehavior(List(actions.LogError("Nothing"))),self)
-    val tracker=new vcc.model.Tracker(logmock)
+    val logmock=new ExpectActor(1000,new ExpectingBehavior(List(vcc.controller.actions.LogError("Nothing"))),self)
+    val tracker=new vcc.controller.Tracker(logmock)
     tracker.setUserInterfaceActor(uimock)
     
     tracker.start
     
-    tracker ! actions.AddCombatant('K,tmpl)
+    tracker ! vcc.controller.actions.AddCombatant('K,tmpl)
     
     receiveWithin(400) {
       case uimock.Done(s) if(s eq uimock)=> assert(true)
       case uimock.Timeout(s) if(s eq uimock) => assert(false,"Should termintate")
       case uimock.Feedback(s,w) if(s eq uimock) => assert(false,"Unexpeced feedback"+w)
     }
-    logmock ! actions.LogError("Nothing")
+    logmock ! vcc.controller.actions.LogError("Nothing")
     receiveWithin(500) {
       case logmock.Done(s) if(s eq logmock)=> assert(true)
       case logmock.Timeout(s) if(s eq logmock) => assert(false,"Should termintate")

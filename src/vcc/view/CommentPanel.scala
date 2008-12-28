@@ -28,7 +28,7 @@ class CommentPanel(val controller:actors.Actor) extends BoxPanel(Orientation.Ver
   }
   private def sendChange() {
     if(_hasChanged) {
-      controller ! vcc.model.actions.SetComment(context.id,edit.text)
+      controller ! vcc.controller.actions.SetComment(context.id,edit.text)
     }
           
   }

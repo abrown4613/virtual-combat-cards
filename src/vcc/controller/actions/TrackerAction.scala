@@ -1,8 +1,9 @@
 //$Id$
-package vcc.model.actions
+package vcc.controller.actions
+
+import vcc.model.CombatantTemplate
 
 class TrackerAction {
-
 }
 
 // Builing the combat grid

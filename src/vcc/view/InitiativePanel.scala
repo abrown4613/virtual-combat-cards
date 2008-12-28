@@ -5,6 +5,7 @@ import scala.swing._
 import scala.swing.event._
 import scala.actors.Actor
 import vcc.model._
+import vcc.controller._
 
 class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
   val startRound_btn=new Button("Start Round")
