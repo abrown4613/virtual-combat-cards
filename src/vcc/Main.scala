@@ -10,16 +10,14 @@ import vcc.view.ViewCombatant
 import scala.actors.Actor
 import scala.actors.Actor.{actor,loop,react}
 import view.{SequenceTable,ViewCombatant}
+import vcc.view.dialog.FileChooserHelper
 
 class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
-    val fileOpen= new FileChooser(new java.io.File(System.getProperty("user.dir")))
-    fileOpen.fileFilter=new javax.swing.filechooser.FileNameExtensionFilter("XML Files","xml")
-    val result=fileOpen.showOpenDialog(this)
-    if(result==FileChooser.Result.Approve) {
-      println("Load party: "+fileOpen.selectedFile)
-      var l=vcc.model.PartyLoader.loadFromFile(fileOpen.selectedFile)
+    var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
+    if(file.isDefined) {
+      var l=vcc.model.PartyLoader.loadFromFile(file.get)
       var id=0
       for(x<-l)  { 
         tracker ! vcc.model.actions.AddCombatant(Symbol(if(x.id!=null)x.id else {id+=1; id.toString}),x)
