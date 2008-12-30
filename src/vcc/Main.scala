@@ -4,26 +4,20 @@ package vcc
 import scala.swing._
 import scala.swing.event._ 
 import vcc.util.swing._
-import javax.swing.BorderFactory
 
 import vcc.view.ViewCombatant
 import scala.actors.Actor
-import scala.actors.Actor.{actor,loop,react}
 import view.{SequenceTable,ViewCombatant}
 import vcc.view.dialog.FileChooserHelper
 import vcc.controller._
 
-class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
+//TODO: See if we can decouple UIA form this.
+class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
-      var l=vcc.model.PartyLoader.loadFromFile(file.get)
-      var id=0
-      for(x<-l)  { 
-        tracker ! actions.AddCombatant(Symbol(if(x.id!=null)x.id else {id+=1; id.toString}),x)
-      }
-      tracker ! actions.Enumerate(uia)
+      coord.loader ! vcc.controller.actions.LoadPartyFile(file.get,uia)
     }
   })
   val combatMenu = new Menu("Combat")
@@ -35,21 +29,21 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
   })
   combatMenu.contents += new Separator
   combatMenu.contents += new MenuItem(Action("Start Combat") {
-    val diag=new vcc.view.dialog.InitiativeDialog(tracker)
+    val diag=new vcc.view.dialog.InitiativeDialog(coord.tracker)
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
-    tracker ! vcc.controller.actions.EndCombat()
-    tracker ! actions.Enumerate(uia)
+    coord.tracker ! vcc.controller.actions.EndCombat()
+    coord.tracker ! actions.Enumerate(uia)
   })
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
-    tracker ! actions.ClearCombatants(false)
-    tracker ! actions.Enumerate(uia)
+    coord.tracker ! actions.ClearCombatants(false)
+    coord.tracker ! actions.Enumerate(uia)
   })
   combatMenu.contents +=new MenuItem(Action("Clear All"){
-    tracker ! actions.ClearCombatants(true)
-    tracker ! actions.Enumerate(uia)
+    coord.tracker ! actions.ClearCombatants(true)
+    coord.tracker ! actions.Enumerate(uia)
   })
 
   var viewMenu= new Menu("View")
@@ -69,37 +63,31 @@ class MainMenu(tracker:Actor,uia:vcc.view.actor.UserInterface) extends MenuBar {
 }
 
 object Main extends SimpleGUIApplication {
-  val log=scala.actors.Actor.actor {
-    loop {
-      react {
-        case s=>println("Log: "+s)
-      }
-    }
-  }
-  val tracker=new vcc.controller.Tracker(log)
-  var uia=new vcc.view.actor.UserInterface(tracker)
-  tracker.setUserInterfaceActor(uia)
+  var coord=vcc.controller.Coordinator.initialize
+
+  var uia=new vcc.view.actor.UserInterface(coord.tracker)
+
+  coord.start
   
-  val commandPanel= new vcc.view.CombatantActionPanel(tracker)
+  val commandPanel= new vcc.view.CombatantActionPanel(coord.tracker)
   var seqTable = new SequenceTable(uia)
-  
-  
-  def top = new MainFrame {
-    title = "Virtual Combat Cards"
-    contents= new BorderPanel {
-      add(commandPanel,BorderPanel.Position.East)
-      add(seqTable,BorderPanel.Position.Center)
-      add(new MainMenu(tracker,uia),BorderPanel.Position.North)
-    }
-  }
   
   // Register panel with UIA
   uia.addSequenceListener(seqTable)
   uia.addSequenceListener(commandPanel)
   uia.addContextListner(commandPanel)
   uia.addContextListner(seqTable)
-
-  // Start actors
-  tracker.start
   uia.start
+  coord.addObserver(uia)
+
+  
+  def top = new MainFrame {
+    title = "Virtual Combat Cards"
+    contents= new BorderPanel {
+      add(commandPanel,BorderPanel.Position.East)
+      add(seqTable,BorderPanel.Position.Center)
+      add(new MainMenu(coord,uia),BorderPanel.Position.North)
+    }
+  }
+  
 }	

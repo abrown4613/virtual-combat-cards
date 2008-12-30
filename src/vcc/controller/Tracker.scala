@@ -16,11 +16,11 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
   var it=InitiativeTracker(0,InitiativeState.Reserve)
 }
 
-class Tracker(log:Actor) extends Actor {
+class Tracker() extends Actor {
   
   private var uia:Actor=null
+  private var _coord:Coordinator =null
   
-  def setUserInterfaceActor(a:Actor) { uia=a}
   private var _initSeq=new CombatSequencer[Symbol]
   private var _map=Map.empty[Symbol,TrackerCombatant]
   
@@ -31,6 +31,12 @@ class Tracker(log:Actor) extends Actor {
   def act()={
     loop {
       react {
+        case actions.AddObserver(obs) => 
+          uia=obs
+          //TODO: This is a wrong approach need to add as many observer as possible
+        case actions.SetCoordinator(coord) => 
+          this._coord=coord
+          
         case actions.AddCombatant(id,template)=>
           var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
           _initSeq add id
@@ -73,19 +79,19 @@ class Tracker(log:Actor) extends Actor {
         // HEALTH Tracking
         case actions.ApplyDamage(InMap(c),amnt) =>
           c.health.applyDamage(amnt)
-          log ! c.name + " took " + amnt + " points of damage"
+          //log ! c.name + " took " + amnt + " points of damage"
           uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
         case actions.HealDamage(InMap(c),amnt) =>
           c.health.heal(amnt)
-          log ! c.name + " healed " + amnt + " points of damage"
+          //log ! c.name + " healed " + amnt + " points of damage"
           uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
         case actions.SetTemporaryHP(InMap(c),amnt) =>
           c.health.setTemporaryHitpoint(amnt)
-          log ! c.name + " received " + amnt + " of temporary hit points"
+          //log ! c.name + " received " + amnt + " of temporary hit points"
           uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
         case actions.FailDeathSave(InMap(c)) =>
           c.health.failDeathSave()
-          log ! c.name + " failed save versus death"
+          //log ! c.name + " failed save versus death"
           uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
         case actions.SetComment(InMap(c),text)=>
           c.info=text
