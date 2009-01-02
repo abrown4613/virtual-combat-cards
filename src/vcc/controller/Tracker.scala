@@ -20,6 +20,7 @@ class Tracker() extends Actor {
   
   private var uia:Actor=null
   private var _coord:Coordinator =null
+  private val _idgen= new IDGenerator(1,50)
   
   private var _initSeq=new CombatSequencer[Symbol]
   private var _map=Map.empty[Symbol,TrackerCombatant]
@@ -37,7 +38,12 @@ class Tracker() extends Actor {
         case actions.SetCoordinator(coord) => 
           this._coord=coord
           
-        case actions.AddCombatant(id,template)=>
+        case actions.AddCombatant(template)=>
+          var id:Symbol=if(template.id==null) _idgen.first() else {
+            var s=Symbol(template.id)
+            if(_idgen.contains(s)) _idgen.removeFromPool(s) // To make sure we don't get doubles
+            s
+          }
           var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
           _initSeq add id
           _map=_map + (id -> nc)
@@ -61,14 +67,17 @@ class Tracker() extends Actor {
           } 
           uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case actions.ClearCombatants(all) =>
+          var current=_map.keySet.toList
           if(all) {
             _map=Map.empty[Symbol,TrackerCombatant]
-            _initSeq.clear
           } else {
             _map=_map.filter(p=>p._2.health.isInstanceOf[CharacterHealthTracker])
-            _initSeq.clear
-            for(c<-_map) _initSeq.add(c._2.id)
           }
+          var removed=current -- _map.keySet.toList
+          for(x <- removed) {
+            _idgen.returnToPool(x)
+          }
+          _initSeq.removeFromSequence(removed)
         case actions.EndCombat() => {
           for(p<-_map) {
             var c=p._2

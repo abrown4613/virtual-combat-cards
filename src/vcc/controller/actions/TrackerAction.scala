@@ -7,7 +7,7 @@ class TrackerAction {
 }
 
 // Builing the combat grid
-case class AddCombatant(id:Symbol,template:CombatantTemplate)
+case class AddCombatant(template:CombatantTemplate)
 case class Enumerate()
 case class ClearCombatants(all:Boolean)
 case class StartCombat(order:Seq[Symbol])
