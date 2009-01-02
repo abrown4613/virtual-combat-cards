@@ -25,7 +25,8 @@ class IDGenerator(start:Int, end:Int) {
     ids match {
       case (a,b)::(c,d)::rest  if(b+2==c && b+1==n) => (a,d)::rest
       case (a,b)::rest =>
-        if(a<=n && n<=b) throw new Exception("Already in sequence")
+        if(n<a-1) (n,n) :: (a,b) :: rest
+        else if(a<=n && n<=b) throw new Exception("Already in sequence")
         else if(n==a-1) (n,b)::rest
         else if(n==b+1) (a,n)::rest
         else (a,b)::addToList(n,rest)
@@ -103,4 +104,6 @@ class IDGenerator(start:Int, end:Int) {
       case _ => false
     }
   }
+  
+  override def toString():String = "IDGenerator("+ids+")"
 }
