@@ -1,3 +1,4 @@
+//$Id$
 package test
 
 import junit.framework._
@@ -31,7 +32,7 @@ class CombatSetupTest extends junit.framework.TestCase {
     
     tracker.start
     
-    tracker ! vcc.controller.actions.AddCombatant('K,tmpl)
+    tracker ! vcc.controller.actions.AddCombatant(tmpl)
     tracker ! vcc.controller.actions.Enumerate()
     
     receiveWithin(400) {
