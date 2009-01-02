@@ -52,7 +52,6 @@ class EncounterEditorTableEntry(val ctype:CombatantType.Value) {
   def toSingleCombatantTemplate():CombatantTemplate = {
     var ct=new CombatantTemplate(name,hp,init,ctype)
     if(id!=null && id!="") ct.id=id
-    println("This entity id="+id)
     var db=DefenseBlock(ac,fortitude,reflex,will)
     if(db!=DefenseBlock(0,0,0,0))
       ct.defense=db
