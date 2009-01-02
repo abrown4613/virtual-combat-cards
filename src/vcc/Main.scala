@@ -13,6 +13,9 @@ import vcc.controller._
 
 //TODO: See if we can decouple UIA form this.
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
+  
+  lazy val encEditor=new vcc.view.dialog.EncounterEditorDialog(coord)
+  
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
@@ -54,7 +57,7 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   viewMenu.contents +=hideDeadMenu
   viewMenu.contents += new Separator
   viewMenu.contents += new MenuItem(Action("Encounter/Party Editor..."){
-    vcc.view.dialog.EncounterEditorDialog.visible=true
+    encEditor.visible=true
   })
   
   contents+=fileMenu

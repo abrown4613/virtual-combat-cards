@@ -6,7 +6,7 @@ import scala.swing.event._
 
 import vcc.model.{CombatantType,PartyLoader,CombatantTemplate}
 
-object EncounterEditorDialog extends Frame {
+class EncounterEditorDialog(val coord:vcc.controller.Coordinator) extends Frame {
   title = "Party/Encounter Editor"
   
   val entries=new vcc.util.swing.ProjectionTableModel[EncounterEditorTableEntry](EncounterEditorTableEntryProjection)
@@ -38,11 +38,9 @@ object EncounterEditorDialog extends Frame {
   val menuFile=new Menu("File")
   menuFile.contents+= new MenuItem(Action("Save..."){ doSave()})
   menuFile.contents+= new MenuItem(Action("Load..."){ doLoad()})
-  /*
-   menuFile.contents+= new MenuItem(Action("Add to battle"){ doAddToBattle()}) {
-    enabled=false // TODO:
+  menuFile.contents+= new MenuItem(Action("Add to battle"){ doAddToBattle()}) {
+    enabled=(coord!=null)
   }
-   */
   menuFile.contents+= new Separator
   menuFile.contents+= new MenuItem(Action("Close"){ visible=false})
   menuBar.contents+=menuFile
@@ -109,9 +107,10 @@ object EncounterEditorDialog extends Frame {
   }
   
   private def doAddToBattle() {
-    //TODO: Think this out
-    println("do addTobattle")
-    
+    if(coord!=null) {
+      var cel= expandEntries(entries.content.toList).map(_.toSingleCombatantTemplate)
+      coord.loader ! vcc.controller.actions.LoadPartyFromTemplate(cel,null)
+    }
   }
   private def compressEntries(cl:List[EncounterEditorTableEntry]):List[EncounterEditorTableEntry] = {
     if(!cl.isEmpty) {
