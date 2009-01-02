@@ -2,8 +2,8 @@
 package vcc.controller
 
 package actions {
-  case class LoadPartyFile(file:java.io.File, observer:scala.actors.Actor)
-  case class LoadPartyFromTemplate(tmpl:Seq[vcc.model.CombatantTemplate], observer:scala.actors.Actor)
+  case class LoadPartyFile(file:java.io.File)
+  case class LoadPartyFromTemplate(tmpl:Seq[vcc.model.CombatantTemplate])
 }
 
 import scala.actors.Actor
@@ -17,15 +17,15 @@ class EntityLoader extends Actor {
     loop {
       react {
         case actions.SetCoordinator(coord) => this.coord=coord
-        case actions.LoadPartyFromTemplate(l,observer)=>
+        case actions.LoadPartyFromTemplate(l)=>
           var id=0
           for(x<-l)  { 
             coord.tracker ! actions.AddCombatant(Symbol(if(x.id!=null)x.id else {id+=1; id.toString}),x)
           }
-          coord.tracker ! actions.Enumerate(observer)          
-        case actions.LoadPartyFile(file,observer)=> 
+          coord.tracker ! actions.Enumerate()          
+        case actions.LoadPartyFile(file)=> 
           var l=vcc.model.PartyLoader.loadFromFile(file)
-          this ! actions.LoadPartyFromTemplate(l,observer)
+          this ! actions.LoadPartyFromTemplate(l)
       }
     }
   }

@@ -41,8 +41,8 @@ class Tracker() extends Actor {
           var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
           _initSeq add id
           _map=_map + (id -> nc)
-        case actions.Enumerate(p)=>
-          val peer = if(p!=null) p else uia
+        case actions.Enumerate()=>
+          val peer = uia
           peer ! vcc.view.actor.ClearSequence()
           for(x<-_map.map(_._2)) { 
             peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init))

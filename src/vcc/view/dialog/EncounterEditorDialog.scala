@@ -109,7 +109,7 @@ class EncounterEditorDialog(val coord:vcc.controller.Coordinator) extends Frame 
   private def doAddToBattle() {
     if(coord!=null) {
       var cel= expandEntries(entries.content.toList).map(_.toSingleCombatantTemplate)
-      coord.loader ! vcc.controller.actions.LoadPartyFromTemplate(cel,null)
+      coord.loader ! vcc.controller.actions.LoadPartyFromTemplate(cel)
     }
   }
   private def compressEntries(cl:List[EncounterEditorTableEntry]):List[EncounterEditorTableEntry] = {

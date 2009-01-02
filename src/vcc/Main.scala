@@ -11,7 +11,6 @@ import view.{SequenceTable,ViewCombatant}
 import vcc.view.dialog.FileChooserHelper
 import vcc.controller._
 
-//TODO: See if we can decouple UIA form this.
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   
   lazy val encEditor=new vcc.view.dialog.EncounterEditorDialog(coord)
@@ -20,7 +19,7 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   fileMenu.contents += new MenuItem(Action("Load Party"){
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
-      coord.loader ! vcc.controller.actions.LoadPartyFile(file.get,uia)
+      coord.loader ! vcc.controller.actions.LoadPartyFile(file.get)
     }
   })
   val combatMenu = new Menu("Combat")
@@ -37,16 +36,16 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
     coord.tracker ! vcc.controller.actions.EndCombat()
-    coord.tracker ! actions.Enumerate(uia)
+    coord.tracker ! actions.Enumerate()
   })
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
     coord.tracker ! actions.ClearCombatants(false)
-    coord.tracker ! actions.Enumerate(uia)
+    coord.tracker ! actions.Enumerate()
   })
   combatMenu.contents +=new MenuItem(Action("Clear All"){
     coord.tracker ! actions.ClearCombatants(true)
-    coord.tracker ! actions.Enumerate(uia)
+    coord.tracker ! actions.Enumerate()
   })
 
   var viewMenu= new Menu("View")

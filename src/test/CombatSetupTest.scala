@@ -6,7 +6,7 @@ import vcc.model._
 import vcc.view._
 import scala.actors.Actor._
 
-
+//FIXME: This test is bad, and is not working.
 
 class CombatSetupTest extends junit.framework.TestCase {
 
@@ -20,6 +20,7 @@ class CombatSetupTest extends junit.framework.TestCase {
     assert(tmpl.id=="K")
 
     val uimock=new ExpectActor(200,new ExpectingBehavior(List(
+      vcc.view.actor.ClearSequence(),
       vcc.view.actor.Combatant(ViewCombatant(Symbol("K"),"Kantrex",44,5)),
       vcc.view.actor.SetHealth('K,HealthTrackerSummary(44,0,HealthStatus.Ok,0)),
       vcc.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
@@ -31,7 +32,7 @@ class CombatSetupTest extends junit.framework.TestCase {
     tracker.start
     
     tracker ! vcc.controller.actions.AddCombatant('K,tmpl)
-    tracker ! vcc.controller.actions.Enumerate(uimock)
+    tracker ! vcc.controller.actions.Enumerate()
     
     receiveWithin(400) {
       case uimock.Done(s) if(s eq uimock)=> assert(true)
