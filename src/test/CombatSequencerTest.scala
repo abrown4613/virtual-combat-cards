@@ -1,3 +1,4 @@
+//$Id$
 package test
 
 import junit.framework.TestCase
@@ -113,5 +114,11 @@ class CombatSequencerTest extends TestCase {
     
     assert(seq.sequence==Nil)
     assert(seq.reserve.toList==Nil)
+  }
+  
+  def testRemoveFromList() {
+    seq.removeFromSequence(List('a,'e))
+    assert(seq.sequence==List('b,'c,'d,'f))
+    assert(seq.reserve.toList == List('f))
   }
 }
