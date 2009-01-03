@@ -1,3 +1,5 @@
+//$Id$
+//FIXME: This code needs refactoring, hide private informations, maybe make it immutable
 package vcc.model
 
 case class HealthTrackerSummary(currhp:Int,temphp:Int,status:HealthStatus.Value,deathstrikes:Int)
@@ -8,7 +10,7 @@ case class HealthTrackerSummary(currhp:Int,temphp:Int,status:HealthStatus.Value,
  */
 abstract class HealthTracker(val hp:Int) {
   var _currhp:Int=hp
-  var _bloody:Int=hp/2
+  protected val _bloody:Int=hp/2
   var _temphp:Int=0
   var _deathStrikes:Int=0
 
