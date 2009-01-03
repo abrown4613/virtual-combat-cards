@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view
 
 import swing._
@@ -17,7 +18,7 @@ class DamageCommandPanel(val controller:actors.Actor) extends GridPanel(2,3) wit
   val death_btn = new Button("Fail Death Save")
   val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn)
 
-  contents+= new Label("Damage:")
+  contents+= new Label("Hit Points:")
   contents++ controls
   border=BorderFactory.createTitledBorder("Change Health")
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
