@@ -9,6 +9,7 @@ object EncounterEditorTableEntry {
     eete.name=ct.name
     eete.init=ct.init
     eete.hp=ct.hp
+    eete.id=ct.id
     eete.ac=if(ct.defense!=null) ct.defense.ac else 0
     eete.fortitude=if(ct.defense!=null) ct.defense.fortitude else 0
     eete.reflex=if(ct.defense!=null) ct.defense.reflex else 0
