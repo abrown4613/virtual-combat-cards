@@ -14,6 +14,7 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
   }
   var info:String=""
   var it=InitiativeTracker(0,InitiativeState.Reserve)
+  var defense:DefenseBlock=null
 }
 
 class Tracker() extends Actor {
@@ -45,13 +46,14 @@ class Tracker() extends Actor {
             s
           }
           var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
+          nc.defense=template.defense
           _initSeq add id
           _map=_map + (id -> nc)
         case actions.Enumerate()=>
           val peer = uia
           peer ! vcc.view.actor.ClearSequence()
           for(x<-_map.map(_._2)) { 
-            peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init))
+            peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
             peer ! vcc.view.actor.SetInitiative(x.id,x.it)
             peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
           }

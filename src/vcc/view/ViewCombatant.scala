@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view 
 
 import vcc.model._
@@ -5,9 +6,8 @@ import vcc.model._
 trait UIFormatted {
   def formattedText():String
 }	
-//case class ViewInitiativeSummary(round:Int,state:vcc.model.InitiativeState.Value)
 
-case class ViewCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int) {
+case class ViewCombatant(id:Symbol,name:String,hp:Int,init:Int,defense:DefenseBlock) {
   var health=HealthTrackerSummary(hp,0,HealthStatus.Ok,0)
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
