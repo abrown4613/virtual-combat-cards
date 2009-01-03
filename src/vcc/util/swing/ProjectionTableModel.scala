@@ -23,12 +23,21 @@ class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax
   override def isCellEditable(row:Int,col:Int)=(elem.size>row) && proj.isEditable(col,elem(row))
   override def setValueAt(value:java.lang.Object,row:Int,col:Int)=proj.set(col,elem(row),value)
   
+  def makeRunnable(f:()=>Unit):java.lang.Runnable =
+    new java.lang.Runnable {
+      def run() {
+        f.apply()
+      }
+    }
+  
   def content_=(content:Seq[T])={
-    var s=elem.size
-    elem=content;
-    if(s>content.size) 
-      this.fireTableRowsDeleted(content.size,s)
-    this.fireTableDataChanged; 
+    javax.swing.SwingUtilities.invokeLater(makeRunnable {
+      var s=elem.size
+      elem=content;
+      if(s>content.size) 
+        this.fireTableRowsDeleted(content.size,s)
+      this.fireTableDataChanged; 
+    })
   }
   def content=elem
 }
