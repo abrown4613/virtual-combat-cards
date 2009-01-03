@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 
   <property name="build"  value="bin"/>
-  <property name="version" value="0.11" />
+  <property name="version" value="0.20" />
   <property name="distbase" value="dist" />
   <property name="dist" value="${distbase}/vcc" />
   <property name="scalajar" value="${distbase}/scalalib" />
@@ -13,7 +13,10 @@
 	<mkdir dir="${dist}"/>
 	<mkdir dir="${dist}/bin"/>
   	
-  	<jar jarfile="${jar.file1}" basedir="${build}" />
+  	<jar jarfile="${jar.file1}" 
+  		basedir="${build}"
+  		excludes="test/*"
+  	/>
         
     <fileset id="jars2pack" dir="${dist}">
         <include name="*.jar"/>
@@ -25,7 +28,7 @@
   	    <fileset dir="scripts"/>
   	    <fileset dir="sample"/>
   	</copy>
-  	<zip destfile="${dist}-${version}.zip" basedir="${dist}"></zip>
+  	<zip destfile="${dist}-${version}.zip" basedir="${distbase}" includes="vcc/**"></zip>
   </target>
   <target name="clean">
   	<deltree dir="${dist}"/>
