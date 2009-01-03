@@ -47,7 +47,16 @@ class Tracker() extends Actor {
           }
           var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
           nc.defense=template.defense
-          _initSeq add id
+          if(_map.contains(nc.id)) {
+            // It's an old combatant salvage old heath and Initiative
+            //FIXME: This is a Hack, health is not well implemented
+            nc.health._currhp =_map(nc.id).health._currhp
+            nc.health._temphp =_map(nc.id).health._temphp
+            nc.health._deathStrikes =_map(nc.id).health._deathStrikes
+            nc.it =_map(nc.id).it
+          } else {
+            _initSeq add id
+          }
           _map=_map + (id -> nc)
         case actions.Enumerate()=>
           val peer = uia
