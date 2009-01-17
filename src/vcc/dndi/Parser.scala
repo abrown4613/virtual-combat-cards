@@ -3,9 +3,14 @@ package vcc.dndi
 
 class UntranslatableException(node:scala.xml.Node) extends Exception("Cant translate node: "+node)
 
+/**
+ * Converts XML nodes form DNDInsiderCapture into a series os Parts.
+ * This involves removing link, converting Break, extrating Keys and Text, and
+ * 
+ */
 object Parser {
   
-  final val reCollonTrim=new scala.util.matching.Regex("^:?\\s*(\\S.*\\S)\\s*$")
+  final val reColonTrim=new scala.util.matching.Regex("^[:\\s]*(.*?)[;\\s]*$")
   final val reFlexiInt=new scala.util.matching.Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
   
   /**
@@ -92,7 +97,8 @@ object Parser {
      * and put some whitespace when needed
      */
     def +(that:Text) = {
-      if(that.text(0).isLetter || that.text(0).isDigit) 
+      if(this.text.length==0) that  // Case for trim that return Text("") 
+      else if(that.text(0).isLetter || that.text(0).isDigit) 
         Text(this.text+" "+that.text)
       else
         Text(this.text+that.text)
@@ -121,7 +127,7 @@ object Parser {
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
       case scala.xml.Text(reFlexiInt(sign,value)) => if(sign!=null )Text(sign+value) else Text(value)
-      case scala.xml.Text(reCollonTrim(text)) => Text(text)
+      case scala.xml.Text(reColonTrim(text)) => if(text!=null) Text(text) else Text("")
       case scala.xml.Text(text) => Text(text.trim)
       case s => throw new UntranslatableException(node)
     }
@@ -132,7 +138,7 @@ object Parser {
    */
   def mergeText(parts:List[Part]):List[Part]= {
     parts match {
-      case (ta:Text):: (tb: Text) :: rest => mergeText((ta+tb)::rest)
+      case (ta:Text)::(tb: Text) :: rest => mergeText((ta+tb)::rest)
       case part :: rest => part :: mergeText(rest)
       case Nil => Nil
     }
@@ -144,5 +150,18 @@ object Parser {
   def parse(nodes: scala.xml.NodeSeq):List[Part] = {
     if(nodes==null) Nil
     else mergeText((nodes.map(parseNode)).toList)
+  }
+  
+  /**
+   * Transform a list of paris of type Key,Text and optional breaks into 
+   * a list of key,value pairs.
+   */
+  def partsToPairs(parts:List[Part]):List[(String,String)] = {
+    parts match {
+      case Key(k)::Text(value)::rest => (k,value):: partsToPairs(rest)
+      case Break()::rest => partsToPairs(rest)
+      case Nil => Nil
+      case s => throw new Exception("List contains unexpected parts: "+s)
+    }
   }
 }
