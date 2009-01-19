@@ -115,6 +115,11 @@ object Parser {
   case class Key(key:String) extends Part
   
   /**
+   * Text that was surrounded in Italic
+   */
+  case class Emphasis(text:String) extends Part
+  
+  /**
    * Transform a simple node into a Part token. This will lift A tags, B to Keys, 
    * images to icon, recharge dice to text, and attempt several triming to get rid
    * of colons, semi-colons, and other noise after valuable data
@@ -124,6 +129,7 @@ object Parser {
       case <BR></BR> => Break()
       case <B>{text}</B> => Key(text.toString.trim)
       case <A>{text}</A> => Text(text.toString.trim)
+      case <I>{text}</I> => Emphasis(text.toString.trim)
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
       case scala.xml.Text(reFlexiInt(sign,value)) => if(sign!=null )Text(sign+value) else Text(value)

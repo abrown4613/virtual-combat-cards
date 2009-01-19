@@ -21,7 +21,11 @@ class Monster(xml:scala.xml.Node) extends DNDIObject {
   
   //Contruction elements
   case class Aura(name:String,desc:String)
-  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String)
+  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) {
+    var secondary:String=null
+    
+    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+desc+", "+secondary+")" 
+  }
   
   private var _map=Map.empty[String,String]
   private var _auras:List[Aura]=Nil
@@ -91,7 +95,7 @@ class Monster(xml:scala.xml.Node) extends DNDIObject {
     assert(blocks.tail != Nil)
     blocks.tail.head match {
       case Text(desc):: Nil => desc
-      case _ => throw new Exception("")
+      case _ => throw new Exception("Cant find description block")
     }
   }
  
@@ -109,11 +113,35 @@ class Monster(xml:scala.xml.Node) extends DNDIObject {
     val head=normalizeTitle(flattenSpan((xml \\ "H1").first))
     addToMap(head)
 
-    var blocks=(xml \ "P").map(block=>parse(block.child)).toList
+    var blocks=(xml \ "P").filter(node=> !(node \ "@class" isEmpty)).map(block=>parse(block.child)).toList
     while(blocks!=Nil) {
       //println("Block\n\t"+blocks.head)
       blocks.head match {
         case Key("Initiative") :: rest => processPrimaryBlock(partsToPairs(blocks.head))
+
+        case Key("Description")::rest => 
+          // This case is needed because of Break in the description
+          _map = _map + ("DESCRIPTION" -> formatDescription(rest))
+          
+        case Key("Equipment")::rest => 
+          // This case is needed because of Break in the description
+          _map = _map + ("EQUIPMENT" -> formatDescription(rest))
+        
+        case Icon(icon)::Key(powername)::Text(action)::Nil =>
+          // Power without keywords (like pseudo dragon fly by)
+          processPower(icon,powername,action,null,extractDescriptionFromBlocks(blocks))
+          blocks=blocks.tail
+
+        case Key(powername)::Text(action)::Nil =>
+          // Power without keyword or Icon (like Goblin Tactics)
+          processPower(null,powername,action,null,extractDescriptionFromBlocks(blocks))
+          blocks=blocks.tail
+          
+        case Emphasis("Secondary Attack")::Nil =>
+          // A secondary attack
+          assert(_power.head != Nil && _power.head.secondary==null)
+          _power.head.secondary=extractDescriptionFromBlocks(blocks)
+          blocks=blocks.tail
           
         case Icon(icon)::Key(powername)::Text(action)::Icon(IconType.Separator)::Key(keywords)::Nil =>
           processPower(icon,powername,action,keywords,extractDescriptionFromBlocks(blocks))
@@ -127,19 +155,12 @@ class Monster(xml:scala.xml.Node) extends DNDIObject {
           processPower(null,feature,null,null,extractDescriptionFromBlocks(blocks))
           blocks=blocks.tail
           
-        case Key("Description")::rest => 
+        case Key("Alignment")::rest => 
           // This case is needed because of Break in the description
-          _map = _map + ("DESCRIPTION" -> formatDescription(rest))
-          
-        case Key("Equipment")::rest => 
-          // This case is needed because of Break in the description
-          _map = _map + ("EQUIPMENT" -> formatDescription(rest))
-          
-        case Key(k)::Text(v)::rest =>
           var pairs=partsToPairs(blocks.head)
           addToMap(pairs)
           
-        case _ => throw new Exception("Shouldn't get here")
+        case s => throw new Exception("Shouldn't get here! What to do with: "+s)
       }
       blocks=blocks.tail
     }
@@ -148,5 +169,9 @@ class Monster(xml:scala.xml.Node) extends DNDIObject {
   def apply(attribute: String):Option[String] = {
     if(_map.contains(attribute)) Some(_map(attribute))
     else None
+  }
+  
+  override def toString():String = {
+    "Monster("+_map+"; Aura="+_auras+"; powers="+_power+")"
   }
 }
