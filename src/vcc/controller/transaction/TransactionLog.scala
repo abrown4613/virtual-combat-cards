@@ -11,9 +11,9 @@ class TransactionLogOutOfBounds(msg:String) extends Exception(msg)
 /**
  * Container for transactions past and future
  */
-class TransactionLog {
+class TransactionLog[T<:TransactionDescription] {
   
-  case class TransactionStore(desc:TransactionDescription, trans:Transaction)
+  case class TransactionStore(desc:T, trans:Transaction)
   private var pastTrans:List[TransactionStore]=Nil
   private var futureTrans:List[TransactionStore]=Nil
   
@@ -24,7 +24,7 @@ class TransactionLog {
    * @param trans The transaction to be stored
    * @throws BadTransaction if transaction is not commited or repeated
    */
-  def store(desc:TransactionDescription, trans:Transaction) {
+  def store(desc:T, trans:Transaction) {
     if(trans==null || desc==null)
       throw new BadTransaction("Transcation must be a transaction")
     if(trans.state != Transaction.state.Committed)
