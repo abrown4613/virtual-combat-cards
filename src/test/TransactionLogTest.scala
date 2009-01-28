@@ -11,7 +11,7 @@ class TransactionLogTest extends TestCase {
   }
   
   def testEmptyLog() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     
     assert(tlog.previousTransctionDescription==null)
     assert(tlog.nextTransactionDescription==null)
@@ -33,7 +33,7 @@ class TransactionLogTest extends TestCase {
   }
   
   def testStoreNull() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     try {
       tlog.store(null,null)
       assert(false,"Must not save null transaction")
@@ -44,7 +44,7 @@ class TransactionLogTest extends TestCase {
   }
   
   def testStoreOpenTransaction() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     val trans= new Transaction()
     
     try {
@@ -56,7 +56,7 @@ class TransactionLogTest extends TestCase {
   }
 
   def testStoreEmptyTransaction() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     val trans= new Transaction()
   
     trans.commit(null)
@@ -69,7 +69,7 @@ class TransactionLogTest extends TestCase {
   }
 
   def testStore() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     implicit var trans= new Transaction()
     val v= new Undoable(10,null)
 
@@ -85,7 +85,7 @@ class TransactionLogTest extends TestCase {
    * Test saving a transaction and making sure that notification go out on save, rollback and rollforward.
    */
   def testStoreAndRollbackThenRollFoward() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     implicit var trans= new Transaction()
     val v= new Undoable[Int](10,(x=>Beep('nu1,x.value)))
     val bp=new BeepOut
@@ -117,7 +117,7 @@ class TransactionLogTest extends TestCase {
    * replacement transaction, this should make the future transcation change. 
    */
   def testStoreStoreAndRollbackThenStore() {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     implicit var trans= new Transaction()
     val v= new Undoable[Int](10,(x=>Beep('nu1,x.value)))
     val bp=new BeepOut
@@ -153,7 +153,7 @@ class TransactionLogTest extends TestCase {
   } 
   
   def testStoreSameTransactionTwice {
-    val tlog= new TransactionLog()
+    val tlog= new TransactionLog[MyTrans]()
     implicit var trans= new Transaction()
     val v= new Undoable[Int](10,(x=>Beep('nu2,x.value)))
 
