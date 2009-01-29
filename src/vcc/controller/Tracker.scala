@@ -38,107 +38,115 @@ class Tracker() extends Actor {
           //TODO: This is a wrong approach need to add as many observer as possible
         case actions.SetCoordinator(coord) => 
           this._coord=coord
-          
-        case actions.AddCombatant(template)=>
-          var id:Symbol=if(template.id==null) _idgen.first() else {
-            var s=Symbol(template.id)
-            if(_idgen.contains(s)) _idgen.removeFromPool(s) // To make sure we don't get doubles
-            s
-          }
-          var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
-          nc.defense=template.defense
-          if(_map.contains(nc.id)) {
-            // It's an old combatant salvage old heath and Initiative
-            //FIXME: This is a Hack, health is not well implemented
-            nc.health._currhp =_map(nc.id).health._currhp
-            nc.health._temphp =_map(nc.id).health._temphp
-            nc.health._deathStrikes =_map(nc.id).health._deathStrikes
-            nc.it =_map(nc.id).it
-          } else {
-            _initSeq add id
-          }
-          _map=_map + (id -> nc)
-        case actions.Enumerate()=>
-          val peer = uia
-          peer ! vcc.view.actor.ClearSequence()
-          for(x<-_map.map(_._2)) { 
-            peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-            peer ! vcc.view.actor.SetInitiative(x.id,x.it)
-            peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
-          }
-          peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
-        case actions.StartCombat(seq) =>
-          for(x<-seq) {
-            if(_map.contains(x)) {
-              var c=_map(x)
-              _initSeq.moveDown(c.id)
-              c.it=InitiativeTracker(0,InitiativeState.Waiting)
-              uia ! vcc.view.actor.SetInitiative(c.id,c.it)
-            }
-          } 
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
-        case actions.ClearCombatants(all) =>
-          var current=_map.keySet.toList
-          if(all) {
-            _map=Map.empty[Symbol,TrackerCombatant]
-          } else {
-            _map=_map.filter(p=>p._2.health.isInstanceOf[CharacterHealthTracker])
-          }
-          var removed=current -- _map.keySet.toList
-          for(x <- removed) {
-            _idgen.returnToPool(x)
-          }
-          _initSeq.removeFromSequence(removed)
-        case actions.EndCombat() => {
-          for(p<-_map) {
-            var c=p._2
-            c.it=InitiativeTracker(0,InitiativeState.Reserve)
-            uia ! vcc.view.actor.SetInitiative(c.id,c.it)
-          }
-        }
-          
-        // HEALTH Tracking
-        case actions.ApplyDamage(InMap(c),amnt) =>
-          c.health.applyDamage(amnt)
-          //log ! c.name + " took " + amnt + " points of damage"
-          uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
-        case actions.HealDamage(InMap(c),amnt) =>
-          c.health.heal(amnt)
-          //log ! c.name + " healed " + amnt + " points of damage"
-          uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
-        case actions.SetTemporaryHP(InMap(c),amnt) =>
-          c.health.setTemporaryHitpoint(amnt)
-          //log ! c.name + " received " + amnt + " of temporary hit points"
-          uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
-        case actions.FailDeathSave(InMap(c)) =>
-          c.health.failDeathSave()
-          //log ! c.name + " failed save versus death"
-          uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
-        case actions.SetComment(InMap(c),text)=>
-          c.info=text
-          uia ! vcc.view.actor.SetInformation(c.id,c.info)
-          
-        // INITIATIVE TRACKING  
-        case actions.MoveUp(InMap(c)) => 
-          this.changeSequence(c,InitiativeTracker.actions.MoveUp)
-        case actions.StartRound(InMap(c)) =>
-          this.changeSequence(c,InitiativeTracker.actions.StartRound)
-        case actions.EndRound(InMap(c)) =>
-          this.changeSequence(c,InitiativeTracker.actions.EndRound)
-        case actions.Delay(InMap(c)) =>
-          this.changeSequence(c,InitiativeTracker.actions.Delay)
-        case actions.Ready(InMap(c)) => 
-          this.changeSequence(c,InitiativeTracker.actions.Ready)
-        case actions.ExecuteReady(InMap(c)) =>
-          this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
-          
-        case actions.QueryCombatantMap(func) =>
-          reply(_map.map(x=>func(x._2)).toList)
-          
+        case ta:actions.TransactionalAction if(processActions.isDefinedAt(ta))=> 
+          processActions(ta)
+        case qa:actions.QueryAction if(processQuery.isDefinedAt(qa)) =>
+          processQuery(qa)
+         
         case s=>println("Tracker receive:"+s)
       }
     }
   }
+  
+  private val processActions:PartialFunction[actions.TransactionalAction,Unit] = { 
+    case actions.AddCombatant(template)=>
+      var id:Symbol=if(template.id==null) _idgen.first() else {
+        var s=Symbol(template.id)
+        if(_idgen.contains(s)) _idgen.removeFromPool(s) // To make sure we don't get doubles
+        s
+      }
+      var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
+      nc.defense=template.defense
+      if(_map.contains(nc.id)) {
+        // It's an old combatant salvage old heath and Initiative
+        //FIXME: This is a Hack, health is not well implemented
+        nc.health._currhp =_map(nc.id).health._currhp
+        nc.health._temphp =_map(nc.id).health._temphp
+        nc.health._deathStrikes =_map(nc.id).health._deathStrikes
+        nc.it =_map(nc.id).it
+      } else {
+        _initSeq add id
+      }
+      _map=_map + (id -> nc)
+    case actions.StartCombat(seq) =>
+      for(x<-seq) {
+        if(_map.contains(x)) {
+          var c=_map(x)
+          _initSeq.moveDown(c.id)
+          c.it=InitiativeTracker(0,InitiativeState.Waiting)
+          uia ! vcc.view.actor.SetInitiative(c.id,c.it)
+        }
+      } 
+      uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
+    case actions.ClearCombatants(all) =>
+      var current=_map.keySet.toList
+      if(all) {
+        _map=Map.empty[Symbol,TrackerCombatant]
+      } else {
+        _map=_map.filter(p=>p._2.health.isInstanceOf[CharacterHealthTracker])
+      }
+      var removed=current -- _map.keySet.toList
+      for(x <- removed) {
+        _idgen.returnToPool(x)
+      }
+      _initSeq.removeFromSequence(removed)
+    case actions.EndCombat() => {
+      for(p<-_map) {
+        var c=p._2
+        c.it=InitiativeTracker(0,InitiativeState.Reserve)
+        uia ! vcc.view.actor.SetInitiative(c.id,c.it)
+      }
+    }
+    
+    // HEALTH Tracking
+    case actions.ApplyDamage(InMap(c),amnt) =>
+      c.health.applyDamage(amnt)
+      //log ! c.name + " took " + amnt + " points of damage"
+      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+    case actions.HealDamage(InMap(c),amnt) =>
+      c.health.heal(amnt)
+      //log ! c.name + " healed " + amnt + " points of damage"
+      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+    case actions.SetTemporaryHP(InMap(c),amnt) =>
+      c.health.setTemporaryHitpoint(amnt)
+      //log ! c.name + " received " + amnt + " of temporary hit points"
+      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+    case actions.FailDeathSave(InMap(c)) =>
+      c.health.failDeathSave()
+      //log ! c.name + " failed save versus death"
+      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+    case actions.SetComment(InMap(c),text)=>
+      c.info=text
+      uia ! vcc.view.actor.SetInformation(c.id,c.info)
+      
+      // INITIATIVE TRACKING  
+    case actions.MoveUp(InMap(c)) => 
+      this.changeSequence(c,InitiativeTracker.actions.MoveUp)
+    case actions.StartRound(InMap(c)) =>
+      this.changeSequence(c,InitiativeTracker.actions.StartRound)
+    case actions.EndRound(InMap(c)) =>
+      this.changeSequence(c,InitiativeTracker.actions.EndRound)
+    case actions.Delay(InMap(c)) =>
+      this.changeSequence(c,InitiativeTracker.actions.Delay)
+    case actions.Ready(InMap(c)) => 
+      this.changeSequence(c,InitiativeTracker.actions.Ready)
+    case actions.ExecuteReady(InMap(c)) =>
+      this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
+  }	
+  
+  val processQuery:PartialFunction[actions.QueryAction,Unit]= {
+    case actions.QueryCombatantMap(func) =>
+      reply(_map.map(x=>func(x._2)).toList)
+    case actions.Enumerate()=>
+      val peer = uia
+      peer ! vcc.view.actor.ClearSequence()
+      for(x<-_map.map(_._2)) { 
+        peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
+        peer ! vcc.view.actor.SetInitiative(x.id,x.it)
+        peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
+      }
+      peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
+  }		
   
   private def advanceToNext() {
     // Auto advance dead guys
