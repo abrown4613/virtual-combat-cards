@@ -7,7 +7,8 @@ import vcc.model.CombatSequencer
 
 class CombatSequencerTest extends TestCase {
 
-  var seq:CombatSequencer[Symbol]=null
+  var seq:CombatSequencer=null
+  implicit val trans= new vcc.controller.transaction.Transaction
   
   
   override def setUp():Unit = {
@@ -22,7 +23,7 @@ class CombatSequencerTest extends TestCase {
   }
   
   def testAdd {
-    var seq=new CombatSequencer[Symbol]
+    var seq=new CombatSequencer
     
     assert(seq.sequence==Nil)
     assert(seq.reserve==Set.empty[Symbol])
@@ -57,7 +58,6 @@ class CombatSequencerTest extends TestCase {
   
   def testRotate() {
     var seq1=new CombatSequencer
-    
     // Should work 
     seq1.rotate 
     assert(seq1.sequence==Nil, "Wrong: "+seq1.sequence)

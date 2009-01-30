@@ -4,7 +4,12 @@ package vcc.controller
 import scala.actors.Actor
 import scala.actors.Actor.loop
 
+import vcc.controller.transaction._
+
 import vcc.model._
+
+case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
+
 
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
   val health:HealthTracker= ctype match {
@@ -13,22 +18,46 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
     case CombatantType.Character => new CharacterHealthTracker(hp)
   }
   var info:String=""
-  var it=InitiativeTracker(0,InitiativeState.Reserve)
+  var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
   var defense:DefenseBlock=null
 }
 
-class Tracker() extends Actor {
+class Tracker() extends Actor with TransactionChangePublisher {
   
   private var uia:Actor=null
   private var _coord:Coordinator =null
   private val _idgen= new IDGenerator(1,50)
   
-  private var _initSeq=new CombatSequencer[Symbol]
+  private var _initSeq=new CombatSequencer
   private var _map=Map.empty[Symbol,TrackerCombatant]
+  
+  private val _tlog= new TransactionLog[actions.TransactionalAction]()
   
   private object InMap {
     def unapply(id:Symbol):Option[TrackerCombatant]= if(_map.contains(id)) Some(_map(id)) else None
   }
+  
+  def startTransaction() = new Transaction()
+  
+  def closeTransaction(action:actions.TransactionalAction, trans:Transaction) {
+    trans.commit(this)
+    if(!trans.isEmpty) {
+      _tlog.store(action,trans)
+      println("TLOG["+ _tlog.length +"] Added transaction"+ _tlog.previousTransctionDescription)
+    }
+  }
+  
+  
+  /**
+   * Publish changes to the observers
+   */
+  def publishChange(changes:Seq[ChangeNotification]) {
+    changes.foreach {
+      case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.view.actor.SetInitiative(comb,s)
+      case s:vcc.view.actor.SetSequence => uia ! s
+    }
+  }
+  
   
   def act()={
     loop {
@@ -38,17 +67,27 @@ class Tracker() extends Actor {
           //TODO: This is a wrong approach need to add as many observer as possible
         case actions.SetCoordinator(coord) => 
           this._coord=coord
-        case ta:actions.TransactionalAction if(processActions.isDefinedAt(ta))=> 
-          processActions(ta)
+        case ta:actions.TransactionalAction => 
+          val trans=startTransaction()
+          processActions(ta)(trans)
+          closeTransaction(ta,trans)
         case qa:actions.QueryAction if(processQuery.isDefinedAt(qa)) =>
           processQuery(qa)
-         
-        case s=>println("Tracker receive:"+s)
+        case actions.Undo() =>
+          try {
+            _tlog.rollback(this)
+          } catch { case s:TransactionLogOutOfBounds => }
+        case actions.Redo() =>
+          try {
+            _tlog.rollforward(this)
+          } catch { case s:TransactionLogOutOfBounds => }
+        case s=>println("Error: Tracker receive:"+s)
       }
     }
   }
   
-  private val processActions:PartialFunction[actions.TransactionalAction,Unit] = { 
+  private def processActions(action:actions.TransactionalAction)(implicit trans:Transaction) {
+    action match {
     case actions.AddCombatant(template)=>
       var id:Symbol=if(template.id==null) _idgen.first() else {
         var s=Symbol(template.id)
@@ -73,11 +112,9 @@ class Tracker() extends Actor {
         if(_map.contains(x)) {
           var c=_map(x)
           _initSeq.moveDown(c.id)
-          c.it=InitiativeTracker(0,InitiativeState.Waiting)
-          uia ! vcc.view.actor.SetInitiative(c.id,c.it)
+          c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
         }
       } 
-      uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
     case actions.ClearCombatants(all) =>
       var current=_map.keySet.toList
       if(all) {
@@ -93,8 +130,7 @@ class Tracker() extends Actor {
     case actions.EndCombat() => {
       for(p<-_map) {
         var c=p._2
-        c.it=InitiativeTracker(0,InitiativeState.Reserve)
-        uia ! vcc.view.actor.SetInitiative(c.id,c.it)
+        c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
       }
     }
     
@@ -132,6 +168,7 @@ class Tracker() extends Actor {
       this.changeSequence(c,InitiativeTracker.actions.Ready)
     case actions.ExecuteReady(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
+    }
   }	
   
   val processQuery:PartialFunction[actions.QueryAction,Unit]= {
@@ -142,54 +179,47 @@ class Tracker() extends Actor {
       peer ! vcc.view.actor.ClearSequence()
       for(x<-_map.map(_._2)) { 
         peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-        peer ! vcc.view.actor.SetInitiative(x.id,x.it)
         peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
       }
       peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
   }		
   
-  private def advanceToNext() {
+  private def advanceToNext()(implicit trans:Transaction) {
     // Auto advance dead guys
     while(_map(_initSeq.sequence.head).health.status==HealthStatus.Dead) {
       var dcmb=_map(_initSeq.sequence.head)
       var dit=dcmb.it
-      dit=dit.transform(true,InitiativeTracker.actions.StartRound)
-      dit=dit.transform(true,InitiativeTracker.actions.EndRound)
+      dit.value=dit.value.transform(true,InitiativeTracker.actions.StartRound)
+      dit.value=dit.value.transform(true,InitiativeTracker.actions.EndRound)
       dcmb.it=dit
       _initSeq.rotate
-      uia ! vcc.view.actor.SetInitiative(dcmb.id,dcmb.it)
     }
   }
-  def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value) {
-    var itt=cmb.it.transform
+  
+  def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
+    var itt=cmb.it.value.transform
     var firstp=_map(_initSeq.sequence.head).id==cmb.id
     if(itt.isDefinedAt(firstp,action)) {
       action match {
         case InitiativeTracker.actions.Delay => 
           _initSeq.moveDown(cmb.id)
           advanceToNext
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case InitiativeTracker.actions.ExecuteReady => 
           _initSeq.moveDown(cmb.id)
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)            
         case InitiativeTracker.actions.EndRound =>
           // When delaying is up, end turn is end of previous
-          if(cmb.it.state!=InitiativeState.Delaying) { 
+          if(cmb.it.value.state!=InitiativeState.Delaying) { 
             _initSeq.rotate
             advanceToNext()
           }
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case InitiativeTracker.actions.Ready => 
           _initSeq.moveDown(cmb.id)
           advanceToNext
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)            
         case InitiativeTracker.actions.MoveUp => 
           _initSeq.moveUp(cmb.id)
-          uia ! vcc.view.actor.SetSequence(_initSeq.sequence)
         case _ =>
       }
-      cmb.it=itt(firstp,action)
-      uia ! vcc.view.actor.SetInitiative(cmb.id,cmb.it)
+      cmb.it.value=itt(firstp,action)
     }
   }
 }

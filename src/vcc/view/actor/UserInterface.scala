@@ -4,7 +4,7 @@ package vcc.view.actor
 case class Combatant(vc:ViewCombatant)
 case class SetHealth(id:Symbol, hts:vcc.model.HealthTrackerSummary)
 case class SetInitiative(id:Symbol, init:vcc.model.InitiativeTracker)
-case class SetSequence(seq:Seq[Symbol])
+case class SetSequence(seq:Seq[Symbol]) extends vcc.controller.transaction.ChangeNotification
 case class SetInformation(id:Symbol,text:String)
 case class SetContext(id:Symbol)
 case class GoToFirst()
