@@ -47,6 +47,19 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     coord.tracker ! actions.ClearCombatants(true)
     coord.tracker ! actions.Enumerate()
   })
+  combatMenu.contents += new Separator
+  combatMenu.contents +=new MenuItem(new Action("Undo"){
+    def apply():Unit={
+      coord.tracker ! vcc.controller.actions.Undo()
+    }
+    accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Z'.toInt,java.awt.Event.CTRL_MASK))
+  })
+  combatMenu.contents +=new MenuItem(new Action("Redo"){
+    def apply():Unit={
+      coord.tracker ! vcc.controller.actions.Redo()
+    }
+    accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Y'.toInt,java.awt.Event.CTRL_MASK))
+  })
 
   var viewMenu= new Menu("View")
   var hideDeadMenu=new CheckMenuItem("Hide Dead")
