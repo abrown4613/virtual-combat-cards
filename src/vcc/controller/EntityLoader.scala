@@ -18,8 +18,10 @@ class EntityLoader extends Actor {
       react {
         case actions.SetCoordinator(coord) => this.coord=coord
         case actions.LoadPartyFromTemplate(l)=>
+          coord.tracker ! actions.StartTransaction("Party Load")
           for(x<-l) coord.tracker ! actions.AddCombatant(x)
-          coord.tracker ! actions.Enumerate()          
+          //coord.tracker ! actions.Enumerate()
+          coord.tracker ! actions.EndTransaction("Party Load")
         case actions.LoadPartyFile(file)=> 
           var l=vcc.model.PartyLoader.loadFromFile(file)
           this ! actions.LoadPartyFromTemplate(l)

@@ -9,6 +9,7 @@ import vcc.controller.transaction._
 import vcc.model._
 
 case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
+case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotification
 
 
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
@@ -29,21 +30,39 @@ class Tracker() extends Actor with TransactionChangePublisher {
   private val _idgen= new IDGenerator(1,50)
   
   private var _initSeq=new CombatSequencer
-  private var _map=Map.empty[Symbol,TrackerCombatant]
+  private var _undo_map:Undoable[Map[Symbol,TrackerCombatant]]=
+    new Undoable(Map.empty[Symbol,TrackerCombatant],un=>RosterUpdate(un.value))
+  
+  private def _map_=(m:Map[Symbol,TrackerCombatant])(implicit trans:Transaction)= _undo_map.value=m
+  private def _map = _undo_map.value
   
   private val _tlog= new TransactionLog[actions.TransactionalAction]()
+  
+  class ComposedAction(val name:String) extends actions.TransactionalAction {
+    private var acts:List[actions.TransactionalAction] =Nil
+    private def add(act:actions.TransactionalAction) {
+      acts=act::acts
+    }
+    def description():String= name
+    lazy val transaction=new Transaction()
+  }
+  
+  private var _composedAction: ComposedAction = null
   
   private object InMap {
     def unapply(id:Symbol):Option[TrackerCombatant]= if(_map.contains(id)) Some(_map(id)) else None
   }
   
-  def startTransaction() = new Transaction()
+  def startTransaction() = if(_composedAction!=null) _composedAction.transaction else new Transaction()
   
   def closeTransaction(action:actions.TransactionalAction, trans:Transaction) {
-    trans.commit(this)
-    if(!trans.isEmpty) {
-      _tlog.store(action,trans)
-      println("TLOG["+ _tlog.length +"] Added transaction"+ _tlog.previousTransctionDescription)
+    if(_composedAction==null || (_composedAction eq action)) {
+      //Need to close composed transcation or a simple transaction
+      trans.commit(this)
+      if(!trans.isEmpty) {
+        _tlog.store(action,trans)
+        println("TLOG["+ _tlog.length +"] Added transaction"+ _tlog.previousTransctionDescription)
+      }
     }
   }
   
@@ -54,6 +73,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
   def publishChange(changes:Seq[ChangeNotification]) {
     changes.foreach {
       case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.view.actor.SetInitiative(comb,s)
+      case RosterUpdate(map) => enumerate(map)
       case s:vcc.view.actor.SetSequence => uia ! s
     }
   }
@@ -71,6 +91,18 @@ class Tracker() extends Actor with TransactionChangePublisher {
           val trans=startTransaction()
           processActions(ta)(trans)
           closeTransaction(ta,trans)
+        case actions.StartTransaction(tname) =>
+          if(_composedAction==null)
+            _composedAction=new ComposedAction(tname)
+          else
+            throw new Exception("Cant nest transaction")
+        case actions.EndTransaction(tname) => 
+          if(_composedAction!=null) {
+            if(_composedAction.name==tname) { 
+              closeTransaction(_composedAction,_composedAction.transaction)
+              _composedAction=null
+            } else throw new Exception("Tranction name mismatch, expected"+_composedAction.name+" found "+tname)
+          } else throw new Exception("Not in compound transaction")
         case qa:actions.QueryAction if(processQuery.isDefinedAt(qa)) =>
           processQuery(qa)
         case actions.Undo() =>
@@ -106,7 +138,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       } else {
         _initSeq add id
       }
-      _map=_map + (id -> nc)
+      _map = _map + (id -> nc)
     case actions.StartCombat(seq) =>
       for(x<-seq) {
         if(_map.contains(x)) {
@@ -171,17 +203,20 @@ class Tracker() extends Actor with TransactionChangePublisher {
     }
   }	
   
+  private def enumerate(map:Map[Symbol,TrackerCombatant]) {
+    val peer = uia
+    peer ! vcc.view.actor.ClearSequence()
+    for(x<-_map.map(_._2)) { 
+      peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
+      peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
+    }
+    peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
+  }
+  
   val processQuery:PartialFunction[actions.QueryAction,Unit]= {
     case actions.QueryCombatantMap(func) =>
       reply(_map.map(x=>func(x._2)).toList)
-    case actions.Enumerate()=>
-      val peer = uia
-      peer ! vcc.view.actor.ClearSequence()
-      for(x<-_map.map(_._2)) { 
-        peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-        peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
-      }
-      peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
+    case actions.Enumerate()=> enumerate(_map)
   }		
   
   private def advanceToNext()(implicit trans:Transaction) {
