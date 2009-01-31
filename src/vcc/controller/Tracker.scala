@@ -30,8 +30,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
   private val _idgen= new IDGenerator(1,50)
   
   private var _initSeq=new CombatSequencer
-  private var _undo_map:Undoable[Map[Symbol,TrackerCombatant]]=
-    new Undoable(Map.empty[Symbol,TrackerCombatant],un=>RosterUpdate(un.value))
+  private var _undo_map=new Undoable[Map[Symbol,TrackerCombatant]](Map.empty[Symbol,TrackerCombatant],un=>RosterUpdate(un.value))
   
   private def _map_=(m:Map[Symbol,TrackerCombatant])(implicit trans:Transaction)= _undo_map.value=m
   private def _map = _undo_map.value
@@ -40,7 +39,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
   
   class ComposedAction(val name:String) extends actions.TransactionalAction {
     private var acts:List[actions.TransactionalAction] =Nil
-    private def add(act:actions.TransactionalAction) {
+    def add(act:actions.TransactionalAction) {
       acts=act::acts
     }
     def description():String= name
@@ -63,6 +62,9 @@ class Tracker() extends Actor with TransactionChangePublisher {
         _tlog.store(action,trans)
         println("TLOG["+ _tlog.length +"] Added transaction"+ _tlog.previousTransctionDescription)
       }
+    } else if(_composedAction!=null ) {
+      //save transaction into the composed action
+      _composedAction.add(action)
     }
   }
   
