@@ -6,15 +6,13 @@ import vcc.controller.transaction._
 
 class TransactionLogTest extends TestCase {
 
-  case class MyTrans(msg:String) extends TransactionDescription {
-    def description=msg
-  }
+  case class MyTrans(msg:String)
   
   def testEmptyLog() {
     val tlog= new TransactionLog[MyTrans]()
     
-    assert(tlog.previousTransctionDescription==null)
-    assert(tlog.nextTransactionDescription==null)
+    assert(tlog.futureActions==Nil)
+    assert(tlog.pastActions==Nil)
     assert(true)
     
     try {
@@ -77,8 +75,8 @@ class TransactionLogTest extends TestCase {
     trans.commit(null)
     tlog.store(MyTrans("First"),trans)
     assert(tlog.length==1)
-    assert(tlog.previousTransctionDescription=="First")
-    assert(tlog.nextTransactionDescription==null)
+    assert(tlog.pastActions==List(MyTrans("First")))
+    assert(tlog.futureActions==Nil)
   }
 
   /**
@@ -94,21 +92,21 @@ class TransactionLogTest extends TestCase {
     trans.commit(null)
     tlog.store(MyTrans("First"),trans)
     assert(tlog.length==1)
-    assert(tlog.previousTransctionDescription=="First")
-    assert(tlog.nextTransactionDescription==null)
+    assert(tlog.pastActions==List(MyTrans("First")))
+    assert(tlog.futureActions==Nil)
     
     tlog.rollback(bp)
     assert(bp.changes.length==1)
     assert(bp.changes.contains(Beep('nu1,10)))
-    assert(tlog.nextTransactionDescription=="First")
-    assert(tlog.previousTransctionDescription==null)
+    assert(tlog.pastActions==Nil)
+    assert(tlog.futureActions==List(MyTrans("First")))
     
     bp.changes=Nil
     tlog.rollforward(bp)
     assert(bp.changes.length==1)
     assert(bp.changes.contains(Beep('nu1,20)))
-    assert(tlog.nextTransactionDescription==null)
-    assert(tlog.previousTransctionDescription=="First")
+    assert(tlog.pastActions==List(MyTrans("First")))
+    assert(tlog.futureActions==Nil)
     
   }
   
@@ -130,26 +128,27 @@ class TransactionLogTest extends TestCase {
     v.value=30
     trans.commit(null)
     tlog.store(MyTrans("Second"),trans)
+    assert(tlog.pastActions==List(MyTrans("Second"),MyTrans("First")))
     
     tlog.rollback(bp)
     assert(bp.changes.length==1)
     assert(bp.changes.contains(Beep('nu1,20)))
-    assert(tlog.nextTransactionDescription=="Second")
-    assert(tlog.previousTransctionDescription=="First")
+    assert(tlog.futureActions==List(MyTrans("Second")))
+    assert(tlog.pastActions==List(MyTrans("First")))
     bp.changes=Nil
     
     trans=new Transaction()
     v.value=22
     trans.commit(null)
     tlog.store(MyTrans("Another path"),trans)
-    assert(tlog.previousTransctionDescription=="Another path")
+    assert(tlog.pastActions==List(MyTrans("Another path"),MyTrans("First")))
+    assert(tlog.futureActions==Nil)
     
     tlog.rollback(bp)
     assert(bp.changes.length==1)
     assert(bp.changes.contains(Beep('nu1,20)))
-    assert(tlog.nextTransactionDescription=="Another path")
-    assert(tlog.previousTransctionDescription=="First")
-    
+    assert(tlog.futureActions==List(MyTrans("Another path")),"Found "+tlog.futureActions)
+    assert(tlog.pastActions==List(MyTrans("First")))
   } 
   
   def testStoreSameTransactionTwice {

@@ -1,13 +1,11 @@
 //$Id$
 package vcc.controller.actions
 
-import vcc.controller.transaction.TransactionDescription
 import vcc.model.CombatantTemplate
 
-class TrackerAction {
+trait TransactionalAction {
+  def description():String
 }
-
-abstract class TransactionalAction extends TransactionDescription
 
 abstract class QueryAction
 
