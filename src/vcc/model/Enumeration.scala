@@ -1,3 +1,4 @@
+//$Id$
 package vcc.model
 
 object InitiativeState extends Enumeration {
