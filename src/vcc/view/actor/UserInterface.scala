@@ -41,6 +41,16 @@ class UserInterface(tracker:Actor) extends Actor {
   def addSequenceListener(seq:SequenceView[T]) { seqAware=seq :: seqAware }
   def addContextListner(ctx:ContextualView[T]) { ctxAware=ctx :: ctxAware }
   
+  /**
+   * This is to update sequence table, it's kind of a hack.
+   */
+  def updateSequenceTable() {
+    ctxAware.foreach(x=> x match {
+                       case x:SequenceTable => x.fireUpdate
+                       case _ =>
+                     })
+  }
+  
   def act() {
     loop {
       react {
@@ -50,9 +60,11 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetHealth(InMap(o), hts)=> 
           o.health=hts
           if(_ctx == Some(o)) signalContext(Some(o))
+          updateSequenceTable()
         case SetInitiative(InMap(o), inits)=>
           o.initTracker=inits
           if(_ctx == Some(o)) signalContext(Some(o))
+          updateSequenceTable()
         case SetInformation(InMap(o),text)=>
           o.info=text
           if(_ctx == Some(o)) signalContext(Some(o))

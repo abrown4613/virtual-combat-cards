@@ -12,6 +12,19 @@ abstract class TableModelRowProjection[T] {
   def set(col:Int,obj:T,value:Any):Unit=if(setter!=null && setter.isDefinedAt(col,obj,value)) setter(col,obj,value)
 }
 
+object SwingHelper {
+  
+  def makeRunnable(f:()=>Unit):java.lang.Runnable =
+    new java.lang.Runnable {
+      def run() {
+        f.apply()
+      }
+    } 
+  
+  def invokeLater(f:()=>Unit) {
+    javax.swing.SwingUtilities.invokeLater(makeRunnable(f))
+  }
+}
 
 class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax.swing.table.AbstractTableModel {
   var elem:Seq[T]=Nil
@@ -23,21 +36,14 @@ class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax
   override def isCellEditable(row:Int,col:Int)=(elem.size>row) && proj.isEditable(col,elem(row))
   override def setValueAt(value:java.lang.Object,row:Int,col:Int)=proj.set(col,elem(row),value)
   
-  def makeRunnable(f:()=>Unit):java.lang.Runnable =
-    new java.lang.Runnable {
-      def run() {
-        f.apply()
-      }
-    }
-  
   def content_=(content:Seq[T])={
-    javax.swing.SwingUtilities.invokeLater(makeRunnable {
+    SwingHelper.invokeLater {
       var s=elem.size
       elem=content;
       if(s>content.size) 
         this.fireTableRowsDeleted(content.size,s)
       this.fireTableDataChanged; 
-    })
+    }
   }
   def content=elem
 }

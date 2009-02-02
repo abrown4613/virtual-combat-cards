@@ -1,3 +1,4 @@
+//$Id$
 package vcc.util.swing
 
 import scala.swing._

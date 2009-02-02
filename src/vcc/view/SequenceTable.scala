@@ -71,6 +71,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
     else
       table.selection.rows+=0
   }
+
   def changeContext(ctx:Option[ViewCombatant]) {
     if(ctx.isDefined && !trackerTable.content.isEmpty && (ctx.get == trackerTable.content(0))) {
       _doingContextChange=true;
@@ -78,7 +79,18 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
       table.selection.rows+=0
       _doingContextChange=false                                                                 
     }
-    table.repaint
+  }
+
+  /**
+   * Schedule a fireTableRowsUpdated() for a later time. Used to refresh the 
+   * values in the table.
+   */
+  def fireUpdate() {
+    SwingHelper.invokeLater(()=>{
+      _doingContextChange=true;
+      trackerTable.fireTableRowsUpdated(0,trackerTable.content.length-1)
+      _doingContextChange=false                                                                 
+    })
   }
   
 }
