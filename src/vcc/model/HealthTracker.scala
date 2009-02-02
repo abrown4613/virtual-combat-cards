@@ -1,66 +1,101 @@
 //$Id$
-//FIXME: This code needs refactoring, hide private informations, maybe make it immutable
 package vcc.model
 
-case class HealthTrackerSummary(currhp:Int,temphp:Int,status:HealthStatus.Value,deathstrikes:Int)
+/**
+ * HeatlthTracker master object
+ */
+object HealthTracker {
+  
+  /**
+   * TypeSemantic captures combatant type (minion, monster, character) specific semantics
+   * for handling Temporary HP, status, and bounds
+   */
+  trait TypeSemantic{
+    val hasTemporaryHP:Boolean
+    def lowerBound(hp:Int):Int
+    def status(tracker:HealthTracker):HealthStatus.Value
+  }
+  
+  /**
+   * Handle minions
+   */
+  object MinionSemantic extends TypeSemantic {
+    val hasTemporaryHP:Boolean=false
+    def lowerBound(hp:Int)=0
+    def status(tracker:HealthTracker):HealthStatus.Value = {
+      if(tracker.currentHP<=0) HealthStatus.Dead else HealthStatus.Ok
+    }
+  } 
+  
+  object MonsterSemantic extends TypeSemantic  {
+    val hasTemporaryHP:Boolean=true
+    def lowerBound(hp:Int)=0
+    def status(tracker:HealthTracker):HealthStatus.Value= {
+      if(tracker.currentHP<=0) HealthStatus.Dead
+      else if(tracker.currentHP<=tracker.hp/2) HealthStatus.Bloody
+      else HealthStatus.Ok
+    }
+  }
+  
+  object CharacterSemantic extends TypeSemantic  {
+    val hasTemporaryHP:Boolean=true
+    def lowerBound(hp:Int):Int= - hp / 2
+    def status(tracker:HealthTracker):HealthStatus.Value= {
+      if(tracker.deathStrikes>=3 || tracker.currentHP == lowerBound(tracker.hp)) HealthStatus.Dead
+      else if(tracker.currentHP <= 0) HealthStatus.Dying
+      else if(tracker.currentHP<=tracker.hp/2) HealthStatus.Bloody
+      else HealthStatus.Ok
+    }	
+  }
+  
+  def createTracker(ctype:CombatantType.Value, hp:Int):HealthTracker = {
+    HealthTracker(hp,hp,0,0,1,ctype match {
+      case CombatantType.Monster => MonsterSemantic
+      case CombatantType.Minion => MinionSemantic
+      case CombatantType.Character => CharacterSemantic
+    })
+  }
+}
 
 /*
  * Since character are the most complex, this class implements their logic, 
  * Other creatures will have different sublogics
  */
-abstract class HealthTracker(val hp:Int) {
-  var _currhp:Int=hp
-  protected val _bloody:Int=hp/2
-  var _temphp:Int=0
-  var _deathStrikes:Int=0
+case class HealthTracker(hp:Int,currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int, seman:HealthTracker.TypeSemantic) {
 
+  private def boundedChange(amnt:Int):Int = { 
+    val n=currentHP+amnt;
+    if(n<seman.lowerBound(hp)) seman.lowerBound(hp)
+    else if(n>hp) hp
+    else n
+  }
   
-  def status():HealthStatus.Value
-  def currentHP():Int = _currhp
-  def temporaryHP():Int= _temphp
+  def applyDamage(amnt:Int) = {
+    if(amnt>temporaryHP) {
+      HealthTracker(hp,boundedChange(-amnt+temporaryHP),0,deathStrikes,surges,seman)
+    } else { 
+      HealthTracker(hp,currentHP,temporaryHP-amnt,deathStrikes,surges,seman)
+    }
+  }
   
-  def failDeathSave():Unit={ if(this.status == HealthStatus.Dying)_deathStrikes+=1}
-  def deathStrikes():Int=_deathStrikes
-  def setTemporaryHitpoint(hp:Int) = if(hp>_temphp) _temphp=hp
-  def applyDamage(amnt:Int)= {
-    // Adjust for temp hp
-    var adj_amnt=amnt-_temphp
-    if(adj_amnt<0) adj_amnt=0
-    
-    // Remove from temphp what it took out and then adjust damage
-    _temphp-=(amnt-adj_amnt)
-    _currhp-=adj_amnt
-  }	
   def heal(amnt:Int) = {
-    // raise to 0 before healing
-    if(_currhp<0) _currhp=0
-    _currhp+=amnt; 
-    if(_currhp>hp) _currhp=hp
-    _deathStrikes=0
+    HealthTracker(hp,boundedChange(if(currentHP<0)amnt-currentHP else amnt),temporaryHP,deathStrikes,surges,seman)
   }
   
-  def getSummary():HealthTrackerSummary=HealthTrackerSummary(this.currentHP,this.temporaryHP,this.status,this.deathStrikes)
-}
-
-class MinionHealthTracker extends MonsterHealthTracker(1) {
-  override def status():HealthStatus.Value=if(_currhp<=0) HealthStatus.Dead else HealthStatus.Ok
-  override def setTemporaryHitpoint(x:Int)={}
-}
-
-class MonsterHealthTracker(hp:Int) extends HealthTracker(hp) {
-  def status():HealthStatus.Value= {
-    if(_currhp<=0) HealthStatus.Dead
-    else if(_currhp<=_bloody) HealthStatus.Bloody
-    else HealthStatus.Ok
+  def setTemporaryHitPoints(amnt:Int,force:Boolean) = {
+    if(seman.hasTemporaryHP) {
+      if(force) HealthTracker(hp,currentHP,amnt,deathStrikes,surges,seman)
+      else if(amnt>temporaryHP)
+        HealthTracker(hp,currentHP,amnt,deathStrikes,surges,seman)
+      else this
+    } else this
   }
-  override def applyDamage(amnt:Int)= {super.applyDamage(amnt); if(_currhp<0) _currhp=0}
-}
-
-class CharacterHealthTracker(hp:Int) extends HealthTracker(hp) {
-  def status():HealthStatus.Value= {
-    if(_deathStrikes>=3 || _currhp <= -_bloody) HealthStatus.Dead
-    else if(_currhp <= 0) HealthStatus.Dying
-    else if(_currhp<=_bloody) HealthStatus.Bloody
-    else HealthStatus.Ok
+  
+  def failDeathSave():HealthTracker={ 
+    if(this.status == HealthStatus.Dying)
+      HealthTracker(hp,currentHP,temporaryHP,deathStrikes+1,surges,seman)
+    else this
   }
+  
+  def status():HealthStatus.Value=seman.status(this) 
 }

@@ -23,7 +23,7 @@ class CombatSetupTest extends junit.framework.TestCase {
     val uimock=new ExpectActor(200,new ExpectingBehavior(List(
       vcc.view.actor.ClearSequence(),
       vcc.view.actor.Combatant(ViewCombatant(Symbol("K"),"Kantrex",44,5,null)),
-      vcc.view.actor.SetHealth('K,HealthTrackerSummary(44,0,HealthStatus.Ok,0)),
+      //vcc.view.actor.SetHealth('K,HealthTrackerSummary(44,0,HealthStatus.Ok,0)),
       vcc.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
     )),self)
     //val logmock=new ExpectActor(1000,new ExpectingBehavior(List(vcc.controller.actions.LogError("Nothing"))),self)

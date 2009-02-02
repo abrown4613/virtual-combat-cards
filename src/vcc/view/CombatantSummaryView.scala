@@ -90,8 +90,8 @@ class CombatantSummaryView extends GridBagPanel with ContextualView[ViewCombatan
         name.text="-"
       case Some(c)=>
         name.text=c.name
-        cur_hp.text=c.health.currhp.toString
-        temp_hp.text=c.health.temphp.toString
+        cur_hp.text=c.health.currentHP.toString
+        temp_hp.text=c.health.temporaryHP.toString
         total_hp.text=c.hp.toString
         status.text=c.health.status.toString
         if(c.defense!=null) {

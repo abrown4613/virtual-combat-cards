@@ -1,3 +1,4 @@
+//$Id$
 package test
 
 import junit.framework._
@@ -8,176 +9,182 @@ class HealthTrackingTest extends TestCase {
 
   def testMinion() {
     
-    var minion=new MinionHealthTracker()
+    var minion:HealthTracker=HealthTracker.createTracker(CombatantType.Minion,1)
     
     // Cant get temporary HP
-    minion.setTemporaryHitpoint(10)
-    assert(minion.temporaryHP==0)
+    var mmod=minion.setTemporaryHitPoints(10,true)
+    assert(mmod eq minion, mmod)
     
     // Any damage should become one, and cause him to be dead
-    minion.applyDamage(10)
+    minion=minion.applyDamage(10)
     assert(minion.currentHP==0)
     assert(minion.status==HealthStatus.Dead)
 
     // This should raise de minion
-    minion.heal(10)
+    minion=minion.heal(10)
     assert(minion.currentHP==1)
     assert(minion.status==HealthStatus.Ok)
   }
   
   def testMonster() {
-    var monster=new MonsterHealthTracker(45)
-    monster.applyDamage(10);
+    var monster:HealthTracker=HealthTracker.createTracker(CombatantType.Monster,45)
+    monster=monster.applyDamage(10);
     assert(monster.currentHP==35)
     assert(monster.status==HealthStatus.Ok)
       
-    monster.applyDamage(13);
+    monster=monster.applyDamage(13);
     assert(monster.currentHP==22)
     assert(monster.status==HealthStatus.Bloody)
       
-    monster.heal(11)
+    monster=monster.heal(11)
     assert(monster.currentHP==33)
     assert(monster.status==HealthStatus.Ok)
 
-    monster.heal(20)
-    assert(monster.currentHP==monster.hp)
+    monster=monster.heal(20)
+    assert(monster.currentHP==45)
     assert(monster.status==HealthStatus.Ok)
     
-    monster.setTemporaryHitpoint(10)
-    assert(monster.currentHP==monster.hp)
+    monster=monster.setTemporaryHitPoints(10,false)
+    assert(monster.currentHP==45)
     assert(monster.temporaryHP==10)
     assert(monster.status==HealthStatus.Ok)
       
-    monster.applyDamage(7)
+    monster=monster.applyDamage(7)
     assert(monster.currentHP==monster.hp)
     assert(monster.temporaryHP==3)
     assert(monster.status==HealthStatus.Ok)
 
-    monster.setTemporaryHitpoint(5)
+    monster=monster.setTemporaryHitPoints(5,false)
     assert(monster.currentHP==monster.hp)
     assert(monster.temporaryHP==5)
     assert(monster.status==HealthStatus.Ok)
       
-    monster.applyDamage(7)
-    assert(monster.currentHP==monster.hp-2)
+    monster=monster.applyDamage(7)
+    assert(monster.currentHP==monster.hp-2,monster)
     assert(monster.temporaryHP==0)
     assert(monster.status==HealthStatus.Ok)
       
-    monster.applyDamage(100)
-    assert(monster.currentHP==0)
+    monster=monster.applyDamage(100)
+    assert(monster.currentHP==0,monster)
     assert(monster.status==HealthStatus.Dead) 
 
-    monster.heal(10)
+    monster=monster.heal(10)
     assert(monster.currentHP==10)
     assert(monster.status==HealthStatus.Bloody) 
   }
 
   def testCharacter() {
-    var pc=new CharacterHealthTracker(45)
-    pc.applyDamage(10);
+    var pc:HealthTracker=HealthTracker.createTracker(CombatantType.Character,45)
+    pc=pc.applyDamage(10);
     assert(pc.currentHP==pc.hp-10)
     assert(pc.status==HealthStatus.Ok)
       
-    pc.applyDamage(13);
+    pc=pc.applyDamage(13);
     assert(pc.currentHP==(pc.hp-10-13))
     assert(pc.status==HealthStatus.Bloody)
       
-    pc.heal(11)
+    pc=pc.heal(11)
     assert(pc.currentHP==33)
     assert(pc.status==HealthStatus.Ok)
 
-    pc.heal(20)
+    pc=pc.heal(20)
     assert(pc.currentHP==pc.hp)
     assert(pc.status==HealthStatus.Ok)
     
-    pc.setTemporaryHitpoint(10)
+    pc=pc.setTemporaryHitPoints(10,false)
     assert(pc.currentHP==pc.hp)
     assert(pc.temporaryHP==10)
     assert(pc.status==HealthStatus.Ok)
       
-    pc.applyDamage(7)
+    pc=pc.applyDamage(7)
     assert(pc.currentHP==pc.hp)
     assert(pc.temporaryHP==3)
     assert(pc.status==HealthStatus.Ok)
 
-    pc.setTemporaryHitpoint(2)
+    pc=pc.setTemporaryHitPoints(2,false)
     assert(pc.temporaryHP==3)
     assert(pc.status==HealthStatus.Ok)
 
     
-    pc.setTemporaryHitpoint(5)
+    pc=pc.setTemporaryHitPoints(5,false)
     assert(pc.currentHP==pc.hp)
     assert(pc.temporaryHP==5)
     assert(pc.status==HealthStatus.Ok)
       
-    pc.applyDamage(7)
+    pc=pc.applyDamage(7)
     assert(pc.currentHP==pc.hp-2)
     assert(pc.temporaryHP==0)
     assert(pc.status==HealthStatus.Ok)
       
-    pc.applyDamage(50)
+    pc=pc.applyDamage(50)
     assert(pc.currentHP==pc.hp-52)
     assert(pc.status==HealthStatus.Dying) 
 
-    pc.heal(10)
+    pc=pc.heal(10)
     assert(pc.currentHP==10)
     assert(pc.status==HealthStatus.Bloody) 
     
-    pc.applyDamage(35)
-    assert(pc.currentHP== -25)
+    pc=pc.applyDamage(35)
+    assert(pc.currentHP== -22,pc)
     assert(pc.status==HealthStatus.Dead) 
   }
 
   def testCharacterDeath() {
-    var pc=new CharacterHealthTracker(40)
-    pc.applyDamage(50)
-    assert(pc.currentHP==pc.hp-50)
+    var pc=HealthTracker.createTracker(CombatantType.Character,40)
+
+    // Bug make sure can't strike living
+    pc=pc.failDeathSave()
+    assert(pc.deathStrikes==0)
+    
+
+    pc=pc.applyDamage(50)
+    assert(pc.currentHP==40-50)
     assert(pc.status==HealthStatus.Dying) 
     assert(pc.deathStrikes==0)
     
-    pc.failDeathSave()
-    assert(pc.currentHP==pc.hp-50)
+    pc=pc.failDeathSave()
+    assert(pc.currentHP==40-50)
     assert(pc.status==HealthStatus.Dying)
     assert(pc.deathStrikes==1)
     
-    pc.heal(25)
+    pc=pc.heal(25)
     assert(pc.currentHP==25)
     assert(pc.status==HealthStatus.Ok) 
 
-    pc.applyDamage(25)
-    assert(pc.currentHP==0)
-    assert(pc.status==HealthStatus.Dying) 
-    assert(pc.deathStrikes==0)
-
-    
-    pc.failDeathSave()
+    pc=pc.applyDamage(25)
     assert(pc.currentHP==0)
     assert(pc.status==HealthStatus.Dying) 
     assert(pc.deathStrikes==1)
-    
-    pc.applyDamage(5)
-    assert(pc.currentHP== -5)
-    assert(pc.status==HealthStatus.Dying) 
-    assert(pc.deathStrikes==1)
 
-    pc.failDeathSave()
+    
+    pc=pc.failDeathSave()
+    assert(pc.currentHP==0)
+    assert(pc.status==HealthStatus.Dying) 
+    assert(pc.deathStrikes==2)
+    
+    pc=pc.applyDamage(5)
     assert(pc.currentHP== -5)
     assert(pc.status==HealthStatus.Dying) 
     assert(pc.deathStrikes==2)
-  
-    pc.failDeathSave()
+
+    pc=pc.failDeathSave()
     assert(pc.currentHP== -5)
+    assert(pc.deathStrikes==3)
     assert(pc.status==HealthStatus.Dead) 
 
     // Healling will raise PC
-    pc.heal(10)
+    pc=pc.heal(10)
     assert(pc.currentHP==10)
-    assert(pc.status==HealthStatus.Bloody) 
-    assert(pc.deathStrikes==0)
+    assert(pc.status==HealthStatus.Dead) 
+    assert(pc.deathStrikes==3)
     
-    // Bug make sure can't strike living
-    pc.failDeathSave()
-    assert(pc.deathStrikes()==0)
-    
+  }
+  
+  def testUnboundHealBug() {
+    var pc=HealthTracker.createTracker(CombatantType.Character,20)
+    pc=pc.applyDamage(25)
+    assert(pc.currentHP== -5)
+    pc=pc.heal(300)
+    assert(pc.currentHP==20,pc)
   }
 }

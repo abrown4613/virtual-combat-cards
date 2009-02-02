@@ -13,11 +13,14 @@ case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotifica
 
 
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
-  val health:HealthTracker= ctype match {
-    case CombatantType.Minion => new MinionHealthTracker
-    case CombatantType.Monster => new MonsterHealthTracker(hp)
-    case CombatantType.Character => new CharacterHealthTracker(hp)
+  private var _health=new Undoable[HealthTracker](HealthTracker.createTracker(ctype,hp),(uv)=>CombatantUpdate(id,uv.value))
+  
+  def health= _health.value
+  def health_=(nh:HealthTracker)(implicit trans:Transaction) {
+    if(nh != _health.value) _health.value=nh
+    this
   }
+  
   var info:String=""
   var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
   var defense:DefenseBlock=null
@@ -76,6 +79,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
     changes.foreach {
       case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.view.actor.SetInitiative(comb,s)
       case RosterUpdate(map) => enumerate(map)
+      case CombatantUpdate(comb, h:HealthTracker) => uia ! vcc.view.actor.SetHealth(comb,h)
       case s:vcc.view.actor.SetSequence => uia ! s
     }
   }
@@ -133,9 +137,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       if(_map.contains(nc.id)) {
         // It's an old combatant salvage old heath and Initiative
         //FIXME: This is a Hack, health is not well implemented
-        nc.health._currhp =_map(nc.id).health._currhp
-        nc.health._temphp =_map(nc.id).health._temphp
-        nc.health._deathStrikes =_map(nc.id).health._deathStrikes
+        nc.health = _map(nc.id).health
         nc.it =_map(nc.id).it
       } else {
         _initSeq add id
@@ -154,7 +156,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       if(all) {
         _map=Map.empty[Symbol,TrackerCombatant]
       } else {
-        _map=_map.filter(p=>p._2.health.isInstanceOf[CharacterHealthTracker])
+        _map=_map.filter(p=>p._2.health.isInstanceOf[HealthTracker])
       }
       var removed=current -- _map.keySet.toList
       for(x <- removed) {
@@ -170,21 +172,13 @@ class Tracker() extends Actor with TransactionChangePublisher {
     
     // HEALTH Tracking
     case actions.ApplyDamage(InMap(c),amnt) =>
-      c.health.applyDamage(amnt)
-      //log ! c.name + " took " + amnt + " points of damage"
-      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+      c.health=c.health.applyDamage(amnt)
     case actions.HealDamage(InMap(c),amnt) =>
-      c.health.heal(amnt)
-      //log ! c.name + " healed " + amnt + " points of damage"
-      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+      c.health=c.health.heal(amnt)
     case actions.SetTemporaryHP(InMap(c),amnt) =>
-      c.health.setTemporaryHitpoint(amnt)
-      //log ! c.name + " received " + amnt + " of temporary hit points"
-      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+      c.health=c.health.setTemporaryHitPoints(amnt,false)
     case actions.FailDeathSave(InMap(c)) =>
-      c.health.failDeathSave()
-      //log ! c.name + " failed save versus death"
-      uia ! vcc.view.actor.SetHealth(c.id,c.health.getSummary)
+      c.health=c.health.failDeathSave()
     case actions.SetComment(InMap(c),text)=>
       c.info=text
       uia ! vcc.view.actor.SetInformation(c.id,c.info)
@@ -210,7 +204,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
     peer ! vcc.view.actor.ClearSequence()
     for(x<-_map.map(_._2)) { 
       peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-      peer ! vcc.view.actor.SetHealth(x.id,x.health.getSummary)
+      peer ! vcc.view.actor.SetHealth(x.id,x.health)
     }
     peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
   }

@@ -8,7 +8,7 @@ trait UIFormatted {
 }	
 
 case class ViewCombatant(id:Symbol,name:String,hp:Int,init:Int,defense:DefenseBlock) {
-  var health=HealthTrackerSummary(hp,0,HealthStatus.Ok,0)
+  var health=HealthTracker.createTracker(CombatantType.Character,hp)
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
 }
@@ -26,8 +26,8 @@ object ViewCombatantProjection extends vcc.util.swing.TableModelRowProjection[Vi
     col match {
       case 0 => comb.id.name
       case 1 => comb.name
-      case 2 => comb.health.currhp + " / "+comb.hp + (if(comb.health.temphp>0) " +"+comb.health.temphp else "")
-      case 3 => comb.health.status + (if(comb.health.status==HealthStatus.Dying) ("(" + comb.health.deathstrikes + "/3)") else "") 
+      case 2 => comb.health.currentHP + " / "+comb.hp + (if(comb.health.temporaryHP>0) " +"+comb.health.temporaryHP else "")
+      case 3 => comb.health.status + (if(comb.health.status==HealthStatus.Dying) ("(" + comb.health.deathStrikes + "/3)") else "") 
       case 4 => int2Integer(comb.initTracker.round)
       case 5 => comb.initTracker.state
     }
