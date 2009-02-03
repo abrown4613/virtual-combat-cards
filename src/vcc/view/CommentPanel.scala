@@ -1,3 +1,4 @@
+//$Id$
 package vcc.view
 
 import swing._
@@ -13,28 +14,29 @@ class CommentPanel(val controller:actors.Actor) extends BoxPanel(Orientation.Ver
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
 
   border=BorderFactory.createTitledBorder("Comments and Notes")
+  
   contents+= new ScrollPane {
     border=BorderFactory.createLoweredBevelBorder
     contents=edit
-  }	
+  }
+  
   listenTo(edit)
   reactions += {
-    case FocusLost(edit:TextArea,opt,state) if(_hasChanged) => 
-      sendChange
-      _hasChanged=false
+    case FocusLost(edit:TextArea,opt,state) if(_hasChanged) =>
+      sendChange()
     case ValueChanged(edit) =>
-      if(!_updating)
-      _hasChanged=true
+      if(!_updating) _hasChanged=true
   }
+  
   private def sendChange() {
     if(_hasChanged) {
+      _hasChanged=false
       controller ! vcc.controller.actions.SetComment(context.id,edit.text)
     }
           
   }
   
   def changeContext(context:Option[ViewCombatant]) = {
-    sendChange()
     _updating=true
     edit.text=if(context.isDefined) context.get.info else ""
     edit.enabled=context!=None

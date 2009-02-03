@@ -11,7 +11,6 @@ import vcc.model._
 case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
 case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotification
 
-
 class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
   private var _health=new Undoable[HealthTracker](HealthTracker.createTracker(ctype,hp),(uv)=>CombatantUpdate(id,uv.value))
   
@@ -21,7 +20,10 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
     this
   }
   
-  var info:String=""
+  private val _info= new Undoable[String]("",uv=>{CombatantUpdate(id,uv.value)})
+  def info= _info.value
+  def info_=(str:String)(implicit trans:Transaction) { _info.value=str; this }
+  
   var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
   var defense:DefenseBlock=null
 }
@@ -80,6 +82,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.view.actor.SetInitiative(comb,s)
       case RosterUpdate(map) => enumerate(map)
       case CombatantUpdate(comb, h:HealthTracker) => uia ! vcc.view.actor.SetHealth(comb,h)
+      case CombatantUpdate(comb, info:String) => uia ! vcc.view.actor.SetInformation(comb,info)
       case s:vcc.view.actor.SetSequence => uia ! s
     }
   }
@@ -136,7 +139,6 @@ class Tracker() extends Actor with TransactionChangePublisher {
       nc.defense=template.defense
       if(_map.contains(nc.id)) {
         // It's an old combatant salvage old heath and Initiative
-        //FIXME: This is a Hack, health is not well implemented
         nc.health = _map(nc.id).health
         nc.it =_map(nc.id).it
       } else {
@@ -181,7 +183,6 @@ class Tracker() extends Actor with TransactionChangePublisher {
       c.health=c.health.failDeathSave()
     case actions.SetComment(InMap(c),text)=>
       c.info=text
-      uia ! vcc.view.actor.SetInformation(c.id,c.info)
       
       // INITIATIVE TRACKING  
     case actions.MoveUp(InMap(c)) => 
