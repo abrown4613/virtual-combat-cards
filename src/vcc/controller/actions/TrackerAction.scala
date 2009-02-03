@@ -39,13 +39,13 @@ case class EndCombat() extends EncounterAction {
 abstract class StateChangeAction extends TransactionalAction
 
 case class SetComment(to:Symbol,text:String) extends TransactionalAction {
-  def description():String = "Comment of "+to.name+ "has changed"
+  def description():String = "Comment of "+to.name+ " has changed"
 }
 
 abstract class HealthChangeAction extends TransactionalAction
 
 case class ApplyDamage(to:Symbol,damage:Int) extends HealthChangeAction {
-  def description():String = to.name + "takens "+damage + " hitpoints of damage"
+  def description():String = to.name + " takes "+damage + " hitpoints of damage"
 }
 
 case class SetTemporaryHP(to:Symbol,temphp:Int) extends HealthChangeAction {
@@ -57,7 +57,7 @@ case class HealDamage(to:Symbol,heal:Int) extends HealthChangeAction {
 }
 
 case class FailDeathSave(to:Symbol) extends HealthChangeAction {
-  def description():String = to.name + "fails save versus death"
+  def description():String = to.name + " fails save versus death"
 }
 
 
@@ -73,13 +73,13 @@ case class EndRound(who:Symbol) extends InitiativeAction {
   def description():String = "End of "+ who.name + "'s round"
 }
 case class Ready(who:Symbol) extends InitiativeAction {
-  def description():String = "Ready action by"+ who.name
+  def description():String = "Ready action by "+ who.name
 }
 case class Delay(who:Symbol) extends InitiativeAction {
   def description():String = "Delay action by "+ who.name
 }
 case class MoveUp(who:Symbol) extends InitiativeAction {
-  def description():String =  who.name + "has moved up round"
+  def description():String =  who.name + " has moved up round"
 }
 case class ExecuteReady(who:Symbol) extends InitiativeAction {
   def description():String = who.name + " executed a ready action"

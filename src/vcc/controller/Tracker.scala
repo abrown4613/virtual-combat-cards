@@ -65,7 +65,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       trans.commit(this)
       if(!trans.isEmpty) {
         _tlog.store(action,trans)
-        println("TLOG["+ _tlog.length +"] Added transaction"+ _tlog.pastActions.head.description)
+        println("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
       }
     } else if(_composedAction!=null ) {
       //save transaction into the composed action
