@@ -28,8 +28,18 @@ class UserInterface(tracker:Actor) extends Actor {
     def unapply(id:Symbol):Option[T] = if(id!=null && _map.contains(id)) Some(_map(id)) else None
   }
   
-  protected def signalContext(o:Option[T]) {for(x<-ctxAware) x.context=(o)}
+  /**
+   * Signal all context objects, this has to be done in the Swing Thread to avoid 
+   * race conditions.
+   */
+  protected def signalContext(o:Option[T]) {
+    util.swing.SwingHelper.invokeLater(()=> {
+      for(x<-ctxAware) x.context=(o)
+    })
+  }
+  
   protected def signalSequence(seq:Seq[T]) {for(x<-seqAware) x.updateSequence(seq)}
+  
   def flush():Unit = {
     _map.clear
     signalContext(None)
@@ -45,10 +55,11 @@ class UserInterface(tracker:Actor) extends Actor {
    * This is to update sequence table, it's kind of a hack.
    */
   def updateSequenceTable() {
-    ctxAware.foreach(x=> x match {
-                       case x:SequenceTable => x.fireUpdate
-                       case _ =>
-                     })
+    ctxAware.foreach(x=> 
+      x match {
+        case x:SequenceTable => x.fireUpdate
+        case _ =>
+      })
   }
   
   def act() {
