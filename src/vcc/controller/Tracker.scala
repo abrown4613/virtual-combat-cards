@@ -218,7 +218,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
   
   private def advanceToNext()(implicit trans:Transaction) {
     // Auto advance dead guys
-    while(_map(_initSeq.sequence.head).health.status==HealthStatus.Dead) {
+    while(_map(_initSeq.sequence.head).health.status==HealthTracker.Status.Dead) {
       var dcmb=_map(_initSeq.sequence.head)
       var dit=dcmb.it
       dit.value=dit.value.transform(true,InitiativeTracker.actions.StartRound)

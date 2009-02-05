@@ -88,7 +88,7 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetSequence(seq)=>
           var l=seq.filter(_map.contains(_)).map(_map(_))
           _seq=l // Save all elements irrespective of health, then filter health and proppagate
-          if(_hidedead) l=l.filter(x=>x.health.status!=vcc.model.HealthStatus.Dead)
+          if(_hidedead) l=l.filter(x=>x.health.status!=vcc.model.HealthTracker.Status.Dead)
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
         case GoToFirst() =>

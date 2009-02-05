@@ -2,100 +2,138 @@
 package vcc.model
 
 /**
+ * Health base definition for the combatant
+ * @param totalHP The total Hitpoints
+ * @param surgeValue Surge value normally 1/4 of HP
+ * @param healingSurges Number os surges
+ */
+abstract case class HealthDefinition(totalHP:Int,surgeValue:Int,healingSurges:Int) {
+  val lowerBound:Int
+  val hasTemporaryHP:Boolean
+  def status(tracker:HealthTracker):HealthTracker.Status.Value
+} 
+
+case class CharacterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends HealthDefinition(totalHP,surgeValue,healingSurges) {
+  val lowerBound= - totalHP/2
+  val hasTemporaryHP = true
+  def status(tracker:HealthTracker)= {
+    if(tracker.deathStrikes==3) HealthTracker.Status.Dead
+    else if(tracker.currentHP<=0) HealthTracker.Status.Dying
+    else if(tracker.currentHP<=totalHP/2) HealthTracker.Status.Bloody
+    else HealthTracker.Status.Ok
+  }
+}
+
+case class MonsterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends CharacterHealthDefinition(totalHP,surgeValue,healingSurges) {
+  override val lowerBound=0
+}
+
+case class MinionHealthDefinition() extends HealthDefinition(1,0,0) {
+  val lowerBound=0
+  override val hasTemporaryHP = false
+
+  def status(tracker:HealthTracker)= {
+    if(tracker.deathStrikes==3) HealthTracker.Status.Dead
+    else if(tracker.currentHP<=0) HealthTracker.Status.Dying
+    else HealthTracker.Status.Ok
+  }
+}
+
+/**
  * HeatlthTracker master object
  */
 object HealthTracker {
   
-  /**
-   * TypeSemantic captures combatant type (minion, monster, character) specific semantics
-   * for handling Temporary HP, status, and bounds
-   */
-  trait TypeSemantic{
-    val hasTemporaryHP:Boolean
-    def lowerBound(hp:Int):Int
-    def status(tracker:HealthTracker):HealthStatus.Value
+  object Status extends Enumeration {
+    val Ok=Value("Ok")
+    val Bloody=Value("Bloody")
+    val Dead=Value("Dead")
+    val Dying=Value("Dying")
   }
   
   /**
-   * Handle minions
+   * Create a HealthTracker based on a HealthDefinition
+   * @param hdef Base health definition
    */
-  object MinionSemantic extends TypeSemantic {
-    val hasTemporaryHP:Boolean=false
-    def lowerBound(hp:Int)=0
-    def status(tracker:HealthTracker):HealthStatus.Value = {
-      if(tracker.currentHP<=0) HealthStatus.Dead else HealthStatus.Ok
+  def createTracker(hdef:HealthDefinition):HealthTracker = {
+    HealthTracker(hdef.totalHP,0,0,hdef.healingSurges,hdef)
+  }
+
+  /**
+   * Create a HealthTracker based on a HealthDefinition
+   * @param hdef Base health definition
+   */
+  @deprecated
+  def createTracker(ctype:CombatantType.Value,hp:Int):HealthTracker = {
+    ctype match {
+      case CombatantType.Character => createTracker(CharacterHealthDefinition(hp,hp/4,4))
+      case CombatantType.Monster => createTracker(MonsterHealthDefinition(hp,hp/4,4))
+      case CombatantType.Minion => createTracker(MinionHealthDefinition())
     }
-  } 
-  
-  object MonsterSemantic extends TypeSemantic  {
-    val hasTemporaryHP:Boolean=true
-    def lowerBound(hp:Int)=0
-    def status(tracker:HealthTracker):HealthStatus.Value= {
-      if(tracker.currentHP<=0) HealthStatus.Dead
-      else if(tracker.currentHP<=tracker.hp/2) HealthStatus.Bloody
-      else HealthStatus.Ok
-    }
   }
   
-  object CharacterSemantic extends TypeSemantic  {
-    val hasTemporaryHP:Boolean=true
-    def lowerBound(hp:Int):Int= - hp / 2
-    def status(tracker:HealthTracker):HealthStatus.Value= {
-      if(tracker.deathStrikes>=3 || tracker.currentHP == lowerBound(tracker.hp)) HealthStatus.Dead
-      else if(tracker.currentHP <= 0) HealthStatus.Dying
-      else if(tracker.currentHP<=tracker.hp/2) HealthStatus.Bloody
-      else HealthStatus.Ok
-    }	
-  }
-  
-  def createTracker(ctype:CombatantType.Value, hp:Int):HealthTracker = {
-    HealthTracker(hp,hp,0,0,1,ctype match {
-      case CombatantType.Monster => MonsterSemantic
-      case CombatantType.Minion => MinionSemantic
-      case CombatantType.Character => CharacterSemantic
-    })
-  }
 }
 
 /*
  * Since character are the most complex, this class implements their logic, 
  * Other creatures will have different sublogics
  */
-case class HealthTracker(hp:Int,currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int, seman:HealthTracker.TypeSemantic) {
-
+case class HealthTracker(currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int,base:HealthDefinition) {
+  
   private def boundedChange(amnt:Int):Int = { 
     val n=currentHP+amnt;
-    if(n<seman.lowerBound(hp)) seman.lowerBound(hp)
-    else if(n>hp) hp
+    if(n<base.lowerBound) base.lowerBound
+    else if(n>base.totalHP) base.totalHP
     else n
   }
   
   def applyDamage(amnt:Int) = {
     if(amnt>temporaryHP) {
-      HealthTracker(hp,boundedChange(-amnt+temporaryHP),0,deathStrikes,surges,seman)
+      val nchp=boundedChange(-amnt+temporaryHP)
+      HealthTracker(nchp,0,if(nchp==base.lowerBound) 3 else deathStrikes,surges,base)
     } else { 
-      HealthTracker(hp,currentHP,temporaryHP-amnt,deathStrikes,surges,seman)
+      HealthTracker(currentHP,temporaryHP-amnt,deathStrikes,surges,base)
     }
   }
   
+  /**
+   * Healing dead is not allowed. They most be removed from death before updating hp
+   */
   def heal(amnt:Int) = {
-    HealthTracker(hp,boundedChange(if(currentHP<0)amnt-currentHP else amnt),temporaryHP,deathStrikes,surges,seman)
+    if(status != HealthTracker.Status.Dead)
+      HealthTracker(boundedChange(if(currentHP<0)amnt-currentHP else amnt),temporaryHP,deathStrikes,surges,base)
+    else 
+      this
   }
   
   def setTemporaryHitPoints(amnt:Int,force:Boolean) = {
-    if(seman.hasTemporaryHP) {
-      if(force) HealthTracker(hp,currentHP,amnt,deathStrikes,surges,seman)
+    if(base.hasTemporaryHP) {
+      if(force) HealthTracker(currentHP,amnt,deathStrikes,surges,base)
       else if(amnt>temporaryHP)
-        HealthTracker(hp,currentHP,amnt,deathStrikes,surges,seman)
+        HealthTracker(currentHP,amnt,deathStrikes,surges,base)
       else this
     } else this
   }
   
   def failDeathSave():HealthTracker={ 
-    if(this.status == HealthStatus.Dying)
-      HealthTracker(hp,currentHP,temporaryHP,deathStrikes+1,surges,seman)
+    if(this.status == HealthTracker.Status.Dying)
+      HealthTracker(currentHP,temporaryHP,deathStrikes+1,surges,base)
     else this
   }
   
-  def status():HealthStatus.Value=seman.status(this) 
+  def status()=base.status(this) 
+
+  def rest(extended:Boolean):HealthTracker = {
+    if(status!=HealthTracker.Status.Dead) {
+      if(extended) HealthTracker(base.totalHP,0,0,1,base)
+      else HealthTracker(currentHP,0,0,1,base)
+    } else 
+      this
+  }
+
+  def raiseFromDead():HealthTracker = {
+    if(status==HealthTracker.Status.Dead) {
+      HealthTracker(0,temporaryHP,0,surges,base)
+    } else this
+  }
 }
