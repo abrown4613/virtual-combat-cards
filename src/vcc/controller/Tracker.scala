@@ -169,6 +169,14 @@ class Tracker() extends Actor with TransactionChangePublisher {
       for(p<-_map) {
         var c=p._2
         c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
+        c.health=c.health.setTemporaryHitPoints(0,true)
+      }
+    }
+    
+    case actions.ApplyRest(extended) => {
+      for(p<-_map) {
+        var c=p._2
+        c.health=c.health.rest(extended)
       }
     }
     

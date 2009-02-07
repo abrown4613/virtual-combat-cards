@@ -38,6 +38,13 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     coord.tracker ! vcc.controller.actions.EndCombat()
     coord.tracker ! actions.Enumerate()
   })
+  combatMenu.contents += new MenuItem(Action("Rest") {
+    coord.tracker ! vcc.controller.actions.ApplyRest(false)
+  })
+  combatMenu.contents += new MenuItem(Action("Extended Rest") {
+    coord.tracker ! vcc.controller.actions.ApplyRest(true)
+  })
+  
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
     coord.tracker ! actions.ClearCombatants(false)

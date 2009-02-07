@@ -36,6 +36,11 @@ case class EndCombat() extends EncounterAction {
   def description():String = "End combat"
 }
 
+case class ApplyRest(extended:Boolean) extends EncounterAction {
+  def description():String = if(extended) "Extended rest" else "Short rest"
+}
+
+
 abstract class StateChangeAction extends TransactionalAction
 
 case class SetComment(to:Symbol,text:String) extends TransactionalAction {
