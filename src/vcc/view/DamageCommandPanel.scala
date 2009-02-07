@@ -4,10 +4,11 @@ package vcc.view
 import swing._
 import swing.event._
 import javax.swing.BorderFactory
+import util.swing.MigPanel
 
 import vcc.controller.actions._
 
-class DamageCommandPanel(val controller:actors.Actor) extends GridPanel(2,3) with ContextualView[ViewCombatant]{
+class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[40][]","[]5[]") with ContextualView[ViewCombatant]{
   val damage=new TextField {
     columns=3
     enabled=false
@@ -16,16 +17,23 @@ class DamageCommandPanel(val controller:actors.Actor) extends GridPanel(2,3) wit
   val heal_btn= new Button("Heal")
   val temp_btn= new Button("Set Temp HP")
   val death_btn = new Button("Fail Death Save")
-  val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn)
+  val undie_btn = new Button("\"undie\"")
+  val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn,undie_btn)
 
-  contents+= new Label("Hit Points:")
-  contents++ controls
+  contents++ List[Component](new Label("Hit Points:"),damage,damage_btn,heal_btn)
+  add(temp_btn,"wrap")
+  add(death_btn,"skip, span, split, align left")
+  contents+= undie_btn
   border=BorderFactory.createTitledBorder("Change Health")
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
   for(x<-controls) listenTo(x)
   reactions +={
     case ButtonClicked(this.death_btn) =>
       controller ! FailDeathSave(context.id)
+
+    case ButtonClicked(this.undie_btn) => 
+      controller ! Undie(context.id)
+
     case ButtonClicked(button) => {
       try {
         val value=damage.text.toInt

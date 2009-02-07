@@ -60,6 +60,10 @@ case class FailDeathSave(to:Symbol) extends HealthChangeAction {
   def description():String = to.name + " fails save versus death"
 }
 
+case class Undie(to:Symbol) extends HealthChangeAction {
+  def description():String = to.name + " is no longer dead"
+}
+
 
 /**
  * Master class for all initiave based actions

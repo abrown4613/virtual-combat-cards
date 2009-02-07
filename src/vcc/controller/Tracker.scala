@@ -181,6 +181,8 @@ class Tracker() extends Actor with TransactionChangePublisher {
       c.health=c.health.setTemporaryHitPoints(amnt,false)
     case actions.FailDeathSave(InMap(c)) =>
       c.health=c.health.failDeathSave()
+    case actions.Undie(InMap(c)) => c.health=c.health.raiseFromDead
+      
     case actions.SetComment(InMap(c),text)=>
       c.info=text
       
