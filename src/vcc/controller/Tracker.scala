@@ -170,6 +170,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
         var c=p._2
         c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
         c.health=c.health.setTemporaryHitPoints(0,true)
+        _initSeq.add(c.id)
       }
     }
     
