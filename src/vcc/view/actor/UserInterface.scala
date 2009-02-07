@@ -38,7 +38,11 @@ class UserInterface(tracker:Actor) extends Actor {
     })
   }
   
-  protected def signalSequence(seq:Seq[T]) {for(x<-seqAware) x.updateSequence(seq)}
+  protected def signalSequence(seq:Seq[T]) {
+    util.swing.SwingHelper.invokeLater(()=> {
+      for(x<-seqAware) x.updateSequence(seq)
+    })
+  }
   
   def flush():Unit = {
     _map.clear
