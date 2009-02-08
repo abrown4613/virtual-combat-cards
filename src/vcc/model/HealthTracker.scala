@@ -11,11 +11,13 @@ abstract case class HealthDefinition(totalHP:Int,surgeValue:Int,healingSurges:In
   val lowerBound:Int
   val hasTemporaryHP:Boolean
   def status(tracker:HealthTracker):HealthTracker.Status.Value
+  val ctype:CombatantType.Value
 } 
 
 case class CharacterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends HealthDefinition(totalHP,surgeValue,healingSurges) {
   val lowerBound= - totalHP/2
   val hasTemporaryHP = true
+  val ctype=CombatantType.Character
   def status(tracker:HealthTracker)= {
     if(tracker.deathStrikes==3) HealthTracker.Status.Dead
     else if(tracker.currentHP<=0) HealthTracker.Status.Dying
@@ -26,10 +28,12 @@ case class CharacterHealthDefinition(override val totalHP:Int,override val surge
 
 case class MonsterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends CharacterHealthDefinition(totalHP,surgeValue,healingSurges) {
   override val lowerBound=0
+  override val ctype=CombatantType.Monster
 }
 
 case class MinionHealthDefinition() extends HealthDefinition(1,0,0) {
   val lowerBound=0
+  val ctype=CombatantType.Minion
   override val hasTemporaryHP = false
 
   def status(tracker:HealthTracker)= {

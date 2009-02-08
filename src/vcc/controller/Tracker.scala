@@ -158,7 +158,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       if(all) {
         _map=Map.empty[Symbol,TrackerCombatant]
       } else {
-        _map=_map.filter(p=>p._2.health.isInstanceOf[HealthTracker])
+        _map=_map.filter(p=>p._2.health.base.ctype==CombatantType.Character)
       }
       var removed=current -- _map.keySet.toList
       for(x <- removed) {
