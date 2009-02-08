@@ -3,11 +3,13 @@ package vcc.model
 
 /**
  * Generates numeric IDs for Combatants with out ID. It works as a set of 
- * clips, so you can take them out of the pool, and back into it.
+ * chips, so you can take them out of the pool, and back into it.
  */
 class IDGenerator(start:Int, end:Int) {
 
   private var ids=List((start,end))
+  
+  private var leased:List[Symbol]=Nil
   
   /**
    * Remove the first ID from the pool, and returns the updated ID 
@@ -37,7 +39,7 @@ class IDGenerator(start:Int, end:Int) {
    * Take a specific ID from the middle of the range, and return the 
    * set without that entry
    */
-  def takeFromPool(n:Int,lst:List[(Int,Int)]):List[(Int,Int)] = 
+  private def takeFromPool(n:Int,lst:List[(Int,Int)]):List[(Int,Int)] = 
     lst match {
       case (a,b)::rest =>
         if(a==n && b==n) rest
@@ -55,6 +57,7 @@ class IDGenerator(start:Int, end:Int) {
     try {
       var num=s.name.toInt
       ids=addToList(num,ids)
+      leased=leased.filter( s != _)
     } catch {
       case e:NumberFormatException => // Do nothing
     }
@@ -66,6 +69,7 @@ class IDGenerator(start:Int, end:Int) {
   def first(): Symbol = {
     var (id,nids)=takeFirst()
     ids=nids
+    leased=id::leased
     id
   }
   
@@ -76,6 +80,7 @@ class IDGenerator(start:Int, end:Int) {
     try {
       var num=s.name.toInt
       ids=takeFromPool(num,ids)
+      leased=s::leased
     } catch {
       case e:NumberFormatException => // Nothing to do
     }
@@ -105,5 +110,10 @@ class IDGenerator(start:Int, end:Int) {
     }
   }
   
-  override def toString():String = "IDGenerator("+ids+")"
+  /**
+   * Returns the list of all symbols that have been leased.
+   */
+  def leasedSymbols= leased
+  
+  override def toString():String = "IDGenerator("+ids+";leased:"+leased + ")"
 }

@@ -217,8 +217,15 @@ class Tracker() extends Actor with TransactionChangePublisher {
     for(x<-_map.map(_._2)) { 
       peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
       peer ! vcc.view.actor.SetHealth(x.id,x.health)
+      peer ! vcc.view.actor.SetInitiative(x.id,x.it.value)
     }
     peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
+    // Return ids to generator
+    for(id<-_idgen.leasedSymbols) {
+      if(!_map.contains(id)) _idgen.returnToPool(id)
+    }
+    for(id<-_map.map(_._1))
+        if(_idgen.contains(id))_idgen.removeFromPool(id)
   }
   
   val processQuery:PartialFunction[actions.QueryAction,Unit]= {
