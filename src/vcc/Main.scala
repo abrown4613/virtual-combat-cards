@@ -54,20 +54,25 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     coord.tracker ! actions.ClearCombatants(true)
     coord.tracker ! actions.Enumerate()
   })
-  combatMenu.contents += new Separator
-  combatMenu.contents +=new MenuItem(new Action("Undo"){
+  
+  val historyMenu= new Menu("History")
+  historyMenu.contents +=new MenuItem(new Action("Undo"){
     def apply():Unit={
       coord.tracker ! vcc.controller.actions.Undo()
     }
     accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Z'.toInt,java.awt.Event.CTRL_MASK))
   })
-  combatMenu.contents +=new MenuItem(new Action("Redo"){
+  historyMenu.contents +=new MenuItem(new Action("Redo"){
     def apply():Unit={
       coord.tracker ! vcc.controller.actions.Redo()
     }
     accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Y'.toInt,java.awt.Event.CTRL_MASK))
   })
-
+  historyMenu.contents += new Separator
+  historyMenu.contents +=new MenuItem(Action("Clear History"){
+    coord.tracker ! actions.ClearTransactionLog()
+  })
+  
   var viewMenu= new Menu("View")
   var hideDeadMenu=new CheckMenuItem("Hide Dead")
   hideDeadMenu.action=Action("Hide Dead"){
@@ -81,6 +86,7 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   
   contents+=fileMenu
   contents+=combatMenu
+  contents+=historyMenu
   contents+=viewMenu
 }
 

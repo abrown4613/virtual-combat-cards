@@ -15,6 +15,7 @@ abstract class EncounterAction extends TransactionalAction
 
 case class StartTransaction(desc:String)
 case class EndTransaction(desc:String)
+case class ClearTransactionLog()
 
 case class Undo() 
 case class Redo()

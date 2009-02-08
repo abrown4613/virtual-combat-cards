@@ -122,6 +122,9 @@ class Tracker() extends Actor with TransactionChangePublisher {
           try {
             _tlog.rollforward(this)
           } catch { case s:TransactionLogOutOfBounds => }
+        case actions.ClearTransactionLog() =>
+          _tlog.clear
+          
         case s=>println("Error: Tracker receive:"+s)
       }
     }
