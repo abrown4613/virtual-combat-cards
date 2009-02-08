@@ -166,4 +166,33 @@ class TransactionLogTest extends TestCase {
       case s:BadTransaction => assert(true)
     }
   }
+
+  /**
+   * Empty the log.
+   */
+  def testClearLog() {
+    val tlog= new TransactionLog[MyTrans]()
+    implicit var trans= new Transaction()
+    val v= new Undoable[Int](10,null)
+
+    v.value=20
+    trans.commit(null)
+    tlog.store(MyTrans("First"),trans)
+
+    trans=new Transaction()
+    v.value=30
+    trans.commit(null)
+    tlog.store(MyTrans("Second"),trans)
+    assert(tlog.pastActions==List(MyTrans("Second"),MyTrans("First")))
+    
+    tlog.rollback(null)
+    assert(tlog.futureActions==List(MyTrans("Second")))
+    assert(tlog.pastActions==List(MyTrans("First")))
+
+    tlog.clear()
+    assert(tlog.length==0)
+    assert(tlog.futureActions==Nil)
+    assert(tlog.pastActions==Nil)
+    
+  }
 }

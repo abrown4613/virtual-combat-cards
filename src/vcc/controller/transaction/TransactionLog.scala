@@ -70,4 +70,12 @@ class TransactionLog[T] {
     futureTrans=futureTrans.tail
     pastTrans=entry::pastTrans
   }
+  
+  /**
+   * Clear log both past and future
+   */
+  def clear() {
+    pastTrans=Nil
+    futureTrans=Nil
+  }
 }
