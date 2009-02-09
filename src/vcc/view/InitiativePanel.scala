@@ -6,8 +6,9 @@ import scala.swing.event._
 import scala.actors.Actor
 import vcc.model._
 import vcc.controller._
+import util.swing.MigPanel
 
-class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
+class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
   val startRound_btn=new Button("Start Round")
   val endRound_btn=new Button("End Round")
   val moveUp_btn=new Button("Move Up & Start Round")
@@ -19,9 +20,9 @@ class InitiativePanel(tracker:Actor) extends GridPanel(3,2) with ContextualView[
   
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
   contents+=startRound_btn
-  contents+=endRound_btn
-  contents+=moveUp_btn
+  add(endRound_btn,"wrap, grow")
   contents+=delay_btn
+  add(moveUp_btn,"wrap")
   contents+=executeReady_btn
   contents+=ready_btn
   border=javax.swing.BorderFactory.createTitledBorder("Initiative Actions")
