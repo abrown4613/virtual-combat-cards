@@ -1,5 +1,5 @@
 //$Id$
-package vcc.view.actor
+package vcc.dnd4e.view.actor
 
 import vcc.dnd4e.model.{HealthTracker,InitiativeTracker}
 case class Combatant(vc:ViewCombatant)

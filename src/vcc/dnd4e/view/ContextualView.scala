@@ -1,4 +1,5 @@
-package vcc.view
+//$Id$
+package vcc.dnd4e.view
 
 class NotInContextException extends Exception("Not in Context")
 

@@ -1,4 +1,5 @@
-package vcc.view.dialog
+//$Id$
+package vcc.dnd4e.view.dialog
 
 import vcc.util.swing.TableModelRowProjection
 import vcc.model.DiceBag

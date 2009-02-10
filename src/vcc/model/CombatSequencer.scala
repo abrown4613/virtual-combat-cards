@@ -13,7 +13,7 @@ class CombatSequencer extends ChangeNotifier {
   private var _reserve= new Undoable[Set[T]](Set.empty[T],x=>ChangeNotificationPromise(this))
   
   def createNotification():ChangeNotification = {
-    vcc.view.actor.SetSequence(this.sequence.toSeq)
+    vcc.dnd4e.view.actor.SetSequence(this.sequence.toSeq)
   }
   
   

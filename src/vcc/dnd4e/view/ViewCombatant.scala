@@ -1,5 +1,5 @@
 //$Id$
-package vcc.view 
+package vcc.dnd4e.view 
 
 import vcc.dnd4e.model._
 

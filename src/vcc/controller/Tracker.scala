@@ -63,11 +63,11 @@ class Tracker() extends Actor with TransactionChangePublisher {
    */
   def publishChange(changes:Seq[ChangeNotification]) {
     changes.foreach {
-      case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.view.actor.SetInitiative(comb,s)
+      case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
       case RosterUpdate(map) => enumerate(map)
-      case CombatantUpdate(comb, h:HealthTracker) => uia ! vcc.view.actor.SetHealth(comb,h)
-      case CombatantUpdate(comb, info:String) => uia ! vcc.view.actor.SetInformation(comb,info)
-      case s:vcc.view.actor.SetSequence => uia ! s
+      case CombatantUpdate(comb, h:HealthTracker) => uia ! vcc.dnd4e.view.actor.SetHealth(comb,h)
+      case CombatantUpdate(comb, info:String) => uia ! vcc.dnd4e.view.actor.SetInformation(comb,info)
+      case s:vcc.dnd4e.view.actor.SetSequence => uia ! s
     }
   }
   
@@ -200,13 +200,13 @@ class Tracker() extends Actor with TransactionChangePublisher {
   
   private def enumerate(map:Map[Symbol,TrackerCombatant]) {
     val peer = uia
-    peer ! vcc.view.actor.ClearSequence()
+    peer ! vcc.dnd4e.view.actor.ClearSequence()
     for(x<-_map.map(_._2)) { 
-      peer ! vcc.view.actor.Combatant(vcc.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-      peer ! vcc.view.actor.SetHealth(x.id,x.health)
-      peer ! vcc.view.actor.SetInitiative(x.id,x.it.value)
+      peer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
+      peer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
+      peer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
     }
-    peer ! vcc.view.actor.SetSequence(_initSeq.sequence)
+    peer ! vcc.dnd4e.view.actor.SetSequence(_initSeq.sequence)
     // Return ids to generator
     for(id<-_idgen.leasedSymbols) {
       if(!_map.contains(id)) _idgen.returnToPool(id)

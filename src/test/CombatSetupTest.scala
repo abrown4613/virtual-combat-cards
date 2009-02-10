@@ -4,7 +4,7 @@ package test
 import junit.framework._
 
 import vcc.dnd4e.model._
-import vcc.view._
+import vcc.dnd4e.view._
 import scala.actors.Actor._
 import vcc.dnd4e.controller._
 
@@ -22,10 +22,10 @@ class CombatSetupTest extends junit.framework.TestCase {
     assert(tmpl.id=="K")
 
     val uimock=new ExpectActor(200,new ExpectingBehavior(List(
-      vcc.view.actor.ClearSequence(),
-      vcc.view.actor.Combatant(ViewCombatant(Symbol("K"),"Kantrex",44,5,null)),
+      vcc.dnd4e.view.actor.ClearSequence(),
+      vcc.dnd4e.view.actor.Combatant(ViewCombatant(Symbol("K"),"Kantrex",44,5,null)),
       //vcc.view.actor.SetHealth('K,HealthTrackerSummary(44,0,HealthStatus.Ok,0)),
-      vcc.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
+      vcc.dnd4e.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
     )),self)
     //val logmock=new ExpectActor(1000,new ExpectingBehavior(List(vcc.controller.actions.LogError("Nothing"))),self)
     val tracker=new vcc.controller.Tracker()

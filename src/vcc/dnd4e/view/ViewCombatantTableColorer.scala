@@ -1,4 +1,5 @@
-package vcc.view
+//$Id$
+package vcc.dnd4e.view
 
 object ViewCombatantTableColorer {
   import java.awt.Color

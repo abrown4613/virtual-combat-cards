@@ -1,5 +1,5 @@
 //$Id$
-package vcc.view
+package vcc.dnd4e.view
 
 import scala.swing._
 import scala.swing.event._
@@ -59,7 +59,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
       var l=table.selection.rows.toSeq
       if(!l.isEmpty && !_doingContextChange) {
         var c=trackerTable.content(l(0))
-        uia ! vcc.view.actor.SetContext(c.id)
+        uia ! actor.SetContext(c.id)
       }	
   }
 

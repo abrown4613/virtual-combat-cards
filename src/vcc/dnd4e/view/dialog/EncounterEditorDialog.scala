@@ -1,5 +1,5 @@
 //$Id$
-package vcc.view.dialog
+package vcc.dnd4e.view.dialog
 
 import scala.swing._
 import scala.swing.event._

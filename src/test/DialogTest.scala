@@ -1,10 +1,11 @@
+//$Id$
 package test
 
 import swing._
 import swing.event._
 
 import vcc.util.swing._
-import vcc.view._
+import vcc.dnd4e.view._
 import vcc.dnd4e.model.TrackerCombatant
 
 import vcc.dnd4e.model.CombatantType
@@ -65,11 +66,11 @@ object DialogTest extends SimpleGUIApplication {
       }
     }
   }
-  var initDiag=new vcc.view.dialog.InitiativeDialog(echoer)
+  var initDiag=new vcc.dnd4e.view.dialog.InitiativeDialog(echoer)
   dialogs=List(
     new MyDialog,
     initDiag,
-    new vcc.view.dialog.EncounterEditorDialog(null)
+    new vcc.dnd4e.view.dialog.EncounterEditorDialog(null)
   )
   var btns= dialogs map (x=>new Button(x.getClass.getCanonicalName))
   var map=collection.mutable.Map.empty[String,Frame]

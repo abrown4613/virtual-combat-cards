@@ -1,4 +1,5 @@
-package vcc.view
+//$Id$
+package vcc.dnd4e.view
 
 import scala.swing._
 import scala.swing.event._ 

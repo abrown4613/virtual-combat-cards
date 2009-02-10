@@ -5,16 +5,17 @@ import scala.swing._
 import scala.swing.event._ 
 import vcc.util.swing._
 
-import vcc.view.ViewCombatant
 import scala.actors.Actor
-import view.{SequenceTable,ViewCombatant}
-import vcc.view.dialog.FileChooserHelper
+
+import vcc.dnd4e.view.ViewCombatant
+import dnd4e.view.{SequenceTable,ViewCombatant}
+import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.controller._
 import vcc.dnd4e.controller.actions._
 
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   
-  lazy val encEditor=new vcc.view.dialog.EncounterEditorDialog(coord)
+  lazy val encEditor=new vcc.dnd4e.view.dialog.EncounterEditorDialog(coord)
   
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
@@ -26,13 +27,13 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   val combatMenu = new Menu("Combat")
   combatMenu.contents +=new MenuItem(new Action("Go to First"){
     def apply():Unit={
-      uia ! vcc.view.actor.GoToFirst()
+      uia ! vcc.dnd4e.view.actor.GoToFirst()
     }
     accelerator=Some(javax.swing.KeyStroke.getKeyStroke('F'.toInt,java.awt.Event.CTRL_MASK))
   })
   combatMenu.contents += new Separator
   combatMenu.contents += new MenuItem(Action("Start Combat") {
-    val diag=new vcc.view.dialog.InitiativeDialog(coord.tracker)
+    val diag=new vcc.dnd4e.view.dialog.InitiativeDialog(coord.tracker)
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
@@ -77,7 +78,7 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   var viewMenu= new Menu("View")
   var hideDeadMenu=new CheckMenuItem("Hide Dead")
   hideDeadMenu.action=Action("Hide Dead"){
-    uia ! vcc.view.actor.SetOption('HIDEDEAD,hideDeadMenu.peer.isSelected)
+    uia ! vcc.dnd4e.view.actor.SetOption('HIDEDEAD,hideDeadMenu.peer.isSelected)
   }
   viewMenu.contents +=hideDeadMenu
   viewMenu.contents += new Separator
@@ -94,12 +95,12 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
 object Main extends SimpleGUIApplication {
   var coord=vcc.controller.Coordinator.initialize
 
-  var uia=new vcc.view.actor.UserInterface(coord.tracker)
+  var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
 
   coord.start
   
-  val commandPanel= new vcc.view.CombatantActionPanel(coord.tracker)
-  var seqTable = new SequenceTable(uia)
+  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(coord.tracker)
+  var seqTable = new vcc.dnd4e.view.SequenceTable(uia)
   
   // Register panel with UIA
   uia.addSequenceListener(seqTable)

@@ -1,4 +1,5 @@
-package vcc.view
+//$Id$
+package vcc.dnd4e.view
 
 import swing._
 import event._ 
