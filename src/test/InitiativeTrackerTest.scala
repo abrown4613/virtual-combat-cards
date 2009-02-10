@@ -2,8 +2,8 @@ package test
 
 import junit.framework.TestCase
 
-import vcc.model._
-import vcc.model.InitiativeState._
+import vcc.dnd4e.model._
+import vcc.dnd4e.model.InitiativeState._
 
 class InitiativeTrackerTest extends TestCase {
 

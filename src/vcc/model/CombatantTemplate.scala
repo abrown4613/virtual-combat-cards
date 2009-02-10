@@ -1,5 +1,5 @@
 //$Id$
-package vcc.model
+package vcc.dnd4e.model
 
 import scala.xml.{Node,NodeSeq,Elem,Null}
 

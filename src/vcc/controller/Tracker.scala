@@ -6,27 +6,11 @@ import scala.actors.Actor.loop
 
 import vcc.controller.transaction._
 
+import vcc.dnd4e.model.TrackerCombatant
+import vcc.dnd4e.model._
+import vcc.dnd4e.controller._
+
 import vcc.model._
-
-case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
-case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotification
-
-class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
-  private var _health=new Undoable[HealthTracker](HealthTracker.createTracker(ctype,hp),(uv)=>CombatantUpdate(id,uv.value))
-  
-  def health= _health.value
-  def health_=(nh:HealthTracker)(implicit trans:Transaction) {
-    if(nh != _health.value) _health.value=nh
-    this
-  }
-  
-  private val _info= new Undoable[String]("",uv=>{CombatantUpdate(id,uv.value)})
-  def info= _info.value
-  def info_=(str:String)(implicit trans:Transaction) { _info.value=str; this }
-  
-  var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
-  var defense:DefenseBlock=null
-}
 
 class Tracker() extends Actor with TransactionChangePublisher {
   
@@ -132,7 +116,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
   
   private def processActions(action:actions.TransactionalAction)(implicit trans:Transaction) {
     action match {
-    case actions.AddCombatant(template)=>
+    case vcc.dnd4e.controller.actions.AddCombatant(template)=>
       var id:Symbol=if(template.id==null) _idgen.first() else {
         var s=Symbol(template.id)
         if(_idgen.contains(s)) _idgen.removeFromPool(s) // To make sure we don't get doubles
@@ -148,7 +132,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
         _initSeq add id
       }
       _map = _map + (id -> nc)
-    case actions.StartCombat(seq) =>
+    case vcc.dnd4e.controller.actions.StartCombat(seq) =>
       for(x<-seq) {
         if(_map.contains(x)) {
           var c=_map(x)
@@ -156,7 +140,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
           c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
         }
       } 
-    case actions.ClearCombatants(all) =>
+    case vcc.dnd4e.controller.actions.ClearCombatants(all) =>
       var current=_map.keySet.toList
       if(all) {
         _map=Map.empty[Symbol,TrackerCombatant]
@@ -168,7 +152,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
         _idgen.returnToPool(x)
       }
       _initSeq.removeFromSequence(removed)
-    case actions.EndCombat() => {
+    case vcc.dnd4e.controller.actions.EndCombat() => {
       for(p<-_map) {
         var c=p._2
         c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
@@ -177,7 +161,7 @@ class Tracker() extends Actor with TransactionChangePublisher {
       }
     }
     
-    case actions.ApplyRest(extended) => {
+    case vcc.dnd4e.controller.actions.ApplyRest(extended) => {
       for(p<-_map) {
         var c=p._2
         c.health=c.health.rest(extended)
@@ -185,31 +169,31 @@ class Tracker() extends Actor with TransactionChangePublisher {
     }
     
     // HEALTH Tracking
-    case actions.ApplyDamage(InMap(c),amnt) =>
+    case vcc.dnd4e.controller.actions.ApplyDamage(InMap(c),amnt) =>
       c.health=c.health.applyDamage(amnt)
-    case actions.HealDamage(InMap(c),amnt) =>
+    case vcc.dnd4e.controller.actions.HealDamage(InMap(c),amnt) =>
       c.health=c.health.heal(amnt)
-    case actions.SetTemporaryHP(InMap(c),amnt) =>
+    case vcc.dnd4e.controller.actions.SetTemporaryHP(InMap(c),amnt) =>
       c.health=c.health.setTemporaryHitPoints(amnt,false)
-    case actions.FailDeathSave(InMap(c)) =>
+    case vcc.dnd4e.controller.actions.FailDeathSave(InMap(c)) =>
       c.health=c.health.failDeathSave()
-    case actions.Undie(InMap(c)) => c.health=c.health.raiseFromDead
+    case vcc.dnd4e.controller.actions.Undie(InMap(c)) => c.health=c.health.raiseFromDead
       
-    case actions.SetComment(InMap(c),text)=>
+    case vcc.dnd4e.controller.actions.SetComment(InMap(c),text)=>
       c.info=text
       
       // INITIATIVE TRACKING  
-    case actions.MoveUp(InMap(c)) => 
+    case vcc.dnd4e.controller.actions.MoveUp(InMap(c)) => 
       this.changeSequence(c,InitiativeTracker.actions.MoveUp)
-    case actions.StartRound(InMap(c)) =>
+    case vcc.dnd4e.controller.actions.StartRound(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.StartRound)
-    case actions.EndRound(InMap(c)) =>
+    case vcc.dnd4e.controller.actions.EndRound(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.EndRound)
-    case actions.Delay(InMap(c)) =>
+    case vcc.dnd4e.controller.actions.Delay(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.Delay)
-    case actions.Ready(InMap(c)) => 
+    case vcc.dnd4e.controller.actions.Ready(InMap(c)) => 
       this.changeSequence(c,InitiativeTracker.actions.Ready)
-    case actions.ExecuteReady(InMap(c)) =>
+    case vcc.dnd4e.controller.actions.ExecuteReady(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
     }
   }	
@@ -232,9 +216,9 @@ class Tracker() extends Actor with TransactionChangePublisher {
   }
   
   val processQuery:PartialFunction[actions.QueryAction,Unit]= {
-    case actions.QueryCombatantMap(func) =>
+    case vcc.dnd4e.controller.actions.QueryCombatantMap(func) =>
       reply(_map.map(x=>func(x._2)).toList)
-    case actions.Enumerate()=> enumerate(_map)
+    case vcc.dnd4e.controller.actions.Enumerate()=> enumerate(_map)
   }		
   
   private def advanceToNext()(implicit trans:Transaction) {

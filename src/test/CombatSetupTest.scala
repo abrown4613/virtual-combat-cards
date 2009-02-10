@@ -3,9 +3,10 @@ package test
 
 import junit.framework._
 
-import vcc.model._
+import vcc.dnd4e.model._
 import vcc.view._
 import scala.actors.Actor._
+import vcc.dnd4e.controller._
 
 //FIXME: This test is bad, and is not working.
 
@@ -32,8 +33,8 @@ class CombatSetupTest extends junit.framework.TestCase {
     
     tracker.start
     
-    tracker ! vcc.controller.actions.AddCombatant(tmpl)
-    tracker ! vcc.controller.actions.Enumerate()
+    tracker ! actions.AddCombatant(tmpl)
+    tracker ! actions.Enumerate()
     
     receiveWithin(400) {
       case uimock.Done(s) if(s eq uimock)=> assert(true)

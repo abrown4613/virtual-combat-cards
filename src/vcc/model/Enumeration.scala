@@ -1,5 +1,5 @@
 //$Id$
-package vcc.model
+package vcc.dnd4e.model
 
 object InitiativeState extends Enumeration {
   val Reserve=Value("Reserve")

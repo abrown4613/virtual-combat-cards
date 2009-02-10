@@ -4,7 +4,7 @@ package vcc.view.dialog
 import scala.swing._
 import scala.swing.event._
 
-import vcc.model.{CombatantType,PartyLoader,CombatantTemplate}
+import vcc.dnd4e.model.{CombatantType,PartyLoader,CombatantTemplate}
 
 class EncounterEditorDialog(val coord:vcc.controller.Coordinator) extends Frame {
   title = "Party/Encounter Editor"

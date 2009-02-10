@@ -2,8 +2,8 @@ package vcc.view
 
 object ViewCombatantTableColorer {
   import java.awt.Color
-  import vcc.model.InitiativeState._
-  import vcc.model.HealthTracker.Status._
+  import vcc.dnd4e.model.InitiativeState._
+  import vcc.dnd4e.model.HealthTracker.Status._
   
   // Pair[Color,Color]  where (background,foreground)
   private val grayed=(Color.LIGHT_GRAY,Color.BLACK)

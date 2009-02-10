@@ -10,6 +10,7 @@ import scala.actors.Actor
 import view.{SequenceTable,ViewCombatant}
 import vcc.view.dialog.FileChooserHelper
 import vcc.controller._
+import vcc.dnd4e.controller.actions._
 
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   
@@ -35,24 +36,24 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
-    coord.tracker ! vcc.controller.actions.EndCombat()
-    coord.tracker ! actions.Enumerate()
+    coord.tracker ! EndCombat()
+    coord.tracker ! Enumerate()
   })
   combatMenu.contents += new MenuItem(Action("Rest") {
-    coord.tracker ! vcc.controller.actions.ApplyRest(false)
+    coord.tracker ! ApplyRest(false)
   })
   combatMenu.contents += new MenuItem(Action("Extended Rest") {
-    coord.tracker ! vcc.controller.actions.ApplyRest(true)
+    coord.tracker ! ApplyRest(true)
   })
   
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
-    coord.tracker ! actions.ClearCombatants(false)
-    coord.tracker ! actions.Enumerate()
+    coord.tracker ! ClearCombatants(false)
+    coord.tracker ! Enumerate()
   })
   combatMenu.contents +=new MenuItem(Action("Clear All"){
-    coord.tracker ! actions.ClearCombatants(true)
-    coord.tracker ! actions.Enumerate()
+    coord.tracker ! ClearCombatants(true)
+    coord.tracker ! Enumerate()
   })
   
   val historyMenu= new Menu("History")

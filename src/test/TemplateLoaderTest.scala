@@ -3,7 +3,7 @@ package test
 
 import junit.framework.TestCase
 
-import vcc.model._
+import vcc.dnd4e.model._
 
 class TemplateLoaderTest extends TestCase {
   

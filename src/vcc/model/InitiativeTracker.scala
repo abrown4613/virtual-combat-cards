@@ -1,6 +1,6 @@
-package vcc.model
+package vcc.dnd4e.model
 
-import vcc.model.InitiativeState._
+import vcc.dnd4e.model.InitiativeState._
 
 //TODO: If the first was is not acting, should not be able to execute readied actions. Maybe
 // initiative transformation should depend on the first char in the sequence (cmb). 
@@ -18,7 +18,7 @@ object InitiativeTracker {
     val ExecuteReady=Value("Execute Ready")
   }  
 }
-case class InitiativeTracker(round:Int,state:vcc.model.InitiativeState.Value) {
+case class InitiativeTracker(round:Int,state:vcc.dnd4e.model.InitiativeState.Value) {
   import InitiativeTracker.actions
   //Transform partial function parameters(first?,Action) 
   val transform:PartialFunction[(Boolean,actions.Value),InitiativeTracker] = {

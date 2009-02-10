@@ -4,6 +4,7 @@ package vcc.view
 import swing._
 import event._
 import javax.swing.BorderFactory
+import vcc.dnd4e.controller._
 
 class CommentPanel(val controller:actors.Actor) extends BoxPanel(Orientation.Vertical) with ContextualView[ViewCombatant]{
   private var _hasChanged=false
@@ -31,7 +32,7 @@ class CommentPanel(val controller:actors.Actor) extends BoxPanel(Orientation.Ver
   private def sendChange() {
     if(_hasChanged) {
       _hasChanged=false
-      controller ! vcc.controller.actions.SetComment(context.id,edit.text)
+      controller ! actions.SetComment(context.id,edit.text)
     }
           
   }

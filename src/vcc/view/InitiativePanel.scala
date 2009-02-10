@@ -4,8 +4,8 @@ package vcc.view
 import scala.swing._
 import scala.swing.event._
 import scala.actors.Actor
-import vcc.model._
-import vcc.controller._
+import vcc.dnd4e.model._
+import vcc.dnd4e.controller._
 import util.swing.MigPanel
 
 class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{

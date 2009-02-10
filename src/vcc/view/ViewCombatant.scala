@@ -1,7 +1,7 @@
 //$Id$
 package vcc.view 
 
-import vcc.model._
+import vcc.dnd4e.model._
 
 trait UIFormatted {
   def formattedText():String

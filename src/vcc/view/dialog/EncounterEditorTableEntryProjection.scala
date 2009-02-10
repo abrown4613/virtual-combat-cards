@@ -1,7 +1,7 @@
 //$Id$
 package vcc.view.dialog
 
-import vcc.model.CombatantType
+import vcc.dnd4e.model.CombatantType
 
 object EncounterEditorTableEntryProjection extends vcc.util.swing.TableModelRowProjection[EncounterEditorTableEntry] {
   val columns:List[(String,java.lang.Class[_])] = List(

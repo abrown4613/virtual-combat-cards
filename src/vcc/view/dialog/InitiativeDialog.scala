@@ -5,7 +5,9 @@ package vcc.view.dialog
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
+
 import vcc.model.DiceBag
+import vcc.dnd4e.controller._
 
 class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
 
@@ -31,17 +33,17 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
       var l=initTable.content.filter(x=> !x.reserve).toArray
       l.foreach(x=>if(x.roll<=0) x.roll=DiceBag.D(20))
       scala.util.Sorting.quickSort[InitiativeDialogEntry](l)(x=>x)
-      tracker ! vcc.controller.actions.StartCombat(l.map(x=>x.id).toSeq)
+      tracker ! actions.StartCombat(l.map(x=>x.id).toSeq)
   }
 
   // This will build my entries based on TrackerCombatant
-  def buildEntryFromCombatant(cmb:vcc.controller.TrackerCombatant):InitiativeDialogEntry = {
+  def buildEntryFromCombatant(cmb:vcc.dnd4e.model.TrackerCombatant):InitiativeDialogEntry = {
     new InitiativeDialogEntry(cmb.id,cmb.name,cmb.init,0,false)
   }
   
   override def visible_=(state:Boolean) {
     if(state) {
-      var resp=(tracker !? vcc.controller.actions.QueryCombatantMap(buildEntryFromCombatant)).asInstanceOf[List[InitiativeDialogEntry]]
+      var resp=(tracker !? actions.QueryCombatantMap(buildEntryFromCombatant)).asInstanceOf[List[InitiativeDialogEntry]]
       var arr=scala.util.Sorting.stableSort[InitiativeDialogEntry](resp,(a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name})
       initTable.content = arr.toSeq
     }

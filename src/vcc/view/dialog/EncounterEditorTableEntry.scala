@@ -1,7 +1,7 @@
 //$Id$
 package vcc.view.dialog
 
-import vcc.model.{CombatantType,CombatantTemplate,DefenseBlock}
+import vcc.dnd4e.model.{CombatantType,CombatantTemplate,DefenseBlock}
 
 object EncounterEditorTableEntry {
   def fromCombatantTemplate(ct:CombatantTemplate):EncounterEditorTableEntry = {

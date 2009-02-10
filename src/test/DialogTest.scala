@@ -5,7 +5,9 @@ import swing.event._
 
 import vcc.util.swing._
 import vcc.view._
-import vcc.controller.TrackerCombatant
+import vcc.dnd4e.model.TrackerCombatant
+
+import vcc.dnd4e.model.CombatantType
 
 class MyDialog extends DialogFrame {
   title="My diag"
@@ -48,15 +50,15 @@ object DialogTest extends SimpleGUIApplication {
   import scala.actors.Actor.{loop,react,reply}
   val echoer=scala.actors.Actor.actor{
     var l=List(
-      new TrackerCombatant('A,"Aza",44,-1,vcc.model.CombatantType.Monster),
-      new TrackerCombatant('B,"Beta",43,3,vcc.model.CombatantType.Monster),
-      new TrackerCombatant('G,"Gamma",43,3,vcc.model.CombatantType.Monster),
-      new TrackerCombatant('D,"Delta",24,2,vcc.model.CombatantType.Monster),
-      new TrackerCombatant('F,"Fi",43,7,vcc.model.CombatantType.Monster)
+      new TrackerCombatant('A,"Aza",44,-1,CombatantType.Monster),
+      new TrackerCombatant('B,"Beta",43,3,CombatantType.Monster),
+      new TrackerCombatant('G,"Gamma",43,3,CombatantType.Monster),
+      new TrackerCombatant('D,"Delta",24,2,CombatantType.Monster),
+      new TrackerCombatant('F,"Fi",43,7,CombatantType.Monster)
     )
     loop {
       react {
-        case vcc.controller.actions.QueryCombatantMap(func) =>
+        case vcc.dnd4e.controller.actions.QueryCombatantMap(func) =>
           println("Requested list of chars")
           reply(l.map(func))
         case s => println("***Echoer: "+s)

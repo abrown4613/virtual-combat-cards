@@ -6,7 +6,7 @@ import swing.event._
 import javax.swing.BorderFactory
 import util.swing.MigPanel
 
-import vcc.controller.actions._
+import vcc.dnd4e.controller.actions._
 
 class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[40][fill][fill][fill]","[]10[]") with ContextualView[ViewCombatant]{
   val damage=new TextField {

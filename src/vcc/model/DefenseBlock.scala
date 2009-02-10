@@ -1,5 +1,5 @@
 //$Id$
-package vcc.model
+package vcc.dnd4e.model
 
 /**
  * A set of defense stats.

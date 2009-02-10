@@ -3,7 +3,7 @@ package test
 
 import junit.framework._
 
-import vcc.model._
+import vcc.dnd4e.model._
 
 
 class HealthTrackingTest extends TestCase {
