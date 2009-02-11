@@ -6,24 +6,39 @@ import scala.actors.Actor.loop
 
 import vcc.controller.transaction._
 
-import vcc.dnd4e.model.TrackerCombatant
-import vcc.dnd4e.model._
-import vcc.dnd4e.controller._
-
-import vcc.model._
-
-class Tracker() extends Actor with TransactionChangePublisher {
+class TrackerResponseBuffer {
+  private var outBound:List[Any]=Nil 
   
-  private var uia:Actor=null
+  private var _reply:Any=null
+  
+  def reply(msg:Any) {
+    if(_reply!=null) throw new Exception("Only can send one reply")
+    else _reply=msg
+  }
+  
+  def replyMessage = _reply
+  
+  def !(msg:Any) {
+    outBound=msg::outBound
+  }
+  def messages:List[Any] = outBound.reverse
+
+}
+
+/**
+ * Tracker actor handles the core logic for the event dispatch loop. It controls
+ * transactions (start, end and clearing the log), undo/redo, and observer registration.
+ * It will dispatch actions and query to the controller handlers, and will gather return
+ * data to be passed on to the observer.
+ * @param controller Action and query logic controller
+ */
+class Tracker[C](controller:TrackerController[C]) extends Actor with TransactionChangePublisher {
+  
+  //private var uia:Actor=null
+  private var observers:List[Actor]=Nil
+  
   private var _coord:Coordinator =null
-  private val _idgen= new IDGenerator(1,50)
-  
-  private var _initSeq=new CombatSequencer
-  private var _undo_map=new Undoable[Map[Symbol,TrackerCombatant]](Map.empty[Symbol,TrackerCombatant],un=>RosterUpdate(un.value))
-  
-  private def _map_=(m:Map[Symbol,TrackerCombatant])(implicit trans:Transaction)= _undo_map.value=m
-  private def _map = _undo_map.value
-  
+
   private val _tlog= new TransactionLog[actions.TransactionalAction]()
   
   class ComposedAction(val name:String) extends actions.TransactionalAction {
@@ -37,16 +52,12 @@ class Tracker() extends Actor with TransactionChangePublisher {
   
   private var _composedAction: ComposedAction = null
   
-  private object InMap {
-    def unapply(id:Symbol):Option[TrackerCombatant]= if(_map.contains(id)) Some(_map(id)) else None
-  }
-  
   def startTransaction() = if(_composedAction!=null) _composedAction.transaction else new Transaction()
   
   def closeTransaction(action:actions.TransactionalAction, trans:Transaction) {
     if(_composedAction==null || (_composedAction eq action)) {
       //Need to close composed transcation or a simple transaction
-      trans.commit(this)
+      trans.commit(this) 
       if(!trans.isEmpty) {
         _tlog.store(action,trans)
         println("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
@@ -57,32 +68,31 @@ class Tracker() extends Actor with TransactionChangePublisher {
     }
   }
   
+  private def sendToObservers(mbuf:TrackerResponseBuffer) {
+    for(obs<-observers) {
+      for(msg<-mbuf.messages) obs ! msg
+    }
+  }
   
   /**
    * Publish changes to the observers
    */
   def publishChange(changes:Seq[ChangeNotification]) {
-    changes.foreach {
-      case CombatantUpdate(comb, s:InitiativeTracker) => uia ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
-      case RosterUpdate(map) => enumerate(map)
-      case CombatantUpdate(comb, h:HealthTracker) => uia ! vcc.dnd4e.view.actor.SetHealth(comb,h)
-      case CombatantUpdate(comb, info:String) => uia ! vcc.dnd4e.view.actor.SetInformation(comb,info)
-      case s:vcc.dnd4e.view.actor.SetSequence => uia ! s
-    }
+    val pbuf=new TrackerResponseBuffer()
+    controller.publish(changes,pbuf)
+    sendToObservers(pbuf)
   }
-  
   
   def act()={
     loop {
       react {
         case actions.AddObserver(obs) => 
-          uia=obs
-          //TODO: This is a wrong approach need to add as many observer as possible
+          observers=obs::observers
         case actions.SetCoordinator(coord) => 
           this._coord=coord
         case ta:actions.TransactionalAction => 
           val trans=startTransaction()
-          processActions(ta)(trans)
+          controller.dispatch(trans,ta)
           closeTransaction(ta,trans)
         case actions.StartTransaction(tname) =>
           if(_composedAction==null)
@@ -96,8 +106,11 @@ class Tracker() extends Actor with TransactionChangePublisher {
               _composedAction=null
             } else throw new Exception("Tranction name mismatch, expected"+_composedAction.name+" found "+tname)
           } else throw new Exception("Not in compound transaction")
-        case qa:actions.QueryAction if(processQuery.isDefinedAt(qa)) =>
-          processQuery(qa)
+        case qa:actions.QueryAction =>
+          val buf=new TrackerResponseBuffer()
+          controller.processQuery(qa,buf)
+          if(buf.replyMessage!=null) reply(buf.replyMessage)
+          sendToObservers(buf)
         case actions.Undo() =>
           try {
             _tlog.rollback(this)
@@ -111,152 +124,6 @@ class Tracker() extends Actor with TransactionChangePublisher {
           
         case s=>println("Error: Tracker receive:"+s)
       }
-    }
-  }
-  
-  private def processActions(action:actions.TransactionalAction)(implicit trans:Transaction) {
-    action match {
-    case vcc.dnd4e.controller.actions.AddCombatant(template)=>
-      var id:Symbol=if(template.id==null) _idgen.first() else {
-        var s=Symbol(template.id)
-        if(_idgen.contains(s)) _idgen.removeFromPool(s) // To make sure we don't get doubles
-        s
-      }
-      var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
-      nc.defense=template.defense
-      if(_map.contains(nc.id)) {
-        // It's an old combatant salvage old heath and Initiative
-        nc.health = _map(nc.id).health
-        nc.it =_map(nc.id).it
-      } else {
-        _initSeq add id
-      }
-      _map = _map + (id -> nc)
-    case vcc.dnd4e.controller.actions.StartCombat(seq) =>
-      for(x<-seq) {
-        if(_map.contains(x)) {
-          var c=_map(x)
-          _initSeq.moveDown(c.id)
-          c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
-        }
-      } 
-    case vcc.dnd4e.controller.actions.ClearCombatants(all) =>
-      var current=_map.keySet.toList
-      if(all) {
-        _map=Map.empty[Symbol,TrackerCombatant]
-      } else {
-        _map=_map.filter(p=>p._2.health.base.ctype==CombatantType.Character)
-      }
-      var removed=current -- _map.keySet.toList
-      for(x <- removed) {
-        _idgen.returnToPool(x)
-      }
-      _initSeq.removeFromSequence(removed)
-    case vcc.dnd4e.controller.actions.EndCombat() => {
-      for(p<-_map) {
-        var c=p._2
-        c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
-        c.health=c.health.setTemporaryHitPoints(0,true)
-        _initSeq.add(c.id)
-      }
-    }
-    
-    case vcc.dnd4e.controller.actions.ApplyRest(extended) => {
-      for(p<-_map) {
-        var c=p._2
-        c.health=c.health.rest(extended)
-      }
-    }
-    
-    // HEALTH Tracking
-    case vcc.dnd4e.controller.actions.ApplyDamage(InMap(c),amnt) =>
-      c.health=c.health.applyDamage(amnt)
-    case vcc.dnd4e.controller.actions.HealDamage(InMap(c),amnt) =>
-      c.health=c.health.heal(amnt)
-    case vcc.dnd4e.controller.actions.SetTemporaryHP(InMap(c),amnt) =>
-      c.health=c.health.setTemporaryHitPoints(amnt,false)
-    case vcc.dnd4e.controller.actions.FailDeathSave(InMap(c)) =>
-      c.health=c.health.failDeathSave()
-    case vcc.dnd4e.controller.actions.Undie(InMap(c)) => c.health=c.health.raiseFromDead
-      
-    case vcc.dnd4e.controller.actions.SetComment(InMap(c),text)=>
-      c.info=text
-      
-      // INITIATIVE TRACKING  
-    case vcc.dnd4e.controller.actions.MoveUp(InMap(c)) => 
-      this.changeSequence(c,InitiativeTracker.actions.MoveUp)
-    case vcc.dnd4e.controller.actions.StartRound(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.StartRound)
-    case vcc.dnd4e.controller.actions.EndRound(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.EndRound)
-    case vcc.dnd4e.controller.actions.Delay(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.Delay)
-    case vcc.dnd4e.controller.actions.Ready(InMap(c)) => 
-      this.changeSequence(c,InitiativeTracker.actions.Ready)
-    case vcc.dnd4e.controller.actions.ExecuteReady(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
-    }
-  }	
-  
-  private def enumerate(map:Map[Symbol,TrackerCombatant]) {
-    val peer = uia
-    peer ! vcc.dnd4e.view.actor.ClearSequence()
-    for(x<-_map.map(_._2)) { 
-      peer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-      peer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
-      peer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
-    }
-    peer ! vcc.dnd4e.view.actor.SetSequence(_initSeq.sequence)
-    // Return ids to generator
-    for(id<-_idgen.leasedSymbols) {
-      if(!_map.contains(id)) _idgen.returnToPool(id)
-    }
-    for(id<-_map.map(_._1))
-        if(_idgen.contains(id))_idgen.removeFromPool(id)
-  }
-  
-  val processQuery:PartialFunction[actions.QueryAction,Unit]= {
-    case vcc.dnd4e.controller.actions.QueryCombatantMap(func) =>
-      reply(_map.map(x=>func(x._2)).toList)
-    case vcc.dnd4e.controller.actions.Enumerate()=> enumerate(_map)
-  }		
-  
-  private def advanceToNext()(implicit trans:Transaction) {
-    // Auto advance dead guys
-    while(_map(_initSeq.sequence.head).health.status==HealthTracker.Status.Dead) {
-      var dcmb=_map(_initSeq.sequence.head)
-      var dit=dcmb.it
-      dit.value=dit.value.transform(true,InitiativeTracker.actions.StartRound)
-      dit.value=dit.value.transform(true,InitiativeTracker.actions.EndRound)
-      dcmb.it=dit
-      _initSeq.rotate
-    }
-  }
-  
-  def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
-    var itt=cmb.it.value.transform
-    var firstp=_map(_initSeq.sequence.head).id==cmb.id
-    if(itt.isDefinedAt(firstp,action)) {
-      action match {
-        case InitiativeTracker.actions.Delay => 
-          _initSeq.moveDown(cmb.id)
-          advanceToNext
-        case InitiativeTracker.actions.ExecuteReady => 
-          _initSeq.moveDown(cmb.id)
-        case InitiativeTracker.actions.EndRound =>
-          // When delaying is up, end turn is end of previous
-          if(cmb.it.value.state!=InitiativeState.Delaying) { 
-            _initSeq.rotate
-            advanceToNext()
-          }
-        case InitiativeTracker.actions.Ready => 
-          _initSeq.moveDown(cmb.id)
-          advanceToNext
-        case InitiativeTracker.actions.MoveUp => 
-          _initSeq.moveUp(cmb.id)
-        case _ =>
-      }
-      cmb.it.value=itt(firstp,action)
     }
   }
 }

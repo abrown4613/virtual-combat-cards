@@ -93,7 +93,10 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
 }
 
 object Main extends SimpleGUIApplication {
-  var coord=vcc.controller.Coordinator.initialize
+  var coord=vcc.controller.Coordinator.initialize(new TrackerController(new vcc.dnd4e.model.TrackerContext){
+    addHandler(new vcc.dnd4e.controller.TrackerContextHandler(context))
+    addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
+  })
 
   var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
 

@@ -28,7 +28,7 @@ class CombatSetupTest extends junit.framework.TestCase {
       vcc.dnd4e.view.actor.SetInitiative('K,InitiativeTracker(0,InitiativeState.Waiting))
     )),self)
     //val logmock=new ExpectActor(1000,new ExpectingBehavior(List(vcc.controller.actions.LogError("Nothing"))),self)
-    val tracker=new vcc.controller.Tracker()
+    val tracker=new vcc.controller.Tracker(null)
     tracker ! vcc.controller.actions.AddObserver(uimock)
     
     tracker.start
