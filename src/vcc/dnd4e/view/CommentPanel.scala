@@ -39,6 +39,7 @@ class CommentPanel(val controller:actors.Actor) extends BoxPanel(Orientation.Ver
   
   def changeContext(context:Option[ViewCombatant]) = {
     _updating=true
+    if(_hasChanged) sendChange()
     edit.text=if(context.isDefined) context.get.info else ""
     edit.enabled=context!=None
     _updating=false
