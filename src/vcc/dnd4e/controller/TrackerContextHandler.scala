@@ -1,7 +1,7 @@
 //$Id$
 package vcc.dnd4e.controller
 
-import vcc.controller.{TransactionalActionHandler}
+import vcc.controller.{TransactionalActionHandler,ChangePublisher}
 import vcc.controller.transaction._
 import vcc.controller.actions.TransactionalAction
 import vcc.dnd4e.model._
@@ -132,28 +132,24 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
       sequence.rotate
     }
   }
-
+}
+  
+class DefaultChangePublisher extends ChangePublisher[TrackerContext] {
   /**
    * Publish changes to the observers
    */
-  def publish(changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
+  def publish(context:TrackerContext, changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
     changes.foreach {
       case CombatantUpdate(comb, s:InitiativeTracker) => buffer ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
-      case RosterUpdate(map) => enumerate(map,buffer)
+      case RosterUpdate(map) => enumerate(context,map,buffer)
       case CombatantUpdate(comb, h:HealthTracker) => buffer ! vcc.dnd4e.view.actor.SetHealth(comb,h)
       case CombatantUpdate(comb, info:String) => buffer  ! vcc.dnd4e.view.actor.SetInformation(comb,info)
       case s:vcc.dnd4e.view.actor.SetSequence => buffer ! s
     }
   }
 
-  private def enumerate(map:Map[Symbol,TrackerCombatant],buffer:vcc.controller.TrackerResponseBuffer) {
-    buffer ! vcc.dnd4e.view.actor.ClearSequence()
-    for(x<-map.map(_._2)) { 
-      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
-      buffer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
-      buffer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
-    }
-    buffer ! vcc.dnd4e.view.actor.SetSequence(context.sequence.sequence)
+  private def enumerate(context:TrackerContext,map:Map[Symbol,TrackerCombatant],buffer:vcc.controller.TrackerResponseBuffer) {
+    TrackerContextEnumerator.enumerate(context,buffer)
     // Return ids to generator, 
     // TODO: This is not a publishing aspect shoudl be somewhere else? 
     for(id<-context.idgen.leasedSymbols) {

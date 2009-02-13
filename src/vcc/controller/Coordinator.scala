@@ -17,6 +17,7 @@ abstract class TrackerController[C](val context:C) {
   
   private var handlers:List[TransactionalActionHandler[C]]=Nil
   private var querys:List[QueryActionHandler[C]]=Nil
+  private var publishers:List[ChangePublisher[C]]=Nil
   
   /**
    * Add a TransactionalAction handler.
@@ -30,6 +31,13 @@ abstract class TrackerController[C](val context:C) {
    */
   protected def addQueryHandler(qhndl:QueryActionHandler[C]) {
     querys=querys:::List(qhndl)
+  }
+  
+  /**
+   * Add a publisher handler.
+   */
+  protected def addPublisher(pub:ChangePublisher[C]) {
+    publishers=publishers:::List(pub)
   }
   
   /**
@@ -55,7 +63,7 @@ abstract class TrackerController[C](val context:C) {
    * observer.
    */
   def publish(changes:Seq[transaction.ChangeNotification],to:TrackerResponseBuffer) {
-    handlers.foreach(_.publish(changes,to))
+    publishers.foreach(_.publish(context,changes,to))
   }
 }
 
