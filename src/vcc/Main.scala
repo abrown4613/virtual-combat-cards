@@ -104,13 +104,15 @@ object Main extends SimpleGUIApplication {
   coord.start
   
   val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(coord.tracker)
-  var seqTable = new vcc.dnd4e.view.SequenceTable(uia)
+  val seqTable = new vcc.dnd4e.view.SequenceTable(uia)
+  val card=new vcc.dnd4e.view.CombatantCard(coord.tracker)
   
   // Register panel with UIA
   uia.addSequenceListener(seqTable)
   uia.addSequenceListener(commandPanel)
-  uia.addContextListner(commandPanel)
-  uia.addContextListner(seqTable)
+  uia.addContextListener(commandPanel)
+  uia.addContextListener(seqTable)
+  uia.addContextListener(card)
   uia.start
   coord.addObserver(uia)
 
@@ -118,7 +120,8 @@ object Main extends SimpleGUIApplication {
   def top = new MainFrame {
     title = "Virtual Combat Cards"
     contents= new BorderPanel {
-      add(commandPanel,BorderPanel.Position.East)
+      add(commandPanel,BorderPanel.Position.West)
+      add(card,BorderPanel.Position.East)
       add(seqTable,BorderPanel.Position.Center)
       add(new MainMenu(coord,uia),BorderPanel.Position.North)
     }
