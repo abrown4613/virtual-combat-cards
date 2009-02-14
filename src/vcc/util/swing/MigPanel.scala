@@ -11,4 +11,14 @@ class MigPanel(layoutConstrains:String, colConstriants:String, rowConstraints:St
   private def layoutManager = peer.getLayout.asInstanceOf[MigLayout]
   
   protected def add(c: Component, l: String) { peer.add(c.peer, l) }
+  
+  protected def add(c: Component) { peer.add(c.peer)}
+  
+  protected def addSeparator(title:String) {
+    if (title != null && !"".equals(title))
+      add(new Label(title), "gapbottom 1, span, split 2");
+    add(new Component { override lazy val peer= new javax.swing.JSeparator()}, "gapleft rel, growx,wrap");
+  }
+
+  
 }
