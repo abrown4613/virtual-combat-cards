@@ -54,7 +54,7 @@ class UserInterface(tracker:Actor) extends Actor {
   private var _first:ViewCombatant=null;
   
   def addSequenceListener(seq:SequenceView[T]) { seqAware=seq :: seqAware }
-  def addContextListner(ctx:ContextualView[T]) { ctxAware=ctx :: ctxAware }
+  def addContextListener(ctx:ContextualView[T]) { ctxAware=ctx :: ctxAware }
   
   /**
    * This is to update sequence table, it's kind of a hack.
