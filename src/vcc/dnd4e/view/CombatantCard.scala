@@ -7,7 +7,7 @@ import util.swing._
 import scala.actors.Actor
 
 class CombatantCard(tracker:Actor) 
-  extends MigPanel("flowy,fillx,debug","[300!]","[c,pref!][c,grow 50,fill][c,grow 50,fill]")
+  extends MigPanel("flowy,fillx","[300!]","[c,pref!][c,grow 50,fill][c,grow 50,fill]")
   with ContextualView[ViewCombatant]
 {
 

@@ -20,9 +20,11 @@ class CombatantActionPanel(val tracker:actors.Actor) extends BorderPanel with vi
   def changeContext(context:Option[ViewCombatant]) {
     damagePanel.context=context
     initiativePanel.context=context
+    effectEditorPanel.context=context
   }
   def updateSequence(seq:Seq[ViewCombatant]) {
     initiativePanel.updateSequence(seq)
+    effectEditorPanel.updateSequence(seq)
   }
 }
 

@@ -2,112 +2,122 @@
 package vcc.dnd4e.view
 
 import scala.swing._
-import util.swing.MigPanel
+import util.swing._
 import scala.actors.Actor
 
-class EffectEditor extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3","","[][][22!]") {
+abstract class Duration
+case class Timed(until:Int,of:Symbol) extends Duration
+case class Other() extends Duration
+
+case class DurationComboEntry(text:String,generate: (ViewCombatant,ViewCombatant)=>Duration) {
+  override def toString():String=text
+}
+
+trait SubPanelComboOption {
+  val name:String 
+  
+  def generateEffect(source:ViewCombatant,target:ViewCombatant):String
+  
+  override def toString()=name
+}
+
+class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3","","[][][22!]") {
   val smallfont= new java.awt.Font(java.awt.Font.SANS_SERIF,0,10)
 
-  //border= javax.swing.BorderFactory.createTitledBorder("Effect")
-  val typeCombo=new ComboBox(List("Any","Mark")) {
-    //makeEditable()(ComboBox.stringEditor)
-    font=smallfont
-  }
-  
-  val permantMarkCheck = new CheckBox("No supersed")
-  
   val descText=new TextField() {
     visible=true
   }
   
-  abstract class Duration
-  case class Timed(until:Int,of:Symbol) extends Duration
-  case class Other() extends Duration
-  
-  case class DurationComboEntry(text:String,f:()=>Duration) {
-    override def toString():String=text
-  }
-  
+  /**
+   * A combo box option that included the infomartion to display and what to 
+   * generate as an output
+   * @param text To appear on the ComboBox
+   * @param f A function form (source,target)=> Duration
+   */
   val durationCombo = new ComboBox(
     List(
-      DurationComboEntry("End of target next turn",()=>{Timed(10,Symbol(typeCombo.selection.item))}),
-      //"End of encounter",
+      DurationComboEntry("End of source's next turn",(s,t)=>{Timed(10,s.id)}),
+      DurationComboEntry("End of target's next turn",(s,t)=>{Timed(10,t.id)}),
+      DurationComboEntry("End of encounter",(s,t)=>{Timed(12,null)}),
       //DurationComboEntry("Stance",()=>{12}),
-      DurationComboEntry("Other",()=>{Other()}))
+      DurationComboEntry("Other",(s,t)=>{Other()}))
   ) {
     font=smallfont
   }
   
+  //This is the subPanel for most general case
+  val generalSubPanel=new MigPanel("fillx,gap 1 0, ins 0","[]","[24!]") with SubPanelComboOption {
+    val name="Any"
+    private val descField=new TextField()
+    add(descField,"growx, h 22!")
+    visible=false
+    def generateEffect(source:ViewCombatant,target:ViewCombatant):String ={
+      descField.text
+    }
+  }
   
-  val combatantSelectCombo= new ComboBox(List("A","10","B")) {
+  // This is the mark paness
+  val markSubPanel=new MigPanel("gap 1 0, ins 0","[][][]","[24!]") with SubPanelComboOption {
+    
+    private val markerText = new ExplicitModelComboBox(parent.idComboModel)//new TextField { columns=4}
+    private val permanentMarkCheck= new CheckBox("cant be superseded") 
+    val name="Mark"
+    add(new Label(" by "),"gap rel")
+    add(markerText,"gap rel, w 40!")
+    add(permanentMarkCheck)
+    visible=false
+    listenTo(markerText.selection)
+    var i=0
+    reactions+= {
+      case event.SelectionChanged(this.markerText) =>
+        println("update sequence"+markerText.selection.item)
+    }
+    def generateEffect(source:ViewCombatant,target:ViewCombatant):String ={
+      "Mark("+markerText+",perm="+ permanentMarkCheck.selected +")"
+    }
+  }
+  
+  val subPanels=List(generalSubPanel,markSubPanel)
+
+  val typeCombo=new ComboBox(subPanels) {
     font=smallfont
   }
-
-  val panel1=new MigPanel("fillx,gap 1 0, ins 0","[]","[24!]") {
-    add(new TextField("its me"),"growx, h 22!")
-  }	
-  val panel2=new MigPanel("gap 1 0, ins 0","[][][]","[24!]") {
-    add(new Label(" by "),"gap rel")
-    add(combatantSelectCombo,"gap rel")
-    add(new CheckBox("cant be superseded"))
-    visible=false
-  }
+  
+  val addButton=new Button("Add") { enabled=false }
+  val clearButton=new Button("Clear")
   add(new Label("Description"),"h 22!")
   add(typeCombo,"split 2, h 22!")
-  add(panel1,"growx")
-  add(panel2,"growx")
+  for(sp<-subPanels) add(sp,"growx")
+  subPanels(0).visible=true
   add(new Label(""),"wrap")
   //add(tabbed,"growx,span,wrap")
   add(new Label("Duration"))
   add(durationCombo,"split 3")
   add(new CheckBox("Beneficial"))
   add(new CheckBox("Sustain"),"wrap")
-  add(new Button("Add"),"skip,split 2")
-  add(new Button("Clear"))
+  add(addButton,"skip,split 2")
+  add(clearButton)
   
     
   listenTo(typeCombo.selection,durationCombo.selection)
+  listenTo(addButton,clearButton)
   reactions+= {
     case event.SelectionChanged(this.durationCombo) =>
-      println(durationCombo.selection.item.text +" implies "+ durationCombo.selection.item.f())
-    case event.SelectionChanged(this.typeCombo) => 
-      typeCombo.selection.item match {
-        case "Any" => 
-          panel1.visible=true
-          panel2.visible=false
-        case "Mark" => 
-          panel1.visible=false
-          panel2.visible=true
-      }
-    case s => println(s)
+      println(durationCombo.selection.item.text +" implies "+ durationCombo.selection.item.generate)
+    case event.SelectionChanged(this.typeCombo) =>
+      for(p <- subPanels) { p.visible= p==typeCombo.selection.item }
+    case event.ButtonClicked(this.addButton) =>
+      parent.createEffect(
+        typeCombo.selection.item,
+        durationCombo.selection.item)
+    //case s => println(s)
   }
-  
 
+  /**
+   * Make sure Add button is enabled only with context active
+   */
+  def setContext(nctx:Option[ViewCombatant]) {
+    addButton.enabled=nctx.isDefined
+  }
 }
 
-class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") {
-  
-  border= javax.swing.BorderFactory.createTitledBorder("Effect Creation")
-  add(new Label("Source:"),"span,split 2")
-  add(new ComboBox(List('A,'B,'C)),"wrap,growx")
-  addSeparator("Effect")
-  add(new EffectEditor(),"span 2,wrap,grow x")
-  addSeparator("Effect")
-  val efp2=new EffectEditor()
-  add(efp2,"span 2,wrap,grow x")
-/*
-  efp2.visible=false
-  listenTo(this.Mouse.moves,this)
-  
-  reactions += {
-    case event.MouseEntered(s,p,i) => 
-      efp2.visible=true
-      println("Entered at "+p+"size "+this.size); 
-    case event.MouseExited(s,p,i) =>
-      if(p.x<0 || p.x>=size.getWidth || p.y<0 || p.y>=size.getHeight)
-        efp2.visible=false
-      println("Exit at "+p+"size "+this.size);
-    case event.ComponentResized(c) => println("New size is="+c.size)
-  }
-  */
-}
