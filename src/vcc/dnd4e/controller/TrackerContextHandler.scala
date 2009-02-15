@@ -145,6 +145,7 @@ class DefaultChangePublisher extends ChangePublisher[TrackerContext] {
       case CombatantUpdate(comb, h:HealthTracker) => buffer ! vcc.dnd4e.view.actor.SetHealth(comb,h)
       case CombatantUpdate(comb, info:String) => buffer  ! vcc.dnd4e.view.actor.SetInformation(comb,info)
       case s:vcc.dnd4e.view.actor.SetSequence => buffer ! s
+      case _ => //Ignore to avoid exception
     }
   }
 
