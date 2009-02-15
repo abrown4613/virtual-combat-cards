@@ -6,25 +6,6 @@ import scala.actors.Actor.loop
 
 import vcc.controller.transaction._
 
-class TrackerResponseBuffer {
-  private var outBound:List[Any]=Nil 
-  
-  private var _reply:Any=null
-  
-  def reply(msg:Any) {
-    if(_reply!=null) throw new Exception("Only can send one reply")
-    else _reply=msg
-  }
-  
-  def replyMessage = _reply
-  
-  def !(msg:Any) {
-    outBound=msg::outBound
-  }
-  def messages:List[Any] = outBound.reverse
-
-}
-
 /**
  * Tracker actor handles the core logic for the event dispatch loop. It controls
  * transactions (start, end and clearing the log), undo/redo, and observer registration.
