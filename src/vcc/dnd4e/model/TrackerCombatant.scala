@@ -21,4 +21,18 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
   
   var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
   var defense:DefenseBlock=null
+  
+  
+  private var _effects=new Undoable[EffectList](EffectList(Nil),uv=>{CombatantUpdate(id,uv.value)})
+  /**
+   * Return the lists of active effect on the list.
+   */
+  def effects:EffectList=_effects.value
+  
+  def effects_=(nel:EffectList)(implicit trans:Transaction) {
+    if(effects != nel)
+      _effects.value=nel; 
+    this 
+  }
+  
 }
