@@ -18,7 +18,7 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx")
     val entries=new vcc.util.swing.ProjectionTableModel[Effect](tabular.EffectTableProjection)
     
     //TODO: These a dummy
-    entries.content=List(Effect('A,Condition.Mark('K,false),Effect.Duration.EndOfEncounter))
+    entries.content=List(Effect('A,Condition.Mark('K,false),true,true,Effect.Duration.EndOfEncounter))
     model=entries
     setColumnWidth(0,30,30,45)
     setColumnWidth(1,50,50,100)

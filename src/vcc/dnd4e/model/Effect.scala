@@ -52,8 +52,10 @@ abstract class Condition
  * model should be a set of Conditions, but for the time being one will do. Effect have the
  * following:
  * @param source The symbol of the source of the effect, used to determine alliedness for delay
- * @param condtion The condition being applied
+ * @param condition The condition being applied
+ * @param sustainable Indicates power can be sustained
+ * @param benefic Indicates if power is good for the target (important for delay)
  * @param duaration An Effect.Duration
  */
-case class Effect(source:Symbol,condition:Condition,duration:Effect.Duration) {
+case class Effect(source:Symbol,condition:Condition,sustainable:Boolean,benefic:Boolean,duration:Effect.Duration) {
 }
