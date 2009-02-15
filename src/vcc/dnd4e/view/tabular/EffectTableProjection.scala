@@ -12,9 +12,9 @@ object EffectTableProjection extends TableModelRowProjection[Effect]{
   
   def apply(col:Int,entry:Effect):java.lang.Object = {
     col match {
-      case 0 => entry.source
-      case 1 => entry.duration
-      case 2 => entry.desc
+      case 0 => entry.source.name
+      case 1 => entry.duration.shortDesc
+      case 2 => entry.condition
     }
   }
   

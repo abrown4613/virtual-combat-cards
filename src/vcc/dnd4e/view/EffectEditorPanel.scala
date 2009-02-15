@@ -13,9 +13,6 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   
   private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),"Terrain or other",0,0,null))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
-
-  // Need this before
-  var idComboModel=new ContainterComboBoxModel[String](Nil)
   
   private val efp1=new EffectEditor(this)
   private val efp2=new EffectEditor(this)
@@ -32,11 +29,14 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   def updateSequence(seq:Seq[ViewCombatant]):Unit= {
     if(seq.isEmpty) {
       activeCombo.peer.setModel(ComboBox.newConstantModel(List(other)))
-      idComboModel.contents=Nil
+      efp1.setSequence(Nil)
+      efp2.setSequence(Nil)
     } else {
       var nac=seq.map(c=>{new ActiveCombatant(c)}).toList:::List(other)
       activeCombo.peer.setModel(ComboBox.newConstantModel(nac))
-      idComboModel.contents=seq.map(c=>{c.id.name})
+      val lid=seq.map(c=>{c.id.name})
+      efp1.setSequence(lid)
+      efp2.setSequence(lid)
     }
   }
 
@@ -45,9 +45,11 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
     efp2.setContext(nctx)
   }
   
-  def createEffect(subPanel:SubPanelComboOption,durOption:DurationComboEntry) {
+  def createEffect(subPanel:EffectSubPanelComboOption,durOption:DurationComboEntry,sustain:Boolean, beneficial:Boolean) {
     val source=activeCombo.selection.item.c
     println("You clicked add to duration of:"+durOption.generate(source,context))
     println("Effect: "+subPanel.generateEffect(source,context))
+    println("Benef: "+beneficial)
+    println("Sustain: "+sustain)
   }
 }
