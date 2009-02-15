@@ -17,13 +17,27 @@ class TrackerMockup[C](controller:TrackerController[C]) extends TransactionChang
   }
   
   /**
-   * Dispatch and action and return the transaction
+   * Dispatch and action and return the transaction not committed
+   * @param otrans An open transaction, if null a new transaction will be created
+   * @param msg The message to be dispatched
+   * @return Open transaction, either otrans if it was valid, or a new one.
    */
-  def dispatch(msg:actions.TransactionalAction):Transaction = {
-    val trans=new Transaction()
+  def dispatchWithoutCommit(otrans:Transaction, msg:actions.TransactionalAction):Transaction = {
+    val trans=if(otrans==null) new Transaction() else otrans
     controller.dispatch(trans,msg)
     trans
   }
+  
+  /**
+   * Dispatch and action and commit transaction
+   */
+  def dispatch(msg:actions.TransactionalAction) {
+    val trans=new Transaction()
+    controller.dispatch(trans,msg)
+    trans.commit(this)
+  }
+  
+  
   
   /**
    * Commit the transaction
