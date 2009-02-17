@@ -97,6 +97,8 @@ object Main extends SimpleGUIApplication {
     addHandler(new vcc.dnd4e.controller.TrackerContextHandler(context))
     addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
     addPublisher(new vcc.dnd4e.controller.DefaultChangePublisher())
+    addHandler(new vcc.dnd4e.controller.TrackerEffectHandler(context))
+    addPublisher(new vcc.dnd4e.controller.TrackerEffectPublisher(context))
   })
 
   var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
@@ -119,6 +121,7 @@ object Main extends SimpleGUIApplication {
   
   def top = new MainFrame {
     title = "Virtual Combat Cards"
+    preferredSize=new java.awt.Dimension(1000,600)
     contents= new BorderPanel {
       add(commandPanel,BorderPanel.Position.West)
       add(card,BorderPanel.Position.East)

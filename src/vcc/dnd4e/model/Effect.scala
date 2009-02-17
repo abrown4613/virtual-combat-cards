@@ -37,15 +37,19 @@ object Effect {
 }
 
 object Condition {
-  case class Mark(marker:Symbol,permanent:Boolean) extends Condition
+  case class Mark(marker:Symbol,permanent:Boolean) extends Condition {
+    def description="Marked by "+marker.name+(if(permanent) " no mark can supersede" else "")
+  }
   
-  case class Generic(desc:String) extends Condition
+  case class Generic(description:String) extends Condition
 }
 
 /**
  * This is the father of all conditions
  */
-abstract class Condition
+abstract class Condition {
+  def description:String
+}
 
 /**
  * Effect representa a condition being applied to a target for a set duration. The proper

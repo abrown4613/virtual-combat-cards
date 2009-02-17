@@ -11,6 +11,7 @@ case class ViewCombatant(id:Symbol,name:String,hp:Int,init:Int,defense:DefenseBl
   var health=HealthTracker.createTracker(CharacterHealthDefinition(hp,hp/4,4))
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
+  var effects:List[Effect]=Nil
 }
 
 object ViewCombatantProjection extends vcc.util.swing.TableModelRowProjection[ViewCombatant] {

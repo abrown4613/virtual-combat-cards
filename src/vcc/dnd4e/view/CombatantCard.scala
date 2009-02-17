@@ -23,5 +23,6 @@ class CombatantCard(tracker:Actor)
   def changeContext(nctx:Option[ViewCombatant]) {
     summary.context=nctx
     commentPanel.context=nctx
+    effects.context=nctx
   }
 }

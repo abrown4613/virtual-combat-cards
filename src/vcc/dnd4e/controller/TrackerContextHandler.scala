@@ -90,8 +90,6 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
       this.changeSequence(c,InitiativeTracker.actions.Ready)
     case actions.ExecuteReady(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
-    
-    case s => println("Unhandled "+s)
   }
   
   def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {

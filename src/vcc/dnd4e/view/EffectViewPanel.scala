@@ -14,25 +14,49 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx")
   
   val sustainButton=new Button("Sustain")
   val cancelButton=new Button("Cancel Effect")
+  
+  val effectModel=new vcc.util.swing.ProjectionTableModel[Effect](tabular.EffectTableProjection)
   val effectTable=new EnhancedTable() {
-    val entries=new vcc.util.swing.ProjectionTableModel[Effect](tabular.EffectTableProjection)
-    
-    //TODO: These a dummy
-    entries.content=List(Effect('A,Condition.Mark('K,false),true,true,Effect.Duration.EndOfEncounter))
-    model=entries
-    setColumnWidth(0,30,30,45)
-    setColumnWidth(1,50,50,100)
-    setColumnWidth(2,200)
+    autoResizeMode=Table.AutoResizeMode.Off
+    selection.intervalMode=Table.IntervalMode.Single
+    model=effectModel
+    setColumnWidth(0,25)
+    setColumnWidth(1,20)
+    setColumnWidth(2,50,50,100)
+    setColumnWidth(3,200)
   }
   
   add(new ScrollPane(effectTable),"growy,growprio 50,wrap")
   add(sustainButton,"split 3")
   add(cancelButton)
   
+  listenTo(effectTable.selection)
+  listenTo(sustainButton,cancelButton)
+  
+  reactions += {
+    case event.ButtonClicked(this.sustainButton) =>
+    case event.ButtonClicked(this.cancelButton) =>
+    case event.TableRowsSelected(this.effectTable,rng,opt) =>
+      val sel=effectTable.selection.rows
+      if(sel.isEmpty) {
+        cancelButton.enabled=false
+      } else {
+        val eff=effectModel.content(sel.toSeq(0))
+        sustainButton.enabled=eff.sustainable
+        cancelButton.enabled=true
+      }
+  }
+  
   /**
    * Update table according to context
    */
   def changeContext(nctx:Option[ViewCombatant]) {
-    
+    nctx match {
+      case Some(c) => 
+        SwingHelper.invokeLater(()=>{
+          effectModel.content=c.effects
+        })
+      case None =>
+    }
   }
 }

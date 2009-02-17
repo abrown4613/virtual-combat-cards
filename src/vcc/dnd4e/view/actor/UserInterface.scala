@@ -15,6 +15,8 @@ case class ClearSequence()
 import scala.actors.Actor._
 import scala.actors.Actor
 
+import vcc.dnd4e.controller.response
+
 class UserInterface(tracker:Actor) extends Actor {
   
   type T=ViewCombatant
@@ -99,12 +101,17 @@ class UserInterface(tracker:Actor) extends Actor {
         case GoToFirst() =>
           _ctx=Some(_first)
           signalContext(_ctx)
+        
+        //Update effect list and notify
+        case response.UpdateEffects(InMap(o),el)=>
+          o.effects=el
+          if(_ctx == Some(o)) signalContext(Some(o))
 
         //Set view options
         case SetOption('HIDEDEAD,state) => 
           _hidedead=state
           this ! SetSequence(_seq.map(x=>x.id))
-        case s => println("Unhandled message:" + s)
+        case s => println("UIA: Unhandled message:" + s)
       }
     }
   }
