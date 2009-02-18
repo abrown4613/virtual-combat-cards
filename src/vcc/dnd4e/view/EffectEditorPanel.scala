@@ -48,10 +48,10 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
     efp2.setContext(nctx)
   }
   
-  def createEffect(subPanel:EffectSubPanelComboOption,durOption:DurationComboEntry,sustain:Boolean, beneficial:Boolean) {
+  def createEffect(subPanel:EffectSubPanelComboOption,durOption:DurationComboEntry,beneficial:Boolean) {
     val source=activeCombo.selection.item.c
     val cond=subPanel.generateEffect(source,context)
     val duration=durOption.generate(source,context)
-    tracker ! request.AddEffect(context.id,Effect(source.id,cond,sustain,beneficial,duration))
+    tracker ! request.AddEffect(context.id,Effect(source.id,cond,beneficial,duration))
   }
 }

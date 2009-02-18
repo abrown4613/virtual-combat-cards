@@ -13,30 +13,41 @@ object Effect {
   }
   
   object Duration {
+    
     object SaveEnd extends Duration {
       val shortDesc="SE"
     }
+    
+    object SaveEndSpecial extends Duration {
+      val shortDesc="SE*"
+    }
+
     object Stance extends Duration {
       val shortDesc="Stance"
     }
+    
     object EndOfEncounter extends Duration {
       val shortDesc="EoE"
     }
+    
     object Other extends Duration {
       val shortDesc="Other"
     }
+    
     object Limit extends Enumeration {
       val EndOfNextTurn=Value("EoNT")
       val EndOfTurn=Value("EoT")
       val StartOfNextTurn=Value("SoNT")
     }
-    case class RoundBound(id:Symbol,limit:Limit.Value) extends Duration {
-      def shortDesc = limit.toString +":"+ id.name
+    
+    case class RoundBound(id:Symbol,limit:Limit.Value,sustain:Boolean) extends Duration {
+      def shortDesc = limit.toString +":"+ id.name + (if(sustain) " s" else "")
     }
   }
 }
 
 object Condition {
+  
   case class Mark(marker:Symbol,permanent:Boolean) extends Condition {
     def description="Marked by "+marker.name+(if(permanent) " no mark can supersede" else "")
   }
@@ -61,5 +72,9 @@ abstract class Condition {
  * @param benefic Indicates if power is good for the target (important for delay)
  * @param duaration An Effect.Duration
  */
-case class Effect(source:Symbol,condition:Condition,sustainable:Boolean,benefic:Boolean,duration:Effect.Duration) {
+case class Effect(source:Symbol,condition:Condition,benefic:Boolean,duration:Effect.Duration) {
+  def sustainable=duration match {
+    case Effect.Duration.RoundBound(c,l,true) => true
+    case _ => false
+  }
 }

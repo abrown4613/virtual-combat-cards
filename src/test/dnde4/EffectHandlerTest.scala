@@ -45,11 +45,11 @@ class EffectHandlerTest extends TestCase {
     val trans1=new Transaction()
     
     //Load first effect 
-    val ef1=Effect(src,Condition.Mark(src,false),false,false,Effect.Duration.EndOfEncounter)
+    val ef1=Effect(src,Condition.Mark(src,false),false,Effect.Duration.EndOfEncounter)
     mockTracker.dispatch(request.AddEffect('A,ef1))
     assert(mockTracker.lastChangeMessages == List(response.UpdateEffects('A,List(ef1))),mockTracker.lastChangeMessages)
 
-    val ef2=Effect(src,Condition.Generic("slowed"),false,false,Effect.Duration.EndOfEncounter)
+    val ef2=Effect(src,Condition.Generic("slowed"),false,Effect.Duration.EndOfEncounter)
     mockTracker.dispatch(request.AddEffect('A,ef2))
     assert(mockTracker.lastChangeMessages != Nil,mockTracker.lastChangeMessages)
     

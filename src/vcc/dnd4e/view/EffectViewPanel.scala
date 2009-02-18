@@ -7,13 +7,14 @@ import util.swing._
 import scala.actors.Actor
 import vcc.dnd4e.model.{Effect,Condition}
 
-class EffectViewPanel(tracker:Actor) extends MigPanel("fillx")
-  with ContextualView[ViewCombatant]
+class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualView[ViewCombatant]
 {
   border= javax.swing.BorderFactory.createTitledBorder("Active Effects")
   
   val sustainButton=new Button("Sustain")
+  sustainButton.enabled=false
   val cancelButton=new Button("Cancel Effect")
+  cancelButton.enabled=false
   
   val effectModel=new vcc.util.swing.ProjectionTableModel[Effect](tabular.EffectTableProjection)
   val effectTable=new EnhancedTable() {
@@ -40,6 +41,7 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx")
       val sel=effectTable.selection.rows
       if(sel.isEmpty) {
         cancelButton.enabled=false
+        sustainButton.enabled=false
       } else {
         val eff=effectModel.content(sel.toSeq(0))
         sustainButton.enabled=eff.sustainable

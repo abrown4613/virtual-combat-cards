@@ -32,14 +32,16 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
    */
   private val durationCombo = new ComboBox(
     List(
-      DurationComboEntry("End of source's next turn",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.EndOfNextTurn)}),
-      DurationComboEntry("Start of source's next turn",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.StartOfNextTurn)}),
+      DurationComboEntry("End of source's next turn",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.EndOfNextTurn,false)}),
+      DurationComboEntry("End of source's next turn, sustain",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.EndOfNextTurn,true)}),
+      DurationComboEntry("Start of source's next turn",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.StartOfNextTurn,false)}),
       DurationComboEntry("End of encounter",(s,t)=>{Effect.Duration.EndOfEncounter}),
       DurationComboEntry("Stance",(s,t)=>{Effect.Duration.Stance}),
       DurationComboEntry("Save End",(s,t)=>{Effect.Duration.SaveEnd}),
+      DurationComboEntry("Save End (Special)",(s,t)=>{Effect.Duration.SaveEndSpecial}),
       DurationComboEntry("Other",(s,t)=>{Effect.Duration.Other}),
-      DurationComboEntry("End of target's next turn",(s,t)=>{Effect.Duration.RoundBound(t.id,Effect.Duration.Limit.EndOfNextTurn)}),
-      DurationComboEntry("Start of target's next turn",(s,t)=>{Effect.Duration.RoundBound(t.id,Effect.Duration.Limit.StartOfNextTurn)}))
+      DurationComboEntry("End of target's next turn",(s,t)=>{Effect.Duration.RoundBound(t.id,Effect.Duration.Limit.EndOfNextTurn,false)}),
+      DurationComboEntry("Start of target's next turn",(s,t)=>{Effect.Duration.RoundBound(t.id,Effect.Duration.Limit.StartOfNextTurn,false)}))
   ) {
     font=smallfont
   }
@@ -81,9 +83,6 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
   private val benefCheckbox=new CheckBox("Beneficial") {
     tooltip="Check if the effect is beneficial for the target"
   }
-  private val sustainCheckbox=new CheckBox("Sustain") {
-    tooltip="Check if the effect can be sustained"
-  }
   
   add(new Label("Condition"),"h 22!")
   add(typeCombo,"split 2, h 22!")
@@ -92,8 +91,7 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
   add(new Label(""),"wrap")
   add(new Label("Duration"))
   add(durationCombo,"split 3")
-  add(benefCheckbox)
-  add(sustainCheckbox,"wrap")
+  add(benefCheckbox,"wrap")
   add(addButton,"skip,split 2")
   add(clearButton)
     
@@ -106,7 +104,6 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
       parent.createEffect(
         typeCombo.selection.item,
         durationCombo.selection.item,
-        sustainCheckbox.selected,
         benefCheckbox.selected
       )
     //case s => println(s)
