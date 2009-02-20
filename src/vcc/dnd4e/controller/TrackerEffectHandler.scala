@@ -14,6 +14,8 @@ class TrackerEffectHandler(context:TrackerContext) extends TransactionalActionHa
   val handler:PartialFunction[TransactionalAction,Unit] = {
     case AddEffect(context.InMap(c),effect) =>
       c.effects = c.effects.add(effect)
+    case CancelEffect(context.InMap(c),pos) =>
+      c.effects = c.effects.delete(pos)
   }                                                                               
 }
 
