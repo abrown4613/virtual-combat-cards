@@ -41,7 +41,7 @@ object Effect {
     }
     
     case class RoundBound(id:Symbol,limit:Limit.Value,sustain:Boolean) extends Duration {
-      def shortDesc = limit.toString +":"+ id.name + (if(sustain) " s" else "")
+      def shortDesc = limit.toString + (if(sustain) "*" else "") +":"+ id.name
     }
   }
 }
