@@ -18,4 +18,6 @@ class TrackerContext {
   object InMap {
     def unapply(id:Symbol):Option[TrackerCombatant]= if(map.contains(id)) Some(map(id)) else None
   }
+  
+  def allCombatant:Seq[TrackerCombatant] = _undo_map.value.map(entry=>entry._2).toSeq
 }

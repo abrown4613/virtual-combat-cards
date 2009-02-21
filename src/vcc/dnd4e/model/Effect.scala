@@ -73,8 +73,32 @@ abstract class Condition {
  * @param duaration An Effect.Duration
  */
 case class Effect(source:Symbol,condition:Condition,benefic:Boolean,duration:Effect.Duration) {
+  import Effect._
+  
   def sustainable=duration match {
     case Effect.Duration.RoundBound(c,l,true) => true
     case _ => false
+  }
+  
+  /**
+   * Change duration according to the start of a round of some combatant
+   */
+  def startRound(cid:Symbol):Effect = {
+    duration match {
+      case Duration.RoundBound(`cid`,Duration.Limit.StartOfNextTurn,sust) => null
+      case Duration.RoundBound(`cid`,Duration.Limit.EndOfNextTurn,sust) =>
+        Effect(source,condition,benefic,Duration.RoundBound(cid,Duration.Limit.EndOfTurn,sust))
+      case _ => this
+    }
+  }
+
+  /**
+   * Change duration according to the start of a round of some combatant
+   */
+  def endRound(cid:Symbol):Effect = {
+    duration match {
+      case Duration.RoundBound(`cid`,Duration.Limit.EndOfTurn,sust) => null
+      case _ => this
+    }
   }
 }

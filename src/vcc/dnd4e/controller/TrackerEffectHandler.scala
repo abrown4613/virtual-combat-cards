@@ -16,6 +16,10 @@ class TrackerEffectHandler(context:TrackerContext) extends TransactionalActionHa
       c.effects = c.effects.add(effect)
     case CancelEffect(context.InMap(c),pos) =>
       c.effects = c.effects.delete(pos)
+    case StartRound(context.InMap(c)) =>
+      context.allCombatant.map(comb=>{comb.effects=comb.effects.startRound(c.id)})
+    case EndRound(context.InMap(c)) =>
+      context.allCombatant.map(comb=>{comb.effects=comb.effects.endRound(c.id)})
   }                                                                               
 }
 

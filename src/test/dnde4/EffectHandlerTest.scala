@@ -130,10 +130,8 @@ class EffectHandlerTest extends TestCase {
    */
   def testRoundBoundEffect() {
     import Duration._
-    val elnde=new Matcher[List[(String,Duration)]]({
-      case response.UpdateEffects(to,el) => el.map(eff=>(eff.condition.description,eff.duration))
-      case _ => Nil
-    })
+    val elndA=makeEffectNameDurationExtrator('A)
+    val elndB=makeEffectNameDurationExtrator('B)
     //All effect are bound to B but affect A and B
     loadEffect('A, Seq(
       Effect('B,Condition.Generic("efrb"),false,Duration.RoundBound('B,Duration.Limit.EndOfNextTurn,false)),
@@ -152,9 +150,32 @@ class EffectHandlerTest extends TestCase {
       Effect('B,Condition.Generic("efestn"),false,Duration.Stance)
     ))
     //println(mockTracker.lastChangeMessages)
-    var elnde.findFirst(x)=mockTracker.lastChangeMessages
+    var elndB.findFirst(x)=mockTracker.lastChangeMessages
+    // Just for sanity
     listMustContainOnly(x,List(("efestn",Stance), ("efese*",SaveEndSpecial), ("efese",SaveEnd), ("efeoe",EndOfEncounter), ("efsrb",RoundBound('B,Limit.StartOfNextTurn,false)), ("efrb",RoundBound('B,Limit.EndOfNextTurn,false)))    )
-    println(x)
+    
+    //Must process start of round for B
+    mockTracker.dispatch(request.StartRound('B))
+    val AaSR=extractSingleEffectListOrFail(elndA)
+    val BaSR=extractSingleEffectListOrFail(elndB)
+    //println("A->"+AaSR)
+    //println("B->"+BaSR)
+    val EaSR=List(("efestn",Stance), ("efese*",SaveEndSpecial), ("efese",SaveEnd), ("efeoe",EndOfEncounter), ("efrb",RoundBound('B,Limit.EndOfTurn,false)))
+    //println("E->"+EaSR)
+    listMustContainOnly(AaSR,EaSR)
+    listMustContainOnly(BaSR,EaSR)
+    
+    // End round of B
+    mockTracker.dispatch(request.EndRound('B))
+    val AaER=extractSingleEffectListOrFail(elndA)
+    val BaER=extractSingleEffectListOrFail(elndB)
+    //println("A->"+AaSR)
+    //println("B->"+BaSR)
+    val EaER=List(("efestn",Stance), ("efese*",SaveEndSpecial), ("efese",SaveEnd), ("efeoe",EndOfEncounter))
+    //println("E->"+EaSR)
+    listMustContainOnly(AaER,EaER)
+    listMustContainOnly(BaER,EaER)
+    
   }
   
   /**
@@ -164,20 +185,41 @@ class EffectHandlerTest extends TestCase {
     assert(false,"Need to implement")
   }
   
+  
+  /**
+   * Delay is a complex action, must have the following behavior:
+   * Process a startRound for the delaying
+   * Process a special endRound were:
+   *  - all effect that are benefial and would end and the end of the round are taken out
+   *  - Sustains all are NOT sustained
+   * 
+   */
+  def testDelay() {
+    assert(false,"Need to implement")
+  }
+  
+
   //UTILITIES 
   
   def makeEffectsNameExtractor(on:Symbol) = {
     new test.helper.Matcher[List[String]]({
-      case response.UpdateEffects(on,el) =>
+      case response.UpdateEffects(`on`,el) =>
           el.map(e=>e.condition.description+":"+e.duration.shortDesc)
     })
   }
   
   def makeEffectListExtractor(on:Symbol) = {
     new test.helper.Matcher[List[Effect]]({
-      case response.UpdateEffects(on,el) => el
+      case response.UpdateEffects(`on`,el) => el
     })
   }
+  
+  def makeEffectNameDurationExtrator(on:Symbol) = {
+    new Matcher[List[(String,Duration)]]({
+      case response.UpdateEffects(`on`,el) => el.map(eff=>(eff.condition.description,eff.duration))
+    })
+  }
+  
   /**
    * Simple test to make sure that the list 'lst' has the element of 'must' (in any order)
    */
