@@ -11,7 +11,7 @@ import vcc.dnd4e.view.ViewCombatant
 import dnd4e.view.{SequenceTable,ViewCombatant}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.controller._
-import vcc.dnd4e.controller.actions._
+import vcc.dnd4e.controller.request._
 
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   

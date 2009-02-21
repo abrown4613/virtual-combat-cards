@@ -22,7 +22,7 @@ class EntityLoader extends Actor {
         case actions.SetCoordinator(coord) => this.coord=coord
         case actions.LoadPartyFromTemplate(l)=>
           coord.tracker ! actions.StartTransaction("Party Load")
-          for(x<-l) coord.tracker ! vcc.dnd4e.controller.actions.AddCombatant(x)
+          for(x<-l) coord.tracker ! vcc.dnd4e.controller.request.AddCombatant(x)
           //coord.tracker ! actions.Enumerate()
           coord.tracker ! actions.EndTransaction("Party Load")
         case actions.LoadPartyFile(file)=> 

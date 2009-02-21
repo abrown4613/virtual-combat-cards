@@ -30,12 +30,12 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
   for(x<-contents) { listenTo(x); x.enabled=false}
   
   reactions+= {
-    case ButtonClicked(this.startRound_btn) => tracker ! actions.StartRound(context.id)
-    case ButtonClicked(this.endRound_btn) => tracker ! actions.EndRound(context.id)
-    case ButtonClicked(this.moveUp_btn) => tracker ! actions.MoveUp(context.id)
-    case ButtonClicked(this.delay_btn) => tracker ! actions.Delay(context.id)
-    case ButtonClicked(this.executeReady_btn) => tracker ! actions.ExecuteReady(context.id)
-    case ButtonClicked(this.ready_btn) => tracker ! actions.Ready(context.id)
+    case ButtonClicked(this.startRound_btn) => tracker ! request.StartRound(context.id)
+    case ButtonClicked(this.endRound_btn) => tracker ! request.EndRound(context.id)
+    case ButtonClicked(this.moveUp_btn) => tracker ! request.MoveUp(context.id)
+    case ButtonClicked(this.delay_btn) => tracker ! request.Delay(context.id)
+    case ButtonClicked(this.executeReady_btn) => tracker ! request.ExecuteReady(context.id)
+    case ButtonClicked(this.ready_btn) => tracker ! request.Ready(context.id)
   }
   
   def changeContext(nctx:Option[ViewCombatant]) = {

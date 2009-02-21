@@ -33,7 +33,7 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
       var l=initTable.content.filter(x=> !x.reserve).toArray
       l.foreach(x=>if(x.roll<=0) x.roll=DiceBag.D(20))
       scala.util.Sorting.quickSort[InitiativeDialogEntry](l)(x=>x)
-      tracker ! actions.StartCombat(l.map(x=>x.id).toSeq)
+      tracker ! request.StartCombat(l.map(x=>x.id).toSeq)
   }
 
   // This will build my entries based on TrackerCombatant

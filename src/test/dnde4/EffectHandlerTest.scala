@@ -23,11 +23,12 @@ class EffectHandlerTest extends TestCase {
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    loadHandler((trans1,actions.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"})))
-    loadHandler((trans1,actions.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Character))))
+    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"})))
+    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Monster))))
+    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Warlord",35,5,CombatantType.Character){id="B"})))
     
     trans1.commit(trans1pub)
-    assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1")))))
+    assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1"),'B))))
     
     //Setup the test subjects
     mockTracker=new TrackerMockup(new TrackerController(context) {
@@ -43,6 +44,7 @@ class EffectHandlerTest extends TestCase {
   def testAddEffects() {
     // Just for sanity
     val src=Symbol("1")
+    var effListExtractor=makeEffectListExtractor('A)
     assert(mockTracker!=null)
     
     //Load first effect 
@@ -54,21 +56,128 @@ class EffectHandlerTest extends TestCase {
     mockTracker.dispatch(request.AddEffect('A,ef2))
     assert(mockTracker.lastChangeMessages != Nil,mockTracker.lastChangeMessages)
     
-    extractEffectList(mockTracker.lastChangeMessages.head) match {
-      case Some(('A,el:List[_])) => 
+    mockTracker.lastChangeMessages match {
+      case effListExtractor.findAll(el)=>
         assert(el.contains(ef1))
         assert(el.contains(ef2))
-      case None => assert(false,"Cant find notification in this message")
+      case _ => assert(false,"Cant find notification in this message")
     }
   }
+
   
-  def makeEffectsNameOnAExtractor() = {
+  /**
+   * Test removal of effect from the list
+   */
+  def testCancelEffect() {
+    val src=Symbol("1")
+    loadEffect('A, Seq(
+      Effect(src,Condition.Generic("ef1"),false,Duration.Other),
+      Effect(src,Condition.Generic("ef2"),false,Duration.Other),
+      Effect(src,Condition.Generic("ef3"),false,Duration.Other)
+    ))
+    
+    val aeffs=makeEffectsNameExtractor('A)
+    val aeffs.findAll(eol) = mockTracker.lastChangeMessages
+    assert(eol.length==3)
+    
+    // Should remove second element, and not change order.
+    mockTracker.dispatch(request.CancelEffect('A,1))
+    val elac1=extractSingleEffectListOrFail(aeffs)
+    assert(elac1==List(eol.head,eol.last), "List does not match"+List(eol.head,eol.last))
+    
+    // Out of bounds, should not change
+    mockTracker.dispatch(request.CancelEffect('A,2))
+    assert(mockTracker.lastChangeMessages==Nil,mockTracker.lastChangeMessages)
+    
+    mockTracker.dispatch(request.CancelEffect('A,0))
+    val elac0=extractSingleEffectListOrFail(aeffs)
+    assert(elac0==List(eol.last),"List does not match"+List(eol.last))
+
+    mockTracker.dispatch(request.CancelEffect('A,0))
+    val elacl=extractSingleEffectListOrFail(aeffs)
+    assert(elacl==Nil,"list should be empty")
+
+    // Remove form empty list should not change
+    mockTracker.dispatch(request.CancelEffect('A,2))
+    assert(mockTracker.lastChangeMessages==Nil,mockTracker.lastChangeMessages)
+
+  }
+  
+  /**
+   * Marks have special handling only one should be present, and then 
+   * if that is a unreplaceble it should stay
+   */
+  def testAddingMarks() {
+    assert(false,"Need to implement")
+  }
+  
+  /**
+   * Stance have special handling, you can only have one stance
+   */
+  def testAddingStance() {
+    assert(false,"Need to implement")
+  }
+  
+  /**
+   * This test must show how time passes on the effect of all combatants
+   * it should indicate that time will elapse and remove effects that
+   * expired.
+   * Tests:
+   * - RoundBound durations
+   * - Stance 
+   * - EoE duration
+   * Should not affect other durations
+   */
+  def testRoundBoundEffect() {
+    import Duration._
+    val elnde=new Matcher[List[(String,Duration)]]({
+      case response.UpdateEffects(to,el) => el.map(eff=>(eff.condition.description,eff.duration))
+      case _ => Nil
+    })
+    //All effect are bound to B but affect A and B
+    loadEffect('A, Seq(
+      Effect('B,Condition.Generic("efrb"),false,Duration.RoundBound('B,Duration.Limit.EndOfNextTurn,false)),
+      Effect('B,Condition.Generic("efsrb"),false,Duration.RoundBound('B,Duration.Limit.StartOfNextTurn,false)),
+      Effect('B,Condition.Generic("efeoe"),false,Duration.EndOfEncounter),
+      Effect('B,Condition.Generic("efese"),false,Duration.SaveEnd),
+      Effect('B,Condition.Generic("efese*"),false,Duration.SaveEndSpecial),
+      Effect('B,Condition.Generic("efestn"),false,Duration.Stance)
+    ))
+    loadEffect('B, Seq(
+      Effect('B,Condition.Generic("efrb"),false,Duration.RoundBound('B,Duration.Limit.EndOfNextTurn,false)),
+      Effect('B,Condition.Generic("efsrb"),false,Duration.RoundBound('B,Duration.Limit.StartOfNextTurn,false)),
+      Effect('B,Condition.Generic("efeoe"),false,Duration.EndOfEncounter),
+      Effect('B,Condition.Generic("efese"),false,Duration.SaveEnd),
+      Effect('B,Condition.Generic("efese*"),false,Duration.SaveEndSpecial),
+      Effect('B,Condition.Generic("efestn"),false,Duration.Stance)
+    ))
+    //println(mockTracker.lastChangeMessages)
+    var elnde.findFirst(x)=mockTracker.lastChangeMessages
+    listMustContainOnly(x,List(("efestn",Stance), ("efese*",SaveEndSpecial), ("efese",SaveEnd), ("efeoe",EndOfEncounter), ("efsrb",RoundBound('B,Limit.StartOfNextTurn,false)), ("efrb",RoundBound('B,Limit.EndOfNextTurn,false)))    )
+    println(x)
+  }
+  
+  /**
+   * Shoud that sustaining will bounce duration up
+   */
+  def testSustation() {
+    assert(false,"Need to implement")
+  }
+  
+  //UTILITIES 
+  
+  def makeEffectsNameExtractor(on:Symbol) = {
     new test.helper.Matcher[List[String]]({
-      case response.UpdateEffects('A,el) =>
+      case response.UpdateEffects(on,el) =>
           el.map(e=>e.condition.description+":"+e.duration.shortDesc)
     })
   }
   
+  def makeEffectListExtractor(on:Symbol) = {
+    new test.helper.Matcher[List[Effect]]({
+      case response.UpdateEffects(on,el) => el
+    })
+  }
   /**
    * Simple test to make sure that the list 'lst' has the element of 'must' (in any order)
    */
@@ -100,57 +209,22 @@ class EffectHandlerTest extends TestCase {
         Nil
     }
   }
-  
-  def testCancelEffect() {
-    val src=Symbol("1")
-    loadEffect('A, Seq(
-      Effect(src,Condition.Generic("ef1"),false,Duration.Other),
-      Effect(src,Condition.Generic("ef2"),false,Duration.Other),
-      Effect(src,Condition.Generic("ef3"),false,Duration.Other)
-    ))
-    
-    val aeffs=makeEffectsNameOnAExtractor()
-    val aeffs.findAll(eol) = mockTracker.lastChangeMessages
-    assert(eol.length==3)
-    
-    // Should remove second element, and not change order.
-    mockTracker.dispatch(request.CancelEffect('A,1))
-    val elac1=extractSingleEffectListOrFail(aeffs)
-    assert(elac1==List(eol.head,eol.last), "List does not match"+List(eol.head,eol.last))
-    
-    // Out of bounds, should not change
-    mockTracker.dispatch(request.CancelEffect('A,2))
-    assert(mockTracker.lastChangeMessages==Nil,mockTracker.lastChangeMessages)
-    
-    mockTracker.dispatch(request.CancelEffect('A,0))
-    val elac0=extractSingleEffectListOrFail(aeffs)
-    assert(elac0==List(eol.last),"List does not match"+List(eol.last))
-
-    mockTracker.dispatch(request.CancelEffect('A,0))
-    val elacl=extractSingleEffectListOrFail(aeffs)
-    assert(elacl==Nil,"list should be empty")
-
-    // Remove form empty list should not change
-    mockTracker.dispatch(request.CancelEffect('A,2))
-    assert(mockTracker.lastChangeMessages==Nil,mockTracker.lastChangeMessages)
-
-  }
-  
-  
-  @deprecated def extractEffectList(m:Any):Option[(Symbol,List[Effect])] = {
-    m match {
-      case response.UpdateEffects(w,el) => Some((w,el))
-      case _ => None
-    }
-  }
-  
+ 
+  /**
+   * Load a list of effect to combatatn
+   * @param to Combatant to add effect to
+   * @param effects List of effects to add
+   */
   def loadEffect(to:Symbol,effects:Seq[Effect]) {
-    val toelm= new test.helper.Matcher[List[Effect]]({ case response.UpdateEffects(to,el) => el })
+    val toelm= new test.helper.Matcher[List[Effect]]({ case response.UpdateEffects(`to`,el) => el })
     for(eff<-effects) {
       mockTracker.dispatch(request.AddEffect(to,eff))
       mockTracker.lastChangeMessages match {
         case toelm.findAll(el) if(el.contains(eff)) => 
-        case _ => assert(false,"Effect not in effect list")
+        case _ => 
+          //println(mockTracker.lastChangeMessages)
+          //println(toelm.findAll.unapplySeq(mockTracker.lastChangeMessages))
+          assert(false,"Effect not in effect list")
       }
     }
   }

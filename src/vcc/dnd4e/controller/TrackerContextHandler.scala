@@ -11,7 +11,7 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
   import context._
  
   val handler:PartialFunction[TransactionalAction,Unit]= {
-    case actions.AddCombatant(template)=>
+    case request.AddCombatant(template)=>
       var id:Symbol=if(template.id==null) context.idgen.first() else {
         var s=Symbol(template.id)
         if(context.idgen.contains(s)) context.idgen.removeFromPool(s) // To make sure we don't get doubles
@@ -27,7 +27,7 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
         context.sequence add id
       }
       map = map + (id -> nc)
-    case actions.StartCombat(seq) =>
+    case request.StartCombat(seq) =>
       for(x<-seq) {
         if(map.contains(x)) {
           var c=map(x)
@@ -35,7 +35,7 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
           c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
         }
       } 
-    case vcc.dnd4e.controller.actions.ClearCombatants(all) =>
+    case request.ClearCombatants(all) =>
       var current=map.keySet.toList
       if(all) {
         map=Map.empty[Symbol,TrackerCombatant]
@@ -47,7 +47,7 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
         idgen.returnToPool(x)
       }
       sequence.removeFromSequence(removed)
-    case actions.EndCombat() => {
+    case request.EndCombat() => {
       for(p<-map) {
         var c=p._2
         c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
@@ -56,7 +56,7 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
       }
     }
     
-    case actions.ApplyRest(extended) => {
+    case request.ApplyRest(extended) => {
       for(p<-map) {
         var c=p._2
         c.health=c.health.rest(extended)
@@ -78,17 +78,17 @@ class TrackerContextHandler(context:TrackerContext) extends TransactionalActionH
       c.info=text
       
       // INITIATIVE TRACKING  
-    case actions.MoveUp(InMap(c)) => 
+    case request.MoveUp(InMap(c)) => 
       this.changeSequence(c,InitiativeTracker.actions.MoveUp)
-    case actions.StartRound(InMap(c)) =>
+    case request.StartRound(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.StartRound)
-    case actions.EndRound(InMap(c)) =>
+    case request.EndRound(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.EndRound)
-    case actions.Delay(InMap(c)) =>
+    case request.Delay(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.Delay)
-    case actions.Ready(InMap(c)) => 
+    case request.Ready(InMap(c)) => 
       this.changeSequence(c,InitiativeTracker.actions.Ready)
-    case actions.ExecuteReady(InMap(c)) =>
+    case request.ExecuteReady(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
   }
   
@@ -179,7 +179,7 @@ class TrackerQueryHandler(context:TrackerContext) extends QueryActionHandler(con
   val query:PartialFunction[QueryAction,Unit]= {
     case vcc.dnd4e.controller.actions.QueryCombatantMap(func) =>
       obs reply context.map.map(x=>func(x._2)).toList
-    case vcc.dnd4e.controller.actions.Enumerate()=> 
+    case request.Enumerate()=> 
       TrackerContextEnumerator.enumerate(context,obs)
   }		
 

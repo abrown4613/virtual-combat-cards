@@ -33,8 +33,8 @@ class CombatSetupTest extends junit.framework.TestCase {
     
     tracker.start
     
-    tracker ! actions.AddCombatant(tmpl)
-    tracker ! actions.Enumerate()
+    tracker ! request.AddCombatant(tmpl)
+    tracker ! request.Enumerate()
     
     receiveWithin(400) {
       case uimock.Done(s) if(s eq uimock)=> assert(true)

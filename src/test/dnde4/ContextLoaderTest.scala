@@ -23,8 +23,8 @@ class ContextLoaderTest extends TestCase {
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    handler((trans1,actions.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"})))
-    handler((trans1,actions.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Character))))
+    handler((trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"})))
+    handler((trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Character))))
     
     trans1.commit(trans1pub)
     println(trans1pub.set)
