@@ -44,24 +44,23 @@ class EffectHandlerTest extends TestCase {
   def testAddEffects() {
     // Just for sanity
     val src=Symbol("1")
-    var effListExtractor=makeEffectListExtractor('A)
+    var effListExtractor=makeEffectsNameExtractor('A)
     assert(mockTracker!=null)
     
     //Load first effect 
     val ef1=Effect(src,Condition.Mark(src,false),false,Effect.Duration.EndOfEncounter)
     mockTracker.dispatch(request.AddEffect('A,ef1))
-    assert(mockTracker.lastChangeMessages == List(response.UpdateEffects('A,List(ef1))),mockTracker.lastChangeMessages)
-
+    val AaAE1=extractSingleEffectListOrFail(effListExtractor)
+    val EaAE1=List("Marked by 1:EoE")
+    listMustContainOnly(AaAE1,EaAE1)
+    
     val ef2=Effect(src,Condition.Generic("slowed"),false,Effect.Duration.EndOfEncounter)
     mockTracker.dispatch(request.AddEffect('A,ef2))
     assert(mockTracker.lastChangeMessages != Nil,mockTracker.lastChangeMessages)
     
-    mockTracker.lastChangeMessages match {
-      case effListExtractor.findAll(el)=>
-        assert(el.contains(ef1))
-        assert(el.contains(ef2))
-      case _ => assert(false,"Cant find notification in this message")
-    }
+    val AaAE2=extractSingleEffectListOrFail(effListExtractor)
+    val EaAE2=List("Marked by 1:EoE","slowed:EoE")
+    listMustContainOnly(AaAE2,EaAE2)
   }
 
   
@@ -108,7 +107,29 @@ class EffectHandlerTest extends TestCase {
    * if that is a unreplaceble it should stay
    */
   def testAddingMarks() {
-    assert(false,"Need to implement")
+    val elndA=makeEffectsNameExtractor('A)
+    loadEffect('A, Seq(
+      Effect('B,Condition.Generic("gen"),false,Duration.SaveEnd),
+      Effect('B,Condition.Mark('C,false),false,Duration.Other)))
+    val elndA.findAll(eol) = mockTracker.lastChangeMessages
+    assert(eol.length==2)
+    
+    // Add new Mark
+    val EaM2=List("Marked by D:Other", "gen:SE")
+    mockTracker.dispatch(request.AddEffect('A,Effect('D,Condition.Mark('D,false),false,Duration.Other)))
+    val AaM2=extractSingleEffectListOrFail(elndA)
+    println("HERE"+AaM2)
+    listMustContainOnly(AaM2,EaM2)
+
+    // Add new Mark, permanent mark
+    val EaM3=List("Marked by E no mark can supersede:Other", "gen:SE")
+    mockTracker.dispatch(request.AddEffect('A,Effect('E,Condition.Mark('E,true),false,Duration.Other)))
+    val AaM3=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AaM3,EaM3)
+
+    // Add new Mark, but it loses to permanent mark
+    mockTracker.dispatch(request.AddEffect('A,Effect('F,Condition.Mark('F,true),false,Duration.Other)))
+    assert(mockTracker.lastChangeMessages==Nil)
   }
   
   /**

@@ -1,9 +1,27 @@
 //$Id$
 package vcc.dnd4e.model
 
+/**
+ * This power
+ */
 case class EffectList(effects:List[Effect]) {
-  def add(effect:Effect) = {
-    EffectList(effect::effects)
+  
+  def add(effect:Effect):EffectList = {
+    def addMark(effect:Effect,effects:List[Effect]):List[Effect] = {
+      effects match {
+        case Nil => List(effect)
+        case Effect(src,Condition.Mark(marker,perm),bene,duration) :: rest =>
+          if(perm) effects
+          else effect::rest
+        case eff :: rest => eff::addMark(effect,rest)
+      }
+    }
+    
+    effect match {
+      case Effect(src,Condition.Mark(marker,perm),bene,duration) =>
+        EffectList(addMark(effect,effects))
+      case _ => EffectList(effect::effects) 
+    }
   }
   
   /**
