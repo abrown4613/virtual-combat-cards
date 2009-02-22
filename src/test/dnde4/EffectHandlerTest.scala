@@ -176,13 +176,50 @@ class EffectHandlerTest extends TestCase {
     listMustContainOnly(AaER,EaER)
     listMustContainOnly(BaER,EaER)
     
+    //End Combat does not cause changes
+    mockTracker.dispatch(request.EndCombat())
+    assert(mockTracker.lastChangeMessages==Nil)
+    
+    mockTracker.dispatch(request.ApplyRest(false))
+    val EaR=List(("efese*",SaveEndSpecial), ("efese",SaveEnd))
+    val AaR=extractSingleEffectListOrFail(elndA)
+    val BaR=extractSingleEffectListOrFail(elndB)
+    listMustContainOnly(AaR,EaR)
+    listMustContainOnly(BaR,EaR)
   }
   
   /**
    * Shoud that sustaining will bounce duration up
    */
   def testSustation() {
-    assert(false,"Need to implement")
+    import Duration._
+    val elndA=makeEffectNameDurationExtrator('A)
+    //All effect are bound to B but affect A and B
+    loadEffect('A, Seq(
+      Effect('A,Condition.Generic("nsus"),false,RoundBound('A,Limit.EndOfNextTurn,false)),
+      Effect('A,Condition.Generic("sus"),false,RoundBound('A,Limit.EndOfNextTurn,true))
+    ))
+    //Sustain a effect that is on boundary, should not change duration
+    mockTracker.dispatch(request.SustainEffect('A,0))
+    assert(mockTracker.lastChangeMessages==Nil)
+    
+    val EaSR=List(("sus",RoundBound('A,Limit.EndOfTurn,true)), ("nsus",RoundBound('A,Limit.EndOfTurn,false)))
+    
+    // Start round, and make these ready for sustain
+    mockTracker.dispatch(request.StartRound('A))
+    val AaSR=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AaSR,EaSR)
+
+    // Start round, and make these ready for sustain
+    val EaS0=List(("sus",RoundBound('A,Limit.EndOfNextTurn,true)), ("nsus",RoundBound('A,Limit.EndOfTurn,false)))
+    mockTracker.dispatch(request.SustainEffect('A,0))
+    val AaS0=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AaS0,EaS0)
+
+    //Sustain unsustainable should result in no change
+    mockTracker.dispatch(request.SustainEffect('A,1))
+    assert(mockTracker.lastChangeMessages==Nil)
+
   }
   
   

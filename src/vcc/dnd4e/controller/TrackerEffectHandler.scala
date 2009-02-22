@@ -20,6 +20,10 @@ class TrackerEffectHandler(context:TrackerContext) extends TransactionalActionHa
       context.allCombatant.map(comb=>{comb.effects=comb.effects.startRound(c.id)})
     case EndRound(context.InMap(c)) =>
       context.allCombatant.map(comb=>{comb.effects=comb.effects.endRound(c.id)})
+    case ApplyRest(dontcare)=>
+      context.allCombatant.map(comb=>{comb.effects=comb.effects.applyRest()})
+    case SustainEffect(context.InMap(c),pos) =>
+      c.effects = c.effects.sustain(pos)
   }                                                                               
 }
 

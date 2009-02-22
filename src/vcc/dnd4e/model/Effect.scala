@@ -101,4 +101,26 @@ case class Effect(source:Symbol,condition:Condition,benefic:Boolean,duration:Eff
       case _ => this
     }
   }
+
+  /**
+   * Expire effects that end at the rest after combat, this include Stance, EndOfEncounter
+   */
+  def applyRest():Effect = {
+    duration match {
+      case Duration.Stance => null
+      case Duration.EndOfEncounter => null
+      case _ => this
+    }
+  }
+  
+  /**
+   * If the effect is sustainable, bound duration due to sustain
+   */
+  def sustain():Effect = {
+    duration match {
+      case Duration.RoundBound(src,Duration.Limit.EndOfTurn,true) =>
+        Effect(source,condition,benefic,Duration.RoundBound(src,Duration.Limit.EndOfNextTurn,true))
+      case _ => this
+    }
+  }
 }

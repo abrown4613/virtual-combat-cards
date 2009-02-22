@@ -36,4 +36,20 @@ case class EffectList(effects:List[Effect]) {
     EffectList(applyAndFilter(e=>e.endRound(cid)))
   }
 
+  /**
+   * Process end of encounter (which is really the rest after combat)
+   */
+  def applyRest() = {
+    EffectList(applyAndFilter(e=>e.applyRest()))
+  }
+
+  /**
+   * Sustain the effect on a given position
+   */
+  def sustain(pos:Int):EffectList = {
+    val eff=effects(pos).sustain()
+    val neffs=effects.slice(0,pos) ++ List(eff) ++ effects.slice(pos+1,effects.length)
+    EffectList(neffs)
+  }
+  
 }

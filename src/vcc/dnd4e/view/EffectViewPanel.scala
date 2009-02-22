@@ -37,6 +37,7 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
   
   reactions += {
     case event.ButtonClicked(this.sustainButton) =>
+      tracker ! request.SustainEffect(context.id,effectTable.selection.rows.toSeq(0))
     case event.ButtonClicked(this.cancelButton) =>
       tracker ! request.CancelEffect(context.id,effectTable.selection.rows.toSeq(0))
     case event.TableRowsSelected(this.effectTable,rng,opt) =>
