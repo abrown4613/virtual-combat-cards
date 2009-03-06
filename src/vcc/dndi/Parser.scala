@@ -48,8 +48,8 @@ object Parser {
       if(node.label=="IMG") {
         val url=(node \ "@src").first.toString
         val img=url.substring(url.lastIndexOf("/")+1)
-        if(imageDirectory.contains(img))
-          Some(imageDirectory(img))
+        if(imageDirectory.contains(img.toLowerCase))
+          Some(imageDirectory(img.toLowerCase))
         else 
           None
       } else 
