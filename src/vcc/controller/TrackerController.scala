@@ -8,16 +8,10 @@ package vcc.controller
  */
 abstract class TrackerController[C](val context:C) {
   
-  private var handlers:List[TransactionalActionHandler[C]]=Nil
+  protected val processor:TransactionalProcessor[C]
+  
   private var querys:List[QueryActionHandler[C]]=Nil
   private var publishers:List[ChangePublisher[C]]=Nil
-  
-  /**
-   * Add a TransactionalAction handler.
-   */
-  protected def addHandler(hndl:TransactionalActionHandler[C]) {
-    handlers = handlers ::: List(hndl)
-  }
   
   /**
    * Add a QueryAction handler.
@@ -37,10 +31,7 @@ abstract class TrackerController[C](val context:C) {
    * Process a TransactionalAction through all handlers in sequence.
    */
   def dispatch(trans:transaction.Transaction,msg:actions.TransactionalAction) {
-    for(hndl<-handlers) {
-      if(hndl.isDefinedAt(trans,msg))
-        hndl(trans,msg)
-    }
+    processor.dispatch(trans,msg)
   }
   
   /**

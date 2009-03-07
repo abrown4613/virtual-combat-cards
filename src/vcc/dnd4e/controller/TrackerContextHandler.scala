@@ -1,16 +1,18 @@
 //$Id$
 package vcc.dnd4e.controller
 
-import vcc.controller.{TransactionalActionHandler,ChangePublisher}
+import vcc.controller.{TransactionalProcessor,ChangePublisher}
 import vcc.controller.transaction._
 import vcc.controller.actions.TransactionalAction
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
 
-class TrackerContextHandler(context:TrackerContext) extends TransactionalActionHandler(context){
+trait TrackerContextHandler {
+  this:TransactionalProcessor[TrackerContext] =>
+
   import context._
  
-  val handler:PartialFunction[TransactionalAction,Unit]= {
+  addHandler {
     case request.AddCombatant(template)=>
       var id:Symbol=if(template.id==null) context.idgen.first() else {
         var s=Symbol(template.id)

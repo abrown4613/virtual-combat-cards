@@ -5,11 +5,11 @@ import vcc.controller.transaction.Transaction
 import vcc.controller.actions.TransactionalAction
 
 /**
- * Provide a way to handle Transactional Actions. This handler is bound to a context and is 
- * responsible for handling game system specific TransactionalActions, wrapping them in the 
- * proper transaction.
+ * TransactionalProcessor is a container for a set of PartialFunctions that 
+ * process an action. They are all called in sequence, and should be defined via
+ * traits in order to access context and transaction fields.
  */
-abstract class TransactionalActionHandler[C](context:C) extends PartialFunction[(Transaction,TransactionalAction),Unit] {
+class TransactionalProcessor[C](val context:C) {
   
   /**
    * This is the transaction holder, should only be used internally
@@ -17,23 +17,23 @@ abstract class TransactionalActionHandler[C](context:C) extends PartialFunction[
   protected implicit var trans:Transaction=null
   
   /**
-   * Handler partial function, should be define in implementation.
+   * A list of handler PartialFunctions that should be added in traits.
    */
-  protected val handler:PartialFunction[TransactionalAction,Unit] 
+  private var handlers:List[PartialFunction[TransactionalAction,Unit]]=Nil
+  
+  def addHandler(handler:PartialFunction[TransactionalAction,Unit]) {
+    handlers=handlers:::List(handler)
+  }
  
   /**
-   * Determines if the Handler is defined for a specific action, transaction parameter will be ignored.
+   * Call internal handlers, but first set the transaction and then unset the transaction
    */
-  def isDefinedAt(p:(Transaction,TransactionalAction)) = handler.isDefinedAt(p._2)
-
-  /**
-   * Call internal handler, but first set the transaction and then unset the transaction
-   */
-  def apply(p:(Transaction,TransactionalAction)):Unit = { 
-    trans=p._1
-    val r=handler.apply(p._2)
+  def dispatch(transaction:Transaction,action:TransactionalAction):Unit = { 
+    trans=transaction
+    for(hndl<-handlers) {
+    	if(hndl.isDefinedAt(action)) hndl.apply(action)
+    }
     trans=null
-    r    
   }
 }
 

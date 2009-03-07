@@ -5,6 +5,7 @@ import junit.framework.TestCase
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
 import vcc.controller.TrackerController
+import vcc.controller.TransactionalProcessor
 import vcc.controller.transaction._
 import vcc.dnd4e.controller._ 
 
@@ -18,21 +19,23 @@ class EffectHandlerTest extends TestCase {
   
   override def setUp() {
     val context=new TrackerContext()
-    val loadHandler=new TrackerContextHandler(context)
+    val loadHandler=new TransactionalProcessor(context) with TrackerContextHandler
     val trans1=new Transaction()
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"})))
-    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Monster))))
-    loadHandler((trans1,request.AddCombatant(new CombatantTemplate("Warlord",35,5,CombatantType.Character){id="B"})))
+    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"}))
+    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Monster)))
+    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Warlord",35,5,CombatantType.Character){id="B"}))
     
     trans1.commit(trans1pub)
     assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1"),'B))))
     
     //Setup the test subjects
     mockTracker=new TrackerMockup(new TrackerController(context) {
-      addHandler(new TrackerEffectHandler(context))
+      //addHandler(new TrackerEffectHandler(context))
+      val processor= new vcc.controller.TransactionalProcessor[vcc.dnd4e.model.TrackerContext](context) with TrackerEffectHandler
+
       addPublisher(new TrackerEffectPublisher(context))
     })
   }
