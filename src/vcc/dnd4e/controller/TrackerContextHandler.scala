@@ -95,9 +95,10 @@ trait TrackerContextHandler {
   }
   
   def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
-    var itt=cmb.it.value.transform
+    var itt=cmb.it.value
     var firstp=map(sequence.sequence.head).id==cmb.id
-    if(itt.isDefinedAt(firstp,action)) {
+    if(itt.canTransform(firstp,action)) {
+      cmb.it.value=itt.transform(firstp,action)
       action match {
         case InitiativeTracker.actions.Delay => 
           sequence.moveDown(cmb.id)
@@ -117,7 +118,6 @@ trait TrackerContextHandler {
           sequence.moveUp(cmb.id)
         case _ =>
       }
-      cmb.it.value=itt(firstp,action)
     }
   }
 

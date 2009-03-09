@@ -11,6 +11,8 @@ import vcc.controller.actions.TransactionalAction
  */
 class TransactionalProcessor[C](val context:C) {
   
+  protected val msgQueue = new scala.collection.mutable.Queue[TransactionalAction]
+  
   /**
    * This is the transaction holder, should only be used internally
    */
@@ -25,13 +27,22 @@ class TransactionalProcessor[C](val context:C) {
     handlers=handlers:::List(handler)
   }
  
+  def enqueueAction(action:TransactionalAction) {
+    msgQueue.enqueue(action)
+  }
+  
   /**
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
   def dispatch(transaction:Transaction,action:TransactionalAction):Unit = { 
+    enqueueAction(action)
     trans=transaction
-    for(hndl<-handlers) {
-    	if(hndl.isDefinedAt(action)) hndl.apply(action)
+    while(!msgQueue.isEmpty) {
+    	println(msgQueue)
+    	val msg=msgQueue.dequeue
+    	for(hndl<-handlers) {
+    		if(hndl.isDefinedAt(msg)) hndl.apply(msg)
+    	}
     }
     trans=null
   }

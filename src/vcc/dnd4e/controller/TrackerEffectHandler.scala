@@ -2,7 +2,7 @@
 package vcc.dnd4e.controller
 
 import vcc.controller.actions.TransactionalAction
-import vcc.controller.{ChangePublisher,TransactionalActionHandler,TransactionalProcessor}
+import vcc.controller.{ChangePublisher,TransactionalProcessor}
 
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller.request._
