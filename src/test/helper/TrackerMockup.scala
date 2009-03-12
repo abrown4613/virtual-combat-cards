@@ -7,7 +7,7 @@ import vcc.controller.transaction._
  * Tracker mockup has several utility methods to help test action handlers and publishers. It is on
  * and actor so it works syncronly.
  */
-class TrackerMockup[C](controller:TrackerController[C]) extends TransactionChangePublisher {
+class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionChangePublisher {
 
   private var pbuf:TrackerResponseBuffer=null
   

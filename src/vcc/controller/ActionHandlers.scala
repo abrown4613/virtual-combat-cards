@@ -27,7 +27,7 @@ class TransactionalProcessor[C](val context:C) {
     handlers=handlers:::List(handler)
   }
  
-  def enqueueAction(action:TransactionalAction) {
+  def rewriteEnqueue(action:TransactionalAction) {
     msgQueue.enqueue(action)
   }
   
@@ -35,10 +35,9 @@ class TransactionalProcessor[C](val context:C) {
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
   def dispatch(transaction:Transaction,action:TransactionalAction):Unit = { 
-    enqueueAction(action)
+    rewriteEnqueue(action)
     trans=transaction
     while(!msgQueue.isEmpty) {
-    	println(msgQueue)
     	val msg=msgQueue.dequeue
     	for(hndl<-handlers) {
     		if(hndl.isDefinedAt(msg)) hndl.apply(msg)

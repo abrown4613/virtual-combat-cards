@@ -2,7 +2,7 @@
 package vcc.dnd4e.controller.request
 
 import vcc.controller.actions.{TransactionalAction,QueryAction}
-import vcc.dnd4e.model.{CombatantTemplate,TrackerCombatant}
+import vcc.dnd4e.model.{CombatantTemplate,TrackerCombatant,InitiativeTracker}
 
 // Builing the combat grid
 
@@ -52,4 +52,8 @@ case class MoveUp(who:Symbol) extends InitiativeAction {
 }
 case class ExecuteReady(who:Symbol) extends InitiativeAction {
   def description():String = who.name + " executed a ready action"
+}
+
+case class InternalInitiativeAction(comb:TrackerCombatant,action:InitiativeTracker.actions.Value) extends InitiativeAction {
+  def description():String = comb.name + " executed initiative action " + action
 }

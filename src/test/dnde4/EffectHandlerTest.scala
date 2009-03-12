@@ -34,7 +34,7 @@ class EffectHandlerTest extends TestCase {
     //Setup the test subjects
     mockTracker=new TrackerMockup(new TrackerController(context) {
       //addHandler(new TrackerEffectHandler(context))
-      val processor= new vcc.controller.TransactionalProcessor[vcc.dnd4e.model.TrackerContext](context) with TrackerEffectHandler
+      val processor= new TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler
 
       addPublisher(new TrackerEffectPublisher(context))
     })

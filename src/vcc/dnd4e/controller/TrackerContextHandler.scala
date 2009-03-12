@@ -29,6 +29,7 @@ trait TrackerContextHandler {
         context.sequence add id
       }
       map = map + (id -> nc)
+    //MOVE OUT
     case request.StartCombat(seq) =>
       for(x<-seq) {
         if(map.contains(x)) {
@@ -37,6 +38,7 @@ trait TrackerContextHandler {
           c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
         }
       } 
+    //END MOVE OUT
     case request.ClearCombatants(all) =>
       var current=map.keySet.toList
       if(all) {
@@ -49,6 +51,8 @@ trait TrackerContextHandler {
         idgen.returnToPool(x)
       }
       sequence.removeFromSequence(removed)
+      
+    //MOVE OUT
     case request.EndCombat() => {
       for(p<-map) {
         var c=p._2
@@ -57,6 +61,7 @@ trait TrackerContextHandler {
         sequence.add(c.id)
       }
     }
+    //END MOVE OUT
     
     case request.ApplyRest(extended) => {
       for(p<-map) {
@@ -79,6 +84,7 @@ trait TrackerContextHandler {
     case vcc.dnd4e.controller.actions.SetComment(InMap(c),text)=>
       c.info=text
       
+    //MOVE OUT
       // INITIATIVE TRACKING  
     case request.MoveUp(InMap(c)) => 
       this.changeSequence(c,InitiativeTracker.actions.MoveUp)
@@ -92,6 +98,7 @@ trait TrackerContextHandler {
       this.changeSequence(c,InitiativeTracker.actions.Ready)
     case request.ExecuteReady(InMap(c)) =>
       this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
+    //END MOVE OUT
   }
   
   def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
@@ -140,10 +147,13 @@ class DefaultChangePublisher extends ChangePublisher[TrackerContext] {
    */
   def publish(context:TrackerContext, changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
     changes.foreach {
+      //TODO: Move out
       case CombatantUpdate(comb, s:InitiativeTracker) => buffer ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
+
       case RosterUpdate(map) => enumerate(context,map,buffer)
       case CombatantUpdate(comb, h:HealthTracker) => buffer ! vcc.dnd4e.view.actor.SetHealth(comb,h)
       case CombatantUpdate(comb, info:String) => buffer  ! vcc.dnd4e.view.actor.SetInformation(comb,info)
+      //TODO: Move out
       case s:vcc.dnd4e.view.actor.SetSequence => buffer ! s
       case _ => //Ignore to avoid exception
     }
