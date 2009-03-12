@@ -85,6 +85,14 @@ class InitiativeSequenceTest extends TestCase {
   
   def testEndCombat() {
     testStartCombat()
+    mockTracker.dispatch(request.EndCombat())
+	val ai1= extractCombatantInitiatives()
+	val binit=InitiativeTracker(0,InitiativeState.Reserve)
+	assert(ai1.contains('A,binit))
+	assert(ai1.contains('B,binit))
+	assert(ai1.contains('C,binit))
+	assert(ai1.contains('D,binit))
+    
   }
   
   /**
@@ -159,6 +167,13 @@ class InitiativeSequenceTest extends TestCase {
 	// Make sure that actions are called internally
 	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
 	assert(al==List(('A,EndRound),('B,StartRound),('B,EndRound),('C,StartRound),('C,EndRound)))
+  }
+  
+  def testMoveOutOfReserve() {
+    testStartCombat()
+    mockTracker.dispatch(request.MoveUp('E))
+	assert(extractCombatSequence()==List('E,'A,'B,'C,'D))
+	assert(extractCombatantInitiatives().contains('E,InitiativeTracker(1,Acting)))
   }
 
   def startRound(who:Symbol) {

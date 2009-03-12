@@ -43,6 +43,14 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
           c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
         }
       }
+    case request.EndCombat() => {
+      context.allCombatant.foreach(c=>{
+        c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
+        c.health=c.health.setTemporaryHitPoints(0,true)
+        sequence.add(c.id)
+      })
+    }
+      
     case request.InternalInitiativeAction(cmb,action) =>
       import InitiativeTracker.actions._
       import request.InternalInitiativeAction
