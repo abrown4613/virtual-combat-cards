@@ -40,6 +40,13 @@ object Effect {
       val StartOfNextTurn=Value("SoNT")
     }
     
+    /**
+     * Round bound duration are durations that change on the limits (startt and end) of
+     * rounds.
+     * @param id Combatant ID
+     * @param limit Round limit (e.g StartOfNextRound, EndOfRound,EndOfNextRound)
+     * @param sustain Indicates effect is sustainable
+     */
     case class RoundBound(id:Symbol,limit:Limit.Value,sustain:Boolean) extends Duration {
       def shortDesc = limit.toString + (if(sustain) "*" else "") +":"+ id.name
     }
@@ -120,6 +127,20 @@ case class Effect(source:Symbol,condition:Condition,benefic:Boolean,duration:Eff
     duration match {
       case Duration.RoundBound(src,Duration.Limit.EndOfTurn,true) =>
         Effect(source,condition,benefic,Duration.RoundBound(src,Duration.Limit.EndOfNextTurn,true))
+      case _ => this
+    }
+  }
+  
+  /**
+   * Process delay on change of round
+   * @param ally Is the delay Combatant and ally of the owner of this effect
+   * @param who  Who is delaying
+   * @return Effect a changed effect (null if it expired)
+   */
+  def processDelay(ally:Boolean,who:Symbol):Effect = {
+    duration match {
+      case Duration.RoundBound(`who`,Duration.Limit.EndOfTurn,true) => null
+      case Duration.RoundBound(`who`,Duration.Limit.EndOfTurn,false) if(benefic == ally) => null
       case _ => this
     }
   }

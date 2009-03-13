@@ -20,6 +20,8 @@ case class EffectList(effects:List[Effect]) {
     effect match {
       case Effect(src,Condition.Mark(marker,perm),bene,duration) =>
         EffectList(addMark(effect,effects))
+      case Effect(src,cond,bene,Effect.Duration.Stance) =>
+        EffectList(effect::(effects.filter(e=>e.duration!=Effect.Duration.Stance)))
       case _ => EffectList(effect::effects) 
     }
   }
@@ -70,4 +72,10 @@ case class EffectList(effects:List[Effect]) {
     EffectList(neffs)
   }
   
+  /**
+   * Process delay to all effects in the list
+   */
+  def processDelay(ally:Boolean,who:Symbol):EffectList = {
+    EffectList(applyAndFilter(e=>e.processDelay(ally,who)))
+  }
 }

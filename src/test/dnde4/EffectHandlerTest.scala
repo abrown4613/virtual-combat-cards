@@ -33,9 +33,7 @@ class EffectHandlerTest extends TestCase {
     
     //Setup the test subjects
     mockTracker=new TrackerMockup(new TrackerController(context) {
-      //addHandler(new TrackerEffectHandler(context))
       val processor= new TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler
-
       addPublisher(new TrackerEffectPublisher(context))
     })
   }
@@ -121,7 +119,6 @@ class EffectHandlerTest extends TestCase {
     val EaM2=List("Marked by D:Other", "gen:SE")
     mockTracker.dispatch(request.AddEffect('A,Effect('D,Condition.Mark('D,false),false,Duration.Other)))
     val AaM2=extractSingleEffectListOrFail(elndA)
-    println("HERE"+AaM2)
     listMustContainOnly(AaM2,EaM2)
 
     // Add new Mark, permanent mark
@@ -139,7 +136,18 @@ class EffectHandlerTest extends TestCase {
    * Stance have special handling, you can only have one stance
    */
   def testAddingStance() {
-    assert(false,"Need to implement")
+    val elndA=makeEffectsNameExtractor('A)
+    loadEffect('A, Seq(
+      Effect('A,Condition.Generic("ef2"),false,Duration.Other),
+      Effect('A,Condition.Generic("cat"),false,Duration.Stance)))
+    val elndA.findAll(eol) = mockTracker.lastChangeMessages
+    listMustContainOnly(eol,List("ef2:Other","cat:Stance"))
+    
+    // Add new Mark
+    val EaM2=List("dog:Stance","ef2:Other")
+    mockTracker.dispatch(request.AddEffect('A,Effect('A,Condition.Generic("dog"),false,Duration.Stance)))
+    val AaM2=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AaM2,EaM2)
   }
   
   /**
@@ -179,7 +187,7 @@ class EffectHandlerTest extends TestCase {
     listMustContainOnly(x,List(("efestn",Stance), ("efese*",SaveEndSpecial), ("efese",SaveEnd), ("efeoe",EndOfEncounter), ("efsrb",RoundBound('B,Limit.StartOfNextTurn,false)), ("efrb",RoundBound('B,Limit.EndOfNextTurn,false)))    )
     
     //Must process start of round for B
-    mockTracker.dispatch(request.StartRound('B))
+    mockTracker.dispatch(request.InternalInitiativeAction(mockTracker.controller.context.map('B),InitiativeTracker.actions.StartRound))
     val AaSR=extractSingleEffectListOrFail(elndA)
     val BaSR=extractSingleEffectListOrFail(elndB)
     //println("A->"+AaSR)
@@ -190,7 +198,7 @@ class EffectHandlerTest extends TestCase {
     listMustContainOnly(BaSR,EaSR)
     
     // End round of B
-    mockTracker.dispatch(request.EndRound('B))
+    mockTracker.dispatch(request.InternalInitiativeAction(mockTracker.controller.context.map('B),InitiativeTracker.actions.EndRound))
     val AaER=extractSingleEffectListOrFail(elndA)
     val BaER=extractSingleEffectListOrFail(elndB)
     //println("A->"+AaSR)
@@ -215,7 +223,7 @@ class EffectHandlerTest extends TestCase {
   /**
    * Shoud that sustaining will bounce duration up
    */
-  def testSustation() {
+  def testSustain() {
     import Duration._
     val elndA=makeEffectNameDurationExtrator('A)
     //All effect are bound to B but affect A and B
@@ -230,7 +238,7 @@ class EffectHandlerTest extends TestCase {
     val EaSR=List(("sus",RoundBound('A,Limit.EndOfTurn,true)), ("nsus",RoundBound('A,Limit.EndOfTurn,false)))
     
     // Start round, and make these ready for sustain
-    mockTracker.dispatch(request.StartRound('A))
+    mockTracker.dispatch(request.InternalInitiativeAction(mockTracker.controller.context.map('A),InitiativeTracker.actions.StartRound))
     val AaSR=extractSingleEffectListOrFail(elndA)
     listMustContainOnly(AaSR,EaSR)
 
@@ -256,10 +264,41 @@ class EffectHandlerTest extends TestCase {
    * 
    */
   def testDelay() {
-    assert(false,"Need to implement")
+    import Duration._
+    val src=Symbol(1.toString)
+    val elnd1=makeEffectsNameExtractor(src)
+    val elndA=makeEffectsNameExtractor('A)
+    //All effect are bound to B but affect A and B
+    loadEffect(src, Seq(
+      Effect('B,Condition.Generic("bad"),false,Duration.RoundBound('B,Limit.EndOfTurn,false)),
+      Effect('B,Condition.Generic("good"),true,Duration.RoundBound('B,Limit.EndOfTurn,false)),
+      Effect('B,Condition.Generic("goodsus"),true,Duration.RoundBound('B,Limit.EndOfTurn,true))
+    ))
+    var elnd1.findFirst(y)=mockTracker.lastChangeMessages
+    // Just for sanity
+    listMustContainOnly(y,List("goodsus:EoT*:B", "good:EoT:B", "bad:EoT:B"))
+
+    loadEffect('A, Seq(
+      Effect('B,Condition.Generic("bad"),false,Duration.RoundBound('B,Limit.EndOfTurn,false)),
+      Effect('B,Condition.Generic("good"),true,Duration.RoundBound('B,Limit.EndOfTurn,false)),
+      Effect('B,Condition.Generic("goodsus"),true,Duration.RoundBound('B,Limit.EndOfTurn,true))
+    ))
+    //println(mockTracker.lastChangeMessages)
+    var elndA.findFirst(x)=mockTracker.lastChangeMessages
+    // Just for sanity
+    listMustContainOnly(x,List("goodsus:EoT*:B", "good:EoT:B", "bad:EoT:B"))
+
+    mockTracker.dispatch(request.InternalInitiativeAction(mockTracker.controller.context.map('B),InitiativeTracker.actions.Delay))
+    val MaD=extractSingleEffectListOrFail(elnd1)
+    listMustContainOnly(MaD,List("good:EoT:B") )
+    val BaD=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(BaD,List("bad:EoT:B") ) // Only bad stuff
   }
   
-
+  def testUpdateEffectText() {
+    assert(false,"Not implemented")
+  }
+  
   //UTILITIES 
   
   def makeEffectsNameExtractor(on:Symbol) = {

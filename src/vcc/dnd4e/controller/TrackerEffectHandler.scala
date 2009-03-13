@@ -18,14 +18,19 @@ trait TrackerEffectHandler {
       c.effects = c.effects.add(effect)
     case CancelEffect(context.InMap(c),pos) =>
       c.effects = c.effects.delete(pos)
-    case StartRound(context.InMap(c)) =>
+    case InternalInitiativeAction(c,InitiativeTracker.actions.StartRound) =>
       context.allCombatant.map(comb=>{comb.effects=comb.effects.startRound(c.id)})
-    case EndRound(context.InMap(c)) =>
-      context.allCombatant.map(comb=>{comb.effects=comb.effects.endRound(c.id)})
+    case InternalInitiativeAction(c,InitiativeTracker.actions.EndRound) =>
+      context.allCombatant.foreach(comb=>{comb.effects=comb.effects.endRound(c.id)})
     case ApplyRest(dontcare)=>
       context.allCombatant.map(comb=>{comb.effects=comb.effects.applyRest()})
     case SustainEffect(context.InMap(c),pos) =>
       c.effects = c.effects.sustain(pos)
+    case InternalInitiativeAction(c,InitiativeTracker.actions.Delay) =>
+      context.allCombatant.foreach(comb=>{
+        val ally= (CombatantType.isCharacter(comb.ctype)==CombatantType.isCharacter(c.ctype))
+        comb.effects=comb.effects.processDelay(ally,c.id)
+      })
   }                                                                               
 }
 

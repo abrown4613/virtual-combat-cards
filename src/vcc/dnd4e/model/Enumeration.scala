@@ -14,4 +14,6 @@ object CombatantType extends Enumeration {
   val Minion=Value("Minion")
   val Character=Value("Character")
   val Monster=Value("Monster")
+  
+  def isCharacter(ctype:this.Value) = ctype==Character
 }

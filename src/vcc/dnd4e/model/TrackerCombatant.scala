@@ -6,7 +6,7 @@ import vcc.controller.transaction._
 case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
 case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotification
 
-class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,ctype:CombatantType.Value) {
+class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int, val ctype:CombatantType.Value) {
   private var _health=new Undoable[HealthTracker](HealthTracker.createTracker(ctype,hp),(uv)=>CombatantUpdate(id,uv.value))
   
   def health= _health.value
@@ -24,6 +24,7 @@ class TrackerCombatant(val id:Symbol,val name:String,val hp:Int,val init:Int,cty
   
   
   private var _effects=new Undoable[EffectList](EffectList(Nil),uv=>{CombatantUpdate(id,uv.value)})
+  
   /**
    * Return the lists of active effect on the list.
    */
