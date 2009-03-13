@@ -52,7 +52,7 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
           ((state==InitiativeState.Ready) && (_first.initTracker.state==InitiativeState.Acting)) ||
           (state==InitiativeState.Reserve && (_first.initTracker.state!=InitiativeState.Acting))
           ));
-      delay_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.Delay)
+      delay_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.StartRound)
       executeReady_btn.enabled=(itt.canTransform(first,InitiativeTracker.actions.ExecuteReady)&& _first.initTracker.state==InitiativeState.Acting)
     } else {
       for(x<-this.contents) { x.enabled=false; }

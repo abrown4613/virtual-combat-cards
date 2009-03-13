@@ -94,10 +94,11 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
 
 object Main extends SimpleGUIApplication {
   import vcc.dnd4e.controller._
-  var coord=vcc.controller.Coordinator.initialize(new TrackerController(new vcc.dnd4e.model.TrackerContext){
+  import vcc.dnd4e.model.TrackerContext
+  var coord=vcc.controller.Coordinator.initialize(new TrackerController(new TrackerContext){
     addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
     addPublisher(new vcc.dnd4e.controller.DefaultChangePublisher())
-    val processor= new vcc.controller.TransactionalProcessor[vcc.dnd4e.model.TrackerContext](context) with TrackerEffectHandler with TrackerContextHandler
+    val processor= new vcc.controller.TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler with TrackerContextHandler with InitiativeActionHandler
     addPublisher(new vcc.dnd4e.controller.TrackerEffectPublisher(context))
   })
 

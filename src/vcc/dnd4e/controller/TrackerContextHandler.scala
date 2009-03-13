@@ -29,16 +29,7 @@ trait TrackerContextHandler {
         context.sequence add id
       }
       map = map + (id -> nc)
-    //MOVE OUT
-    case request.StartCombat(seq) =>
-      for(x<-seq) {
-        if(map.contains(x)) {
-          var c=map(x)
-          sequence.moveDown(c.id)
-          c.it.value=InitiativeTracker(0,InitiativeState.Waiting)
-        }
-      } 
-    //END MOVE OUT
+
     case request.ClearCombatants(all) =>
       var current=map.keySet.toList
       if(all) {
@@ -52,17 +43,6 @@ trait TrackerContextHandler {
       }
       sequence.removeFromSequence(removed)
       
-    //MOVE OUT
-    case request.EndCombat() => {
-      for(p<-map) {
-        var c=p._2
-        c.it.value=InitiativeTracker(0,InitiativeState.Reserve)
-        c.health=c.health.setTemporaryHitPoints(0,true)
-        sequence.add(c.id)
-      }
-    }
-    //END MOVE OUT
-    
     case request.ApplyRest(extended) => {
       for(p<-map) {
         var c=p._2
@@ -84,21 +64,6 @@ trait TrackerContextHandler {
     case vcc.dnd4e.controller.actions.SetComment(InMap(c),text)=>
       c.info=text
       
-    //MOVE OUT
-      // INITIATIVE TRACKING  
-    case request.MoveUp(InMap(c)) => 
-      this.changeSequence(c,InitiativeTracker.actions.MoveUp)
-    case request.StartRound(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.StartRound)
-    case request.EndRound(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.EndRound)
-    case request.Delay(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.Delay)
-    case request.Ready(InMap(c)) => 
-      this.changeSequence(c,InitiativeTracker.actions.Ready)
-    case request.ExecuteReady(InMap(c)) =>
-      this.changeSequence(c,InitiativeTracker.actions.ExecuteReady)
-    //END MOVE OUT
   }
   
   def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
