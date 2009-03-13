@@ -115,6 +115,26 @@ class InitiativeSequenceTest extends TestCase {
 	val s4=extractCombatSequence()
 	assert(s4==List('A,'C,'D,'B,'E))
  
+	endRound('A,List('C,'D,'B,'A,'E))
+
+	mockTracker.dispatch(request.Delay('C))
+	val ci2=extractCombatantInitiatives()
+	assert(ci2.contains('C,InitiativeTracker(1,Delaying)))
+	assert(extractCombatSequence()==List('D,'B,'A,'C,'E))
+ 
+	startRound('D)
+	endRound('D,List('B,'A,'C,'D,'E))
+
+	startRound('B)
+	endRound('B,List('A,'C,'D,'B,'E))
+
+	startRound('A)
+	endRound('A,List('C,'D,'B,'A,'E))
+ 
+	// The delaying guy C has to end last round, so sequence does not change
+    mockTracker.dispatch(request.EndRound('C))
+	sequenceUnchanged()
+	assert(extractCombatantInitiatives().contains('C,InitiativeTracker(1,Waiting)),extractCombatantInitiatives())
   }
   
   def testReadyAction() {
@@ -190,7 +210,8 @@ class InitiativeSequenceTest extends TestCase {
 	val ci=extractCombatantInitiatives()
 	assert(ci.contains(who,init.transform(true,InitiativeTracker.actions.EndRound)))
 	val s2=extractCombatSequence()
-	assert(s2==nseq)
+	assert(s2==nseq, "Sequence is not correct got "+s2+ " expected "+nseq )
+  
   } 
   
   def sequenceUnchanged() {

@@ -10,7 +10,7 @@ import vcc.controller.ChangePublisher
 trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
   this: TransactionalProcessor[TrackerContext] =>
 
-  val cmap=context.map
+  def cmap=context.map
   val sequence=context.sequence
   
   override def rewriteEnqueue(msg:TransactionalAction) {
@@ -64,13 +64,16 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
     	  case Ready => sequence.moveDown(cmb.id)
     	  case MoveUp => sequence.moveUp(cmb.id)
     	  case ExecuteReady => sequence.moveDown(cmb.id)
-    	  case EndRound => //Close round and out advance dead
+    	  case EndRound if(itt.state!=InitiativeState.Delaying)=> 
+    	    //Close round and out advance dead
     	    sequence.moveDown(cmb.id)
     	    val next=context.map(context.sequence.sequence.head)
     	    if(next.health.status == HealthTracker.Status.Dead) 
     	      msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
     	  case _ =>
     	}
+      } else {
+        println("Error: Cant process "+action)
       }
   }
 }
