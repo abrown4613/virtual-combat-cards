@@ -2,25 +2,25 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.TableModelRowProjection
-import vcc.dnd4e.model.Effect
+import vcc.dnd4e.model.{Effect,Condition}
 
-object EffectTableProjection extends TableModelRowProjection[Effect]{
+class EffectTableProjection(tracker:scala.actors.Actor) extends TableModelRowProjection[(Symbol,Int,Effect)]{
   
   val columns:List[(String,java.lang.Class[_])] = List(
     ("Src",classOf[String]),
-    ("B",classOf[String]),
     ("End",classOf[String]),
     ("Description",classOf[String]))
   
-  def apply(col:Int,entry:Effect):java.lang.Object = {
+  def apply(col:Int,entry:(Symbol,Int,Effect)):java.lang.Object = {
     col match {
-      case 0 => entry.source.name
-      case 1 => (if(entry.benefic)"B" else "-")
-      case 2 => entry.duration.shortDesc
-      case 3 => entry.condition.description
+      case 0 => entry._3.source.name
+      case 1 => entry._3.duration.shortDesc
+      case 2 => entry._3.condition.description
     }
   }
   
- val setter:PartialFunction[(Int,Effect,Any),Unit]=null
-  
+  val setter:PartialFunction[(Int,(Symbol,Int,Effect),Any),Unit]= {
+    case (2,(who,pos,Effect(_,Condition.Generic(x),_,_)),newvalue) =>
+      tracker ! vcc.dnd4e.controller.request.UpdateEffect(who,pos,Condition.Generic(newvalue.asInstanceOf[String]))
+  }
 }

@@ -38,6 +38,22 @@ case class EffectList(effects:List[Effect]) {
       this
   }
   
+  /**
+   * Update an effect int the list. Will only update generic effect.
+   * @param pos The position of the effect in the list
+   * @param newcond The new condition
+   * @return The new EffectList
+   */
+  def update(pos:Int,newcond:Condition):EffectList = {
+    if(pos >= 0 && pos < effects.length && effects(pos).condition.isInstanceOf[Condition.Generic] ) {
+      
+      val l=effects.slice(0,pos) ++ (effects(pos).updateCondition(newcond):: effects.slice(pos+1,effects.length))
+      if(l == effects) this
+      else EffectList(l)
+    } else 
+      this
+  }
+  
   protected def applyAndFilter(f:Effect=>Effect):List[Effect] = {
     effects.map(f).filter(e=> e!=null)
   } 

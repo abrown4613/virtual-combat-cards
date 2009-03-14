@@ -144,4 +144,15 @@ case class Effect(source:Symbol,condition:Condition,benefic:Boolean,duration:Eff
       case _ => this
     }
   }
+  
+  /**
+   * Create a new effect with a new condition
+   * @param newcond the condition to be updated
+   */
+  def updateCondition(newcond:Condition):Effect = {
+    condition match {
+      case dontcate:Condition.Generic => Effect(source,newcond,benefic,duration) 
+      case _ => this
+    }
+  }
 }

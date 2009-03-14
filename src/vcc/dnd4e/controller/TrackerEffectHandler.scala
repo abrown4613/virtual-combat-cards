@@ -18,6 +18,8 @@ trait TrackerEffectHandler {
       c.effects = c.effects.add(effect)
     case CancelEffect(context.InMap(c),pos) =>
       c.effects = c.effects.delete(pos)
+    case UpdateEffect(context.InMap(c),pos,newcond) =>
+      c.effects = c.effects.update(pos,newcond)
     case InternalInitiativeAction(c,InitiativeTracker.actions.StartRound) =>
       context.allCombatant.map(comb=>{comb.effects=comb.effects.startRound(c.id)})
     case InternalInitiativeAction(c,InitiativeTracker.actions.EndRound) =>

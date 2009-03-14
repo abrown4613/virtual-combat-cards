@@ -13,6 +13,9 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
   def cmap=context.map
   val sequence=context.sequence
   
+  /**
+   * We need to rewrite composed initiative operation to their internal versions.
+   */
   override def rewriteEnqueue(msg:TransactionalAction) {
     import InitiativeTracker.actions._
     import request.InternalInitiativeAction
@@ -28,7 +31,7 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
         }
       case request.StartRound(context.InMap(c))=> msgQueue.enqueue(InternalInitiativeAction(c,StartRound))
       case request.EndRound(context.InMap(c))=> msgQueue.enqueue(InternalInitiativeAction(c,EndRound))
-      case request.Ready(context.InMap(c)) => msgQueue.enqueue(InternalInitiativeAction(c,Ready))
+      case request.Ready(context.InMap(c)) => msgQueue.enqueue(InternalInitiativeAction(c,Ready),InternalInitiativeAction(c,EndRound))
       case request.ExecuteReady(context.InMap(c)) => msgQueue.enqueue(InternalInitiativeAction(c,ExecuteReady))
       case _ => super.rewriteEnqueue(msg)
     }
@@ -55,25 +58,30 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
       import InitiativeTracker.actions._
       import request.InternalInitiativeAction
       
+      def advanceDead() {
+    	//Close round and out advance dead
+    	sequence.moveDown(cmb.id)
+    	val next=context.map(context.sequence.sequence.head)
+    	if(next.health.status == HealthTracker.Status.Dead) 
+    	  msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+      }
+      
       val firstp=this.context.map(sequence.sequence.head).id==cmb.id
       var itt=cmb.it.value
       if(itt.canTransform(firstp,action)) {
     	cmb.it.value=itt.transform(firstp,action)
     	action match {
-    	  case Delay => sequence.moveDown(cmb.id)
-    	  case Ready => sequence.moveDown(cmb.id)
+    	  case Delay => 
+    	    sequence.moveDown(cmb.id)
+    	    advanceDead()
     	  case MoveUp => sequence.moveUp(cmb.id)
     	  case ExecuteReady => sequence.moveDown(cmb.id)
-    	  case EndRound if(itt.state!=InitiativeState.Delaying)=> 
-    	    //Close round and out advance dead
-    	    sequence.moveDown(cmb.id)
-    	    val next=context.map(context.sequence.sequence.head)
-    	    if(next.health.status == HealthTracker.Status.Dead) 
-    	      msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+    	  case EndRound if(itt.state!=InitiativeState.Delaying)=>
+    	    advanceDead()
     	  case _ =>
     	}
       } else {
-        println("Error: Cant process "+action)
+        throw new Exception("Error: Cant process "+(firstp,action)+ " on state "+itt)
       }
   }
 }

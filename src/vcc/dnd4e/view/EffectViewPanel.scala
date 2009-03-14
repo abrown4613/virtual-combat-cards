@@ -17,15 +17,14 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
   private val cancelButton=new Button("Cancel Effect")
   cancelButton.enabled=false
   
-  val effectModel=new vcc.util.swing.ProjectionTableModel[Effect](tabular.EffectTableProjection)
+  val effectModel=new vcc.util.swing.ProjectionTableModel[(Symbol,Int,Effect)](new tabular.EffectTableProjection(tracker))
   val effectTable=new EnhancedTable() {
     autoResizeMode=Table.AutoResizeMode.Off
     selection.intervalMode=Table.IntervalMode.Single
     model=effectModel
     setColumnWidth(0,25)
-    setColumnWidth(1,10)
-    setColumnWidth(2,50,50,100)
-    setColumnWidth(3,200)
+    setColumnWidth(1,50,50,100)
+    setColumnWidth(2,200)
   }
   
   add(new ScrollPane(effectTable),"growy,growprio 50,wrap")
@@ -47,7 +46,7 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
         sustainButton.enabled=false
       } else {
         val eff=effectModel.content(sel.toSeq(0))
-        sustainButton.enabled=eff.sustainable
+        sustainButton.enabled=eff._3.sustainable
         cancelButton.enabled=true
       }
   }
@@ -59,7 +58,7 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
     nctx match {
       case Some(c) => 
         SwingHelper.invokeLater(()=>{
-          effectModel.content=c.effects
+          effectModel.content= (0 to c.effects.length-1).map(pos=>(c.id,pos,c.effects(pos)))
         })
       case None =>
     }
