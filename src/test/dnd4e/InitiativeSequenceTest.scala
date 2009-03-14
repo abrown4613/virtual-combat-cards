@@ -1,5 +1,5 @@
 //$Id$
-package test.dnde4
+package test.dnd4e
 
 import junit.framework.TestCase
 import vcc.controller.TransactionalProcessor
@@ -147,6 +147,11 @@ class InitiativeSequenceTest extends TestCase {
 	assert(ci2.contains('A,InitiativeTracker(1,Ready)))
 	assert(extractCombatSequence()==List('B,'C,'D,'A,'E))
  
+ 	// Make sure that actions are called internally: In our case end of turn
+	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
+	assert(al==List(('A,InitiativeTracker.actions.Ready),('A,InitiativeTracker.actions.EndRound)))
+
+ 
 	startRound('B)
  	endRound('B,List('C,'D,'A,'B,'E))
 
@@ -157,19 +162,22 @@ class InitiativeSequenceTest extends TestCase {
 	assert(extractCombatSequence()==List('C,'D,'B,'A,'E))
   }
   
+  def killSomeCombatant(seq:Seq[Symbol]) {
+	implicit val trans=new Transaction()
+	for(x<-seq) {
+	  val cmb=mockTracker.controller.context.map(x)
+	  cmb.health=cmb.health.applyDamage(20)
+    }
+    trans.commit(null)
+  }
+  
+  /**
+   * Start and end round in front of a bunch of dead guys, must skip
+   */
   def testAutoStartDead() {
     import InitiativeTracker.actions._
     testStartCombat()
-    
-    // Kill a bunch
-    {
-      implicit val trans=new Transaction()
-      for(x<-List('B,'C)) {
-    	val cmb=mockTracker.controller.context.map(x)
-        cmb.health=cmb.health.applyDamage(20)
-      }
-      trans.commit(null)
-    }
+    killSomeCombatant(List('B,'C))
 
     mockTracker.dispatch(request.StartRound('A))
 	val ci1=extractCombatantInitiatives()
@@ -181,12 +189,56 @@ class InitiativeSequenceTest extends TestCase {
 	assert(ci3.contains('A,InitiativeTracker(1,Waiting)))
 	assert(ci3.contains('B,InitiativeTracker(1,Waiting)))
 	assert(ci3.contains('C,InitiativeTracker(1,Waiting)))
-	val s3=extractCombatSequence()
-	assert(s3==List('D,'A,'B,'C,'E))
+	assert(extractCombatSequence()==List('D,'A,'B,'C,'E))
     
 	// Make sure that actions are called internally
 	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
 	assert(al==List(('A,EndRound),('B,StartRound),('B,EndRound),('C,StartRound),('C,EndRound)))
+  }
+  
+  /**
+   * Start and end round in front of a bunch of dead guys, must skip
+   */
+  def testAutoStartDeadOnDelay() {
+    import InitiativeTracker.actions._
+    testStartCombat()
+    killSomeCombatant(List('B,'C))
+
+    mockTracker.dispatch(request.Delay('A))
+	val ci1=extractCombatantInitiatives()
+	assert(ci1.contains('A,InitiativeTracker(1,Delaying)))
+	assert(ci1.contains('B,InitiativeTracker(1,Waiting)))
+	assert(ci1.contains('C,InitiativeTracker(1,Waiting)))
+	assert(extractCombatSequence()==List('D,'A,'B,'C,'E))
+    
+	// Make sure that actions are called internally
+	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
+	assert(al==List(('A,StartRound),('A,Delay),('B,StartRound),('B,EndRound),('C,StartRound),('C,EndRound)))
+  }
+  
+  /**
+   * Start and end round in front of a bunch of dead guys, must skip
+   */
+  def testAutoStartDeadOnReady() {
+    import InitiativeTracker.actions._
+    testStartCombat()
+    killSomeCombatant(List('B,'C))
+
+    mockTracker.dispatch(request.StartRound('A))
+	val ci1=extractCombatantInitiatives()
+	assert(ci1.contains('A,InitiativeTracker(1,Acting)))
+	sequenceUnchanged()
+
+    mockTracker.dispatch(request.Ready('A))
+	val ci2=extractCombatantInitiatives()
+	assert(ci2.contains(('A,InitiativeTracker(1,InitiativeState.Ready))))
+	assert(ci2.contains(('B,InitiativeTracker(1,Waiting))))
+	assert(ci2.contains(('C,InitiativeTracker(1,Waiting))))
+	assert(extractCombatSequence()==List('D,'A,'B,'C,'E))
+    
+	// Make sure that actions are called internally
+	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
+	assert(al==List(('A,Ready),('A,EndRound),('B,StartRound),('B,EndRound),('C,StartRound),('C,EndRound)))
   }
   
   def testMoveOutOfReserve() {

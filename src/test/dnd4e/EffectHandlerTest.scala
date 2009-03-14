@@ -1,5 +1,5 @@
 //$Id$
-package test.dnde4
+package test.dnd4e
 
 import junit.framework.TestCase
 import vcc.dnd4e.model._
@@ -294,9 +294,40 @@ class EffectHandlerTest extends TestCase {
     val BaD=extractSingleEffectListOrFail(elndA)
     listMustContainOnly(BaD,List("bad:EoT:B") ) // Only bad stuff
   }
-  
+
+  /**
+   * You can only update generic effects. So we add some effects than attempt to 
+   * update the generic ones
+   */
   def testUpdateEffectText() {
-    assert(false,"Not implemented")
+    val elndA=makeEffectsNameExtractor('A)
+    loadEffect('A, Seq(
+      Effect('B,Condition.Mark('C,false),false,Duration.Other),
+      Effect('B,Condition.Generic("ef1"),false,Duration.SaveEnd),
+      Effect('B,Condition.Generic("ef2"),false,Duration.SaveEndSpecial)))
+    val elndA.findAll(eol) = mockTracker.lastChangeMessages
+
+    
+    //This is the actual order in this version
+    val BE=List("ef2:SE*","ef1:SE","Marked by C:Other")
+    listMustContainOnly(eol,BE)
+    
+    //Update effect 0: ef2
+    mockTracker.dispatch(request.UpdateEffect('A,0,Condition.Generic("new ef2")))
+    val UEL1=List("ef1:SE","new ef2:SE*","Marked by C:Other")
+    val AEL1=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AEL1,UEL1)
+    
+    //Update effect 1: ef1
+    mockTracker.dispatch(request.UpdateEffect('A,1,Condition.Generic("new ef1")))
+    val UEL2=List("new ef1:SE","new ef2:SE*","Marked by C:Other")
+    val AEL2=extractSingleEffectListOrFail(elndA)
+    listMustContainOnly(AEL2,UEL2)
+
+    
+    //Update effect 2: A mark, this must not change any value
+    mockTracker.dispatch(request.UpdateEffect('A,2,Condition.Generic("new mark")))
+    assert(mockTracker.lastChangeMessages==Nil)
   }
   
   //UTILITIES 

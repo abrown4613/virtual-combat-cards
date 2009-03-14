@@ -1,5 +1,5 @@
 //$Id$
-package test.dnde4
+package test.dnd4e
 import junit.framework.TestCase
 import vcc.dnd4e.model._
 import vcc.controller.transaction._
