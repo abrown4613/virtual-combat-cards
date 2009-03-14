@@ -20,10 +20,11 @@ object InitiativeTracker {
   val transform:PartialFunction[(InitiativeTracker,Boolean,actions.Value),InitiativeTracker] = {
     case (it,true,actions.StartRound) if(it.state==Waiting||it.state==Ready) => InitiativeTracker(it.round+1,Acting)
     case (it,true,actions.EndRound) if(it.state==Acting) =>  InitiativeTracker(it.round,Waiting)
+    case (it,true,actions.EndRound) if(it.state==Readying) =>  InitiativeTracker(it.round,Ready)
     case (it,true,actions.EndRound) if(it.state==Delaying) => InitiativeTracker(it.round,Waiting)
     case (it,false,actions.MoveUp) if(it.state==Delaying)=> InitiativeTracker(it.round,Acting)
     case (it,first,actions.MoveUp) if(it.state==Reserve) => InitiativeTracker(it.round,Waiting)
-    case (it,true,actions.Ready) if(it.state==Acting) => InitiativeTracker(it.round,Ready)
+    case (it,true,actions.Ready) if(it.state==Acting) => InitiativeTracker(it.round,Readying)
     case (it,false,actions.ExecuteReady) if(it.state==Ready) => InitiativeTracker(it.round,Waiting)
     case (it,true,actions.Delay) if(it.state==Acting) => InitiativeTracker(it.round,Delaying)
   }
