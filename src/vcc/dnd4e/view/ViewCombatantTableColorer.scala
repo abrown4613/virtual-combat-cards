@@ -1,11 +1,15 @@
 //$Id$
 package vcc.dnd4e.view
 
-object ViewCombatantTableColorer {
+import vcc.util.swing.ProjectionTableLabelFormatter
+
+object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewCombatant] {
   import java.awt.Color
   import vcc.dnd4e.model.InitiativeState._
   import vcc.dnd4e.model.HealthTracker.Status._
   
+  private val cellFont=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN,14)
+
   // Pair[Color,Color]  where (background,foreground)
   private val grayed=(Color.LIGHT_GRAY,Color.BLACK)
   private val dead=(Color.BLACK,Color.WHITE)
@@ -20,9 +24,10 @@ object ViewCombatantTableColorer {
     label.setForeground(cp._2)
   }
   
-  def colorLabel(label:javax.swing.JLabel, col:Int, isSelected:Boolean, cmb: ViewCombatant):Unit = {
+  def render(label:javax.swing.JLabel, col:Int, isSelected:Boolean, cmb: ViewCombatant):Unit = {
     var is=cmb.initTracker.state
     var hs=cmb.health.status
+    label.setFont(cellFont)
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label,col match {
       case 0 if(is==Ready || is==Delaying)=> ready
