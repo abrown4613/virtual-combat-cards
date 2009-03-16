@@ -23,8 +23,10 @@ trait TrackerContextHandler {
       nc.defense=template.defense
       if(context.map.contains(nc.id)) {
         // It's an old combatant salvage old heath and Initiative
-        nc.health = context.map(nc.id).health
-        nc.it =context.map(nc.id).it
+        val oc=context.map(nc.id)
+        nc.health = oc.health.replaceHealthDefinition(nc.health.base)
+        nc.it =oc.it
+        nc.effects=oc.effects
       } else {
         context.sequence add id
       }
