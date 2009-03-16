@@ -297,4 +297,24 @@ class HealthTrackingTest extends TestCase {
     
   }
   
+  def testDeltaApply() {
+    val pc=HealthTracker.createTracker(CombatantType.Character,20)
+    
+    val pc_mode=HealthTracker(pc.currentHP-5, 5, 1, pc.surges-1,pc.base)
+    
+    val delta=pc_mode.getDelta()
+    
+    assert(delta!=null)
+    assert(delta==HealthTrackerDelta(5,5,1,1))
+    
+    val pc_mode2=pc.applyDelta(delta)
+    
+    assert(pc_mode2==pc_mode)
+    
+    val pc30=HealthTracker.createTracker(CombatantType.Character,30)
+    val pc30_mode=pc_mode.replaceHealthDefinition(pc30.base)
+    
+    assert(pc30_mode==HealthTracker(pc30.currentHP-5,5,1,pc30.surges-1,pc30.base))
+  }
+  
 }

@@ -78,9 +78,23 @@ object HealthTracker {
   
 }
 
-/*
+/**
+ * Difference from base healthDefinition
+ * @param currentHP Current hp
+ * @param temporaryHP Temp HP
+ * @param deathStrikes Current failed death saves
+ * @param surges Sure
+ */
+case class HealthTrackerDelta(damage:Int,temporaryHP:Int,deathStrikes:Int,spentSurges:Int)
+
+/**
  * Since character are the most complex, this class implements their logic, 
  * Other creatures will have different sublogics
+ * @param currentHP Current hp
+ * @param temporaryHP Temp HP
+ * @param deathStrikes Current failed death saves
+ * @param surges Sure
+ * @param bas 
  */
 case class HealthTracker(currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int,base:HealthDefinition) {
   
@@ -139,5 +153,19 @@ case class HealthTracker(currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:I
     if(status==HealthTracker.Status.Dead) {
       HealthTracker(0,temporaryHP,0,surges,base)
     } else this
+  }
+  
+  def getDelta(): HealthTrackerDelta = {
+    HealthTrackerDelta(this.base.totalHP - this.currentHP,this.temporaryHP,this.deathStrikes,this.base.healingSurges - this.surges)
+  }
+  
+  def applyDelta(delta:HealthTrackerDelta):HealthTracker = {
+    HealthTracker(this.currentHP-delta.damage, delta.temporaryHP, delta.deathStrikes, this.surges-delta.spentSurges,this.base)
+  }
+  
+  def replaceHealthDefinition(hd:HealthDefinition):HealthTracker = {
+    val delta=this.getDelta
+    val nht=HealthTracker.createTracker(hd)
+    nht.applyDelta(delta)
   }
 }
