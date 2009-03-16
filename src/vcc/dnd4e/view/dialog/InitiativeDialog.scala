@@ -6,7 +6,7 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
 
-import vcc.model.DiceBag
+import vcc.util.DiceBag
 import vcc.dnd4e.controller._
 
 class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
