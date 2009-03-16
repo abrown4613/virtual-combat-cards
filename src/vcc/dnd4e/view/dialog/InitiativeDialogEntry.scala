@@ -2,7 +2,7 @@
 package vcc.dnd4e.view.dialog
 
 import vcc.util.swing.TableModelRowProjection
-import vcc.model.DiceBag
+import vcc.util.DiceBag
 
 //NOTE: These classes should be internal to the Dialog 
 
