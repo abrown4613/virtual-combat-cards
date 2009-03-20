@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 
   <property name="build"  value="bin"/>
-  <property name="version" value="0.40" />
+  <property name="version" value="0.90" />
   <property name="distbase" value="dist" />
   <property name="dist" value="${distbase}/vcc" />
   <property name="scalajar" value="${distbase}/scalalib" />
