@@ -11,7 +11,7 @@ object DiceBag {
    * Set the random seed
    * @param nseed The new seed
    */
-  def seed_=(nseed:Long) { rand.setSeed(nseed) }
+  def seed(nseed:Long) { rand.setSeed(nseed) }
   
   /**
    * Return a random number between 1 and side
