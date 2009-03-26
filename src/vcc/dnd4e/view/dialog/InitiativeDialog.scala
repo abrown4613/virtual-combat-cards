@@ -23,8 +23,11 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
     setColumnWidth(4,70)
   }	
   title="Roll Initative"
-  contents=new ScrollPane {
-    contents=table
+  
+  private val groupCheckbox= new CheckBox("Group similar (same name and initiative bonus)")
+  contents= new MigPanel("flowy") {
+    add( new ScrollPane {contents=table}, "growx,growy")
+    add(groupCheckbox)
   }
   minimumSize=new java.awt.Dimension(360,400)
   listenTo(this)
