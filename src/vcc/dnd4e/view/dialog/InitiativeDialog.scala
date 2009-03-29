@@ -33,10 +33,8 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
   listenTo(this)
   reactions += {
     case DialogClosed(diag,false) if(diag==this)=>
-      var l=initTable.content.filter(x=> !x.reserve).toArray
-      l.foreach(x=>if(x.roll<=0) x.roll=DiceBag.D(20))
-      scala.util.Sorting.quickSort[InitiativeDialogEntry](l)(x=>x)
-      tracker ! request.StartCombat(l.map(x=>x.id).toSeq)
+      val seq=helper.InitiativeRoller.rollInitiative(groupCheckbox.selected,initTable.content.toList)
+      tracker ! request.StartCombat(seq)
   }
 
   // This will build my entries based on TrackerCombatant
