@@ -6,15 +6,7 @@ import vcc.util.DiceBag
 
 //NOTE: These classes should be internal to the Dialog 
 
-class InitiativeDialogEntry(val id:Symbol, val name:String, var init:Int, var roll:Int, var reserve:Boolean) extends Ordered[InitiativeDialogEntry] {
-  def compare(that:InitiativeDialogEntry):Int= {
-    var diff=(roll+init)-(that.roll+that.init)
-    if(diff==0) {
-      diff=init-that.init
-      if(diff==0) return if(DiceBag.flipCoin) -1 else 1
-    }
-    -diff
-  }
+class InitiativeDialogEntry(val id:Symbol, val name:String, var init:Int, var roll:Int, var reserve:Boolean) {
   override def toString():String="IDEntry("+id+","+name+","+init+","+roll+","+reserve+")"
 }
 
