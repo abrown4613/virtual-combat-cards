@@ -14,7 +14,7 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
   private val grayed=(Color.LIGHT_GRAY,Color.BLACK)
   private val dead=(Color.BLACK,Color.WHITE)
   private val dying=(Color.GRAY,Color.WHITE)
-  private val bloody=(Color.RED,Color.WHITE)
+  private val bloody=(new Color(220,20,60),Color.WHITE)
   private val ready=(Color.ORANGE,Color.BLACK)
   private val normal=(Color.WHITE,Color.BLACK)
   private val selected=(Color.BLUE,Color.WHITE)
