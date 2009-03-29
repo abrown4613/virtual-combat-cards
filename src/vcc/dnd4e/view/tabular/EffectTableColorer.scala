@@ -8,7 +8,7 @@ object EffectTableColorer extends ProjectionTableLabelFormatter[(Symbol,Int,Effe
   import java.awt.Color
 
   private val attention=(Color.ORANGE,Color.BLACK)
-  private val beneficial=(new Color(0x66,0xCC,0xFF),Color.BLACK)
+  private val beneficial=(new Color(152,251,152),Color.BLACK)
   private val normal=(Color.WHITE,Color.BLACK)
   
   def setColor(label:javax.swing.JLabel, colors:(Color,Color)) {
