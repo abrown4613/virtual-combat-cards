@@ -22,6 +22,8 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
   private val undie_btn = new Button("\"undie\"")
   private val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn,undie_btn)
   private val damageRelButton=List(damage_btn, heal_btn, temp_btn)
+  
+  private var damageEquation:helper.DamageParser.Term=null
 
   contents++ List[Component](new Label("Hit Points:"),damage,damage_btn,heal_btn)
   add(temp_btn,"wrap")
@@ -35,17 +37,8 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
   
   reactions +={
     case ValueChanged(this.damage) =>
-      try {
-        damage.text.toInt
-        damage.background=java.awt.Color.white
-        for(x<-damageRelButton) x.enabled=true
-      } catch {
-        case nfe:NumberFormatException =>
-          damage.background=badColor
-          println("Bad number")
-          for(x<-damageRelButton) x.enabled=false
-      }      
-    
+      damageEquation=try{helper.DamageParser.parseString(damage.text)} catch { case _ => null}
+      enableDamageControls(damageEquation!=null)
     case FocusGained(this.damage,other,temporary) =>
       damage.selectAll()
       
@@ -55,9 +48,13 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
     case ButtonClicked(this.undie_btn) => 
       controller ! Undie(context.id)
 
-    case ButtonClicked(button) => {
-      val value = try { damage.text.toInt } catch {  case nfe:NumberFormatException => 0 }
-      if(value != 0 )
+    case ButtonClicked(button) if(damageEquation!=null)=> {
+      val cinfo= Map(
+        "b" ->context.health.base.totalHP/2,
+        "s" ->context.health.base.totalHP/4
+      )
+      val value=damageEquation.apply(cinfo)
+      if(value >= 0 )
     	button match {
     	  case this.damage_btn => controller ! ApplyDamage(context.id, value)
     	  case this.heal_btn => controller ! HealDamage(context.id,value)
@@ -66,6 +63,11 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
     }
   }
 
+  def enableDamageControls(enable:Boolean) {
+	damage.background=if(enable) java.awt.Color.white else badColor
+	for(x<-damageRelButton) x.enabled=enable
+  }
+  
   def changeContext(context:Option[ViewCombatant]) {
     controls map (x=>x.enabled= context!=None)
   }
