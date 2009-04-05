@@ -8,7 +8,7 @@ import vcc.util.swing._
 import scala.actors.Actor
 
 import vcc.dnd4e.view.ViewCombatant
-import dnd4e.view.{SequenceTable,ViewCombatant}
+import dnd4e.view.{SequenceTable,ViewCombatant,StatusBar}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.controller._
 import vcc.dnd4e.controller.request._
@@ -106,9 +106,10 @@ object Main extends SimpleGUIApplication {
 
   coord.start
   
-  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(coord.tracker)
+  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,coord.tracker)
   val seqTable = new vcc.dnd4e.view.SequenceTable(uia)
   val card=new vcc.dnd4e.view.CombatantCard(coord.tracker)
+  val statusBar=new StatusBar(uia)
   
   // Register panel with UIA
   uia.addSequenceListener(seqTable)
@@ -116,6 +117,7 @@ object Main extends SimpleGUIApplication {
   uia.addContextListener(commandPanel)
   uia.addContextListener(seqTable)
   uia.addContextListener(card)
+  uia.setStatusBar(statusBar)
   uia.start
   coord.addObserver(uia)
 
@@ -128,6 +130,7 @@ object Main extends SimpleGUIApplication {
       add(card,BorderPanel.Position.East)
       add(seqTable,BorderPanel.Position.Center)
       add(new MainMenu(coord,uia),BorderPanel.Position.North)
+      add(statusBar,BorderPanel.Position.South)
     }
   }
   
