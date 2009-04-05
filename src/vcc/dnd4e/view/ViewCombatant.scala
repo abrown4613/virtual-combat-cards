@@ -12,6 +12,8 @@ case class ViewCombatant(id:Symbol,name:String,hp:Int,init:Int,defense:DefenseBl
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
   var effects:List[Effect]=Nil
+  
+  def isCharacter:Boolean = health.base.ctype==CombatantType.Character
 }
 
 object ViewCombatantProjection extends vcc.util.swing.TableModelRowProjection[ViewCombatant] {

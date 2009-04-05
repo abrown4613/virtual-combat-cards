@@ -2,6 +2,7 @@
 package vcc.dnd4e.view
 
 import vcc.util.swing.ProjectionTableLabelFormatter
+import vcc.dnd4e.model.CombatantType
 
 object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewCombatant] {
   import java.awt.Color
@@ -18,6 +19,10 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
   private val ready=(Color.ORANGE,Color.BLACK)
   private val normal=(Color.WHITE,Color.BLACK)
   private val selected=(Color.BLUE,Color.WHITE)
+  private val monsterCallout=(new Color(152,32,32),Color.WHITE)
+  private val charCallout=(new Color(77,140,59),Color.WHITE)
+  private val charBackground=(new Color(240,255,236),Color.BLACK)
+  private val monsterBackground=normal //(new Color(255,248,220),Color.BLACK)
   
   private def setColor(label:javax.swing.JLabel, cp:Pair[Color,Color]):Unit = {
     label.setBackground(cp._1)
@@ -27,10 +32,11 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
   def render(label:javax.swing.JLabel, col:Int, isSelected:Boolean, cmb: ViewCombatant):Unit = {
     var is=cmb.initTracker.state
     var hs=cmb.health.status
+    val normalBack=if(cmb.isCharacter) charBackground else normal
     label.setFont(cellFont)
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label,col match {
-      case 0 if(is==Ready || is==Delaying)=> ready
+      case 0 => if(cmb.isCharacter) charCallout else monsterCallout
       case 3 =>
          hs match {
            case Dead => dead
@@ -38,13 +44,13 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
            case Bloody => bloody
            case _ if(isSelected) => (label.getBackground,label.getForeground)
            case _ if(is==Reserve) => grayed
-           case _ => normal
+           case _ => normalBack
          }
       case 5 if(is==Ready || is==Delaying)=> ready
       case _ if(isSelected) => (label.getBackground,label.getForeground)
       case _ if(hs==Dead)=> grayed 
       case _ if(is==Reserve)=> grayed 
-      case _ => normal
+      case _ => normalBack
     })
   }
 }
