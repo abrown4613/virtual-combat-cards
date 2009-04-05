@@ -4,10 +4,10 @@ package vcc.dnd4e.view
 import scala.swing._
 import scala.swing.event._ 
 
-class CombatantActionPanel(val tracker:actors.Actor) extends BorderPanel with view.ContextualView[ViewCombatant] with view.SequenceView[ViewCombatant]{
+class CombatantActionPanel(val uia:actors.Actor,val tracker:actors.Actor) extends BorderPanel with view.ContextualView[ViewCombatant] with view.SequenceView[ViewCombatant]{
   minimumSize=new java.awt.Dimension(390,500)
   preferredSize=minimumSize
-  val damagePanel=new view.DamageCommandPanel(tracker) 
+  val damagePanel=new view.DamageCommandPanel(uia,tracker) 
   val initiativePanel = new view.InitiativePanel(tracker)
   val effectEditorPanel = new view.EffectEditorPanel(tracker)
   

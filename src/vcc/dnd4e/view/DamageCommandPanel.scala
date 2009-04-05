@@ -8,7 +8,7 @@ import util.swing.MigPanel
 
 import vcc.dnd4e.controller.actions._
 
-class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[40][fill][fill][fill]","[]10[]") with ContextualView[ViewCombatant]{
+class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) extends MigPanel("","[]5[40][fill][fill][fill]","[]10[]") with ContextualView[ViewCombatant]{
   private val damage=new TextField {
     columns=3
     enabled=false
@@ -20,6 +20,7 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
   private val temp_btn= new Button("Set Temporary")
   private val death_btn = new Button("Fail Death Save")
   private val undie_btn = new Button("\"undie\"")
+  undie_btn.tooltip="Use this button to bring a dead combatant back to dying state. This will clear death strikes."
   private val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn,undie_btn)
   private val damageRelButton=List(damage_btn, heal_btn, temp_btn)
   
@@ -40,7 +41,10 @@ class DamageCommandPanel(val controller:actors.Actor) extends MigPanel("","[]5[4
       damageEquation=try{helper.DamageParser.parseString(damage.text)} catch { case _ => null}
       enableDamageControls(damageEquation!=null)
     case FocusGained(this.damage,other,temporary) =>
+      uia ! vcc.dnd4e.view.actor.SetTip("Enter equation with: + - * / and parenthesis and variable: 's' for surge value ; 'b' for bloody value")
       damage.selectAll()
+    case FocusLost(this.damage,other,temp) => 
+      uia ! vcc.dnd4e.view.actor.SetTip("")
       
     case ButtonClicked(this.death_btn) =>
       controller ! FailDeathSave(context.id)

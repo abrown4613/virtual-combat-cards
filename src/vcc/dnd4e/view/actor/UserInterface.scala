@@ -11,6 +11,7 @@ case class SetContext(id:Symbol)
 case class GoToFirst()
 case class SetOption(opt:Symbol,state:Boolean)
 case class ClearSequence()
+case class SetTip(tip:String)
 
 import scala.actors.Actor._
 import scala.actors.Actor
@@ -26,6 +27,7 @@ class UserInterface(tracker:Actor) extends Actor {
   private var _ctx:Option[T]=None
   private var seqAware:List[SequenceView[T]]=Nil
   private var ctxAware:List[ContextualView[T]]=Nil
+  private var statusBar:StatusBar=null
   private val _map=scala.collection.mutable.Map.empty[Symbol,T]
   object InMap {
     def unapply(id:Symbol):Option[T] = if(id!=null && _map.contains(id)) Some(_map(id)) else None
@@ -57,6 +59,10 @@ class UserInterface(tracker:Actor) extends Actor {
   
   def addSequenceListener(seq:SequenceView[T]) { seqAware=seq :: seqAware }
   def addContextListener(ctx:ContextualView[T]) { ctxAware=ctx :: ctxAware }
+  
+  def setStatusBar(sb: StatusBar) { 
+    statusBar=sb
+  }
   
   /**
    * This is to update sequence table, it's kind of a hack.
@@ -111,6 +117,10 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetOption('HIDEDEAD,state) => 
           _hidedead=state
           this ! SetSequence(_seq.map(x=>x.id))
+          
+        case SetTip(str) =>
+          statusBar.setTipText(str)
+          
         case s => println("UIA: Unhandled message:" + s)
       }
     }
