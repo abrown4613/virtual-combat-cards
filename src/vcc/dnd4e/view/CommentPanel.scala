@@ -7,7 +7,7 @@ import javax.swing.BorderFactory
 import vcc.dnd4e.controller._
 import util.swing.MigPanel
 
-class CommentPanel(val controller:actors.Actor) extends MigPanel("fillx") with ContextualView[ViewCombatant]{
+class CommentPanel(val controller:actors.Actor) extends MigPanel("fill","","") with ContextualView[ViewCombatant]{
   private var _hasChanged=false
   private var _updating=false
   private var edit=new TextArea {
@@ -15,12 +15,11 @@ class CommentPanel(val controller:actors.Actor) extends MigPanel("fillx") with C
   }
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
 
-  border=BorderFactory.createTitledBorder("Comments and Notes")
-  
+  add(new Label("Comments and Notes"),"wrap")
   add(new ScrollPane {
     border=BorderFactory.createLoweredBevelBorder
     contents=edit
-  },"h 150,growx,growy")
+  },"growx,growy")
   
   listenTo(edit)
   reactions += {

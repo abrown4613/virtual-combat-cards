@@ -10,8 +10,6 @@ import vcc.dnd4e.controller.request
 
 class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualView[ViewCombatant]
 {
-  border= javax.swing.BorderFactory.createTitledBorder("Active Effects")
-  
   private val sustainButton=new Button("Sustain")
   sustainButton.enabled=false
   private val cancelButton=new Button("Cancel Effect")
@@ -28,7 +26,8 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
     setColumnWidth(2,200)
   }
   
-  add(new ScrollPane(effectTable),"growy,growprio 50,wrap")
+  add(new Label("Active Effects"),"wrap")
+  add(new ScrollPane(effectTable),"growy,growprio 50,h 50:150,wrap")
   add(sustainButton,"split 3")
   add(cancelButton)
   
