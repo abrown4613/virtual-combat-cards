@@ -7,17 +7,17 @@ import util.swing._
 import scala.actors.Actor
 
 class CombatantCard(tracker:Actor) 
-  extends MigPanel("flowy,fillx","[300!]","[c,pref!][c,grow 25,fill][c,grow 75,fill]")
+  extends MigPanel("flowy,fill","[300!]","[c,pref!][c,fill]")
   with ContextualView[ViewCombatant]
 {
 
-  val summary=new CombatantSummaryView()
-  val effects=new EffectViewPanel(tracker)
-  val commentPanel= new view.CommentPanel(tracker)
+  private val summary=new CombatantSummaryView()
+  private val effects=new EffectViewPanel(tracker)
+  private val commentPanel= new view.CommentPanel(tracker)
+  private val split1=new SplitPane(Orientation.Horizontal,effects,commentPanel)
   
   add(summary,"growx")
-  add(effects,"growx")
-  add(commentPanel,"growx,hmin 120px")
+  add(split1,"growx")
   
   def changeContext(nctx:Option[ViewCombatant]) {
     summary.context=nctx
