@@ -7,6 +7,12 @@ import scala.actors.Actor
 
 import vcc.dnd4e.model.{Effect,Condition}
 
+/**
+ * A combo box option that included the infomartion to display and what to 
+ * generate as an output
+ * @param text To appear on the ComboBox
+ * @param generate A function form (source,target)=> Duration
+ */
 case class DurationComboEntry(text:String,generate: (ViewCombatant,ViewCombatant)=>Effect.Duration) {
   override def toString():String=text
 }
@@ -16,20 +22,23 @@ trait EffectSubPanelComboOption {
   
   def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition
   
+  def saveMemento():Any
+  
+  def restoreMemento(memento:Any)
+  
   override def toString()=name
 }
 
+object EffectEditor {
+  case class StateMemento(spIdx:Int,spMemento:Any,durIdx:Int,benef:Boolean)
+}
+
 class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3","","[][][22!]") {
+  
   private val smallfont= new java.awt.Font(java.awt.Font.SANS_SERIF,0,10)
 
   private val idComboModel=new ContainterComboBoxModel[String](Nil)
   
-  /**
-   * A combo box option that included the infomartion to display and what to 
-   * generate as an output
-   * @param text To appear on the ComboBox
-   * @param f A function form (source,target)=> Duration
-   */
   private val durationCombo = new ComboBox(
     List(
       DurationComboEntry("End of source's next turn",(s,t)=>{Effect.Duration.RoundBound(s.id,Effect.Duration.Limit.EndOfNextTurn,false)}),
@@ -55,9 +64,18 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
     def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition ={
       Condition.Generic(descField.text)
     }
+    
+    def saveMemento():Any = descField.text
+    
+    def restoreMemento(memento:Any) {
+      memento match {
+        case text:String => descField.text=text 
+        case _ =>
+      }
+    }
   }
   
-  // This is the mark paness
+  // This is the mark panel
   private val markSubPanel=new MigPanel("gap 1 0, ins 0","[][][]","[24!]") with EffectSubPanelComboOption {
     private val markerText = new ExplicitModelComboBox(idComboModel)//new TextField { columns=4}
     private val permanentMarkCheck= new CheckBox("cant be superseded") 
@@ -70,6 +88,20 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
     def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition ={
       Condition.Mark(Symbol(markerText.selection.item),permanentMarkCheck.selected)
     }
+    
+    def saveMemento():Any= (Symbol(markerText.selection.item),permanentMarkCheck.selected)
+    
+    def restoreMemento(memento:Any) {
+      memento match {
+        case (marker:Symbol,perm:Boolean) => 
+          val idx=idComboModel.contents.indexOf(marker.name)
+          permanentMarkCheck.selected=perm
+          markerText.selection.index = idx
+          this.repaint
+        case _ =>
+      }
+    }
+
   }
   
   private val subPanels=List(generalSubPanel,markSubPanel)
@@ -106,9 +138,31 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
         durationCombo.selection.item,
         benefCheckbox.selected
       )
-    //case s => println(s)
+    case event.ButtonClicked(this.clearButton)=>
+      typeCombo.selection.index=0;
+      typeCombo.selection.item.restoreMemento((""))
+      typeCombo.repaint()
+      durationCombo.selection.index=0
+      durationCombo.repaint()
   }
-
+  
+  def restoreMemento(memento:EffectEditor.StateMemento) {
+    typeCombo.selection.index=memento.spIdx
+    durationCombo.selection.index=memento.durIdx
+    benefCheckbox.selected=memento.benef
+    typeCombo.selection.item.restoreMemento(memento.spMemento)
+    this.repaint()
+  }
+  
+  def saveMemento():EffectEditor.StateMemento = {
+    EffectEditor.StateMemento(
+      typeCombo.selection.index,
+      typeCombo.selection.item.saveMemento(),
+      durationCombo.selection.index,
+      benefCheckbox.selected
+    )
+  }
+  
   /**
    * Make sure Add button is enabled only with context active
    */

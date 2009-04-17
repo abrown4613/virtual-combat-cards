@@ -17,35 +17,48 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),"Terrain or other",0,0,null))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
   
-  private val efp1=new EffectEditor(this)
-  private val efp2=new EffectEditor(this)
+  private val efpl = List(
+    new EffectEditor(this),
+    //new EffectEditor(this),
+    new EffectEditor(this))
 
   
   border= javax.swing.BorderFactory.createTitledBorder("Effect Creation")
   add(new Label("Source:"),"span,split 2")
   add(activeCombo,"wrap,growx")
-  addSeparator("Effect")
-  add(efp1,"span 2,wrap,grow x")
-  addSeparator("Effect")
-  add(efp2,"span 2,wrap,grow x")
+  for(efp<-efpl) {
+	  addSeparator("Effect")
+	  add(efp,"span 2,wrap,grow x")
+  }
  
+  
+  // Set and handle reaction to changing the active characters
+  listenTo(activeCombo.selection)
+  reactions += {
+    case event.SelectionChanged(`activeCombo`)=>
+      println(activeCombo.selection.index )
+      println(activeCombo.selection.item.c.name)
+      for(efp<-efpl)
+    	  println(efp.saveMemento())
+  //TEST
+  efpl(0).restoreMemento(EffectEditor.StateMemento(0,("I set this"),4,true))
+  efpl(1).restoreMemento(EffectEditor.StateMemento(1,('G,true),3,false))
+  }
+  
   def updateSequence(seq:Seq[ViewCombatant]):Unit= {
     if(seq.isEmpty) {
       activeCombo.peer.setModel(ComboBox.newConstantModel(List(other)))
-      efp1.setSequence(Nil)
-      efp2.setSequence(Nil)
+      for(efp<-efpl) efp.setSequence(Nil)
     } else {
       var nac=seq.map(c=>{new ActiveCombatant(c)}).toList:::List(other)
       activeCombo.peer.setModel(ComboBox.newConstantModel(nac))
       val lid=seq.map(c=>{c.id.name})
-      efp1.setSequence(lid)
-      efp2.setSequence(lid)
+      for(efp<-efpl) efp.setSequence(lid)
     }
   }
 
   def changeContext(nctx:Option[ViewCombatant]) {
-    efp1.setContext(nctx)
-    efp2.setContext(nctx)
+    for(efp<-efpl) efp.setContext(nctx)
   }
   
   def createEffect(subPanel:EffectSubPanelComboOption,durOption:DurationComboEntry,beneficial:Boolean) {
