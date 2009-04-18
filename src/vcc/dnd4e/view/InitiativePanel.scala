@@ -9,12 +9,14 @@ import vcc.dnd4e.controller._
 import util.swing.MigPanel
 
 class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
-  val startRound_btn=new Button("Start Round")
-  val endRound_btn=new Button("End Round")
-  val moveUp_btn=new Button("Move Up & Start Round")
-  val delay_btn=new Button("Delay")
-  val ready_btn=new Button("Ready Action")
-  val executeReady_btn=new Button("Execute Ready")
+  private val startRound_btn=new Button("Start Round")
+  startRound_btn.tooltip=("Start round of the first combatant")
+  private val endRound_btn=new Button("End Round")
+  endRound_btn.tooltip=("End round of the first combatant")
+  private val moveUp_btn=new Button("Move Up & Start Round")
+  private val delay_btn=new Button("Delay")
+  private val ready_btn=new Button("Ready Action")
+  private val executeReady_btn=new Button("Execute Ready")
 
   private var _first:ViewCombatant=null
   
@@ -30,8 +32,11 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
   for(x<-contents) { listenTo(x); x.enabled=false}
   
   reactions+= {
-    case ButtonClicked(this.startRound_btn) => tracker ! request.StartRound(context.id)
-    case ButtonClicked(this.endRound_btn) => tracker ! request.EndRound(context.id)
+    case ButtonClicked(this.startRound_btn) if(_first!=null) => 
+      tracker ! request.StartRound(_first.id)
+      Thread.sleep(100)
+      changeContext(Some(context))
+    case ButtonClicked(this.endRound_btn) if(_first!=null) => tracker ! request.EndRound(_first.id)
     case ButtonClicked(this.moveUp_btn) => tracker ! request.MoveUp(context.id)
     case ButtonClicked(this.delay_btn) => tracker ! request.Delay(context.id)
     case ButtonClicked(this.executeReady_btn) => tracker ! request.ExecuteReady(context.id)
@@ -43,9 +48,15 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
       var itt=nctx.get.initTracker
       var first=(nctx.get==_first)
       var state=nctx.get.initTracker.state
-      startRound_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.StartRound)
+      if(_first!=null) {
+    	startRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.StartRound)
+    	endRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.Ready)
+      } else {
+        startRound_btn.enabled=false
+        endRound_btn.enabled=false
+      }
       ready_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.Ready) 
-      endRound_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.EndRound)
+      //endRound_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.EndRound)
       moveUp_btn.enabled=(
         itt.canTransform(first,InitiativeTracker.actions.MoveUp) && (
           ((state==InitiativeState.Delaying) && (_first.initTracker.state!=InitiativeState.Acting)) ||
