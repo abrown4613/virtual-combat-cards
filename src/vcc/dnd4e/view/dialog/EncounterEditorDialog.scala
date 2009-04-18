@@ -9,18 +9,20 @@ import vcc.dnd4e.model.{CombatantType,PartyLoader,CombatantTemplate}
 class EncounterEditorDialog(val coord:vcc.controller.Coordinator) extends Frame {
   title = "Party/Encounter Editor"
   
-  val entries=new vcc.util.swing.ProjectionTableModel[EncounterEditorTableEntry](EncounterEditorTableEntryProjection)
+  private val entries=new vcc.util.swing.ProjectionTableModel[EncounterEditorTableEntry](EncounterEditorTableEntryProjection)
   //Buttons
-  val btnAddMonster=new Button("Add Monster")
-  val btnAddMinion=new Button("Add Minion")
-  val btnAddCharacter=new Button("Add Character")
-  val btnRemoveCombatant=new Button("Remove Combatant")
-  val btnExpandSame=new Button("Expand Similar")
-  val btnCompressSame=new Button("Compress Similar")
-  val btnClearAll=new Button("Clear All")
-  val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant,btnExpandSame,btnCompressSame,btnClearAll)
+  private val btnAddMonster=new Button("Add Monster")
+  private val btnAddMinion=new Button("Add Minion")
+  private val btnAddCharacter=new Button("Add Character")
+  private val btnRemoveCombatant=new Button("Remove Combatant")
+  private val btnExpandSame=new Button("Expand Similar")
+  private val btnCompressSame=new Button("Compress Similar")
+  private val btnClearAll=new Button("Clear All")
+  private val btns=List(btnAddMonster,btnAddMinion,btnAddCharacter,btnRemoveCombatant,btnExpandSame,btnCompressSame,btnClearAll)
   
-  val table=new vcc.util.swing.EnhancedTable() {
+  iconImage=IconLibrary.MetalD20.getImage
+  
+  private val table=new vcc.util.swing.EnhancedTable() {
     model=entries
     autoResizeMode=Table.AutoResizeMode.Off
     for(i<-0 to 8)
