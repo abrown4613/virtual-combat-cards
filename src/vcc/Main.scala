@@ -8,7 +8,7 @@ import vcc.util.swing._
 import scala.actors.Actor
 
 import vcc.dnd4e.view.ViewCombatant
-import dnd4e.view.{SequenceTable,ViewCombatant,StatusBar}
+import dnd4e.view.{SequenceTable,ViewCombatant,StatusBar,IconLibrary}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.controller._
 import vcc.dnd4e.controller.request._
@@ -104,6 +104,7 @@ object Main extends SimpleGUIApplication {
 
   var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
 
+ 
   coord.start
   
   val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,coord.tracker)
@@ -121,17 +122,26 @@ object Main extends SimpleGUIApplication {
   uia.start
   coord.addObserver(uia)
 
-  
   def top = new MainFrame {
     title = "Virtual Combat Cards"
-    preferredSize=new java.awt.Dimension(1000,600)
+    
+    preferredSize= {
+      val toolkit = java.awt.Toolkit.getDefaultToolkit();
+      val dimension = toolkit.getScreenSize();
+      if(dimension!=null)
+    	new java.awt.Dimension(if(dimension.getWidth()>=1150) 1150 else 800, if(dimension.getHeight()>=700) 690 else 600)
+      else
+        new java.awt.Dimension(800,600) 
+    }
     contents= new BorderPanel {
       add(commandPanel,BorderPanel.Position.West)
       add(card,BorderPanel.Position.East)
       add(seqTable,BorderPanel.Position.Center)
       add(new MainMenu(coord,uia),BorderPanel.Position.North)
       add(statusBar,BorderPanel.Position.South)
+      iconImage=IconLibrary.MetalD20.getImage()
     }
   }
+  
   
 }	
