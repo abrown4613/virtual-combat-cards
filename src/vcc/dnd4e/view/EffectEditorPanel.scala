@@ -19,11 +19,11 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   
   private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),"Terrain or other",0,0,null))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
-  
-  private val efpl = List(
-    new EffectEditor(this),
-    //new EffectEditor(this),
-    new EffectEditor(this))
+  private val efpl = if(java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>700) {
+	List(new EffectEditor(this),new EffectEditor(this),new EffectEditor(this))
+  } else {
+    List(new EffectEditor(this),new EffectEditor(this))
+  }
   
   border= javax.swing.BorderFactory.createTitledBorder("Effect Creation")
   add(new Label("Source:"),"span,split 2")
@@ -38,14 +38,6 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   reactions += {
     case event.SelectionChanged(`activeCombo`)=>
       switchActive(activeCombo.selection.item.c.name)
-/*      println(activeCombo.selection.index )
-      println(activeCombo.selection.item.c.name)
-      for(efp<-efpl)
-    	  println(efp.saveMemento())
-  //TEST
-  efpl(0).restoreMemento(EffectEditor.StateMemento(0,("I set this"),4,true))
-  efpl(1).restoreMemento(EffectEditor.StateMemento(1,('G,true),3,false))
-  */
   }
   
   def updateSequence(seq:Seq[ViewCombatant]):Unit= {
