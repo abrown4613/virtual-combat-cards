@@ -2,5 +2,5 @@
 package vcc.dnd4e
 
 object BootStrap {
-	val version="0.91"
+	val version="0.92"
 }
