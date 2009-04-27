@@ -50,7 +50,7 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
       var state=nctx.get.initTracker.state
       if(_first!=null) {
     	startRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.StartRound)
-    	endRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.Ready)
+    	endRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.EndRound)
       } else {
         startRound_btn.enabled=false
         endRound_btn.enabled=false
