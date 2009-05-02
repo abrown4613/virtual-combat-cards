@@ -8,7 +8,7 @@ import util.swing.MigPanel
 
 import vcc.dnd4e.controller.actions._
 
-class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) extends MigPanel("","[]5[40][fill][fill][fill]","[]10[]") with ContextualView[ViewCombatant]{
+class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) extends MigPanel("","[fill][fill][fill][fill]","") with ContextualView[ViewCombatant]{
   private val damage=new TextField {
     columns=3
     enabled=false
@@ -26,9 +26,12 @@ class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) exte
   
   private var damageEquation:helper.DamageParser.Term=null
 
-  contents++ List[Component](new Label("Hit Points:"),damage,damage_btn,heal_btn)
+  add(new Label("Hit Points:"))
+  add(damage,"wrap")
+  add(damage_btn,"skip 1")
+  add(heal_btn)
   add(temp_btn,"wrap")
-  add(undie_btn,"skip 2, align left")
+  add(undie_btn,"skip 1,align left")
   add(death_btn,"align left,span 2")
   border=BorderFactory.createTitledBorder("Change Health")
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;

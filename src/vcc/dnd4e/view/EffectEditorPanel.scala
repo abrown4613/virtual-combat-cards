@@ -7,6 +7,7 @@ import scala.actors.Actor
 
 import vcc.dnd4e.controller.request
 import vcc.dnd4e.model.Effect
+import vcc.dnd4e.BootStrap
 
 class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") with SequenceView[ViewCombatant] with ContextualView[ViewCombatant]{
   
@@ -19,7 +20,10 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
   
   private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),"Terrain or other",0,0,null))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
-  private val efpl = if(java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>700) {
+  private val efpl = if(
+    java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>700 &&
+    BootStrap.getPropertyAsInt("vcc.view.efp.max",3)>2
+  ) {
 	List(new EffectEditor(this),new EffectEditor(this),new EffectEditor(this))
   } else {
     List(new EffectEditor(this),new EffectEditor(this))

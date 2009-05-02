@@ -4,8 +4,9 @@ package vcc.dnd4e.view
 import swing._
 import event._ 
 import javax.swing.BorderFactory
+import vcc.util.swing.MigPanel
 
-class CombatantSummaryView extends GridBagPanel with ContextualView[ViewCombatant]{
+class CombatantSummaryView extends MigPanel("","[65!][65!][65!][65!]","") with ContextualView[ViewCombatant]{
   
   protected def createTextField(text:String,cols:Int):TextField = {
     val tf=new TextField(text)
@@ -31,59 +32,39 @@ class CombatantSummaryView extends GridBagPanel with ContextualView[ViewCombatan
   private val reflex_label=createTextField("--",3)
   private val will_label=createTextField("--",3)
 
-  private final val defInset= new java.awt.Insets(2,2,2,2)
-  private final val insetHeader= new java.awt.Insets(2,20,2,10)
-  private def makeConstraints(pos:Pair[Int,Int],l:Int):Constraints = {
-    var c=new Constraints
-    c.gridwidth=l
-    c.fill=GridBagPanel.Fill.Horizontal
-    //c.weightx=1.0
-    c.insets=defInset
-    c.grid=pos
-    c
-  }
-  private def addHeaderLabel(text:String, pos:Pair[Int,Int]) {
-    var c=new Constraints
-    c.gridwidth=1
-    c.fill=GridBagPanel.Fill.Horizontal
-    //c.weightx=1.0
-    c.insets=insetHeader
-    c.grid=pos
-    this.add(createHeaderLabel(text),c)
-  }
-  
   private val name=new Label("-")
-  name.font=new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.ITALIC,24)
-  
+  name.font=new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.ITALIC,20)
   
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;  
   
-  private val name_const=makeConstraints((0,0),5)
-  name_const.weightx=1.0
-  this.add(name,name_const)
-  addHeaderLabel("HP",(0,1))
-  this.add(cur_hp,makeConstraints((1,1),1))
-  addHeaderLabel("Temp HP",(0,2))
-  add(temp_hp,makeConstraints((1,2),1))
-  addHeaderLabel("Total",(0,3))
-  add(total_hp,makeConstraints((1,3),1))
-  addHeaderLabel("Status",(0,4))
-  add(status,makeConstraints((1,4),1))
+  this.add(name,"span 4,align center, wrap")
   
-  addHeaderLabel("AC",(2,1))
-  add(ac_label,(3,1))
-  addHeaderLabel("Fortitude",(2,2))
-  add(fortitude_label,(3,2))
-  addHeaderLabel("Reflex",(2,3))
-  add(reflex_label,(3,3))
-  addHeaderLabel("Will",(2,4))
-  add(will_label,(3,4))
+  add(new Label("HP"),"align right")
+  add(cur_hp)
+  add(new Label("AC"),"align right")
+  add(ac_label,"wrap")
+  
+  add( new Label("Total"),"align right")
+  add(total_hp)
+  add(new Label("Fortitude"),"align right")
+  add(fortitude_label,"wrap")
+  
+  add( new Label("Temp HP"),"align right")
+  add(temp_hp)
+  add(new Label("Reflex"),"align right")
+  add(reflex_label,"wrap")
+
+  add( new Label("Status"),"align right")
+  add(status)
+  add( new Label("Will"),"align right")
+  add(will_label,"wrap")
 
   border= BorderFactory.createTitledBorder("Combatant Information")
 
   private def formatDefense(score:Int):String = {
     if(score>0) score.toString else "--"
-  } 
+  }
+  
   def changeContext(context:Option[ViewCombatant]) = {
     context match {
       case None => 
