@@ -81,7 +81,7 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
     private val permanentMarkCheck= new CheckBox("cant be superseded") 
     val name="Mark"
     add(new Label(" by "),"gap rel")
-    add(markerText,"gap rel, w 40!")
+    add(markerText,"gap rel, wmin 40")
     add(permanentMarkCheck)
     visible=false
 
