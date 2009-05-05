@@ -53,6 +53,11 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
         sequence.add(c.id)
       })
     }
+    
+    case request.MoveBefore(context.InMap(who),context.InMap(before)) =>
+      if(who.it.value.state != InitiativeState.Acting && before.it.value.state != InitiativeState.Acting ) {
+        sequence.moveBefore(who.id,before.id)
+      }
       
     case request.InternalInitiativeAction(cmb,action) =>
       import InitiativeTracker.actions._
