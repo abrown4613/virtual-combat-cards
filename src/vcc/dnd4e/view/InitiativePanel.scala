@@ -19,7 +19,9 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
   private val delay_btn=new Button("Delay")
   private val ready_btn=new Button("Ready Action")
   private val executeReady_btn=new Button("Execute Ready")
-  private val moveBefore_btn=new Button("Move Before")
+  private val moveBefore_btn=new Button("Move")
+  private val moveLabel=new Label("Move select combatant before:")
+  moveLabel.horizontalAlignment= scala.swing.Alignment.Right
   private val candidateBefore = new ContainterComboBoxModel[String](Nil)
   private val before_Combo=new ExplicitModelComboBox[String](candidateBefore)
   
@@ -35,11 +37,12 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
   add(moveUp_btn,"wrap")
   contents+=executeReady_btn
   add(ready_btn,"wrap")
+  add(moveLabel,"align right")
+  add(before_Combo,"split 2")
   add(moveBefore_btn)
-  add(before_Combo)
   border=javax.swing.BorderFactory.createTitledBorder("Initiative Actions")
   
-  for(x<-contents) { listenTo(x); x.enabled=false}
+  for(x<-contents) { listenTo(x); x.enabled= x.isInstanceOf[Label] }
   
   reactions+= {
     case ButtonClicked(this.startRound_btn) if(_first!=null) => 
@@ -69,7 +72,10 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
       }
       moveBefore_btn.enabled = nctx.get.initTracker.state!=InitiativeState.Acting && nctx.get.initTracker.state!=InitiativeState.Reserve
       before_Combo.enabled=moveBefore_btn.enabled
-      ready_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.Ready) 
+      moveLabel.enabled=moveBefore_btn.enabled
+      ready_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.Ready)
+      moveLabel.text="Move ["+ nctx.get.id.name  +"] before:"
+      
       //endRound_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.EndRound)
       moveUp_btn.enabled=(
         itt.canTransform(first,InitiativeTracker.actions.MoveUp) && (
@@ -85,6 +91,7 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
       candidateBefore.contents = before
       before_Combo.selection.index = -1
     } else {
+      moveLabel.text="Move select combatant before:"
       for(x<-this.contents) { x.enabled=false; }
     }
   }
