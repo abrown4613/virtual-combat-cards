@@ -54,6 +54,10 @@ case class ExecuteReady(who:Symbol) extends InitiativeAction {
   def description():String = who.name + " executed a ready action"
 }
 
+case class MoveBefore(who:Symbol,before:Symbol) extends InitiativeAction {
+  def description():String = who.name + " moving before "+before.name + " in the sequence"
+}
+
 case class InternalInitiativeAction(comb:TrackerCombatant,action:InitiativeTracker.actions.Value) extends InitiativeAction {
   def description():String = comb.name + " executed initiative action " + action
 }

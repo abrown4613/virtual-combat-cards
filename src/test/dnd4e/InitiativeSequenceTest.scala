@@ -247,6 +247,62 @@ class InitiativeSequenceTest extends TestCase {
 	assert(extractCombatSequence()==List('E,'A,'B,'C,'D))
 	assert(extractCombatantInitiatives().contains('E,InitiativeTracker(1,Acting)))
   }
+  
+  
+  /**
+   * Test move before action, this is an initiative sequence actions so it should:
+   * 1) Not change tracker status
+   * 2) Allow move before acting combatant
+   * 3) Allow move before reserver
+   * 4) Move acting char
+   */
+  def testMoveBefore() {
+    testStartCombat()
+	val s1 = extractCombatSequence()
+	val ai1= extractCombatantInitiatives()
+	assert(s1==List('A,'B,'C,'D,'E),s1)
+
+	startRound('A)
+
+	// Move A before D, this must fail because A is acting
+	mockTracker.dispatch(request.MoveBefore('A,'D))
+	sequenceUnchanged()
+ 
+	// Move D befora A, must fail since A is acting
+	mockTracker.dispatch(request.MoveBefore('D,'A))
+	sequenceUnchanged()
+
+	// Move F befora D, must fail because 'F is not in the sequence
+	mockTracker.dispatch(request.MoveBefore('D,'A))
+	sequenceUnchanged()
+
+ 	// Move E befora B, must fail since E is in reserve
+	mockTracker.dispatch(request.MoveBefore('E,'B))
+	sequenceUnchanged()
+
+  	// Move B befora B, must fail since move the same
+	mockTracker.dispatch(request.MoveBefore('B,'B))
+	sequenceUnchanged()
+
+	// Move D befora B, should work
+	mockTracker.dispatch(request.MoveBefore('D,'B))
+	val ci2=extractCombatantInitiatives()
+	assert(ci2==Nil,ci2)
+	assert(extractCombatSequence()==List('A,'D,'B,'C,'E),extractCombatSequence)
+
+	// Move C befora E, must fail since E is in reserve
+	mockTracker.dispatch(request.MoveBefore('C,'E))
+	sequenceUnchanged()
+
+	endRound('A,List('D,'B,'C,'A,'E))
+
+	// Move D before B (move back), should work 
+	mockTracker.dispatch(request.MoveBefore('D, 'C))
+	val ci3=extractCombatantInitiatives()
+	assert(ci3==Nil,ci3)
+	assert(extractCombatSequence()==List('B,'D,'C,'A,'E))
+ 
+  }
 
   def startRound(who:Symbol) {
 	val init=mockTracker.controller.context.map(who).it.value

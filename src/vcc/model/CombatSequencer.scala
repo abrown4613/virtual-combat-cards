@@ -54,6 +54,21 @@ class CombatSequencer extends ChangeNotifier {
   }
   
   /**
+   * Move element 'elem' to a position before 'before'. Elements cant be in the reserve, 
+   * can't be the same element and must be in the list
+   * @param elem The element to move
+   * @param before The element before with elem must be placed
+   */
+  def moveBefore(elem:T,before:T)(implicit trans:Transaction) {
+    if(elem != before && !_reserve.value(elem) && !_reserve.value(before) && _sequence.value.contains(elem) && _sequence.value.contains(before)) {
+      val elist=List(elem)
+      val lst=_sequence.value -- elist
+      val (lh,lr)=lst.splitAt(lst.indexOf(before))
+      _sequence.value=lh:::List(elem):::lr
+    }
+  }
+  
+  /**
    * Add an combatant to the reserve.
    */
   def add(elem:T)(implicit trans:Transaction) {
