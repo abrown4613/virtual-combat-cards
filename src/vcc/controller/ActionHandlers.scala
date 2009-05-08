@@ -37,14 +37,22 @@ class TransactionalProcessor[C](val context:C) {
   def dispatch(transaction:Transaction,action:TransactionalAction):Unit = { 
     rewriteEnqueue(action)
     trans=transaction
-    while(!msgQueue.isEmpty) {
+    try {
+      while(!msgQueue.isEmpty) {
     	val msg=msgQueue.dequeue
     	for(hndl<-handlers) {
     		if(hndl.isDefinedAt(msg)) hndl.apply(msg)
     	}
+      }
+    } catch {
+      // We had an exception, flush message buffer to avoid leaving trash messages
+      case e => 
+        msgQueue.clear()
+        throw e
     }
     trans=null
   }
+  
 }
 
 /**

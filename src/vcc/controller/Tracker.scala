@@ -71,10 +71,20 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
           observers=obs::observers
         case actions.SetCoordinator(coord) => 
           this._coord=coord
+          
         case ta:actions.TransactionalAction => 
           val trans=startTransaction()
-          controller.dispatch(trans,ta)
-          closeTransaction(ta,trans)
+          try {
+        	controller.dispatch(trans,ta)
+        	closeTransaction(ta,trans)
+          } catch {
+            case e => 
+              println("An exception occured, rolling back.\n")
+              trans.cancel()
+              e.printStackTrace(System.out)
+              controller
+          }
+          
         case actions.StartTransaction(tname) =>
           if(_composedAction==null)
             _composedAction=new ComposedAction(tname)
