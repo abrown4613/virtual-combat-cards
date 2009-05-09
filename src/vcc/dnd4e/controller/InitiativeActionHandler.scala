@@ -67,8 +67,14 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
     	//Close round and out advance dead
     	sequence.moveDown(cmb.id)
     	val next=context.map(context.sequence.sequence.head)
-    	if(next.health.status == HealthTracker.Status.Dead) 
-    	  msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+    	if(next.health.status == HealthTracker.Status.Dead) {
+    	  // Need to check if the dead combatant is delay, and end its round accordingly
+    	  if(next.it.value.state == InitiativeState.Delaying) {
+    	    msgQueue.enqueue(InternalInitiativeAction(next,EndRound),InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+    	  } else {
+    		msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+          }
+    	}
       }
       
       val firstp=this.context.map(sequence.sequence.head).id==cmb.id
@@ -86,7 +92,7 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
     	  case _ =>
     	}
       } else {
-        throw new Exception("Error: Cant process "+(firstp,action)+ " on state "+itt)
+        throw new Exception("Error: Cant process "+(firstp,action)+ " on state "+itt +" of "+cmb.id.name)
       }
   }
 }
