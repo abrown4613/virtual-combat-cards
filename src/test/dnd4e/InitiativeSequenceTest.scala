@@ -240,6 +240,37 @@ class InitiativeSequenceTest extends TestCase {
 	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
 	assert(al==List(('A,Ready),('A,EndRound),('B,StartRound),('B,EndRound),('C,StartRound),('C,EndRound)))
   }
+
+  /**
+   * Start and end round in front of a bunch of dead guys, must skip the dead
+   * including Delaying deads
+   */
+  def testAutoStartDelayedDeadIssue85() {
+    import InitiativeTracker.actions._
+    testStartCombat()
+    
+
+    startRound('A)
+    mockTracker.dispatch(request.Ready('A))
+	assert(extractCombatantInitiatives().contains('A,InitiativeTracker(1,InitiativeState.Ready)))
+
+	mockTracker.dispatch(request.Delay('B))
+	assert(extractCombatantInitiatives().contains('B,InitiativeTracker(1,InitiativeState.Delaying)))
+
+	assert(extractCombatSequence()==List('C,'D,'A,'B,'E))
+
+	killSomeCombatant(List('A,'B))
+ 
+	startRound('C)
+	endRound('C,List('D,'A,'B,'C,'E))
+
+	startRound('D)
+	endRound('D,List('C,'D,'A,'B,'E))
+    
+	// Make sure that actions are called internally
+	val al=for(request.InternalInitiativeAction(cmb,act)<-mockTracker.actionsExecuted) yield (cmb.id,act)
+	assert(al==List(('D,EndRound),('A,StartRound),('A,EndRound),('B,EndRound),('B,StartRound),('B,EndRound)),al)
+  }
   
   def testMoveOutOfReserve() {
     testStartCombat()
