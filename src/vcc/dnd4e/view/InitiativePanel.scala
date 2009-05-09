@@ -49,7 +49,10 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
       tracker ! request.StartRound(_first.id)
       Thread.sleep(100)
       changeContext(Some(context))
-    case ButtonClicked(this.endRound_btn) if(_first!=null) => tracker ! request.EndRound(_first.id)
+    case ButtonClicked(this.endRound_btn) if(_first!=null) => 
+      tracker ! request.EndRound(_first.id)
+      Thread.sleep(100)
+      changeContext(Some(context)) //TODO: This is a hack
     case ButtonClicked(this.moveUp_btn) => tracker ! request.MoveUp(context.id)
     case ButtonClicked(this.delay_btn) => tracker ! request.Delay(context.id)
     case ButtonClicked(this.executeReady_btn) => tracker ! request.ExecuteReady(context.id)
