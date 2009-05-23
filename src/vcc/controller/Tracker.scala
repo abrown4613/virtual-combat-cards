@@ -79,10 +79,10 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
         	closeTransaction(ta,trans)
           } catch {
             case e => 
-              println("An exception occured, rolling back.\n")
-              trans.cancel()
+              println("An exception occured while processing: "+ ta)
               e.printStackTrace(System.out)
-              controller
+              println("Rolling back transaction")
+              trans.cancel()
           }
           
         case actions.StartTransaction(tname) =>
