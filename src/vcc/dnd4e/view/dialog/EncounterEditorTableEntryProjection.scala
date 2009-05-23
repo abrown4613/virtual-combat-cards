@@ -19,7 +19,7 @@ object EncounterEditorTableEntryProjection extends vcc.util.swing.TableModelRowP
   val setter:PartialFunction[(Int,EncounterEditorTableEntry,Any),Unit]= {
     case (0,entry,v) if(entry.qty==1)=> 
       entry.id=v.asInstanceOf[String].toUpperCase
-    case (1,entry,v) if(entry.id=="")=> 
+    case (1,entry,v) if(entry.id=="" || entry.id == null )=> 
       entry.qty=v.asInstanceOf[Int]
       if(entry.qty<1) entry.qty=1
     case (2,entry,v) => 
