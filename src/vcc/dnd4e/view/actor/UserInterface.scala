@@ -1,7 +1,7 @@
 //$Id$
 package vcc.dnd4e.view.actor
 
-import vcc.dnd4e.model.{HealthTracker,InitiativeTracker}
+import vcc.dnd4e.model.{HealthTracker,InitiativeTracker,InitiativeState}
 case class Combatant(vc:ViewCombatant)
 case class SetHealth(id:Symbol, hts:HealthTracker)
 case class SetInitiative(id:Symbol, init:InitiativeTracker)
@@ -101,7 +101,7 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetSequence(seq)=>
           var l=seq.filter(_map.contains(_)).map(_map(_))
           _seq=l // Save all elements irrespective of health, then filter health and proppagate
-          if(_hidedead) l=l.filter(x=>x.health.status!=HealthTracker.Status.Dead)
+          if(_hidedead) l=l.filter(x=> x.health.status!=HealthTracker.Status.Dead || x.initTracker.state == InitiativeState.Acting)
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
         case GoToFirst() =>
