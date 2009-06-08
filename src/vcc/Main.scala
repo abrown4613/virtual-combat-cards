@@ -173,7 +173,7 @@ object Main extends SimpleGUIApplication {
   }
   
   if(!vcc.util.Configuration.isConfigured) {
-    println("Can't find the configuration")
+    //println("Can't find the configuration")
   }
   
 }
