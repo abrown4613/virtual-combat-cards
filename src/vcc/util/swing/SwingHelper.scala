@@ -26,8 +26,12 @@ object SwingHelper {
   }
   
   def openDesktopBrowser(url:java.net.URL) {
-	val dsk=java.awt.Desktop.getDesktop
-    dsk.browse(url.toURI)
+    try {
+      val dsk=java.awt.Desktop.getDesktop
+      dsk.browse(url.toURI)
+    }catch {
+      case _ => println("Failed to open browser on URL: "+url)
+    }
   }
 }
 
