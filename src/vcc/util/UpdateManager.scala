@@ -1,4 +1,4 @@
-//$Id: UpdateManager.scala 247 2009-06-01 03:08:46Z tms $
+//$Id$
 package vcc.util
 
 import java.net.URL
@@ -54,6 +54,7 @@ object UpdateManager {
    */
   def checkAvailableVersions(stream: InputSource):Seq[Release] = {
     val release= XML.load(stream)
+    val useUnpublished = System.getProperty("vcc.update.unpublished") != null
     
     val releases:Seq[Release] = (release \\ "release").map { release => 
       val major = XMLHelper.nodeSeq2Int(release \ "version_major",0)
@@ -63,12 +64,14 @@ object UpdateManager {
       val download = XMLHelper.nodeSeq2String(release \ "download_link",null)
       val md5 = XMLHelper.nodeSeq2String(release \ "mdhash",null)
       val info = XMLHelper.nodeSeq2String(release \ "release_link",null)
-      if(XMLHelper.nodeSeq2String(release \ "status")!= "published" || download == null) null
+
+      if((! useUnpublished && XMLHelper.nodeSeq2String(release \ "status")!= "published") || download == null) null
       else Release(
         Version(major,minor,patch,extra),
           if(download!=null)new URL(download) else null,
           md5,
-          if(info!=null)new URL(info) else null)
+          if(info!=null)new URL(info) else null
+      	)
     }.filter(r=> r != null)
     assert(releases!=null)
     releases
