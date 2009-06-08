@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="VCC" default="dist" basedir="..">
+	
+  <property name="classpath"  value="bin"/>
+  <property name="version" value="0.95.0" />
+  <property name="dist" value="dist" />
+	<property name="package" value="${dist}/package" />
+	<property name="deplib" value="${dist}/deplib" />
+	<property name="installer" value="${dist}/installer" />
+  <property name="vcc.jar" value="${installer}/lib/vcc.jar" />
+
+	<fileset id="deplibs" dir="${deplib}">
+		<include name="*.jar" />
+		<exclude name="vccrun.jar"/>
+	</fileset>
+
+	<target name="treestruct">
+		<mkdir dir="${dist}"/>
+  	<mkdir dir="${deplib}"/>
+		<mkdir dir="${package}" />
+		<mkdir dir="${installer}" />
+  	<mkdir dir="${installer}/lib" />
+  	<mkdir dir="${installer}/sample" />
+	</target>
+	
+	<target name="vccjar">
+  	<jar jarfile="${vcc.jar}" 
+  		basedir="${classpath}"
+  		excludes="test/*"
+  	/>
+	</target>
+
+
+	<target name="installzip" depends="treestruct,vccjar">
+		<copy todir="${installer}/lib" file="ant/library.lst" />
+		
+  	<copy todir="${installer}/lib" verbose="true">
+			<fileset refid="deplibs" />
+		</copy>
+  	<copy todir="${installer}/sample">
+  	  <fileset dir="sample"/>
+  	</copy>
+  	<zip destfile="${package}/install.zip" basedir="${installer}" includes="**" />
+	</target>
+	
+	<target name="packagezip" depends="installzip">
+  	<copy todir="${package}">
+  	  <fileset dir="scripts"/>
+  		<fileset dir="${deplib}">
+  			<filename name="vccrun.jar" />
+  		</fileset>
+  	</copy>
+  	<zip destfile="${dist}/vcc-${version}.zip" basedir="${package}" includes="**">
+  	</zip>
+	</target>
+	
+	
+	<target name="build" depends="packagezip">	
+  	
+  </target>
+
+  <target name="dist" depends="build">
+	</target>
+	
+  <target name="dist-patch" depends="build">
+  	<zip destfile="${dist}-${version}.zip" basedir="${package}" includes="vcc/bin/vcc.jar"></zip>
+	</target>
+	<target name="clean">
+  	<deltree dir="${dist}"/>
+  </target>
+</project>

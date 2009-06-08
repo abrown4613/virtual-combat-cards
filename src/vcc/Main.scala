@@ -86,10 +86,39 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     encEditor.visible=true
   })
   
+  //Help menu
+  val helpMenu = new Menu("Help")
+  helpMenu.contents += new MenuItem(Action("Online Manual"){
+    val dsk=java.awt.Desktop.getDesktop
+    dsk.browse(new java.net.URL("http://www.exnebula.org/vcc/manual").toURI)
+  })
+
+  helpMenu.contents += new MenuItem(Action("Check for Updates ..."){
+    SwingHelper.invokeInOtherThread( ()=> {
+      println("Update manager: Starting update")
+      val url=System.getProperty("vcc.releaseurl","http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
+      println("Update manager: Fetch version from URL: "+url)
+      vcc.util.UpdateManager.runUpgradeProcess(new java.net.URL(url))
+      println("Update manager: End update")
+    })
+  })
+
+  helpMenu.contents += new Separator
+  helpMenu.contents += new MenuItem(Action("About") {
+    Dialog.showMessage(
+      this,
+      "This is Virtual Combant Cards version: "+ vcc.dnd4e.BootStrap.version.versionString+
+        "\nDesigned at: www.exnebula.org",
+      "About Virtual Combat Cards",
+      Dialog.Message.Info, vcc.dnd4e.view.IconLibrary.MetalD20
+    )
+  })
+  
   contents+=fileMenu
   contents+=combatMenu
   contents+=historyMenu
   contents+=viewMenu
+  contents+=helpMenu
 }
 
 object Main extends SimpleGUIApplication {
@@ -143,5 +172,8 @@ object Main extends SimpleGUIApplication {
     }
   }
   
+  if(!vcc.util.Configuration.isConfigured) {
+    println("Can't find the configuration")
+  }
   
-}	
+}

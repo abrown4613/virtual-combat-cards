@@ -1,0 +1,81 @@
+<project xmlns:dc="http://purl.org/dc/elements/1.1/">
+<title>Virtual Combat Cards</title>
+<short_name>vcc</short_name>
+<dc:creator>admin</dc:creator>
+<api_version>all</api_version>
+<project_status>published</project_status>
+<link>http://www.exnebula.org/vcc/download</link>
+<releases>
+ <release>
+  <name>Virtual Combat Cards 2.0.1-RC1</name>
+  <version>2.0.1-RC1</version>
+  <version_major>2</version_major>
+  <version_minor>0</version_minor>
+  <version_patch>1</version_patch>
+  <version_extra>RC1</version_extra>
+  <status>published</status>
+  <download_link>http://www.exnebula.org/files/vcc-2.0.1-RC1.zip</download_link>
+  <release_link>http://www.exnebula.org/node/21</release_link>
+ </release>
+ <release>
+  <name>Virtual Combat Cards 1.2.3 is out</name>
+  <version>1.2.3-RC1</version>
+  <version_major>1</version_major>
+  <version_minor>2</version_minor>
+  <version_patch>3</version_patch>
+  <version_extra>RC1</version_extra>
+  <status>unpublished</status>
+  <date>1238523460</date>
+  <download_link>http://www.exnebula.org/files/vcc-1.2.3-RC1.zip</download_link>
+  <mdhash>d2dfd126172806b4b28289d3c20fb3ac</mdhash>
+ </release>
+ <release>
+  <name>Virtual Combat Cards 1.0.0</name>
+  <version>1.0.0</version>
+  <version_major>1</version_major>
+  <version_minor>0</version_minor>
+  <version_patch>0</version_patch>
+  <status>published</status>
+  <release_link>http://www.exnebula.org/node/12</release_link>
+  <download_link>http://www.exnebula.org/files/vcc-1.0.0.zip</download_link>
+  <date>1238506968</date>
+  <mdhash>d2dfd126172806b4b28289d3c20fb3ac</mdhash>
+ </release>
+ <release>
+  <name>Virtual Combat Cards 0.95</name>
+  <version>0.95.0</version>
+  <version_major>0</version_major>
+  <version_minor>95</version_minor>
+  <version_patch>0</version_patch>
+  <version_extra>echo</version_extra>
+  <status>published</status>
+  <release_link>http://www.exnebula.org/node/10</release_link>
+  <download_link>http://www.exnebula.org/files/vcc-0.10.zip</download_link>
+  <date>1238505019</date>
+  <mdhash>1a359a82bc713df7f2acdda9a7147976</mdhash>
+ </release>
+ <release>
+  <name>Virtual Combat Cards 0.90.1</name>
+  <version>0.90.1</version>
+  <version_major>0</version_major>
+  <version_minor>90</version_minor>
+  <version_patch>1</version_patch>
+  <status>published</status>
+  <release_link>http://www.exnebula.org/node/6</release_link>
+  <download_link>http://www.exnebula.org/files/vcc-0.90.zip</download_link>
+  <date>1238502640</date>
+  <mdhash>9e45876d5f12b7f40f5d4b4bdd353752</mdhash>
+ </release>
+ <release>
+  <name>Virtual Combat Cards 0.90</name>
+  <version>0.90</version>
+  <version_major>0</version_major>
+  <version_minor>90</version_minor>
+  <status>published</status>
+  <release_link>http://www.exnebula.org/node/3</release_link>
+  <download_link>http://www.exnebula.org/files/Treasure.zip</download_link>
+  <date>1237591728</date>
+  <mdhash>720f332f0b9c3655d9aeeedfd09ae747</mdhash>
+ </release>
+</releases>
+</project>
