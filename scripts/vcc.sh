@@ -14,5 +14,5 @@ else
 	echo "Running on other Unix"
 	JAVA=java
 fi
-CLASSPATH="bin/scala-swing.jar:bin/scala-library.jar:bin/miglayout-3.6.2-swing.jar:bin/vcc.jar"
-$JAVA -cp $CLASSPATH $ARGS vcc.Main
+#CLASSPATH="bin/scala-swing.jar:bin/scala-library.jar:bin/miglayout-3.6.2-swing.jar:bin/vcc.jar"
+$JAVA $ARGS -jar vccrun.jar

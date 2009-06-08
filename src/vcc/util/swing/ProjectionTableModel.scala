@@ -12,20 +12,6 @@ abstract class TableModelRowProjection[T] {
   def set(col:Int,obj:T,value:Any):Unit=if(setter!=null && setter.isDefinedAt(col,obj,value)) setter(col,obj,value)
 }
 
-object SwingHelper {
-  
-  def makeRunnable(f:()=>Unit):java.lang.Runnable =
-    new java.lang.Runnable {
-      def run() {
-        f.apply()
-      }
-    } 
-  
-  def invokeLater(f:()=>Unit) {
-    javax.swing.SwingUtilities.invokeLater(makeRunnable(f))
-  }
-}
-
 class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax.swing.table.AbstractTableModel {
   var elem:Seq[T]=Nil
   def getValueAt(row:Int,col:Int):java.lang.Object= if(elem.size>row )proj(col,elem(row)) else null

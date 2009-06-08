@@ -6,7 +6,7 @@ import vcc.dnd4e.BootStrap
 import scala.swing._
 
 class StatusBar(uia: scala.actors.Actor) extends MigPanel("ins 1,fillx") {
-  private val versionLabel= new Label("Version: "+BootStrap.version)
+  private val versionLabel= new Label("Version: "+BootStrap.version.versionString)
   private val tipLabel = new Label("Welcome to Virtual Combat Cards") 
   tipLabel.xAlignment= Alignment.Left
 
