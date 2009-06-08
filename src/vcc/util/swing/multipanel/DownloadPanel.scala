@@ -10,7 +10,7 @@ import scala.actors.Actor.{actor,loop,react,receive}
 import vcc.util.Downloader
 
 class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with AbstractPanel[File] {
-  add(new Label("Downloading "+url),"wrap")
+  add(new Label("Downloading: "+url),"wrap")
   private val progress=new ProgressBar()
   private val cancelButton=new Button("Cancel")
   private val kbytesCount= new Label("0/0")

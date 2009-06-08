@@ -96,7 +96,7 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   helpMenu.contents += new MenuItem(Action("Check for Updates ..."){
     SwingHelper.invokeInOtherThread( ()=> {
       println("Update manager: Starting update")
-      val url=System.getProperty("vcc.releaseurl","http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
+      val url=System.getProperty("vcc.update.url","http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
       println("Update manager: Fetch version from URL: "+url)
       vcc.util.UpdateManager.runUpgradeProcess(new java.net.URL(url))
       println("Update manager: End update")
