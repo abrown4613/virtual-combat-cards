@@ -73,9 +73,9 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
   def changeContext(nctx:Option[ViewCombatant]) {
     nctx match {
       case Some(c) => 
-        SwingHelper.invokeLater(()=>{
+        SwingHelper.invokeLater{
           effectTable.content= (0 to c.effects.length-1).map(pos=>(c.id,pos,c.effects(pos)))
-        })
+        }
       case None =>
     }
   }

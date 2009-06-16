@@ -54,15 +54,15 @@ class UserInterface(tracker:Actor) extends Actor {
    * race conditions.
    */
   protected def signalContext(o:Option[T]) {
-    util.swing.SwingHelper.invokeLater(()=> {
+    util.swing.SwingHelper.invokeLater {
       for(x<-ctxAware) x.context=(o)
-    })
+    }
   }
   
   protected def signalSequence(seq:Seq[T]) {
-    util.swing.SwingHelper.invokeLater(()=> {
+    util.swing.SwingHelper.invokeLater {
       for(x<-seqAware) x.updateSequence(seq)
-    })
+    }
   }
   
   def flush():Unit = {
