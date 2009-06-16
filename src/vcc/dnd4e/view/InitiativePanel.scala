@@ -35,7 +35,6 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
   endRound_btn.tooltip=("End round of the first combatant (Alt-E)")
   endRound_btn.peer.setMnemonic(java.awt.event.KeyEvent.VK_E)
   
-  
   private val moveUp_btn=new Button("Move Up & Start Round")
   //This is a test
   val a = javax.swing.KeyStroke.getKeyStroke("control alt 7")

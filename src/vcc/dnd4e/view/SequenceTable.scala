@@ -52,7 +52,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
         uia ! actor.SetContext(c.id)
       }	
   }
-
+  
   def updateSequence(seq:Seq[ViewCombatant]):Unit = { 
     table.content=seq
     table.selection.rows.clear
@@ -76,11 +76,11 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
    * values in the table.
    */
   def fireUpdate() {
-    SwingHelper.invokeLater(()=>{
+    SwingHelper.invokeLater {
       _doingContextChange=true;
       table.projection.fireTableRowsUpdated(0,table.content.length-1)
       _doingContextChange=false                                                                 
-    })
+    }
   }
   
 }

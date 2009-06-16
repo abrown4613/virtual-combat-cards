@@ -20,18 +20,18 @@ package vcc.util.swing
 object SwingHelper {
   import javax.swing.SwingUtilities
   
-  def makeRunnable(f:() =>Unit):java.lang.Runnable =
+  def makeRunnable(f: =>Unit):java.lang.Runnable =
     new java.lang.Runnable {
       def run() {
-        f.apply()
+        f
       }
     } 
   
-  def invokeLater(f:()=>Unit) {
+  def invokeLater(f: =>Unit) {
     javax.swing.SwingUtilities.invokeLater(makeRunnable(f))
   }
   
-  def invokeInOtherThread( f: () =>Unit) {
+  def invokeInOtherThread( f: =>Unit) {
     if(SwingUtilities.isEventDispatchThread()) {
       var run=makeRunnable(f)
       val thr=new Thread(run)
