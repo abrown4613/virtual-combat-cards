@@ -25,27 +25,18 @@ import vcc.dnd4e.controller._
 import util.swing.MigPanel
 import util.swing.ExplicitModelComboBox
 import util.swing.ContainterComboBoxModel
+import vcc.util.swing.KeystrokeActionable
 
 class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
-  private val startRound_btn=new Button("Start Round")
-  startRound_btn.tooltip=("Start round of the first combatant (Alt-S)")
-  startRound_btn.peer.setMnemonic(java.awt.event.KeyEvent.VK_S)
+  private val startRound_btn=new Button("Start Round") with KeystrokeActionable
+  startRound_btn.tooltip=("Start round of the first combatant (Ctrl-S)")
+  startRound_btn.bindKeystrokeAction("control S",Action("Start round") { startRound_btn.doClick() })
 
-  private val endRound_btn=new Button("End Round")
-  endRound_btn.tooltip=("End round of the first combatant (Alt-E)")
-  endRound_btn.peer.setMnemonic(java.awt.event.KeyEvent.VK_E)
-  
+  private val endRound_btn=new Button("End Round") with KeystrokeActionable
+  endRound_btn.tooltip=("End round of the first combatant (Ctrl-E)")
+  endRound_btn.bindKeystrokeAction("control E",Action("End round") { endRound_btn.doClick() })
+
   private val moveUp_btn=new Button("Move Up & Start Round")
-  //This is a test
-  val a = javax.swing.KeyStroke.getKeyStroke("control alt 7")
-  println("Keystroke "+a)
-  moveUp_btn.peer.getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(a,"theAction")
-  moveUp_btn.peer.getActionMap.put("theAction",new javax.swing.AbstractAction() {
-    def actionPerformed(e:java.awt.event.ActionEvent) {
-      moveUp_btn.doClick
-    }
-  })
-  
   private val delay_btn=new Button("Delay")
   private val ready_btn=new Button("Ready Action")
   private val executeReady_btn=new Button("Execute Ready")
