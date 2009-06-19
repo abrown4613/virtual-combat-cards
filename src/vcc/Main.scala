@@ -153,7 +153,7 @@ object Main extends SimpleGUIApplication {
   coord.start
   
   val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,coord.tracker)
-  val seqTable = new vcc.dnd4e.view.SequenceTable(uia)
+  val seqTable = new vcc.dnd4e.view.SequenceTable(uia,coord.tracker)
   val card=new vcc.dnd4e.view.CombatantCard(coord.tracker)
   val statusBar=new StatusBar(uia)
   
@@ -161,6 +161,7 @@ object Main extends SimpleGUIApplication {
   uia.addSequenceListener(seqTable)
   uia.addSequenceListener(commandPanel)
   uia.addContextListener(commandPanel)
+  uia.addContextListener(commandPanel.effectEditorPanel)
   uia.addContextListener(seqTable)
   uia.addContextListener(card)
   uia.setStatusBar(statusBar)

@@ -25,16 +25,16 @@ import vcc.dnd4e.controller._
 import util.swing.MigPanel
 import util.swing.ExplicitModelComboBox
 import util.swing.ContainterComboBoxModel
-import vcc.util.swing.KeystrokeActionable
+import vcc.util.swing.{KeystrokeActionable,FocusCondition}
 
 class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
   private val startRound_btn=new Button("Start Round") with KeystrokeActionable
   startRound_btn.tooltip=("Start round of the first combatant (Ctrl-S)")
-  startRound_btn.bindKeystrokeAction("control S",Action("Start round") { startRound_btn.doClick() })
+  startRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control S",Action("Start round") { startRound_btn.doClick() })
 
   private val endRound_btn=new Button("End Round") with KeystrokeActionable
   endRound_btn.tooltip=("End round of the first combatant (Ctrl-E)")
-  endRound_btn.bindKeystrokeAction("control E",Action("End round") { endRound_btn.doClick() })
+  endRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control E",Action("End round") { endRound_btn.doClick() })
 
   private val moveUp_btn=new Button("Move Up & Start Round")
   private val delay_btn=new Button("Delay")
@@ -123,4 +123,5 @@ class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fi
     _first=if(seq.isEmpty)null else seq(0)
     _seq=seq.toList
   }
+  
 }

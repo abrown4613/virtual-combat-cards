@@ -28,6 +28,8 @@ case class GoToFirst()
 case class SetOption(opt:Symbol,state:Boolean)
 case class ClearSequence()
 case class SetTip(tip:String)
+case class SetActing(id:Symbol)
+case class QueryInfo(tag:Symbol)
 
 import scala.actors.Actor._
 import scala.actors.Actor
@@ -41,6 +43,7 @@ class UserInterface(tracker:Actor) extends Actor {
   private var _hidedead=false
   private var _seq:Seq[T]=Nil
   private var _ctx:Option[T]=None
+  private var _acting:Option[T]=None
   private var seqAware:List[SequenceView[T]]=Nil
   private var ctxAware:List[ContextualView[T]]=Nil
   private var statusBar:StatusBar=null
@@ -120,6 +123,7 @@ class UserInterface(tracker:Actor) extends Actor {
           if(_hidedead) l=l.filter(x=> x.health.status!=HealthTracker.Status.Dead || x.initTracker.state == InitiativeState.Acting)
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
+
         case GoToFirst() =>
           _ctx=Some(_first)
           signalContext(_ctx)
@@ -137,8 +141,24 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetTip(str) =>
           statusBar.setTipText(str)
           
+        case QueryInfo('ACTING) => reply(_acting)
+        
+        case SetActing(InMap(o)) =>
+          if(_acting != Some(o))changeActing(Some(o))
+          
+        case SetActing(other) =>
+          if(_acting != None) changeActing(None)
+          
         case s => println("UIA: Unhandled message:" + s)
       }
     }
+  }
+  
+  //FIXME: This is really a quick hack shoudl update to something better
+  def changeActing(opt:Option[ViewCombatant]) {
+    _acting = opt
+	for(x<-ctxAware if(x.isInstanceOf[EffectEditorPanel])) {
+	  x.asInstanceOf[EffectEditorPanel].setActing(opt)
+	}
   }
 }

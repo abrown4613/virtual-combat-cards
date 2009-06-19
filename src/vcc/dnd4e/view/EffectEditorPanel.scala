@@ -25,12 +25,13 @@ import vcc.dnd4e.controller.request
 import vcc.dnd4e.model.Effect
 import vcc.dnd4e.BootStrap
 
-class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") with SequenceView[ViewCombatant] with ContextualView[ViewCombatant]{
+class EffectEditorPanel(uia: Actor,tracker: Actor) extends MigPanel("fillx,hidemode 3") with SequenceView[ViewCombatant] with ContextualView[ViewCombatant]{
   
   private val memory= scala.collection.mutable.Map.empty[String,List[EffectEditor.StateMemento]]
   private var lastActiveKey:String=null
+  private var _changing:Boolean = false
   
-  class ActiveCombatant(val c:ViewCombatant) {
+  case class ActiveCombatant(val c:ViewCombatant) {
     override def toString()= c.id.name + " - "+c.name
   }
   
@@ -52,11 +53,12 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
 	  addSeparator("Effect")
 	  add(efp,"span 2,wrap,grow x")
   }
-  
+
   // Set and handle reaction to changing the active characters
   listenTo(activeCombo.selection)
   reactions += {
     case event.SelectionChanged(`activeCombo`)=>
+      if(!_changing) uia ! actor.SetActing(activeCombo.selection.item.c.id)
       switchActive(activeCombo.selection.item.c.name)
   }
   
@@ -70,7 +72,8 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
       val lid=seq.map(c=>{c.id.name})
       for(efp<-efpl) efp.setSequence(lid)
     }
-    switchActive(activeCombo.selection.item.c.name)
+    //switchActive(activeCombo.selection.item.c.name)
+    uia ! actor.SetActing(activeCombo.selection.item.c.id)
   }
 
   def changeContext(nctx:Option[ViewCombatant]) {
@@ -98,4 +101,14 @@ class EffectEditorPanel(tracker: Actor) extends MigPanel("fillx,hidemode 3") wit
       efpl.zip(memory(nkey)).map(x=>x._1.restoreMemento(x._2))
     }
   }
+  
+  def setActing(act:Option[ViewCombatant]) {
+    if(act.isDefined) {
+      _changing=true
+      activeCombo.selection.item= new ActiveCombatant(act.get)
+      activeCombo.repaint
+      _changing=false
+    }
+  }
+
 }
