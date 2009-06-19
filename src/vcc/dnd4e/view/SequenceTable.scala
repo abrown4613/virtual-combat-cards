@@ -22,10 +22,9 @@ import scala.swing.event._
 import vcc.util.swing._
 import scala.actors.Actor
 
-class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombatant] with SequenceView[ViewCombatant] {
+class SequenceTable(uia:Actor,tracker:Actor) extends ScrollPane with ContextualView[ViewCombatant] with SequenceView[ViewCombatant] {
   //Init
-  //val trackerTable=new vcc.util.swing.ProjectionTableModel[ViewCombatant](view.ViewCombatantProjection)
-  val table = new RowProjectionTable[ViewCombatant] with CustomRenderedRowProjectionTable[ViewCombatant]{
+  val table = new RowProjectionTable[ViewCombatant] with CustomRenderedRowProjectionTable[ViewCombatant] with KeystrokeActionable {
     val labelFormatter=ViewCombatantTableColorer
     projection = new vcc.util.swing.ProjectionTableModel[ViewCombatant](view.ViewCombatantProjection)
     autoResizeMode=Table.AutoResizeMode.Off
@@ -40,12 +39,31 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
   }
   
   this.contents=table
+  val setAction=Action("SetActing") {
+    if(isInContext) uia ! actor.SetActing(context.id)
+  }
+  table.bindKeystrokeAction(FocusCondition.WhenAncestorFocused,"ctrl A", setAction)
+  //table.peer.getInputMap(javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(javax.swing.KeyStroke.getKeyStroke("ctrl pressed A"),"SetActing")
+  table.bindKeystrokeAction("control M", Action("table.mark") {
+    if(isInContext) {
+      val r = uia !? actor.QueryInfo('ACTING)
+      r match {
+        case Some(c:ViewCombatant) => {
+          import vcc.dnd4e.model._
+          tracker ! vcc.dnd4e.controller.request.AddEffect(context.id, 
+            Effect(c.id, Condition.Mark(c.id,false),false,
+            		Effect.Duration.RoundBound(c.id,Effect.Duration.Limit.EndOfNextTurn,false)))
+          }
+        case s => println(s)
+      }
+    }
+  })
   
   var _doingContextChange=false
   
   listenTo(table.selection)
   reactions += {
-    case TableRowsSelected(t,rng,b) => 
+    case TableRowsSelected(t,rng,false) => 
       var l=table.selection.rows.toSeq
       if(!l.isEmpty && !_doingContextChange) {
         var c=table.content(l(0))
@@ -56,7 +74,7 @@ class SequenceTable(uia:Actor) extends ScrollPane with ContextualView[ViewCombat
   def updateSequence(seq:Seq[ViewCombatant]):Unit = { 
     table.content=seq
     table.selection.rows.clear
-    if(table.content.isEmpty)
+    if(table.content.isEmpty) 
       uia ! actor.SetContext(null)
     else
       table.selection.rows+=0

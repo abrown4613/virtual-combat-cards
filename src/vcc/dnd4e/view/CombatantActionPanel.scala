@@ -27,7 +27,7 @@ class CombatantActionPanel(val uia:actors.Actor,val tracker:actors.Actor) extend
   preferredSize=minimumSize
   val damagePanel=new view.DamageCommandPanel(uia,tracker) 
   val initiativePanel = new view.InitiativePanel(tracker)
-  val effectEditorPanel = new view.EffectEditorPanel(tracker)
+  val effectEditorPanel = new view.EffectEditorPanel(uia,tracker)
   
   add(new BoxPanel(Orientation.Vertical) {
     contents+= damagePanel 
