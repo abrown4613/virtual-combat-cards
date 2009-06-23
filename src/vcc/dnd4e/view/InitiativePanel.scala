@@ -29,11 +29,11 @@ import vcc.util.swing.{KeystrokeActionable,FocusCondition}
 
 class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
   private val startRound_btn=new Button("Start Round") with KeystrokeActionable
-  startRound_btn.tooltip=("Start round of the first combatant (Ctrl-S)")
+  startRound_btn.tooltip=("Start round of the first combatant")
   startRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control S",Action("Start round") { startRound_btn.doClick() })
 
   private val endRound_btn=new Button("End Round") with KeystrokeActionable
-  endRound_btn.tooltip=("End round of the first combatant (Ctrl-E)")
+  endRound_btn.tooltip=("End round of the first combatant")
   endRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control E",Action("End round") { endRound_btn.doClick() })
 
   private val moveUp_btn=new Button("Move Up & Start Round")
