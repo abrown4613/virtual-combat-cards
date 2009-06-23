@@ -20,7 +20,7 @@ package vcc.dnd4e.view
 import swing._
 import swing.event._
 import javax.swing.BorderFactory
-import util.swing.MigPanel
+import util.swing.{MigPanel,KeystrokeActionable,FocusCondition}
 
 import vcc.dnd4e.controller.actions._
 
@@ -30,10 +30,20 @@ class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) exte
     enabled=false
   }
   private val badColor= new java.awt.Color(255,228,196)
-  private val damage_btn= new Button("Damage")
   damage.background=badColor
-  private val heal_btn= new Button("Heal")
-  private val temp_btn= new Button("Set Temporary")
+
+  private val damage_btn= new Button("Damage") with KeystrokeActionable
+  damage_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control D",Action("Damage") { damage_btn.doClick() })
+  damage_btn.tooltip = "Apply damage to selected combatant (Ctrl + D)"
+
+  private val heal_btn= new Button("Heal") with KeystrokeActionable
+  heal_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control H",Action("Heal") { heal_btn.doClick() })
+  heal_btn.tooltip = "Heal selected combatant (Ctrl + H)"
+  
+  private val temp_btn= new Button("Set Temporary") with KeystrokeActionable
+  temp_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control T",Action("Set Tempory") { temp_btn.doClick() })
+  temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value (Ctrl + T)"
+  
   private val death_btn = new Button("Fail Death Save")
   private val undie_btn = new Button("\"undie\"")
   undie_btn.tooltip="Use this button to bring a dead combatant back to dying state. This will clear death strikes."
