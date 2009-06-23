@@ -27,5 +27,5 @@ object BootStrap {
     case _ => default
   }
 
-  val version=new UpdateManager.Version(0,95,0,null) 
+  val version=new UpdateManager.Version(0,95,1,null) 
 }
