@@ -183,7 +183,7 @@ object UpdateManager {
           
           val dfile=umd.downloadFile(release.download, java.io.File.createTempFile("vcc",".zip") )
           if(dfile!=null) {
-            umd.showMessage(false,"Checkin and unpacking...")
+            umd.showMessage(false,"Checking and unpacking downloaded file...")
             // We have the file
             if(checkFileMD5Sum(dfile, release.md5)) {
               PackageUtil.extractFilesFromZip(dfile,new File(System.getProperty("user.dir")))
@@ -199,7 +199,7 @@ object UpdateManager {
     	  // No version selected
     	}
       } else {
-        umd.showMessage(true,"You version is up to date.")
+        umd.showMessage(true,"Your version is up to date.")
       }
     } else {
       umd.showMessage(true,"<html><body>Failed to download Releases history from:<br>"+url+"</body></html>")
