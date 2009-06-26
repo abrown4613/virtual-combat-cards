@@ -42,9 +42,9 @@ class SequenceTable(uia:Actor,tracker:Actor) extends ScrollPane with ContextualV
   val setAction=Action("SetActing") {
     if(isInContext) uia ! actor.SetActing(context.id)
   }
-  table.bindKeystrokeAction(FocusCondition.WhenAncestorFocused,"ctrl A", setAction)
+  table.bindKeystrokeAction(FocusCondition.WhenAncestorFocused,"alt A", setAction)
   //table.peer.getInputMap(javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(javax.swing.KeyStroke.getKeyStroke("ctrl pressed A"),"SetActing")
-  table.bindKeystrokeAction("control M", Action("table.mark") {
+  table.bindKeystrokeAction("alt M", Action("table.mark") {
     if(isInContext) {
       val r = uia !? actor.QueryInfo('ACTING)
       r match {
@@ -61,14 +61,19 @@ class SequenceTable(uia:Actor,tracker:Actor) extends ScrollPane with ContextualV
   
   var _doingContextChange=false
   
-  listenTo(table.selection)
+  listenTo(table.selection,table)
+
   reactions += {
     case TableRowsSelected(t,rng,false) => 
       var l=table.selection.rows.toSeq
       if(!l.isEmpty && !_doingContextChange) {
         var c=table.content(l(0))
         uia ! actor.SetContext(c.id)
-      }	
+      }
+    case FocusGained(this.table,other,temporary) =>
+      uia ! vcc.dnd4e.view.actor.SetTip("Alt+A to set source on effect panel; Alt+M mark selected combatant")
+    case FocusLost(this.table,other,temp) => 
+      uia ! vcc.dnd4e.view.actor.SetTip("")
   }
   
   def updateSequence(seq:Seq[ViewCombatant]):Unit = { 
