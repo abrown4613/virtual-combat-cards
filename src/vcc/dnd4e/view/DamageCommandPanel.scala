@@ -33,15 +33,15 @@ class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) exte
   damage.background=badColor
 
   private val damage_btn= new Button("Damage") with KeystrokeActionable
-  damage_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control D",Action("Damage") { damage_btn.doClick() })
+  damage_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"alt D",Action("Damage") { damage_btn.doClick() })
   damage_btn.tooltip = "Apply damage to selected combatant"
 
   private val heal_btn= new Button("Heal") with KeystrokeActionable
-  heal_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control H",Action("Heal") { heal_btn.doClick() })
+  heal_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"alt H",Action("Heal") { heal_btn.doClick() })
   heal_btn.tooltip = "Heal selected combatant"
   
   private val temp_btn= new Button("Set Temporary") with KeystrokeActionable
-  temp_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"control T",Action("Set Tempory") { temp_btn.doClick() })
+  temp_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"alt T",Action("Set Tempory") { temp_btn.doClick() })
   temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value"
   
   private val death_btn = new Button("Fail Death Save")
@@ -103,6 +103,7 @@ class DamageCommandPanel(val uia:actors.Actor, val controller:actors.Actor) exte
   
   def changeContext(context:Option[ViewCombatant]) {
     controls map (x=>x.enabled= context!=None)
+    enableDamageControls(damageEquation!=null)
   }
 
 }
