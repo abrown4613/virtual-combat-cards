@@ -78,11 +78,13 @@ class SequenceTable(uia:Actor,tracker:Actor) extends ScrollPane with ContextualV
   
   def updateSequence(seq:Seq[ViewCombatant]):Unit = { 
     table.content=seq
-    table.selection.rows.clear
-    if(table.content.isEmpty) 
-      uia ! actor.SetContext(null)
-    else
-      table.selection.rows+=0
+    SwingHelper.invokeLater{
+      table.selection.rows.clear
+      if(table.content.isEmpty) 
+        uia ! actor.SetContext(null)
+      else
+        table.selection.rows+=0
+    }
   }
 
   def changeContext(ctx:Option[ViewCombatant]) {
