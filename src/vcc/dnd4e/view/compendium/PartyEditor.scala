@@ -83,7 +83,7 @@ class PartyEditor extends Frame {
   }
   private val compendiumEntries = new CompendiumEntitySelectionPanel()
   private val totalXPLabel = new Label()
-  recalculateXP()
+  recalculateXP(Nil)
   
   private def entitySummaryToPartyEntry(es:EntitySummary):PartyTableEntry = 
     es match {
@@ -95,9 +95,9 @@ class PartyEditor extends Frame {
   private val addButton = new Button(Action("Add to Party >>"){ 
     val sel = compendiumEntries.currentSelection
     if(sel.isDefined) {
-      partyTableModel.content = partyTableModel.content ++ Seq(entitySummaryToPartyEntry(sel.get))
-      compressEntries()
-      recalculateXP()
+      val nl = compressEntries(partyTableModel.content ++ Seq(entitySummaryToPartyEntry(sel.get)))
+      recalculateXP(nl)
+      partyTableModel.content = nl 
     }
   }) 
   
@@ -106,8 +106,9 @@ class PartyEditor extends Frame {
 	if(!sel.isEmpty) {
 	  val idx = sel.toSeq(0)
 	  val l = partyTableModel.content.toList
-	  partyTableModel.content = l - l(idx)
-      recalculateXP()
+	  val nl = l - l(idx)
+	  partyTableModel.content = nl
+      recalculateXP(nl)
 	}
   })
   
@@ -140,14 +141,15 @@ class PartyEditor extends Frame {
   listenTo(collapseCheckBox)
   
   reactions += {
-    case ButtonClicked(this.collapseCheckBox) => compressEntries() 
+    case ButtonClicked(this.collapseCheckBox) => 
+      partyTableModel.content =  compressEntries(partyTableModel.content) 
   }
   
   
   private def doSave() {
     var file=FileChooserHelper.chooseSaveFile(table.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
-      val pml = expandEntries().map(_.toPartyMember())
+      val pml = expandEntries(partyTableModel.content).map(_.toPartyMember())
       PartyLoader.saveToFile(null,file.get,pml)
     }    
   }
@@ -157,48 +159,50 @@ class PartyEditor extends Frame {
     if(file.isDefined) {
       val es = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
       var combs=PartyLoader.loadFromFile(Registry.get[EntityStoreID]("Compendium").get,file.get)
-      partyTableModel.content = combs.map(pm => {
+      val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
         val pe = entitySummaryToPartyEntry(es.loadEntitySummary(pm.eid))
         pe.id = if(pm.id!=null )pm.id.name else null
         pe.alias = pm.alias
         pe
-      })
-      recalculateXP()
+      }))
+      partyTableModel.content = pml
+      recalculateXP(pml)
     }
-    
   }
   
   private def doAddToCombat() {
     val esid = Registry.get[EntityStoreID]("Compendium").get
-	PartyLoader.loadToBattle(esid,expandEntries().map(_.toPartyMember))
+	PartyLoader.loadToBattle(esid,expandEntries(partyTableModel.content).map(_.toPartyMember))
   }
 
-  private def expandEntries() = partyTableModel.content.flatMap[PartyTableEntry](x => x.toIndividual()) 
+  private def expandEntries(ol:Seq[PartyTableEntry]):Seq[PartyTableEntry] = ol.flatMap[PartyTableEntry](x => x.toIndividual()) 
   
-  private def compressEntries() {
+  private def compressEntries(ol:Seq[PartyTableEntry]):Seq[PartyTableEntry] = {
     if(!collapseCheckBox.selected) {
-      val newlist = expandEntries()
-      partyTableModel.content = newlist
+      expandEntries(ol)
     } else {
       var map = scala.collection.mutable.Map.empty[(EntityID,String,String),PartyTableEntry]
-      for(entry <- partyTableModel.content) {
+      for(entry <- ol) {
        val key = (entry.eid,entry.id,entry.alias)
        if(map.isDefinedAt(key)) map(key).qty += entry.qty
        else map += (key -> entry)
       }
-      partyTableModel.content = map.map(x => x._2).toSeq
+      map.map(x => x._2).toSeq
     }
   }
   
   private def fireQuantityChange() {
-    compressEntries()
-    recalculateXP()
+    val pml = compressEntries(partyTableModel.content)
+    partyTableModel.content = pml
+    recalculateXP(pml)
   }
   
-  private def recalculateXP() {
-	val xp = partyTableModel.content.map(e => e.qty * e.xp).foldLeft(0)(_ + _ )
-	totalXPLabel.text = "Total XP: "+xp
+  private def recalculateXP(pml:Seq[PartyTableEntry]) {
+    SwingHelper.invokeLater {
+	  val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _ )
+	  totalXPLabel.text = "Total XP: "+xp
+	}
   }
   
 }
