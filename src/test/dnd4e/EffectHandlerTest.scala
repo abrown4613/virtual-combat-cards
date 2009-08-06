@@ -40,9 +40,9 @@ class EffectHandlerTest extends TestCase {
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"}))
-    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Monster)))
-    loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Warlord",35,5,CombatantType.Character){id="B"}))
+    //FIXME loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"}))
+    //FIXME loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Monster)))
+    //FIXME loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Warlord",35,5,CombatantType.Character){id="B"}))
     
     trans1.commit(trans1pub)
     assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1"),'B))))

@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,32 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.model.datastore
+package vcc.dnd4e.view.compendium
 
-abstract class Field[T](val fset:FieldContainer, val id:String) {
-  
-  def value:Option[T]
-  
-  def value_=(v:T)
-  
-  def clear()
-  
-  fset.addField(this)
-  
-  def fromStorageString(str:String)
-  
-  def toStorageString:String
-  
-  def prefix:String = fset.storageId + ":" + fset.storageIndex
-  
-  val datumKey:DatumKey = DatumKey(fset.storageId,fset.storageIndex,id)
+import scala.swing._
 
-  def extractData():List[Datum] = List(Datum(datumKey,toStorageString))
-
-  def toXML:scala.xml.Node = {
-    val datum=toStorageString
-    if(datum!=null) <datum id={id}>{datum}</datum>
-    else null
-  }
+class CompendiumMenu extends Menu("Compendium") {
+  this.contents += new MenuItem(Action("View Entries ...") {
+    CompendiumView.visible = true
+  })
+  this.contents += new MenuItem(Action("Edit Parties ...") {
+    val partyEditor = new PartyEditor()
+    partyEditor.visible = true
+  })
+  this.contents += new MenuItem(Action("D&D Insider Capture ...") {
+    DNDICaptureMonitor.visible = true
+  })
+  
 }

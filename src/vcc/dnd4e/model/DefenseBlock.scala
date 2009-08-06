@@ -30,12 +30,12 @@ case class DefenseBlock(ac:Int,fortitude:Int,reflex:Int,will:Int) {
 }
 
 object DefenseBlock {
-  import XMLLoaderUtilities._
+  import vcc.util.XMLHelper._
   
   def fromXML(node: scala.xml.Node): DefenseBlock = 
     DefenseBlock(
-      attribOrDefault[Int](node \ "@ac", 0,nodeSeq2Int),
-      attribOrDefault[Int](node \ "@fortitude", 0,nodeSeq2Int),
-      attribOrDefault[Int](node \ "@reflex", 0,nodeSeq2Int),
-      attribOrDefault[Int](node \ "@will", 0,nodeSeq2Int))
+      nodeSeq2Int(node \ "@ac", 0),
+      nodeSeq2Int(node \ "@fortitude", 0),
+      nodeSeq2Int(node \ "@reflex", 0),
+      nodeSeq2Int(node \ "@will", 0))
 }

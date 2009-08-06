@@ -15,22 +15,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package test
+package test.vcccore.datastoretest
 
+import _root_.vcc.model.datastore._
 import junit.framework.TestCase
-
-import vcc.model.datastore._
 
 class DataStoreTest extends TestCase {
 
+  final val testClassID = DataStoreURI.asEntityClassID("vcc-class:data")
+  final val testID = DataStoreURI.asEntityID("vcc-ent:test:0")
+  assert(testID != null)
+  
   object Ctype extends Enumeration {
     val alpha=Value("Alpha")
     val beta=Value("Beta")
   }
   
-  class TestEntity(id:String) extends Entity(id) {
+  class TestEntity(id:EntityID) extends Entity(id) {
     
-    val classId="class:data"
+    val classId = testClassID
+    assert(classId != null)
+
     
     val ctype=new EnumerationField(topLevel,"ctype",Ctype)
     val hp=new IntField(topLevel,"hp")
@@ -50,25 +55,58 @@ class DataStoreTest extends TestCase {
     
   }
   
+  case class TestEntitySummary(override val eid:EntityID, override val classid:EntityClassID, name:String, ctype:Ctype.Value) extends EntitySummary(eid,classid)
+  
+  object TestEntityBuilder extends TestEntity(null) with EntityBuilder {
+    def createInstance(eid:EntityID):Entity = new TestEntity(eid)
+    def createSummaryFromMap(eid:EntityID,classid:EntityClassID,fmap:Map[DatumKey,String]):EntitySummary = {
+      val dkCtype = ctype.datumKey
+      val fctype = if(fmap.isDefinedAt(dkCtype)) Ctype.valueOf(fmap(dkCtype)) else None
+      val dkName = name.datumKey
+      val mname = if(fmap.isDefinedAt(dkName)) fmap(dkName) else null
+      if(fctype.isDefined && mname != null)
+    	TestEntitySummary(eid,classid,mname,fctype.get)
+      else null
+    }
+    val summaryFields = Seq(name.datumKey,ctype.datumKey)
+  }
+  
   override def setUp {
-    EntityFactory.registerEntityClass("class:data", id => new TestEntity(id))
+    EntityFactory.registerEntityClass(testClassID, TestEntityBuilder)
+  }
+  
+  
+  /**
+   * Test builder SummaryFromMap 
+   */
+  def testSummary() {
+    val m = Map(DatumKey("base",0,"name")->"Test name",DatumKey("base",0,"ctype")->Ctype.alpha.toString)
+    val builder = EntityFactory.getEntityBuilder(testClassID)
+    
+    assert(builder!=null)
+    val es = builder.createSummaryFromMap(testID,testClassID,m)
+    assert(es!=null)
+    assert(es.isInstanceOf[TestEntitySummary])
+    val tes = es.asInstanceOf[TestEntitySummary]
+    assert(tes.name == "Test name", tes)
+    assert(tes.ctype == Ctype.alpha, tes)
   }
   
   /**
    * Check entity EntityFactory functions  
    */
   def testSanity() {
-    assert(EntityFactory.isClassDefined("class:data"))
-    val ent=EntityFactory.createInstance("class:data","data:0")
+    assert(EntityFactory.isClassDefined(testClassID))
+    val ent=EntityFactory.createInstance(testClassID,testID)
     assert(ent!=null)
     assert(ent.isInstanceOf[Entity])
   }
   
   def testLoadFromBadDummyNoField {
-    val src= new ListEntitySource("class:data","test:0", Seq(Datum("base",0,"nofield","Test")))
+    val src= new ListEntitySource(testClassID,testID, Seq(Datum(DatumKey("base",0,"nofield"),"Test")))
     
     try { 
-      val ent=EntityLoader.load(src)
+      val ent=EntityFactory.createInstance(src)
       assert(false,"Should not get here")
     } catch {
       case e: UnexistantField => assert(true)
@@ -77,10 +115,10 @@ class DataStoreTest extends TestCase {
   }
 
   def testLoadFromBadDummyNoFieldSet {
-    val src= new ListEntitySource("class:data","test:0", Seq(Datum("nobase",0,"nofield","Test")))
+    val src= new ListEntitySource(testClassID,testID, Seq(Datum(DatumKey("nobase",0,"nofield"),"Test")))
     
     try { 
-      val ent=EntityLoader.load(src)
+      val ent=EntityFactory.createInstance(src)
       assert(false,"Should not get here")
     } catch {
       case e: UnexistantField => assert(true)
@@ -89,10 +127,10 @@ class DataStoreTest extends TestCase {
   }
 
   def testLoadFromBadFieldInMultiSet {
-    val src= new ListEntitySource("class:data","test:0", Seq(Datum("powers",0,"nofield","Test")))
+    val src= new ListEntitySource(testClassID,testID, Seq(Datum(DatumKey("powers",0,"nofield"),"Test")))
     
     try { 
-      val ent=EntityLoader.load(src)
+      val ent=EntityFactory.createInstance(src)
       assert(false,"Should not get here")
     } catch {
       case e: UnexistantField => assert(true)
@@ -101,10 +139,10 @@ class DataStoreTest extends TestCase {
   }
 
   def testLoadFromBadIntField {
-    val src= new ListEntitySource("class:data","test:0", Seq(Datum("base",0,"hp","Test")))
+    val src= new ListEntitySource(testClassID,testID, Seq(Datum(DatumKey("base",0,"hp"),"Test")))
     
     try { 
-      val ent=EntityLoader.load(src)
+      val ent=EntityFactory.createInstance(src)
       assert(false,"Should not get here")
     } catch {
       case e: NumberFormatException => assert(true)
@@ -113,10 +151,10 @@ class DataStoreTest extends TestCase {
   }
   
   def testLoadFromBadEnumerationField {
-    val src= new ListEntitySource("class:data","test:0", Seq(Datum("base",0,"ctype","Test")))
+    val src= new ListEntitySource(testClassID,testID, Seq(Datum(DatumKey("base",0,"ctype"),"Test")))
     
     try { 
-      val ent=EntityLoader.load(src)
+      val ent=EntityFactory.createInstance(src)
       assert(false,"Should not get here")
     } catch {
       case e: EnumerationConstantNotPresentException => assert(true)
@@ -125,18 +163,18 @@ class DataStoreTest extends TestCase {
   }
   
   def testLoadFromDummySource {
-    val src= new ListEntitySource("class:data","test:0", Seq(
-        Datum("base",0,"name","Test"),
-        Datum("base",0,"ctype","Alpha"),
-        Datum("powers",0,"name","Test Power"),
-        Datum("powers",1,"name","Another Power"),
-        Datum("skills",0,"perception","10")
+    val src= new ListEntitySource(testClassID,testID, Seq(
+        Datum(DatumKey("base",0,"name"),"Test"),
+        Datum(DatumKey("base",0,"ctype"),"Alpha"),
+        Datum(DatumKey("powers",0,"name"),"Test Power"),
+        Datum(DatumKey("powers",1,"name"),"Another Power"),
+        Datum(DatumKey("skills",0,"perception"),"10")
       ))
  
-    val ent=EntityLoader.load(src)
+    val ent=EntityFactory.createInstance(src)
     assert(ent!=null)
-    assert(ent.id=="test:0")
-    assert(ent.classId=="class:data")
+    assert(ent.id == testID)
+    assert(ent.classId==DataStoreURI.asEntityClassID("vcc-class:data"))
     assert(ent.isInstanceOf[TestEntity])
     val et=ent.asInstanceOf[TestEntity]
     assert(et.name.value==Some("Test"),et.name.value)
@@ -148,7 +186,7 @@ class DataStoreTest extends TestCase {
   }
   
   def testNewEntity() {
-    var v=new TestEntity("vcc:data:2")
+    var v=new TestEntity(DataStoreURI.asEntityID("vcc:data:2"))
     
     v.hp.value=10
     v.name.value="Goblin"
@@ -168,7 +206,7 @@ class DataStoreTest extends TestCase {
   }
   
   def testXMLLoad() {
-    val xml = <entity classId="class:data" id="vcc:data:1">
+    val xml = <entity classId="vcc-class:data" id="vcc-ent:data:1">
       <set id="base">
         <datum id="hp">40</datum>
         <datum id="ctype">Alpha</datum>
@@ -193,7 +231,7 @@ class DataStoreTest extends TestCase {
 	assert(xml!=null)
 	val ds=EntityXMLFileLoader.dataFromXML(xml)
 	assert(ds!=null)
-	val absEnt=EntityLoader.load(ds)
+	val absEnt=EntityFactory.createInstance(ds)
 	assert(absEnt!=null)
     assert(absEnt.isInstanceOf[TestEntity])
     val ent=absEnt.asInstanceOf[TestEntity]
@@ -218,12 +256,14 @@ class DataStoreTest extends TestCase {
       ("Not entity", <abc id="an"></abc>),
       ("No Classid", <entity></entity>),
       ("No ID", <entity classId="abc"></entity>),
-      ("No set ID", <entity classId="abc" id="ent"><set></set></entity>),
-      ("No datum ID", <entity classId="abc" id="ent"><set id="base"><datum /></set></entity>),
-      ("No mset ID", <entity classId="abc" id="ent"><mset></mset></entity>),
-      ("No mset/set ID", <entity classId="abc" id="ent"><mset id="mset"><set></set></mset></entity>),
-      ("Bad mset/set ID", <entity classId="abc" id="ent"><mset id="mset"><set id="a"></set></mset></entity>),
-      ("Bad mset/set field id", <entity classId="abc" id="ent"><mset id="mset"><set id="1"><datum /></set></mset></entity>)
+      ("Bad ClassID", <entity classId="abc" id="abc"></entity>),
+      ("Bad EntID", <entity classId="abc" id="abc"></entity>),
+      ("No set ID", <entity classId="vcc-class:abc" id="vcc-ent:ent"><set></set></entity>),
+      ("No datum ID", <entity classId="vcc-class:abc" id="vcc-ent:ent"><set id="base"><datum /></set></entity>),
+      ("No mset ID", <entity classId="vcc-class:abc" id="vcc-ent:ent"><mset></mset></entity>),
+      ("No mset/set ID", <entity classId="vcc-class:abc" id="vcc-ent:ent"><mset id="mset"><set></set></mset></entity>),
+      ("Bad mset/set ID", <entity classId="vcc-class:abc" id="vcc-ent:ent"><mset id="mset"><set id="a"></set></mset></entity>),
+      ("Bad mset/set field id", <entity classId="vcc-class:abc" id="vcc-ent:ent"><mset id="mset"><set id="1"><datum /></set></mset></entity>)
     )
     for(xml<-xmls) {
       try {
@@ -236,6 +276,5 @@ class DataStoreTest extends TestCase {
       }
     }
   }
-  
 }
 

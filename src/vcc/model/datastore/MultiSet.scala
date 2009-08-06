@@ -25,7 +25,7 @@ class MultiSetFieldContainer(val parent:MultiSet[_]) extends FieldContainer {
   
   private[datastore] def storageIndex():Int = parent.indexOf(this)
 
-  private[datastore] def classId():String = parent.owner.classId
+  private[datastore] def classId():EntityClassID = parent.owner.classId
 
 }
 
@@ -53,8 +53,10 @@ class MultiSet[T<:MultiSetFieldContainer](val owner:Entity,val id:String,constru
 
   def loadDatum(datum:Datum) {
     //Fill up table
-    while(_elem.length-1 < datum.index) addInstance()
-    _elem(datum.index).loadDatum(datum)
+    while(_elem.length-1 < datum.key.index) addInstance()
+    _elem(datum.key.index).loadDatum(datum)
   }
   
+  def getFieldFromDatumKey(key:DatumKey):Field[_] = if(_elem.size <= key.index) _elem(key.index).getFieldFromDatumKey(key) else null
+
 }

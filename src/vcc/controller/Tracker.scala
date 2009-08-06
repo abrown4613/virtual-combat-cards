@@ -98,7 +98,7 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
               println("An exception occured while processing: "+ ta)
               e.printStackTrace(System.out)
               println("Rolling back transaction")
-              trans.cancel()
+              if(trans.state == Transaction.state.Active)trans.cancel()
           }
           
         case actions.StartTransaction(tname) =>
@@ -109,7 +109,7 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
         case actions.EndTransaction(tname) => 
           if(_composedAction!=null) {
             if(_composedAction.name==tname) { 
-              closeTransaction(_composedAction,_composedAction.transaction)
+              if(_composedAction.transaction.state == Transaction.state.Active) closeTransaction(_composedAction,_composedAction.transaction)
               _composedAction=null
             } else throw new Exception("Tranction name mismatch, expected"+_composedAction.name+" found "+tname)
           } else throw new Exception("Not in compound transaction")

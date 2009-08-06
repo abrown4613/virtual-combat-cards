@@ -19,27 +19,29 @@ package vcc.controller
 
 import scala.actors.Actor
 
+import vcc.model.Registry
+
 package actions {
   case class SetCoordinator(coord:Coordinator)
   case class AddObserver(obs:Actor)
 }
 
+//FIXME: destroy this object
 object Coordinator {
 
   def initialize[C](tc:TrackerController[C]):Coordinator = {
     val tracker=new Tracker(tc)
-    val loader=new EntityLoader();
     
-    new Coordinator(tracker,loader)
+    Registry.register[Actor]("tracker",tracker)
+    
+    new Coordinator(tracker)
   }
 }
 
-class Coordinator(val tracker:Actor, val loader:Actor) {
+class Coordinator(val tracker:Actor) {
   def start() {
     tracker.start
-    loader.start
     tracker ! actions.SetCoordinator(this)
-    loader ! actions.SetCoordinator(this)
   }
   
   def addObserver(obs:Actor) {

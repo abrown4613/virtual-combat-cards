@@ -1,0 +1,16 @@
+<entity classId="vcc-class:monster" id="vcc-ent:dndi:monster:665">
+   <set id="base">
+      <datum id="name">Goblin Warrior</datum>
+      <datum id="role">Skirmisher</datum>
+      <datum id="level">1</datum>
+      <datum id="xp">100</datum>
+   </set>
+   <set id="stats">
+     <datum id="initiative">7</datum>
+     <datum id="hp">25</datum>
+     <datum id="will">12</datum>
+     <datum id="fortitude">13</datum>
+     <datum id="reflex">15</datum>
+     <datum id="ac">17</datum>
+   </set>
+</entity>

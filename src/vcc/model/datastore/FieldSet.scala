@@ -27,7 +27,7 @@ trait FieldContainer extends DataContainer {
   
   def addField(field:Field[_]) { _fields= _fields + (field.id -> field)}
   
-  private[datastore] def classId():String
+  private[datastore] def classId():EntityClassID
   
   private[datastore] def storageId():String
   
@@ -38,20 +38,22 @@ trait FieldContainer extends DataContainer {
   def toXML:scala.xml.Node = <set id={id}>{_fields.map(f=>f._2.toXML).toSeq}</set>
 
   def loadDatum(datum:Datum) {
-	if(_fields.contains(datum.field)) {
-	  _fields(datum.field).fromStorageString(datum.value)
+	if(_fields.contains(datum.key.field)) {
+	  _fields(datum.key.field).fromStorageString(datum.value)
 	} else {
-	  throw new UnexistantField(classId,datum.prefix,datum.field)
+	  throw new UnexistantField(classId,datum.key.prefix,datum.key.field)
 	}
   }
   
+  def getFieldFromDatumKey(key:DatumKey):Field[_] = if(_fields.contains(key.field)) _fields(key.field) else null
+
 }
 
 class FieldSet(val owner:Entity,val id :String) extends FieldContainer {
 
   owner.addContainer(this)
   
-  private[datastore] val classId = owner.classId
+  private[datastore] def classId = owner.classId
   
   override def toString:String = "FieldSet("+id+")"
   

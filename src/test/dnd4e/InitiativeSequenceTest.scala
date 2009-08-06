@@ -70,7 +70,7 @@ class InitiativeSequenceTest extends TestCase {
     assert(true)
     
     for(cid<-List('A,'B,'C,'D,'E)) {
-    	loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Comb"+cid.name,10,5,CombatantType.Monster){id=cid.name}))
+    	//FIXME loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Comb"+cid.name,10,5,CombatantType.Monster){id=cid.name}))
     }
     trans1.commit(trans1pub)
     

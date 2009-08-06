@@ -17,6 +17,8 @@
 //$Id$
 package vcc.dndi
 
+import scala.util.matching.Regex
+
 class UntranslatableException(node:scala.xml.Node) extends Exception("Cant translate node: "+node)
 
 /**
@@ -26,8 +28,9 @@ class UntranslatableException(node:scala.xml.Node) extends Exception("Cant trans
  */
 object Parser {
   
-  final val reColonTrim=new scala.util.matching.Regex("^[:\\s]*(.*?)[;\\s]*$")
-  final val reFlexiInt=new scala.util.matching.Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
+  final val reColonTrim = new Regex("^[:\\s]*(.*?)[;\\s]*$")
+  final val reFlexiInt = new Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
+  final val reSpaces = new Regex("[\\s\u00a0]+")
   
   /**
    * Symbolic names for the DND Insider icons, we don't need them, this will make the text
@@ -141,6 +144,15 @@ object Parser {
    * of colons, semi-colons, and other noise after valuable data
    */
   def parseNode(node:scala.xml.Node):Part = {
+    
+    def processString(str:String): String = {
+      reSpaces.replaceAllIn(str," ") match {
+        case reFlexiInt(sign,value) => if("-" == sign) sign+value else value
+        case reColonTrim(text) => text
+        case nomatch => nomatch
+      }
+    }
+    
     node match {
       case <BR></BR> => Break()
       case <B>{text}</B> => Key(text.toString.trim)
@@ -148,9 +160,7 @@ object Parser {
       case <I>{text}</I> => Emphasis(text.toString.trim)
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
-      case scala.xml.Text(reFlexiInt(sign,value)) => if(sign!=null )Text(sign+value) else Text(value)
-      case scala.xml.Text(reColonTrim(text)) => if(text!=null) Text(text) else Text("")
-      case scala.xml.Text(text) => Text(text.trim)
+      case scala.xml.Text(text) => Text(processString(text).trim)
       case s => throw new UntranslatableException(node)
     }
   }

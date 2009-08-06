@@ -17,6 +17,7 @@
 //$Id$
 package vcc
 
+import test.dnd4e.TestEntityRepository
 import scala.swing._
 import scala.swing.event._ 
 import vcc.util.swing._
@@ -25,19 +26,24 @@ import scala.actors.Actor
 
 import vcc.dnd4e.view.ViewCombatant
 import dnd4e.view.{SequenceTable,ViewCombatant,StatusBar,IconLibrary}
+import vcc.dnd4e.view.compendium.CompendiumMenu
+import vcc.model.Registry
+import vcc.model.datastore.EntityStoreID
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.controller._
 import vcc.dnd4e.controller.request._
+import vcc.dnd4e.model.PartyLoader
 
 class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   
-  lazy val encEditor=new vcc.dnd4e.view.dialog.EncounterEditorDialog(coord)
+  val compendiumID = Registry.get[EntityStoreID]("Compendium").get
   
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
-      coord.loader ! vcc.controller.actions.LoadPartyFile(file.get)
+      val pml = PartyLoader.loadFromFile(compendiumID,file.get)
+      PartyLoader.loadToBattle(compendiumID,pml)                                   
     }
   })
   val combatMenu = new Menu("Combat")
@@ -97,10 +103,6 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
     uia ! vcc.dnd4e.view.actor.SetOption('HIDEDEAD,hideDeadMenu.peer.isSelected)
   }
   viewMenu.contents +=hideDeadMenu
-  viewMenu.contents += new Separator
-  viewMenu.contents += new MenuItem(Action("Encounter/Party Editor..."){
-    encEditor.visible=true
-  })
   
   //Help menu
   val helpMenu = new Menu("Help")
@@ -134,12 +136,16 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   contents+=combatMenu
   contents+=historyMenu
   contents+=viewMenu
+  contents+=new CompendiumMenu()
   contents+=helpMenu
 }
 
 object Main extends SimpleGUIApplication {
   import vcc.dnd4e.controller._
   import vcc.dnd4e.model.TrackerContext
+  
+  vcc.dnd4e.BootStrap.initialize()
+  
   var coord=vcc.controller.Coordinator.initialize(new TrackerController(new TrackerContext){
     addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
     addPublisher(new vcc.dnd4e.controller.DefaultChangePublisher())
@@ -148,8 +154,7 @@ object Main extends SimpleGUIApplication {
   })
 
   var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
-
- 
+  
   coord.start
   
   val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,coord.tracker)
@@ -188,9 +193,19 @@ object Main extends SimpleGUIApplication {
       iconImage=IconLibrary.MetalD20.getImage()
     }
   }
-  
   if(!vcc.util.Configuration.isConfigured) {
-    //println("Can't find the configuration")
+	println("Main: Can't find the configuration")
+ /*
+    val diag = new vcc.util.swing.ModalDialog(this.top," Confirm me") {
+      minimumSize = new java.awt.Dimension(300,400)
+      contents = new vcc.util.swing.MigPanel("") { 
+        add(new Button("Yes"),"wrap")
+        add(new Button("No"),"wrap")
+      }
+    }
+    diag.visible = true
+   */ 
+    println("Here")
   }
-  
+
 }
