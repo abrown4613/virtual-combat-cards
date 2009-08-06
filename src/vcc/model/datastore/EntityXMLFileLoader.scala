@@ -34,15 +34,19 @@ object EntityXMLFileLoader {
     def extractDatum(datum:Node,prefix:String, idx:Int):Datum = {
       val field=extractFirstNodeText(datum \ "@id")
       if(field == null) throw new InvalidEntityXMLException("Missing 'id' attribute on datum " + datum)
-      new Datum(prefix,idx,field,datum.text)
+      Datum(DatumKey(prefix,idx,field),datum.text)
     }
 
     if(xml.label != "entity") throw new InvalidEntityXMLException("Can't find entity")
     
-    val classId= extractFirstNodeText(xml \ "@classId")
-    if(classId==null) throw new InvalidEntityXMLException("Missing 'classId' attribute on entity")
-    val id= extractFirstNodeText(xml \ "@id")
-    if(id==null) throw new InvalidEntityXMLException("Missing 'id' attribute on entity")
+    val rawClassId = extractFirstNodeText(xml \ "@classId")
+    if(rawClassId==null) throw new InvalidEntityXMLException("Missing 'classId' attribute on entity")
+    val classId = DataStoreURI.asEntityClassID(rawClassId)
+    if(classId==null) throw new InvalidEntityXMLException("Invalid 'classId' attribute on entity")
+    val rawId = extractFirstNodeText(xml \ "@id") 
+    if(rawId == null) throw new InvalidEntityXMLException("Missing 'id' attribute on entity")
+    val id = DataStoreURI.asEntityID(rawId)
+    if(id == null) throw new InvalidEntityXMLException("Invalid 'id' attribute on entity")
 
     var dl:List[Datum] = Nil
     

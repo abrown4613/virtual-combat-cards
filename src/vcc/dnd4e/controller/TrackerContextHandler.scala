@@ -23,20 +23,27 @@ import vcc.controller.actions.TransactionalAction
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
 
+import vcc.model.Registry
+import vcc.model.datastore.EntityStore
+
 trait TrackerContextHandler {
   this:TransactionalProcessor[TrackerContext] =>
 
   import context._
  
   addHandler {
-    case request.AddCombatant(template)=>
-      var id:Symbol=if(template.id==null) context.idgen.first() else {
-        var s=Symbol(template.id)
+    case request.AddCombatant(store,member)=>
+      var id:Symbol=if(member.id==null) context.idgen.first() else {
+        var s=member.id
         if(context.idgen.contains(s)) context.idgen.removeFromPool(s) // To make sure we don't get doubles
         s
       }
-      var nc=new TrackerCombatant(id,template.name,template.hp,template.init,template.ctype)
-      nc.defense=template.defense
+      val repository = Registry.get[EntityStore](store).get
+      if(repository == null) throw new Exception("Cant find store "+store)
+      val ent = repository.load(member.eid).asInstanceOf[CombatantEntity]
+      if(ent == null) throw new Exception("Can't find entity "+member.eid+ " in EntityStore")
+      var nc=new TrackerCombatant(id,member.alias, ent.name.value.get,ent.hp.value.get,ent.initiative.value.get,ent.combatantType,ent)
+      nc.defense=new DefenseBlock(ent.ac.value.get, ent.fortitude.value.get, ent.reflex.value.get, ent.will.value.get)
       if(context.map.contains(nc.id)) {
         // It's an old combatant salvage old heath and Initiative
         val oc=context.map(nc.id)
@@ -83,45 +90,6 @@ trait TrackerContextHandler {
       c.info=text
       
   }
-  
-  def changeSequence(cmb:TrackerCombatant,action:InitiativeTracker.actions.Value)(implicit trans:Transaction) {
-    var itt=cmb.it.value
-    var firstp=map(sequence.sequence.head).id==cmb.id
-    if(itt.canTransform(firstp,action)) {
-      cmb.it.value=itt.transform(firstp,action)
-      action match {
-        case InitiativeTracker.actions.Delay => 
-          sequence.moveDown(cmb.id)
-          advanceToNext
-        case InitiativeTracker.actions.ExecuteReady => 
-          sequence.moveDown(cmb.id)
-        case InitiativeTracker.actions.EndRound =>
-          // When delaying is up, end turn is end of previous
-          if(cmb.it.value.state!=InitiativeState.Delaying) { 
-            sequence.rotate
-            advanceToNext()
-          }
-        case InitiativeTracker.actions.Ready => 
-          sequence.moveDown(cmb.id)
-          advanceToNext
-        case InitiativeTracker.actions.MoveUp => 
-          sequence.moveUp(cmb.id)
-        case _ =>
-      }
-    }
-  }
-
-  private def advanceToNext()(implicit trans:Transaction) {
-    // Auto advance dead guys
-    while(map(sequence.sequence.head).health.status==HealthTracker.Status.Dead) {
-      var dcmb=map(sequence.sequence.head)
-      var dit=dcmb.it
-      dit.value=dit.value.transform(true,InitiativeTracker.actions.StartRound)
-      dit.value=dit.value.transform(true,InitiativeTracker.actions.EndRound)
-      dcmb.it=dit
-      sequence.rotate
-    }
-  }
 }
   
 class DefaultChangePublisher extends ChangePublisher[TrackerContext] {
@@ -158,7 +126,7 @@ object TrackerContextEnumerator {
   def enumerate(context:TrackerContext,buffer:vcc.controller.TrackerResponseBuffer) { 
     buffer ! vcc.dnd4e.view.actor.ClearSequence()
     for(x<-context.map.map(_._2)) { 
-      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.name,x.hp,x.init,x.defense))
+      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.alias,x.name,x.hp,x.init,x.defense))
       buffer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
       buffer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
       buffer ! vcc.dnd4e.view.actor.SetInformation(x.id,x.info)

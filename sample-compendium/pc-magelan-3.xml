@@ -1,0 +1,16 @@
+<entity classId="vcc-class:character" id="vcc-ent:pc:magelan:3">
+  <set id="base">
+    <datum id="name">Magelan</datum>
+    <datum id="class">Wizard</datum>
+    <datum id="level">4</datum>
+    <datum id="race">Eladrin</datum>
+  </set>
+  <set id="stats">
+    <datum id="initiative">4</datum>
+    <datum id="hp">22</datum>
+    <datum id="will">20</datum>
+    <datum id="fortitude">17</datum>
+    <datum id="reflex">19</datum>
+    <datum id="ac">17</datum>
+  </set>
+</entity>

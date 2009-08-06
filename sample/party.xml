@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<party>
-  <character id="k" name="Kantrex" hp="46" init="3"><defense ac="22" fortitude="16" reflex="16" will="16" /> </character>
-  <character id="A" name="Azathoth" hp="45" init="3"><defense ac="18" fortitude="16" reflex="17" will="15" /> </character>
-  <character id="G" name="Groover Omeprazol" hp="44" init="1"><defense ac="21" fortitude="17" reflex="13" will="13"/> </character>
-  <character id="M" name="Magellan" hp="30" init="2"><defense ac="16" fortitude="12" reflex="16" will="15"/> </character>
-  <character id="V" name="Valistrianna" hp="37" init="7"><defense ac="19" fortitude="14" reflex="18" will="15"/> </character>
-  <character id="AF" name="Aramil, the Forgetful" hp="41" init="5"><defense ac="18" fortitude="16" reflex="15" will="16"/> </character>
-</party>

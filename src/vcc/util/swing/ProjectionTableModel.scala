@@ -29,7 +29,7 @@ abstract class TableModelRowProjection[T] {
 }
 
 class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax.swing.table.AbstractTableModel {
-  var elem:Seq[T]=Nil
+  private var elem:Seq[T]=Nil
   def getValueAt(row:Int,col:Int):java.lang.Object= if(elem.size>row )proj(col,elem(row)) else null
   def getColumnCount():Int = proj.size
   def getRowCount():Int=elem.size

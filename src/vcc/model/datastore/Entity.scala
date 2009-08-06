@@ -17,9 +17,23 @@
 //$Id$
 package vcc.model.datastore
 
-abstract class Entity(val id:String) {
+/**
+ * This is the parent class for all entity summary
+ */
+abstract class EntitySummary(val eid:EntityID, val classid: EntityClassID)
+
+trait EntityBuilder extends Entity {
   
-  val classId:String
+  def createInstance(eid:EntityID):Entity
+  
+  def createSummaryFromMap(eid: EntityID, classid:EntityClassID, fmap:Map[DatumKey,String]):EntitySummary 
+  
+  val summaryFields:Seq[DatumKey]
+}
+
+abstract class Entity(val id:EntityID) {
+  
+  val classId:EntityClassID
   
   private var _containers = scala.collection.immutable.Map.empty[String,DataContainer] 
   
@@ -33,11 +47,16 @@ abstract class Entity(val id:String) {
     _containers.flatMap(f=>f._2.exportData()).toList
   }
   
-  def toXML:scala.xml.Node = <entity classId={classId} id={id}>{ _containers.map(c=>c._2.toXML).toSeq }</entity>
+  def toXML:scala.xml.Node = <entity classId={classId.uri.toString} id={id.uri.toString}>{ _containers.map(c=>c._2.toXML).toSeq }</entity>
     
+  def getFieldFromDatumKey(key:DatumKey):Field[_] = {
+    if(_containers.isDefinedAt(key.prefix)) {
+      _containers(key.prefix).getFieldFromDatumKey(key)
+    } else null
+  }
   def loadDatum(datum:Datum) { 
-    if(_containers.contains(datum.prefix)) {
-      _containers(datum.prefix).loadDatum(datum)
-    } else throw new UnexistantField(classId,datum.prefix,datum.field)
+    if(_containers.contains(datum.key.prefix)) {
+      _containers(datum.key.prefix).loadDatum(datum)
+    } else throw new UnexistantField(classId,datum.key.prefix,datum.key.field)
   }
 }

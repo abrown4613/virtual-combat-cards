@@ -18,21 +18,20 @@
 package vcc.model.datastore
 
 /**
- * 
+ * Creates Entity based on entity ID. All entities type should be registered on this
+ * factory to be dynamically created during entity load process.
  */
 object EntityFactory {
   
-  type Constructor = String => Entity
-  
-  private var _registry=scala.collection.immutable.Map.empty[String,Constructor]
+  private var _registry=scala.collection.immutable.Map.empty[EntityClassID,EntityBuilder]
   
   /**
    * Register a class and constructor for a given class. Will replace prior definition
    * @param classId The name of the class to be registers
    * @param constructor A function that returns of Entity of 
    */
-  def registerEntityClass(classId:String,constructor:Constructor) {
-    _registry += classId->constructor
+  def registerEntityClass(classId:EntityClassID,builder:EntityBuilder) {
+    _registry += (classId -> builder)
   }
   
   /**
@@ -40,13 +39,35 @@ object EntityFactory {
    * @parma classId Class name to get
    * @return true if the class is register
    */
-  def isClassDefined(classId:String):Boolean = _registry.contains(classId)
+  def isClassDefined(classId:EntityClassID):Boolean = _registry.contains(classId)
   
   /**
    * Create a new instance of the class if it's registered
+   * @param soruce Source of the entity
+   * @return A new loaded Entity, if the class exists, null otherwise
    */
-  def createInstance(classId:String, id:String):Entity = {
-    if(isClassDefined(classId)) _registry(classId)(id)
+  def createInstance(source:EntitySource):Entity = {
+    val entity = if(isClassDefined(source.classId)) _registry(source.classId).createInstance(source.id) else null
+    if(entity != null) {
+	  for(datum <- source.getData()) {
+		entity.loadDatum(datum)
+	  }
+    }
+    entity
+  }
+  
+  def getEntityBuilder(classId: EntityClassID):EntityBuilder = 
+    if(isClassDefined(classId)) _registry(classId)
+    else null
+
+  /**
+   * Create a new instance of the class if it's registered
+   * @param classID the class ID that should be created
+   * @param id The entity ID
+   * @return A new empty Entity, if the class exists, null otherwise
+   */
+  def createInstance(classId:EntityClassID, id:EntityID):Entity = {
+    if(isClassDefined(classId)) _registry(classId).createInstance(id)
     else null
   }
 

@@ -67,11 +67,11 @@ object DialogTest extends SimpleGUIApplication {
   import scala.actors.Actor.{loop,react,reply}
   val echoer=scala.actors.Actor.actor{
     var l=List(
-      new TrackerCombatant('A,"Aza",44,-1,CombatantType.Monster),
-      new TrackerCombatant('B,"Beta",43,3,CombatantType.Monster),
-      new TrackerCombatant('G,"Gamma",43,3,CombatantType.Monster),
-      new TrackerCombatant('D,"Delta",24,2,CombatantType.Monster),
-      new TrackerCombatant('F,"Fi",43,7,CombatantType.Monster)
+      new TrackerCombatant('A,null,"Aza",44,-1,CombatantType.Monster,null),
+      new TrackerCombatant('B,null,"Beta",43,3,CombatantType.Monster,null),
+      new TrackerCombatant('G,null,"Gamma",43,3,CombatantType.Monster,null),
+      new TrackerCombatant('D,null,"Delta",24,2,CombatantType.Monster,null),
+      new TrackerCombatant('F,null,"Fi",43,7,CombatantType.Monster,null)
     )
     loop {
       react {
@@ -85,8 +85,7 @@ object DialogTest extends SimpleGUIApplication {
   var initDiag=new vcc.dnd4e.view.dialog.InitiativeDialog(echoer)
   dialogs=List(
     new MyDialog,
-    initDiag,
-    new vcc.dnd4e.view.dialog.EncounterEditorDialog(null)
+    initDiag
   )
   var btns= dialogs map (x=>new Button(x.getClass.getCanonicalName))
   var map=collection.mutable.Map.empty[String,Frame]

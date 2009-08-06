@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,32 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.model.datastore
 
-abstract class Field[T](val fset:FieldContainer, val id:String) {
-  
-  def value:Option[T]
-  
-  def value_=(v:T)
-  
-  def clear()
-  
-  fset.addField(this)
-  
-  def fromStorageString(str:String)
-  
-  def toStorageString:String
-  
-  def prefix:String = fset.storageId + ":" + fset.storageIndex
-  
-  val datumKey:DatumKey = DatumKey(fset.storageId,fset.storageIndex,id)
+package vcc.dnd4e.view.compendium
 
-  def extractData():List[Datum] = List(Datum(datumKey,toStorageString))
+import scala.swing._
+import scala.swing.event._
+import vcc.util.swing.MigPanel
 
-  def toXML:scala.xml.Node = {
-    val datum=toStorageString
-    if(datum!=null) <datum id={id}>{datum}</datum>
-    else null
+object CompendiumView extends Frame {
+  title = "Compendium Entries"
+  contents = new MigPanel("fill") {
+    add(new CompendiumEntitySelectionPanel(),"span 3,wrap")
+	add(new Button("New ..."), "split 4")
+	add(new Button("Edit ..."))
+	add(new Button("Close"))
   }
 }

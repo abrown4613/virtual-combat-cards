@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.controller.actions
 
-import vcc.dnd4e.model.{CombatantTemplate,TrackerCombatant}
+import vcc.dnd4e.model.{TrackerCombatant}
 import vcc.controller.actions._
 
 

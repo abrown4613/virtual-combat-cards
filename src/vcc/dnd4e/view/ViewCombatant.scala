@@ -23,7 +23,7 @@ trait UIFormatted {
   def formattedText():String
 }	
 
-case class ViewCombatant(id:Symbol,name:String,hp:Int,init:Int,defense:DefenseBlock) {
+case class ViewCombatant(id:Symbol,alias:String, name:String,hp:Int,init:Int,defense:DefenseBlock) {
   var health=HealthTracker.createTracker(CharacterHealthDefinition(hp,hp/4,4))
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
@@ -44,7 +44,7 @@ object ViewCombatantProjection extends vcc.util.swing.TableModelRowProjection[Vi
   def apply(col:Int,comb:ViewCombatant):java.lang.Object= {
     col match {
       case 0 => comb.id.name
-      case 1 => comb.name
+      case 1 => (if(comb.alias!=null) "[" + comb.alias + "] " else "" )+comb.name
       case 2 => comb.health.currentHP + " / "+comb.hp + (if(comb.health.temporaryHP>0) " +"+comb.health.temporaryHP else "")
       case 3 => comb.health.status + (if(comb.health.status==HealthTracker.Status.Dying) ("(" + comb.health.deathStrikes + "/3)") else "!!!".substring(0,comb.health.deathStrikes)) 
       case 4 => int2Integer(comb.initTracker.round)
