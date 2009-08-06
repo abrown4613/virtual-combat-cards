@@ -21,6 +21,7 @@ import scala.actors.Actor
 import scala.actors.Actor.loop
 
 import vcc.controller.transaction._
+import vcc.model.Registry
 
 /**
  * Tracker actor handles the core logic for the event dispatch loop. It controls
@@ -34,8 +35,6 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
   //private var uia:Actor=null
   private var observers:List[Actor]=Nil
   
-  private var _coord:Coordinator =null
-
   private val _tlog= new TransactionLog[actions.TransactionalAction]()
   
   class ComposedAction(val name:String) extends actions.TransactionalAction {
@@ -85,8 +84,6 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
       react {
         case actions.AddObserver(obs) => 
           observers=obs::observers
-        case actions.SetCoordinator(coord) => 
-          this._coord=coord
           
         case ta:actions.TransactionalAction => 
           val trans=startTransaction()
@@ -133,4 +130,14 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with Transaction
       }
     }
   }
+}
+
+object Tracker {
+  def initialize[C](tc:TrackerController[C]):Tracker[C] = {
+    val tracker=new Tracker(tc)
+    Registry.register[Actor]("tracker",tracker)
+    tracker.start
+    tracker
+  }
+  
 }
