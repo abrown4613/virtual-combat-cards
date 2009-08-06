@@ -28,6 +28,6 @@ object CompendiumView extends Frame {
     add(new CompendiumEntitySelectionPanel(),"span 3,wrap")
 	add(new Button("New ..."), "split 4")
 	add(new Button("Edit ..."))
-	add(new Button("Close"))
+	add(new Button(Action("Close") {CompendiumView.visible = false }))
   }
 }

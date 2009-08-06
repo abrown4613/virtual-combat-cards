@@ -32,8 +32,7 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
     ("Role",classOf[String]),
     ("Type",classOf[String]),
     ("Level",classOf[Integer]),
-    ("XP",classOf[Integer]),
-    ("EID",classOf[String])
+    ("XP",classOf[Integer])
   )
   val setter:PartialFunction[(Int,MonsterSummary,Any),Unit] = null
   def apply(col:Int,obj:MonsterSummary):java.lang.Object = {
@@ -43,7 +42,6 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
       case 2 => if(obj.minion) "Minion" else "Standard"
       case 3 => int2Integer(obj.level)
       case 4 => int2Integer(obj.xp)
-      case 5 => obj.eid
     }
   }
 }
@@ -51,57 +49,66 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
 object CharacterSummaryProjection extends TableModelRowProjection[CharacterSummary] {
   val columns:List[(String,java.lang.Class[_])] = List(
     ("Name",classOf[String]),
-    ("Level",classOf[Int]),
     ("Class",classOf[String]),
     ("Race",classOf[String]),
-    ("EID",classOf[String])
+    ("Level",classOf[Int])
   )
   val setter:PartialFunction[(Int,CharacterSummary,Any),Unit] = null
   def apply(col:Int,obj:CharacterSummary):java.lang.Object = {
     col match {
       case 0 => obj.name
-      case 1 => int2Integer(obj.level)
-      case 2 => obj.cclass
-      case 3 => obj.race
-      case 4 => obj.eid 
+      case 1 => obj.cclass
+      case 2 => obj.race
+      case 3 => int2Integer(obj.level)
     }
   }
 }
 
-class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0"){
+class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
   private val buttonGroup = new ButtonGroup(monsterButton,characterButton)
-  private val table = new RowProjectionTable[EntitySummary]() {
+  private val monsterTableModel = new ProjectionTableModel(MonsterSummaryProjection) 
+  private val monsterTable = new RowProjectionTable[EntitySummary]() {
     autoResizeMode=Table.AutoResizeMode.Off
     selection.intervalMode=Table.IntervalMode.Single
+    model = monsterTableModel
+    setColumnWidth(0,150)
+    setColumnWidth(3,35)
+    setColumnWidth(4,60)
   }
-  private val monsterTableModel = new ProjectionTableModel(MonsterSummaryProjection) 
   private val characterTableModel = new ProjectionTableModel(CharacterSummaryProjection) 
+  private val characterTable = new RowProjectionTable[EntitySummary]() {
+    autoResizeMode=Table.AutoResizeMode.Off
+    selection.intervalMode=Table.IntervalMode.Single
+    model = characterTableModel
+    setColumnWidth(0,150)
+    setColumnWidth(3,35)
+  }
+  private val scrollPane = new ScrollPane(monsterTable)
+  monsterButton.selected = true
  
   private val activeEntityStore = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
  
-  println(activeEntityStore)
   monsterTableModel.content = activeEntityStore.enumerate(Compendium.monsterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[MonsterSummary]).toSeq
   characterTableModel.content = activeEntityStore.enumerate(Compendium.characterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[CharacterSummary]).toSeq 
-  table.model = monsterTableModel
-  
+
   add(monsterButton,"split 4")
   add(characterButton,"wrap")
-  add(new ScrollPane(table), "span 3, growx, growy")
+  add(scrollPane, "span 3,wrap, growx, growy")
+  //add(characterScrollPane, "span 3,wrap, growx, growy")
   
   listenTo(monsterButton,characterButton) 
   reactions += {
     case ButtonClicked(this.monsterButton) =>
-      table.model = monsterTableModel
-      table.repaint()
+      scrollPane.contents = monsterTable
     case ButtonClicked(this.characterButton) =>
-      table.model = characterTableModel
-      table.repaint()
+      scrollPane.contents = characterTable
   }
   
-  def currentSelection():Option[EntitySummary] = 
-    if(table.selection.rows.isEmpty) None 
-    else Some(table.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(table.selection.rows.toSeq(0)))
-
+  def currentSelection():Option[EntitySummary] = {
+    val activeTable = if(monsterButton.selected) monsterTable else characterTable
+    if(activeTable.selection.rows.isEmpty) None 
+    else Some(activeTable.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(activeTable.selection.rows.toSeq(0)))
+  }
 }
