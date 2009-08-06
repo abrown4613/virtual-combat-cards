@@ -34,9 +34,10 @@ import vcc.controller._
 import vcc.dnd4e.controller.request._
 import vcc.dnd4e.model.PartyLoader
 
-class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
+class MainMenu(uia:Actor) extends MenuBar {
   
   val compendiumID = Registry.get[EntityStoreID]("Compendium").get
+  val tracker = Registry.get[Actor]("tracker").get
   
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party"){
@@ -55,46 +56,46 @@ class MainMenu(coord:Coordinator,uia:Actor) extends MenuBar {
   })
   combatMenu.contents += new Separator
   combatMenu.contents += new MenuItem(Action("Start Combat") {
-    val diag=new vcc.dnd4e.view.dialog.InitiativeDialog(coord.tracker)
+    val diag=new vcc.dnd4e.view.dialog.InitiativeDialog(tracker)
     diag.visible=true
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
-    coord.tracker ! EndCombat()
-    coord.tracker ! Enumerate()
+    tracker ! EndCombat()
+    tracker ! Enumerate()
   })
   combatMenu.contents += new MenuItem(Action("Rest") {
-    coord.tracker ! ApplyRest(false)
+    tracker ! ApplyRest(false)
   })
   combatMenu.contents += new MenuItem(Action("Extended Rest") {
-    coord.tracker ! ApplyRest(true)
+    tracker ! ApplyRest(true)
   })
   
   combatMenu.contents += new Separator
   combatMenu.contents +=new MenuItem(Action("Clear Monsters"){
-    coord.tracker ! ClearCombatants(false)
-    coord.tracker ! Enumerate()
+    tracker ! ClearCombatants(false)
+    tracker ! Enumerate()
   })
   combatMenu.contents +=new MenuItem(Action("Clear All"){
-    coord.tracker ! ClearCombatants(true)
-    coord.tracker ! Enumerate()
+    tracker ! ClearCombatants(true)
+    tracker ! Enumerate()
   })
   
   val historyMenu= new Menu("History")
   historyMenu.contents +=new MenuItem(new Action("Undo"){
     def apply():Unit={
-      coord.tracker ! vcc.controller.actions.Undo()
+      tracker ! vcc.controller.actions.Undo()
     }
     accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Z'.toInt,java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents +=new MenuItem(new Action("Redo"){
     def apply():Unit={
-      coord.tracker ! vcc.controller.actions.Redo()
+      tracker ! vcc.controller.actions.Redo()
     }
     accelerator=Some(javax.swing.KeyStroke.getKeyStroke('Y'.toInt,java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new Separator
   historyMenu.contents +=new MenuItem(Action("Clear History"){
-    coord.tracker ! actions.ClearTransactionLog()
+    tracker ! actions.ClearTransactionLog()
   })
   
   var viewMenu= new Menu("View")
@@ -146,20 +147,18 @@ object Main extends SimpleGUIApplication {
   
   vcc.dnd4e.BootStrap.initialize()
   
-  var coord=vcc.controller.Coordinator.initialize(new TrackerController(new TrackerContext){
+  val tracker = vcc.controller.Tracker.initialize(new TrackerController(new TrackerContext){
     addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
     addPublisher(new vcc.dnd4e.controller.DefaultChangePublisher())
     val processor= new vcc.controller.TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler with TrackerContextHandler with InitiativeActionHandler
     addPublisher(new vcc.dnd4e.controller.TrackerEffectPublisher(context))
   })
 
-  var uia=new vcc.dnd4e.view.actor.UserInterface(coord.tracker)
+  var uia=new vcc.dnd4e.view.actor.UserInterface(tracker)
   
-  coord.start
-  
-  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,coord.tracker)
-  val seqTable = new vcc.dnd4e.view.SequenceTable(uia,coord.tracker)
-  val card=new vcc.dnd4e.view.CombatantCard(coord.tracker)
+  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,tracker)
+  val seqTable = new vcc.dnd4e.view.SequenceTable(uia,tracker)
+  val card=new vcc.dnd4e.view.CombatantCard(tracker)
   val statusBar=new StatusBar(uia)
   
   // Register panel with UIA
@@ -171,7 +170,7 @@ object Main extends SimpleGUIApplication {
   uia.addContextListener(card)
   uia.setStatusBar(statusBar)
   uia.start
-  coord.addObserver(uia)
+  tracker ! vcc.controller.actions.AddObserver(uia)
 
   def top = new MainFrame {
     title = "Virtual Combat Cards"
@@ -188,7 +187,7 @@ object Main extends SimpleGUIApplication {
       add(commandPanel,BorderPanel.Position.West)
       add(card,BorderPanel.Position.East)
       add(seqTable,BorderPanel.Position.Center)
-      add(new MainMenu(coord,uia),BorderPanel.Position.North)
+      add(new MainMenu(uia),BorderPanel.Position.North)
       add(statusBar,BorderPanel.Position.South)
       iconImage=IconLibrary.MetalD20.getImage()
     }

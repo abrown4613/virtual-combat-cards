@@ -30,6 +30,7 @@ trait TransactionalAction {
  */
 abstract class QueryAction
 
+case class AddObserver(obs:scala.actors.Actor)
 case class StartTransaction(desc:String)
 case class EndTransaction(desc:String)
 case class ClearTransactionLog()
