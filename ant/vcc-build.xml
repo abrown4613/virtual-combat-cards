@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 	
   <property name="classpath"  value="bin"/>
-  <property name="version" value="0.95.1" />
+  <property name="version" value="1.0.0-RC1" />
   <property name="dist" value="dist" />
 	<property name="package" value="${dist}/package" />
 	<property name="deplib" value="${dist}/deplib" />
@@ -21,6 +21,7 @@
 		<mkdir dir="${installer}" />
   	<mkdir dir="${installer}/lib" />
   	<mkdir dir="${installer}/sample" />
+  	<mkdir dir="${installer}/sample-compendium" />
 	</target>
 	
 	<target name="vccjar">
@@ -39,6 +40,9 @@
 		</copy>
   	<copy todir="${installer}/sample">
   	  <fileset dir="sample"/>
+  	</copy>
+  	<copy todir="${installer}/sample-compendium">
+  	  <fileset dir="sample-compendium" includes="*.xml" />
   	</copy>
   	<zip destfile="${package}/install.zip" basedir="${installer}" includes="**" />
 	</target>
