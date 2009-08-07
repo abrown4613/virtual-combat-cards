@@ -28,7 +28,7 @@ object BootStrap {
     case _ => default
   }
 
-  val version=new UpdateManager.Version(1,0,0,"RC1") 
+  val version=new UpdateManager.Version(0,99,0,"RC1") 
   
   def initialize() {
     if(!vcc.util.Configuration.isConfigured) {
