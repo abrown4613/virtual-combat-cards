@@ -21,11 +21,37 @@ package vcc.infra.webserver
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.bio.SocketConnector
 import org.mortbay.jetty.servlet.ServletHandler
-
+import org.mortbay.component._
 
 class WebServer(port:Int) {
-  
-  private val server:Server = new Server()
+
+  protected object  ServerStatus extends LifeCycle.Listener {
+	var running:Boolean = false 
+ 
+	def lifeCycleFailure(event: LifeCycle, cause: Throwable) {
+	  println("Server Failed")
+    }
+           
+    def lifeCycleStarted(event: LifeCycle) {
+      println("Server started")
+      running = true
+    }
+           
+    def lifeCycleStarting(event: LifeCycle) {
+      println("Server starting")
+    }
+    
+    def lifeCycleStopped(event: LifeCycle) {
+      println("Server stopped")
+      running = false
+    }
+           
+    def lifeCycleStopping(event: LifeCycle) {
+      println("Server stoping")
+    }
+  }
+
+  private val server = new Server()
   private val handler= new ServletHandler()
   
   protected def initialize() {
@@ -33,22 +59,30 @@ class WebServer(port:Int) {
 	connector.setPort(port)
 	server.setConnectors(Array(connector))
 	server.addHandler(handler)
+	server.addLifeCycleListener(ServerStatus)
   }
   initialize()
   
-  def running:Boolean = false 
+ 
+  def running = ServerStatus.running
   
   def start() {
-	server.start()
+    try {
+      server.start()
+    } catch {
+      case e => 
+        server.stop
+        server.join
+    }
   }
   
   def stop() {
-    server.stop() 
+    server.stop()
+    server.join()
   }
   
   def registerServlet(classPath:String,path:String) {
     handler.addServletWithMapping(classPath,path)
   }
-  
   
 }

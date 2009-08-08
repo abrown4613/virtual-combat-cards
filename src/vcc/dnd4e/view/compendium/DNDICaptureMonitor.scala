@@ -20,29 +20,46 @@ package vcc.dnd4e.view.compendium
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing.MigPanel
+import vcc.app.dndi.CaptureHoldingArea
+import vcc.domain.dndi.Monster
+import vcc.domain.dndi.MonsterImportService
 
 object DNDICaptureMonitor extends Frame {
+  
+  private val webserver = vcc.model.Registry.get[vcc.infra.webserver.WebServer]("webserver").get
+  private val stateMessage = new Label()
+  private var monsters:Seq[Monster] = Nil
+  private val monsterList = new ListView[String](Nil)
+  
   preferredSize = new java.awt.Dimension(300,400)
+  
   contents = new MigPanel("fill","[][][]","[][][]") {
-    add(new Label("Server Status: stoppped"),"wrap")
-    add(new ScrollPane(new ListView(List("ab","cd"))), "span 3,growx, growy, wrap")
-    add(new Button("Import"))
+    add(stateMessage,"wrap")
+    add(new ScrollPane(monsterList), "span 3,growx, growy, wrap")
+    add(new Button(Action("Import"){
+      val sel = monsterList.selection.indices
+      if(!sel.isEmpty) {
+        for(idx <- sel) {
+          MonsterImportService.importMonster(monsters(idx))
+        }
+      }
+    }))
     add(new Button(Action("Close") { DNDICaptureMonitor.visible = false }))
   }
-
-  var serverActive = false 
+  
   private val startServerAction = Action("Start") { 
-    serverActive = true
+    webserver.start()
     toggleActionState()
   } 
   private val stopServerAction = Action("Stop") {
-    serverActive = false
+    webserver.stop()
     toggleActionState()
   }
   
   private def toggleActionState() {
-    stopServerAction.enabled = serverActive 
-    startServerAction.enabled = ! serverActive
+    stopServerAction.enabled = webserver.running 
+    startServerAction.enabled = ! webserver.running
+    stateMessage.text = "Capture "+ (if(webserver.running) "Server is running" else "Server is stopped")
   }
   
   menuBar = { 
@@ -51,12 +68,19 @@ object DNDICaptureMonitor extends Frame {
     serverMenu.contents += new MenuItem(startServerAction)
     serverMenu.contents += new MenuItem(stopServerAction)
     mb.contents += serverMenu
-    val cacheMenu = new Menu("Server")
-    cacheMenu.contents += new MenuItem(Action("Clear Cache") { })
-    cacheMenu.contents += new MenuItem(Action("Load cached entries"){})
+    val cacheMenu = new Menu("Cache")
+    cacheMenu.contents += new MenuItem(Action("Clear Cache") { CaptureHoldingArea.clearCachedMonster() })
+    cacheMenu.contents += new MenuItem(Action("Load cached entries"){ CaptureHoldingArea.loadCachedMonster()})
     mb.contents += cacheMenu
     mb
   }
   
   toggleActionState()
+  CaptureHoldingArea.addMonsterObserver(new CaptureHoldingArea.CaptureHoldingObserver[Monster] {
+     def updateContent(newContent: Seq[Monster]) {
+       monsters = newContent
+       monsterList.listData = newContent.map(monster => monster("NAME").get)
+     }                                   
+  })
+  
 }
