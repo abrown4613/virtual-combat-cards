@@ -147,7 +147,9 @@ object Main extends SimpleGUIApplication {
   
   vcc.dnd4e.BootStrap.initialize()
   val ws = new vcc.infra.webserver.WebServer(4143)
-  ws.registerServlet("vcc.dndi.CaptureServlet","/capture")
+  ws.registerServlet("vcc.app.dndi.CaptureServlet","/capture")
+  Registry.register("webserver",ws)
+  println("WebServer "+ws)
   ws.start
   
   val tracker = vcc.controller.Tracker.initialize(new TrackerController(new TrackerContext){

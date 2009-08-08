@@ -18,7 +18,7 @@
 package test
 
 import junit.framework.TestCase
-import vcc.dndi.Parser
+import vcc.domain.dndi.Parser
 
 class DNDICaptureTest extends TestCase {
   
@@ -34,7 +34,7 @@ class DNDICaptureTest extends TestCase {
   }
   
   def testLinientToInt {
-     import vcc.dndi.DNDInsiderCapture.flexiToInt
+     import vcc.domain.dndi.DNDInsiderCapture.flexiToInt
      assert(flexiToInt("20")==Some(20))
      assert(flexiToInt(" + 20")==Some(20))
      assert(flexiToInt("+20")==Some(20))
@@ -55,7 +55,7 @@ class DNDICaptureTest extends TestCase {
     val xml=scala.xml.XML.load(file)
     assert(!xml.isEmpty)
 
-    var monster=vcc.dndi.DNDInsiderCapture.load(xml)
+    var monster=vcc.domain.dndi.DNDInsiderCapture.load(xml)
     assert(monster!=null)
     assert(monster("NAME")==Some("Death Knight (Human Fighter)"))
     assert(monster("HP")==Some("264"))
@@ -67,7 +67,7 @@ class DNDICaptureTest extends TestCase {
     val xml=scala.xml.XML.load(file)
     assert(!xml.isEmpty)
 
-    var monster=vcc.dndi.DNDInsiderCapture.load(xml)
+    var monster=vcc.domain.dndi.DNDInsiderCapture.load(xml)
     assert(monster!=null)
     assert(monster("NAME")==Some("Ice Archon Hailscourge"))
     assert(monster("HP")==Some("120"),monster("HP"))
