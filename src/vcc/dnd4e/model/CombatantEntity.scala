@@ -18,6 +18,7 @@
 package vcc.dnd4e.model
 
 import vcc.model.datastore._
+import vcc.model.Registry
 
 abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
   def combatantType: CombatantType.Value
@@ -38,11 +39,22 @@ abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
 object Compendium {
   val monsterClassID = DataStoreURI.asEntityClassID("vcc-class:monster")
   val characterClassID = DataStoreURI.asEntityClassID("vcc-class:character")
-  
+  var _activeRepository:EntityStore = null
+
   println("Registering compendium")
   
   EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
   EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
+  
+  def setActiveRepository(es: EntityStore) {
+    _activeRepository = es
+  }
+  
+  def activeRepository: EntityStore = _activeRepository
+  
+  def initialize() {
+    _activeRepository = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
+  }
 }
 
 class MonsterEntity(eid:EntityID) extends CombatantEntity(eid) {

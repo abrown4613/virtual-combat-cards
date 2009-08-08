@@ -34,13 +34,14 @@ object BootStrap {
     if(!vcc.util.Configuration.isConfigured) {
       println("Can't find the configuration")
     }
-    vcc.dnd4e.model.Compendium
     //FIXME This is just for testing
     val sampleCompendiumID = vcc.model.datastore.DataStoreURI.directoryEntityStoreIDFromFile(new java.io.File("sample-compendium"))
     Registry.register(sampleCompendiumID, vcc.model.datastore.EntityStoreFactory.createStore(sampleCompendiumID))
     Registry.register("Compendium",sampleCompendiumID)
     Registry.register("SampleCompendium",sampleCompendiumID)
-  
+
+    // Compendium depends on active Compendium settings
+    vcc.dnd4e.model.Compendium.initialize
 
   }
 }
