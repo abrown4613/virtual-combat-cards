@@ -16,20 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-package vcc.dndi
+package vcc.app.dndi
 
-import javax.servlet.ServletException
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.http.HttpServlet
+import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+
+import vcc.domain.dndi.DNDInsiderCapture
+import vcc.domain.dndi.UntranslatableException
+import vcc.domain.dndi.Monster
 
 class CaptureServlet extends HttpServlet {
 
   override protected def doGet(request: HttpServletRequest, response: HttpServletResponse) {
 	response.setContentType("text/html");
 	response.setStatus(HttpServletResponse.SC_OK);
-	response.getWriter().println("<h1>Hello SimpleServlet</h1>");
+	response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
   }		
 
   override protected def doPost(request: HttpServletRequest, response: HttpServletResponse) {
@@ -43,19 +47,21 @@ class CaptureServlet extends HttpServlet {
     }  
     try {
       println("I got his XMl"+xml)
-      val monster=vcc.dndi.DNDInsiderCapture.load(xml)
-      monster match {
-        case s: vcc.dndi.Monster => 
+      val dndiObject = DNDInsiderCapture.load(xml)
+      dndiObject match {
+        case monster: Monster => 
           println("Read monster "+monster("NAME"))
           println("     monster "+monster("INITIATIVE"))
           println("     monster "+monster("HP"))
           println("Monster "+monster)
+          CaptureHoldingArea.addCapturedMonsterAndCacheXML(monster,xml)
+          //val log = org.mortbay.log.Logger.getLogger(null)
           response.getWriter().println("Captured monster "+monster("NAME").get);
         case null =>
           response.getWriter.println("You sent something that is no capturable")
       }
     } catch {
-      case ue: vcc.dndi.UntranslatableException => 
+      case ue: UntranslatableException => 
         // XML is ok, but can be parsed so we save it for debuging
         val file=java.io.File.createTempFile("capture", ".xml")
         println(ue)
