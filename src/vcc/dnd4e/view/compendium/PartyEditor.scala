@@ -69,6 +69,8 @@ class PartyEditor extends Frame {
   }
   
   title = "Edit Party"
+  iconImage = IconLibrary.MetalD20.getImage
+
   
   private val partyTableModel = new ProjectionTableModel[PartyTableEntry](PartyTableEntryProject)
   private val table = new RowProjectionTable[PartyTableEntry]() {

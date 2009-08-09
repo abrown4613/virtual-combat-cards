@@ -32,7 +32,8 @@ object DNDICaptureMonitor extends Frame {
   private val monsterList = new ListView[String](Nil)
   
   preferredSize = new java.awt.Dimension(300,400)
-  
+  iconImage = IconLibrary.MetalD20.getImage
+  title = "D&D Insider Capture Monitor" 
   contents = new MigPanel("fill","[][][]","[][][]") {
     add(stateMessage,"wrap")
     add(new ScrollPane(monsterList), "span 3,growx, growy, wrap")

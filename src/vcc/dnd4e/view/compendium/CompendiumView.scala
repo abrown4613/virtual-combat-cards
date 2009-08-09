@@ -23,7 +23,10 @@ import scala.swing.event._
 import vcc.util.swing.MigPanel
 
 object CompendiumView extends Frame {
+  
   title = "Compendium Entries"
+  iconImage = IconLibrary.MetalD20.getImage
+
   contents = new MigPanel("fill") {
     add(new CompendiumEntitySelectionPanel(),"span 3,wrap")
 	add(new Button("New ..."), "split 4")
