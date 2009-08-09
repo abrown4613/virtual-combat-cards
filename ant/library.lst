@@ -2,4 +2,10 @@
 scala-swing.jar
 scala-library.jar
 miglayout-3.6.2-swing.jar
+jetty-6.1.14.jar
+jetty-util-6.1.14.jar
+servlet-api-2.5-6.1.14.jar
+log4j-1.2.15.jar
+slf4j-api-1.5.8.jar
+slf4j-log4j12-1.5.8.jar
 vcc.jar
