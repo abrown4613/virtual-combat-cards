@@ -31,6 +31,9 @@ object BootStrap {
   val version=new UpdateManager.Version(0,99,0,"RC1") 
   
   def initialize() {
+    import vcc.infra.LogService
+    val logger = LogService.initializeLog("org.mortbay.log",LogService.level.Info)
+    
     if(!vcc.util.Configuration.isConfigured) {
       println("Can't find the configuration")
     }
