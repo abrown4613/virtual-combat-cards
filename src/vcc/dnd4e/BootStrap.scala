@@ -19,6 +19,7 @@ package vcc.dnd4e
 
 import vcc.util.UpdateManager
 import vcc.model.Registry
+import vcc.dnd4e.model.Compendium
 
 object BootStrap {
   
@@ -33,18 +34,20 @@ object BootStrap {
   def initialize() {
     import vcc.infra.LogService
     val logger = LogService.initializeLog("org.mortbay.log",LogService.level.Info)
+    LogService.initializeLog("infra",LogService.level.Debug)
     
     if(!vcc.util.Configuration.isConfigured) {
       println("Can't find the configuration")
     }
+    // Compendium depends on active Compendium settings
+    Compendium.initialize
+
     //FIXME This is just for testing
     val sampleCompendiumID = vcc.model.datastore.DataStoreURI.directoryEntityStoreIDFromFile(new java.io.File("sample-compendium"))
-    Registry.register(sampleCompendiumID, vcc.model.datastore.EntityStoreFactory.createStore(sampleCompendiumID))
+    val sampleCompendium = vcc.model.datastore.EntityStoreFactory.createStore(sampleCompendiumID)
+    Registry.register(sampleCompendiumID, sampleCompendium)
     Registry.register("Compendium",sampleCompendiumID)
     Registry.register("SampleCompendium",sampleCompendiumID)
-
-    // Compendium depends on active Compendium settings
-    vcc.dnd4e.model.Compendium.initialize
-
+    Compendium.setActiveRepository(sampleCompendium)
   }
 }

@@ -41,11 +41,6 @@ object Compendium {
   val characterClassID = DataStoreURI.asEntityClassID("vcc-class:character")
   var _activeRepository:EntityStore = null
 
-  println("Registering compendium")
-  
-  EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
-  EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
-  
   def setActiveRepository(es: EntityStore) {
     _activeRepository = es
   }
@@ -53,7 +48,8 @@ object Compendium {
   def activeRepository: EntityStore = _activeRepository
   
   def initialize() {
-    _activeRepository = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
+    EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
+    EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
   }
 }
 

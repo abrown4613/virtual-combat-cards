@@ -23,6 +23,9 @@ package vcc.model.datastore
  */
 object EntityFactory {
   
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
+
+  
   private var _registry=scala.collection.immutable.Map.empty[EntityClassID,EntityBuilder]
   
   /**
@@ -48,6 +51,7 @@ object EntityFactory {
    */
   def createInstance(source:EntitySource):Entity = {
     val entity = if(isClassDefined(source.classId)) _registry(source.classId).createInstance(source.id) else null
+    if(entity==null) logger.error("EntityFactory does not contain class {}",source.classId)
     if(entity != null) {
 	  for(datum <- source.getData()) {
 		entity.loadDatum(datum)
