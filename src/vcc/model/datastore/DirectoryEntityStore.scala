@@ -69,8 +69,10 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
     var flist = new vcc.util.DirectoryIterator(baseDir,true).filter( x => x.toString.endsWith(".xml"))
     for(file <- flist) {
       val ent = loadFile(file)
-      _map = _map + (ent.id-> new Entry(ent.classId,file,ent))
-      os.println(List(ent.id.uri.toString,ent.classId.uri.toString,file.getName).mkString("|"))
+      if(ent != null) {
+        _map = _map + (ent.id-> new Entry(ent.classId,file,ent))
+        os.println(List(ent.id.uri.toString,ent.classId.uri.toString,file.getName).mkString("|"))
+      }
     }
 	os.close()
   }
