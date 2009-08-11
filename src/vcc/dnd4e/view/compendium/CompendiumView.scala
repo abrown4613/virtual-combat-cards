@@ -26,11 +26,24 @@ object CompendiumView extends Frame {
   
   title = "Compendium Entries"
   iconImage = IconLibrary.MetalD20.getImage
+  
+  val window = this
+
+  val newEntryAction = Action("New Entry ...") {
+	val diag = new NewCombatantDialog(window)
+	diag.visible = true
+	println("Dialog is done"+diag.dialogResult)
+  }
 
   contents = new MigPanel("fill") {
     add(new CompendiumEntitySelectionPanel(),"span 3,wrap")
-	add(new Button("New ..."), "split 4")
-	add(new Button("Edit ..."))
+	add(new Button(newEntryAction), "split 4")
+	add(new Button(Action("Edit ..."){ doEditEntry() }))
 	add(new Button(Action("Close") {CompendiumView.visible = false }))
+  }
+  
+  
+  def doEditEntry() {
+    
   }
 }
