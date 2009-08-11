@@ -23,6 +23,7 @@ class CompendiumMenu extends Menu("Compendium") {
   this.contents += new MenuItem(Action("View Entries ...") {
     CompendiumView.visible = true
   })
+  this.contents += new MenuItem(CompendiumView.newEntryAction)
   this.contents += new MenuItem(Action("Edit Parties ...") {
     val partyEditor = new PartyEditor()
     partyEditor.visible = true
