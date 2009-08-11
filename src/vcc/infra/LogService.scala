@@ -32,6 +32,8 @@ object LogService {
     
   }
   
+  private var _registeredLogs = Set.empty[String]
+  
   protected val mapToLog4J = Map[level.Value,Level](
     level.Debug -> Level.DEBUG,
     level.Info -> Level.INFO,
@@ -41,12 +43,14 @@ object LogService {
   )
   
   def initializeLog(context:String, lvl: level.Value) {
-	val log = Logger.getLogger(context)
-	
-    log.setLevel(mapToLog4J(lvl))
-    val fmt = new org.apache.log4j.TTCCLayout()// SimpleLayout()
-    val apdr = new org.apache.log4j.ConsoleAppender(fmt)
-    log.addAppender(apdr)
+    if(!_registeredLogs.contains(context)) {
+	  val log = Logger.getLogger(context)
+      log.setLevel(mapToLog4J(lvl))
+      val fmt = new org.apache.log4j.TTCCLayout()// SimpleLayout()
+      val apdr = new org.apache.log4j.ConsoleAppender(fmt)
+      log.addAppender(apdr)
+      _registeredLogs += context
+    }
   }
   
 }
