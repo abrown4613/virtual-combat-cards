@@ -94,4 +94,5 @@ object TestEntityRepository extends EntityStore {
     Set(entIKnow.keys.map(DataStoreURI.asEntityID(_)).toList : _*)
   }
   
+  def nextSequential() = 0
 }

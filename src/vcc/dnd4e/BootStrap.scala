@@ -33,8 +33,11 @@ object BootStrap {
   
   def initialize() {
     import vcc.infra.LogService
-    val logger = LogService.initializeLog("org.mortbay.log",LogService.level.Info)
+    LogService.initializeLog("org.mortbay.log",LogService.level.Info)
     LogService.initializeLog("infra",LogService.level.Debug)
+    LogService.initializeLog("domain",LogService.level.Debug)
+    LogService.initializeLog("app",LogService.level.Debug)
+    LogService.initializeLog("user",LogService.level.Info)
     
     if(!vcc.util.Configuration.isConfigured) {
       println("Can't find the configuration")
@@ -44,7 +47,7 @@ object BootStrap {
 
     //FIXME This is just for testing
     val sampleCompendiumID = vcc.model.datastore.DataStoreURI.directoryEntityStoreIDFromFile(new java.io.File("sample-compendium"))
-    val sampleCompendium = vcc.model.datastore.EntityStoreFactory.createStore(sampleCompendiumID)
+    val sampleCompendium = vcc.model.datastore.EntityStoreFactory.openStore(sampleCompendiumID)
     Registry.register(sampleCompendiumID, sampleCompendium)
     Registry.register("Compendium",sampleCompendiumID)
     Registry.register("SampleCompendium",sampleCompendiumID)
