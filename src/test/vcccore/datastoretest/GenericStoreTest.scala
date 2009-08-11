@@ -26,6 +26,10 @@ abstract class GenericStoreTest extends TestCase {
   val blockClassID = DataStoreURI.asEntityClassID("vcc-class:block")
   val eid0 = DataStoreURI.asEntityID("vcc-ent:monster:0")
   val eid1 = DataStoreURI.asEntityID("vcc-ent:block:1")
+  val storeID:EntityStoreID
+  var entityStore:EntityStore = null
+  
+   vcc.infra.LogService.initializeLog("infra",vcc.infra.LogService.level.Off)
   
   class TestEntity(eid:EntityID) extends Entity(eid) {
     val classId = testClassID
@@ -57,24 +61,27 @@ abstract class GenericStoreTest extends TestCase {
     val summaryFields = Seq(name.datumKey,hp.datumKey,skills.perception.datumKey)
   }
   
-  def dispose()
-  
-  def open():EntityStore
-  
-  def close(es:EntityStore)
-  
-  var entityStore:EntityStore = null
+  /**
+   * This is a holder for an eventual implementation of special logic for
+   * shutting down log.
+   */
+  def close(es:EntityStore) {}
   
   override def setUp() {
     EntityFactory.registerEntityClass(testClassID, TestEntityBuilder)
     EntityFactory.registerEntityClass(blockClassID, BlockEntityBuilder)
-    entityStore = open()
+    val builder = EntityStoreFactory.getEntityStoreBuilder(storeID)
+    assert(builder!=null)
+
+    //Dispose it
+    if(builder.exists(storeID)) builder.destroy(storeID)
+    entityStore = builder.create(storeID)
     assert(entityStore != null)
   }
   
   override def tearDown() {
-    close(entityStore)
-    dispose()
+    val builder = EntityStoreFactory.getEntityStoreBuilder(storeID)
+    builder.destroy(storeID)
   }
   
   def checkEntityExistance(eid:EntityID,classId:EntityClassID) {
@@ -120,7 +127,7 @@ abstract class GenericStoreTest extends TestCase {
 
     //Close and open again
     close(entityStore)
-    entityStore = open()
+    entityStore = EntityStoreFactory.openStore(storeID)
 
     checkEntityExistance(eid0, testClassID)
     checkEntityExistance(eid1, blockClassID)
@@ -154,7 +161,7 @@ abstract class GenericStoreTest extends TestCase {
 
     //make sure it got saved
     close(entityStore)
-    entityStore = open()
+    entityStore = EntityStoreFactory.openStore(storeID)
     assert(entityStore.getEntityClassID(eid0) == None)
     checkEntityExistance(eid1, blockClassID)
     
@@ -164,7 +171,7 @@ abstract class GenericStoreTest extends TestCase {
     loadUpDatabase
     //Close and open again
     close(entityStore)
-    entityStore = open()
+    entityStore = EntityStoreFactory.openStore(storeID)
     
     assert(entityStore.getEntityClassID(eid0)== Some(testClassID))
     val em = entityStore.loadEntitySummary(eid0)
@@ -183,5 +190,72 @@ abstract class GenericStoreTest extends TestCase {
 
     assert(mes.map.contains(TestEntityBuilder.skills.perception.datumKey))
     assert(mes.map(TestEntityBuilder.skills.perception.datumKey) == "5")
+  }
+  
+  def testBuilder() {
+    val builder = EntityStoreFactory.getEntityStoreBuilder(storeID)
+    assert(builder!=null)
+    
+    try {
+      builder.create(storeID)
+      assert(false, "Should not create an exisitng EntityStore")   
+    } catch {
+      case e:EntityStoreException => 
+      case s =>
+        assert(false,s)
+        s.printStackTrace()
+    }
+
+    //This may not work
+    if(builder.exists(storeID)) builder.destroy(storeID)
+    assert(!builder.exists(storeID), "Entity store should not exist")
+    
+    val es1 = builder.create(storeID)
+    assert(es1!=null)
+    assert(builder.exists(storeID))
+    
+    val es2 = builder.open(storeID)
+    assert(es2!=null)
+    assert(builder.exists(storeID))
+    
+    builder.destroy(storeID)
+    assert(!builder.exists(storeID))
+
+    try {
+      builder.open(storeID)
+      assert(false, "Should not open an unexisitng EntityStore")   
+    } catch {
+      case e:EntityStoreException =>
+      case s => assert(false,s) 
+    }
+  }
+  
+  def testFactory() {
+    assert(EntityStoreFactory.exists(storeID))
+    val es2 = EntityStoreFactory.openStore(storeID)
+    assert(es2 != null)
+
+    EntityStoreFactory.getEntityStoreBuilder(storeID).destroy(storeID)
+    assert(!EntityStoreFactory.exists(storeID))
+    
+    val es1 = EntityStoreFactory.createStore(storeID)
+    assert(es1 != null)
+    assert(EntityStoreFactory.exists(storeID))    
+  }
+  
+  def testSequence() {
+    val v1 = entityStore.nextSequential()
+    assert(v1 != 0)
+
+    val v2 = entityStore.nextSequential()
+    assert(v1 != v2)
+    
+    close(entityStore)
+    entityStore = EntityStoreFactory.openStore(storeID)
+    assert(entityStore != null)
+    
+    val v3 = entityStore.nextSequential()
+    assert(v3 != v2)
+    assert(v3 != v1)
   }
 }

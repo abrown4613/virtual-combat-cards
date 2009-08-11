@@ -17,6 +17,8 @@
  */
 package vcc.model.datastore
 
+class EntityStoreException(msg:String) extends Exception(msg)
+
 /**
  * Implementation of this trait should provide means of loading
  * and storing entities.
@@ -35,6 +37,10 @@ trait EntityStore {
    */
   def load(eid:EntityID):Entity
   
+  /**
+   * Gets all the fields in the summary and places them in a map. 
+   * This is needed to executed the callback on loadEntitySummary
+   */
   protected def getEntitySummaryMap(eid:EntityID):Map[DatumKey,String]
 
   /**
@@ -68,6 +74,48 @@ trait EntityStore {
    */
   def enumerate(classId: EntityClassID):scala.collection.Set[EntityID]
   
+  /**
+   * Return the next integer number in the repository sequence. This
+   * number should be unique with the repository and once created 
+   * it must not be reused.
+   */
+  def nextSequential():Int
+}
+
+/**
+ *  
+ */
+trait EntityStoreBuilder {
+
+  /**
+   * Destroy and eliminate all data in the repository.
+   */
+  def destroy(esid:EntityStoreID)
+  
+  /**
+   * Create a new instance of the repository. In this step all necessary steps to create
+   * the repository. It should also open the repository.
+   */
+  def create(esid:EntityStoreID):EntityStore
+  
+  /**
+   * Open an existing respository. If the repository has not been create an exceptions
+   * will be thrown.
+   */
+  def open(esid:EntityStoreID):EntityStore
+  
+  /**
+   * Test if the repository is already created.
+   * @return False if the repository does not exist
+   */
+  def exists(esid:EntityStoreID):Boolean
+  
+  /**
+   * Test if the EntityStoreID is a valid ID for this type of entity store.
+   * @return False if the repository does not exist
+   */
+  def isValidEntityStoreID(esid:EntityStoreID):Boolean
+  
 }
 
 /**
@@ -76,8 +124,8 @@ trait EntityStore {
  */
 object EntityStoreFactory {
 
-  private var subSchemeMap:Map[String,EntityStoreID => EntityStore] = Map(
-    "directory" -> { esid => new DirectoryEntityStore(esid) }
+  private var subSchemeMap:Map[String,EntityStoreBuilder] = Map(
+    "directory" -> DirectoryEntityStore
   )
   
   /**
@@ -86,7 +134,7 @@ object EntityStoreFactory {
    * @param builder A function that given a EntityStoreID of a subScheme will return the
    * appropriate EntityStore.
    */
-  def registerEntityStoreType(subScheme:String, builder:EntityStoreID => EntityStore) {
+  def registerEntityStoreType(subScheme:String, builder:EntityStoreBuilder) {
     subSchemeMap = subSchemeMap + (subScheme -> builder)
   }
   
@@ -97,9 +145,32 @@ object EntityStoreFactory {
    */
   def createStore(esid:EntityStoreID):EntityStore = {
     if(subSchemeMap.isDefinedAt(esid.subScheme)) {
-      subSchemeMap(esid.subScheme)(esid)
+      subSchemeMap(esid.subScheme).create(esid)
     } else {
       null
     }
+  }
+  
+  /**
+   * Open an existant EntityStore based on the URI
+   * @param esid The EntityStoreID
+   * @return A new EntityStore or null if the scheme is bad or is not mapped to a builder
+   */
+  def openStore(esid:EntityStoreID):EntityStore = {
+    if(subSchemeMap.isDefinedAt(esid.subScheme)) {
+      val builder = subSchemeMap(esid.subScheme)
+      if(!builder.exists(esid)) null
+      else builder.open(esid)
+    } else {
+      null
+    }
+  }
+  
+  def getEntityStoreBuilder(esid:EntityStoreID):EntityStoreBuilder = if(subSchemeMap.isDefinedAt(esid.subScheme)) subSchemeMap(esid.subScheme) else null
+  
+  def exists(esid:EntityStoreID) = {
+    val builder = getEntityStoreBuilder(esid)
+    if(builder != null) builder.exists(esid)
+    else false
   }
 }

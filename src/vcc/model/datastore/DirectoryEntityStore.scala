@@ -23,23 +23,21 @@ import java.io.File
 class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
   
   private class Entry(val classId:EntityClassID, val file:File, var entity:Entity) 
+
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
   
   private var _map = Map.empty[EntityID,Entry]
   
-  private val baseDir = try {
-    if(esid.subScheme == "directory") {
-      new File(new java.net.URI(esid.getSubSchemeSpecificPart))
-    } else null
-  } catch { case _ => null }
-  
-  assert(baseDir != null)
-  if(!baseDir.exists) baseDir.mkdirs()
-  assert(baseDir.isDirectory)
-  
+  private val baseDir = DirectoryEntityStore.extractBaseDirectory(esid) 
+  if(baseDir == null) throw new EntityStoreException("Base directory not defined correctly")
+  private val marker = new DirectoryEntityStore.RepositoryMark(DirectoryEntityStore.getMarkerFile(baseDir))
+  if(!marker.exists) throw new EntityStoreException("Cant find generate marker file, maybe not a real DirectoryEntityStore "+marker)
+
   private val indexFile = new File(baseDir,"index.toc")
   scanIndex()  
   
   private def scanIndex() {
+    logger.info("Scaning index file {}",indexFile)
 	if(indexFile.exists) {
 	  val is = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(indexFile)))
 	  var line = is.readLine()
@@ -53,7 +51,7 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
             _map = _map + (eid -> new Entry(classId,file,null))
           }
 	    } else {
-	      println("Bad line: " + line)
+	      logger.error("Bad line: {}", line)
 	    }
 	    line = is.readLine()
 	  }
@@ -64,10 +62,12 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
   }
   
   private def reIndex() {
+    logger.info("Reindexing directory {}",baseDir)
     indexFile.delete()
 	val os = new java.io.PrintWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(indexFile,true)))
     var flist = new vcc.util.DirectoryIterator(baseDir,true).filter( x => x.toString.endsWith(".xml"))
     for(file <- flist) {
+      logger.debug("Parsing file {}",file)
       val ent = loadFile(file)
       if(ent != null) {
         _map = _map + (ent.id-> new Entry(ent.classId,file,ent))
@@ -153,4 +153,108 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
     else Set() ++ _map.map(p => if(p._2.classId == classId) p._1 else null).filter( x => x != null)
   }
 
+  def nextSequential() = marker.getNextInSequence()
+}
+
+object DirectoryEntityStore extends EntityStoreBuilder {
+
+    
+  private class RepositoryMark(markFile:File) {
+
+    if(markFile == null) throw new Exception("Invalid markerFile")
+    private var seq = 0
+    if(markFile.exists) load()
+    
+    def exists() = markFile.exists() 
+    
+    def getNextInSequence():Int = {
+       seq += 1
+       save()
+       seq
+    }
+    
+    def save() {
+      scala.xml.XML.saveFull(markFile.toString,
+        <repository version="1.0"><sequence id="base" value={seq.toString} /></repository>
+      , "UTF-8",true,null)
+    }
+    
+    def load() {
+      try {
+    	val xml = scala.xml.XML.load(new java.io.FileInputStream(markFile))
+    	val s = (xml \\ "sequence")(0)
+    	seq = s.attribute("value").get.text.toInt
+      } catch {
+        case e => throw new Exception("Failed load marker file",e)
+      }
+    }
+  }
+
+  
+  /**
+   * Destroy and eliminate all data in the repository.
+   */
+  def destroy(esid:EntityStoreID) {
+    val dir = extractBaseDirectory(esid)
+    if(dir != null) new vcc.util.DirectoryIterator(dir,false) foreach (x => x.delete)
+  }
+  
+  /**
+   * Create a new instance of the repository. In this step all necessary steps to create
+   * the repository. It should also open the repository.
+   */
+  def create(esid:EntityStoreID):EntityStore = {
+    val baseDir = extractBaseDirectory(esid)
+    val markFile = getMarkerFile(baseDir)
+    if(!exists(esid)) {
+    	if(!baseDir.exists) baseDir.mkdirs
+    	val rm = new RepositoryMark(markFile)
+    	rm.save()
+    	open(esid) 
+    } else throw new EntityStoreException("Cannot create "+esid+" since it already exists")
+  }
+  
+  /**
+   * Open an existing respository. If the repository has not been create an exceptions
+   * will be thrown.
+   */
+  def open(esid:EntityStoreID):EntityStore = {
+    if(isValidEntityStoreID(esid)) {
+      if(!exists(esid)) throw new EntityStoreException("Cant open "+esid+" since it has not been created")
+      val es = new DirectoryEntityStore(esid)
+      assert(es!=null)
+      es
+    } else null
+  }
+  
+  /**
+   * Test if the repository is already created.
+   * @return False if the repository does not exist
+   */
+  def exists(esid:EntityStoreID):Boolean = {
+    val baseDir = extractBaseDirectory(esid)
+    val markFile = getMarkerFile(baseDir)
+    (baseDir != null && markFile != null && baseDir.exists && baseDir.isDirectory && markFile.exists && markFile.isFile) 
+  }
+  
+  /**
+   * Test if the EntityStoreID is a valid ID for this type of entity store.
+   * @return False if the repository does not exist
+   */
+  def isValidEntityStoreID(esid:EntityStoreID):Boolean = (esid.subScheme == "directory") && (extractBaseDirectory(esid) != null)
+  
+  protected def extractBaseDirectory(esid:EntityStoreID):File = {
+    try {
+      if(esid.subScheme == "directory") {
+        val dir = new File(new java.net.URI(esid.getSubSchemeSpecificPart))
+        if( (dir.exists && dir.isDirectory) || ( ! dir.exists) ) dir
+        else null
+      } else null
+    } catch { case _ => null }
+  }
+  
+  protected def getMarkerFile(baseDir:File):File = 
+    if(baseDir != null) new File(baseDir,"repository.dat")
+    else null
+  
 }

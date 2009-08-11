@@ -26,32 +26,33 @@ class DirectoryEntityStoreTest extends GenericStoreTest {
   val dir = new java.io.File(System.getProperty("java.io.tmpdir"),"a7s123")
   val storeID = DataStoreURI.asEntityStoreID("vcc-store:directory:"+dir.toURI.toString)
   
-  def dispose() {
-    if(dir.isDirectory) {
-      new vcc.util.DirectoryIterator(dir,false) foreach (x => x.delete)
-    }
-  }
-  
-  def open():EntityStore = EntityStoreFactory.createStore(storeID)
-  
-  def close(es:EntityStore) {
-    
-  }
-  
   def testReindexFile() {
     loadUpDatabase
 
     //Close and open again
     close(entityStore)
     new File(dir,"index.toc").delete()
-    entityStore = open()
+    entityStore = EntityStoreFactory.openStore(storeID)
+    assert(entityStore!=null)
 
     checkEntityExistance(eid0, testClassID)
     val ent = entityStore.load(eid0)
     assert(ent != null)
     assert(ent.id == eid0)
     assert(ent.classId == testClassID)
-    checkEntityExistance(eid1, blockClassID)
-    
+    checkEntityExistance(eid1, blockClassID)   
   }
+  
+  def testDirectCreation() {
+    if(EntityStoreFactory.exists(storeID)) EntityStoreFactory.getEntityStoreBuilder(storeID).destroy(storeID)
+    try {
+      val es = new DirectoryEntityStore(storeID)
+      assert(false,"Should not get here")
+    } catch {
+      case s:EntityStoreException => 
+      case s => assert(false,"Should not get here" + s)
+    }
+  }
+  
+  
 }
