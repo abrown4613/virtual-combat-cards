@@ -36,23 +36,6 @@ abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
   val will = new IntField(stats,"will") 
 }
 
-object Compendium {
-  val monsterClassID = DataStoreURI.asEntityClassID("vcc-class:monster")
-  val characterClassID = DataStoreURI.asEntityClassID("vcc-class:character")
-  var _activeRepository:EntityStore = null
-
-  def setActiveRepository(es: EntityStore) {
-    _activeRepository = es
-  }
-  
-  def activeRepository: EntityStore = _activeRepository
-  
-  def initialize() {
-    EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
-    EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
-  }
-}
-
 class MonsterEntity(eid:EntityID) extends CombatantEntity(eid) {
   val classId = Compendium.monsterClassID
   def combatantType = if(hp==1) CombatantType.Minion else CombatantType.Monster
