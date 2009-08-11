@@ -20,7 +20,23 @@ package vcc.util.swing
 import scala.swing._
 import javax.swing.JDialog
 
-class ModalDialog (owner: Frame, title:String) extends UIElement with RootPanel with Publisher
+abstract class ModalDialog[T] (owner: Frame, title:String) extends UIElement with RootPanel with Publisher
 {
   override lazy val peer = new JDialog(owner.peer,title,true)
+ 
+  protected var _result:Option[T] = None
+  
+  val okAction = Action("OK") { 
+    processOK()
+    visible = false
+  }
+  val cancelAction = Action("Cancel") { 
+    visible = false 
+  }
+  
+  def processOK()
+  
+  protected def dialogResult_=(v:Option[T]) { _result = v }
+  
+  def dialogResult:Option[T] = _result
 }
