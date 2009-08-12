@@ -180,6 +180,9 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject {
       }
       blocks=blocks.tail
     }
+    // Fix minion HP and Role
+    if(_map.contains("HP")&& _map("HP").startsWith("1;")) _map = _map + ("HP" ->"1")
+    if(_map.contains("ROLE")&& _map("ROLE") == "Minion") _map = _map + ("ROLE" ->"No Role")
   }
   
   def apply(attribute: String):Option[String] = {

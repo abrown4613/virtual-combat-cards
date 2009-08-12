@@ -26,12 +26,15 @@ import vcc.model.datastore.{EntityFactory,EntityID,DataStoreURI,Field}
  * the MonsterEntity model.
  */
 object MonsterImportService {
-   def importMonster(dndiMonster: Monster) {
+  
+  val logger = org.slf4j.LoggerFactory.getLogger("domain")
+  
+  def importMonster(dndiMonster: Monster) {
      if(dndiMonster==null) return  
      val es = Compendium.activeRepository
-     val eid = DataStoreURI.asEntityID("vcc-ent:dndi:monster"+dndiMonster.id)
+     val eid = DataStoreURI.asEntityID("vcc-ent:dndi:monster:"+dndiMonster.id)
      val monster = EntityFactory.createInstance(Compendium.monsterClassID,eid).asInstanceOf[MonsterEntity]
-     println(dndiMonster)
+     logger.debug("Load D&DI Monster: {}",dndiMonster)
      val fieldMap = Map[String,Field[_]](
        "NAME"->monster.name,
        "HP"->monster.hp,
@@ -48,14 +51,13 @@ object MonsterImportService {
        val v = dndiMonster(key) 
        try {
     	   if(v.isDefined )field.fromStorageString(v.get)
-    	   else println("Mapping failed between " +key + " and "+field.datumKey)
+    	   else logger.warn("Mapping failed between {} and {}",key,field.datumKey)
        } catch {
          case e => 
-           println("Exception will processing "+key)
-           e.printStackTrace
+           logger.error("Exception will processing "+key,e)
        }
      }
-     println(monster.toXML)
+     logger.debug("Imported MonsterEntity in XML: {}",monster.toXML)
      es.store(monster)
    }
 }
