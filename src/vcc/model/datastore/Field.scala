@@ -17,19 +17,29 @@
 //$Id$
 package vcc.model.datastore
 
+trait ValidationError
+
+class NotProperFormatForFieldError(e:Throwable) extends ValidationError
+
 abstract class Field[T](val fset:FieldContainer, val id:String) {
   
-  def value:Option[T]
+  protected var _value:Option[T] = None
   
-  def value_=(v:T)
+  def value:Option[T] = _value
   
-  def clear()
+  def value_=(v:T) { _value = Some(v)}
+  
+  def clear() { _value = None }
   
   fset.addField(this)
   
-  def fromStorageString(str:String)
+  def valueFromStorageString(str:String):Option[T]
   
-  def toStorageString:String
+  def fromStorageString(str:String) {
+    _value = valueFromStorageString(str)
+  }
+  
+  def toStorageString:String = if(_value.isDefined) _value.get.toString else null
   
   def prefix:String = fset.storageId + ":" + fset.storageIndex
   
@@ -39,7 +49,31 @@ abstract class Field[T](val fset:FieldContainer, val id:String) {
 
   def toXML:scala.xml.Node = {
     val datum=toStorageString
-    if(datum!=null) <datum id={id}>{datum}</datum>
+    if(datum!=null) (<datum id={id}>{datum}</datum>)
     else null
   }
+  
+  def isValid:Boolean = (validate(_value) == None)
+  
+  /**
+   * This is a validation for the field. This method can be oveloaded and 
+   * stacked to make for complex validation rules. 
+   * Unless validation traits are added a field is always valid if it exists.
+   * @param value Value to be checked, this is already in the appropriate type system
+   * @return None if the value is ok, or the validation error is something failed
+   */
+  def validate(value: Option[T]):Option[ValidationError] = None
+  
+  /**
+   * This is a helper method to check a string against the format
+   * and validation of a give field.
+   */
+  def inputValidation(str:String):Option[ValidationError] = {
+    try {
+      val v = valueFromStorageString(str)
+      validate(v)
+    } catch {
+      case s => Some(new NotProperFormatForFieldError(s))
+    }
+  }  
 }
