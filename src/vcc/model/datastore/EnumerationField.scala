@@ -23,22 +23,14 @@ class EnumerationConstantNotPresentException(enum:Enumeration,str:String) extend
 
 class EnumerationField[E<:Enumeration](fset:FieldContainer,id:String,enum:E) extends Field[E#Value](fset,id){
 
-  private var _value:Option[E#Value]=None
-  
-  def value_= (v:E#Value) { _value=Some(v) }
-  
-  def clear { _value = None }
-  
-  def value:Option[E#Value] = _value
-  
-  def fromStorageString(str:String) {
-    val v=enum.valueOf(str)
-    if((str!=null && str!="") && ! v.isDefined) 
-      throw new EnumerationConstantNotPresentException(enum,str) 
-    _value=v
+  def valueFromStorageString(str:String):Option[E#Value] = {
+    if(str==null && str=="") None
+    else {
+      val v=enum.valueOf(str)
+      if(! v.isDefined) throw new EnumerationConstantNotPresentException(enum,str) 
+      v
+    }
   }
   
-  def toStorageString:String = if(_value.isDefined) _value.get.toString else null
-  
-  override def toString = "IntField("+prefix+":"+id+":= "+ value +")"
+  override def toString = "EnumerationField("+prefix+":"+id+":= "+ value +")"
 }
