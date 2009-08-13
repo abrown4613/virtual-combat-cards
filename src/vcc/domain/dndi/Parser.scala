@@ -39,10 +39,12 @@ object Parser {
   object IconType extends Enumeration {
     val Separator=Value("X")
     val MeleeBasic=Value("Melee Basic")
+    val AreaBasic=Value("Area Basic")
+    val CloseBasic=Value("Close Basic")
+    val RangeBasic=Value("Range Basic")
     val Range=Value("Range")
     val Melee=Value("Melee")
     val Close=Value("Close")
-    val RangeBasic=Value("Range Basic")
     val Area = Value("Area")
     val Unknown=Value("?")
     
@@ -51,8 +53,10 @@ object Parser {
      */
     final val imageDirectory=Map(
       "x.gif"-> Separator,
+      "s4.gif"-> AreaBasic,
       "s3.gif"-> RangeBasic,
       "s2.gif"-> MeleeBasic,
+      "s1.gif"-> CloseBasic,
       "z4a.gif" -> Area,
       "z3a.gif" -> Range,
       "z2a.gif" -> Melee,
