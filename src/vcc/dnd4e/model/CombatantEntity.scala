@@ -51,7 +51,9 @@ object MonsterEntityBuilder extends MonsterEntity(null) with EntityBuilder {
   def createInstance(eid:EntityID):Entity = new MonsterEntity(eid)
   
   def createSummaryFromMap(eid: EntityID, classid:EntityClassID, fmap:Map[DatumKey,String]):EntitySummary = 
-    MonsterSummary(eid,classid,fmap(name.datumKey),fmap(level.datumKey).toInt, fmap(xp.datumKey).toInt,fmap(role.datumKey),(fmap(hp.datumKey)=="1"))
+    if(!fmap.isEmpty)
+      MonsterSummary(eid,classid,fmap(name.datumKey),fmap(level.datumKey).toInt, fmap(xp.datumKey).toInt,fmap(role.datumKey),(fmap(hp.datumKey)=="1"))
+    else null
 
   val summaryFields = Seq(name,level,xp,role,hp).map(_.datumKey)
   
@@ -72,7 +74,9 @@ object CharacterEntityBuilder extends CharacterEntity(null) with EntityBuilder {
   def createInstance(eid:EntityID):Entity = new CharacterEntity(eid)
   
   def createSummaryFromMap(eid: EntityID, classid:EntityClassID, fmap:Map[DatumKey,String]):EntitySummary = 
-    CharacterSummary(eid,classid,fmap(name.datumKey),fmap(level.datumKey).toInt, fmap(charClass.datumKey),fmap(race.datumKey))
+    if(!fmap.isEmpty)
+      CharacterSummary(eid,classid,fmap(name.datumKey),fmap(level.datumKey).toInt, fmap(charClass.datumKey),fmap(race.datumKey))
+    else null
   
   val summaryFields = Seq(name,level,charClass,race).map(_.datumKey)
 }
