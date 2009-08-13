@@ -84,11 +84,17 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
   }
   
   private def loadFile(file:File):Entity = {
-    val xml = scala.xml.XML.loadFile(file)
-    val ds=EntityXMLFileLoader.dataFromXML(xml)
-    if(ds != null)
-      EntityFactory.createInstance(ds)
-    else null
+    try {
+      val xml = scala.xml.XML.loadFile(file)
+      val ds=EntityXMLFileLoader.dataFromXML(xml)
+      if(ds != null)
+        EntityFactory.createInstance(ds)
+      else null
+    } catch {
+      case e => 
+        logger.error("Failed to load file: "+file,e)
+        null
+    }
   } 
   
   /**
@@ -112,8 +118,11 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
       val entry = _map(eid)
       if(entry.entity == null) entry.entity = loadFile(entry.file)
       entry.entity
-    } else
+    } else {
+      // Clear map or we run into trouble
+      _map = _map - eid
       null.asInstanceOf[Entity]
+    } 
   }
   
   protected def getEntitySummaryMap(eid:EntityID):Map[DatumKey,String] = {

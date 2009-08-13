@@ -90,8 +90,8 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
  
   private val activeEntityStore = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
  
-  monsterTableModel.content = activeEntityStore.enumerate(Compendium.monsterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[MonsterSummary]).toSeq
-  characterTableModel.content = activeEntityStore.enumerate(Compendium.characterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[CharacterSummary]).toSeq 
+  monsterTableModel.content = activeEntityStore.enumerate(Compendium.monsterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[MonsterSummary]).filter(x=> x!=null).toSeq
+  characterTableModel.content = activeEntityStore.enumerate(Compendium.characterClassID).map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[CharacterSummary]).filter(x=> x!=null).toSeq 
 
   add(monsterButton,"split 4")
   add(characterButton,"wrap")
