@@ -26,6 +26,7 @@ abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
   val name = new StringField(topLevel,"name")
   
   val stats = new FieldSet(this,"stats")
+  val text = new FieldSet(this,"text")
   
   val initiative = new IntField(stats,"initiative")
   val hp = new IntField(stats,"hp")
@@ -34,6 +35,8 @@ abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
   val fortitude = new IntField(stats,"fortitude")
   val reflex = new IntField(stats,"reflex")
   val will = new IntField(stats,"will") 
+  
+  val statblock = new StringField(text,"statblock")
 }
 
 class MonsterEntity(eid:EntityID) extends CombatantEntity(eid) {

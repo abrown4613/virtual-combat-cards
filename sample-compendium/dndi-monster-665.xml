@@ -13,4 +13,27 @@
      <datum id="reflex">15</datum>
      <datum id="ac">17</datum>
    </set>
+   <set id="text">
+     <datum id="statblock"><![CDATA[
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="dndi.css" />
+</head>
+<body>
+<div id="detail">
+<h1 class="monster">Goblin cool dude</h1>
+<p class="flavor"><b>Initiative</b> +3        <b>Senses</b> Perception +2; low-light vision<br/>
+<b>AC</b> 16; <b>Fortitude</b> 15, <b>Reflex</b> 14, <b>Will</b> 12<br/><b>Speed</b> 5</p>
+<p class="flavor alt"><img src="S2.gif" /> <b>Battleaxe</b> (Standard, at-will) <img src="x.gif" /> <b>Weapon</b></p>
+<p class="flavorIndent">+6 vs Armor Class; 1d10+5 damage, or 2d10 + 5 while bloodied.</p>
+<p class="flavor alt"> <b>Bloodied Rage</b> (while bloodied) </p>
+<p class="flavorIndent">While bloodied, the goblin skullcleaver loses the ability to use goblin tactics and can do nothing but attack the nearest enemy, charging when possible.</p>
+<p class="flavor alt"> <b>Goblin Tactics</b> (immediate reaction, when missed by a melee attack, at-will) </p>
+<p class="flavorIndent">The goblin shifts 1 square.</p><p class="flavor alt"><b>Alignment</b> Evil       <b> Languages</b> Common, Goblin<br/><b>Skills</b> Stealth +9, Thievery +9<br/><b>Str</b> 18 (+5)       <b>Dex</b> 14 (+3)       <b>Wis</b> 13 (+2)<br/><b>Con</b> 13 (+2)       <b>Int</b> 8 (0)       <b>Cha</b> 8 (0)</p><p class="flavor alt"><b>Equipment</b>: battleaxe , chainmail.</p>
+</div>
+</body>
+</html>     
+     ]]>
+     </datum>
+   </set>
 </entity>
