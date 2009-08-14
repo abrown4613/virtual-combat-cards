@@ -48,6 +48,10 @@ object BootStrap {
     //FIXME This is just for testing
     val sampleCompendiumID = vcc.model.datastore.DataStoreURI.directoryEntityStoreIDFromFile(new java.io.File("sample-compendium"))
     val sampleCompendium = vcc.model.datastore.EntityStoreFactory.openStore(sampleCompendiumID)
+    if(sampleCompendium == null) {
+      println("Failed to load compendium... exiting")
+      exit
+    }
     Registry.register(sampleCompendiumID, sampleCompendium)
     Registry.register("Compendium",sampleCompendiumID)
     Registry.register("SampleCompendium",sampleCompendiumID)

@@ -20,7 +20,7 @@ package vcc.dnd4e.model
 import vcc.model.datastore._
 import vcc.model.Registry
 
-abstract class CombatantEntity(eid:EntityID) extends Entity(eid) {
+abstract class CombatantEntity(val eid:EntityID) extends Entity(eid) {
   def combatantType: CombatantType.Value
   
   val name = new StringField(topLevel,"name")

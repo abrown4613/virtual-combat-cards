@@ -29,6 +29,8 @@ import vcc.domain.dndi.UntranslatableException
 import vcc.domain.dndi.Monster
 
 class CaptureServlet extends HttpServlet {
+  
+  val logger = org.slf4j.LoggerFactory.getLogger("app")
 
   override protected def doGet(request: HttpServletRequest, response: HttpServletResponse) {
 	response.setContentType("text/html");
@@ -39,36 +41,36 @@ class CaptureServlet extends HttpServlet {
   override protected def doPost(request: HttpServletRequest, response: HttpServletResponse) {
 	response.setContentType("text/html");
 	response.setStatus(HttpServletResponse.SC_OK);
-	println(request.toString)
+	logger.debug("Request: {}",request.toString)
 	val xml=try {
 	  scala.xml.XML.load(request.getInputStream)
     } catch {
-      case s => throw s
+      case s =>
+        logger.warn("Failed to parse XML",s)
+        throw s
     }  
     try {
-      println("I got his XMl"+xml)
+      logger.debug("Parsed XML is: {}",xml)
       val dndiObject = DNDInsiderCapture.load(xml)
       dndiObject match {
         case monster: Monster => 
-          println("Read monster "+monster("NAME"))
-          println("     monster "+monster("INITIATIVE"))
-          println("     monster "+monster("HP"))
-          println("Monster "+monster)
+          logger.info("Captured monster {}",monster("NAME"))
+          logger.debug("Catured Monster: {}",monster)
           CaptureHoldingArea.addCapturedMonsterAndCacheXML(monster,xml)
           //val log = org.mortbay.log.Logger.getLogger(null)
           response.getWriter().println("Captured monster "+monster("NAME").get);
         case null =>
-          response.getWriter.println("You sent something that is no capturable")
+          response.getWriter.println("You sent something that VCC cannot capture.")
       }
     } catch {
       case ue: UntranslatableException => 
         // XML is ok, but can be parsed so we save it for debuging
+        logger.warn("Failed to capture monster",ue)
         val file=java.io.File.createTempFile("capture", ".xml")
-        println(ue)
-        ue.printStackTrace
         println("Write to file"+file.getAbsolutePath)
         scala.xml.XML.save(file.getAbsolutePath,xml,"UTF-8")
-        response.getWriter().println("Could not process capture correctly. Save XML to "+file.getAbsoluteFile+ ". If you thing this should be captured, report an bug on http://www.exnebula.org/vcc and send us the file")
+        logger.warn("Failed capture informations saved at: {}",file.getAbsolutePath)
+        response.getWriter().println("Could not process capture correctly. Save XML to "+file.getAbsoluteFile+ ". If you thing the information should be captured, report an bug on http://www.exnebula.org/vcc and send us the file.")
     }
   }		
 }

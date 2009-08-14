@@ -126,7 +126,7 @@ object TrackerContextEnumerator {
   def enumerate(context:TrackerContext,buffer:vcc.controller.TrackerResponseBuffer) { 
     buffer ! vcc.dnd4e.view.actor.ClearSequence()
     for(x<-context.map.map(_._2)) { 
-      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.alias,x.name,x.hp,x.init,x.defense))
+      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.alias,x.name,x.hp,x.init,x.defense,x.entity))
       buffer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
       buffer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
       buffer ! vcc.dnd4e.view.actor.SetInformation(x.id,x.info)

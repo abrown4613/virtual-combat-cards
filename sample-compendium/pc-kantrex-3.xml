@@ -13,4 +13,22 @@
     <datum id="reflex">17</datum>
     <datum id="ac">23</datum>
   </set>
+  <set id="text">
+     <datum id="statblock"><![CDATA[
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="dndi.css" />
+</head>
+<body>
+<div id="detail">
+<h1 class="player">Kantrex<br /><span class="type">Dragonborn Paladin</span></h1>
+<p class="flavor"><b>Initiative</b> +5 <br/>
+<b>AC</b> 23; <b>Fortitude</b> 18, <b>Reflex</b> 17, <b>Will</b> 18<br/></p>
+</div>
+</body>
+</html>     
+     ]]>
+     </datum>
+   </set>
+  
 </entity>

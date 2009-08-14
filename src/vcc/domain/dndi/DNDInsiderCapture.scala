@@ -45,7 +45,6 @@ object DNDInsiderCapture {
     if(xml==null) return null
     
     val id = try {(xml \ "@id").toString.toInt } catch { case _ => 0}
-    println("CApturing object of ID "+id)
     (xml \\ "H1" \"@class").toString match {
       case "monster" => new Monster(xml,id)
       case _ => null
