@@ -21,23 +21,29 @@ import scala.swing._
 import util.swing._
 
 import scala.actors.Actor
+import helper.CombatantStatBlockCache
 
-class CombatantCard(tracker:Actor) 
-  extends MigPanel("flowy,fill","[300!]","[c,pref!][c,fill]")
-  with ContextualView[ViewCombatant]
-{
+class CombatantCard(tracker:Actor) extends GridPanel(1,1) with ContextualView[ViewCombatant] {
 
-  private val summary=new CombatantSummaryView()
+  minimumSize = new java.awt.Dimension(300,400)
+  
   private val effects=new EffectViewPanel(tracker)
   private val commentPanel= new view.CommentPanel(tracker)
+  private val statBlock = new XHTMLPane
+  statBlock.minimumSize = new java.awt.Dimension(200,200)
   private val split1=new SplitPane(Orientation.Horizontal,effects,commentPanel)
+  private val split2=new SplitPane(Orientation.Horizontal,new ScrollPane(statBlock) { this.peer.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)} ,split1)
+  split1.peer.setDividerSize(4)
+  split1.peer.setDividerLocation(0.5)
+  split2.peer.setDividerSize(4)
+  split2.peer.setDividerLocation(300)
   
-  add(summary,"growx")
-  add(split1,"growx")
+  contents += split2
   
   def changeContext(nctx:Option[ViewCombatant]) {
-    summary.context=nctx
     commentPanel.context=nctx
     effects.context=nctx
+    if(nctx.isDefined) statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(nctx.get.entity.eid))
+    else statBlock.setDocumentFromText("") 
   }
 }

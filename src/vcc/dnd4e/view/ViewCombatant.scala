@@ -19,11 +19,13 @@ package vcc.dnd4e.view
 
 import vcc.dnd4e.model._
 
+/*
 trait UIFormatted {
   def formattedText():String
 }	
+*/
 
-case class ViewCombatant(id:Symbol,alias:String, name:String,hp:Int,init:Int,defense:DefenseBlock) {
+case class ViewCombatant(id:Symbol,alias:String, name:String,hp:Int,init:Int,defense:DefenseBlock,entity:CombatantEntity) {
   var health=HealthTracker.createTracker(CharacterHealthDefinition(hp,hp/4,4))
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""

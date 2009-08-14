@@ -163,6 +163,7 @@ object Main extends SimpleGUIApplication {
   
   val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,tracker)
   val seqTable = new vcc.dnd4e.view.SequenceTable(uia,tracker)
+  seqTable.minimumSize = new java.awt.Dimension(300,200)
   val card=new vcc.dnd4e.view.CombatantCard(tracker)
   val statusBar=new StatusBar(uia)
   
@@ -177,7 +178,7 @@ object Main extends SimpleGUIApplication {
   uia.start
   tracker ! vcc.controller.actions.AddObserver(uia)
 
-  def top = new MainFrame {
+  val top = new MainFrame {
     title = "Virtual Combat Cards"
     
     preferredSize= {
@@ -188,10 +189,13 @@ object Main extends SimpleGUIApplication {
       else
         new java.awt.Dimension(800,600) 
     }
+    val split = new SplitPane(Orientation.Vertical,seqTable,card)
+    split.peer.setDividerSize(4)
+    split.peer.setDividerLocation(440)
+    
     contents= new BorderPanel {
       add(commandPanel,BorderPanel.Position.West)
-      add(card,BorderPanel.Position.East)
-      add(seqTable,BorderPanel.Position.Center)
+      add(split,BorderPanel.Position.Center)
       add(new MainMenu(uia),BorderPanel.Position.North)
       add(statusBar,BorderPanel.Position.South)
       iconImage=IconLibrary.MetalD20.getImage()

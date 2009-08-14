@@ -76,6 +76,10 @@ class UserInterface(tracker:Actor) extends Actor {
   
   private var _first:ViewCombatant=null;
   
+  // Make sure we have everybody locking at None
+  signalContext(None)
+  signalSequence(Nil)
+  
   def addSequenceListener(seq:SequenceView[T]) { seqAware=seq :: seqAware }
   def addContextListener(ctx:ContextualView[T]) { ctxAware=ctx :: ctxAware }
   
@@ -125,7 +129,7 @@ class UserInterface(tracker:Actor) extends Actor {
           signalSequence(l)
 
         case GoToFirst() =>
-          _ctx=Some(_first)
+          if(_first != null )_ctx=Some(_first) else _ctx=None
           signalContext(_ctx)
         
         //Update effect list and notify

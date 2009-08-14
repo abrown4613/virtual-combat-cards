@@ -35,7 +35,7 @@ class EffectEditorPanel(uia: Actor,tracker: Actor) extends MigPanel("fillx,hidem
     override def toString()= c.id.name + " - "+c.name
   }
   
-  private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),null,"Terrain or other",0,0,null))
+  private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),null,"Terrain or other",0,0,null,null))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
   private val efpl = if(
     java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>700 &&

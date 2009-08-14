@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <party>
-	<combatant eid="vcc-ent:dndi:monster:665" alias="Globin spear" count="4" />
+	<combatant eid="vcc-ent:dndi:monster:665" alias="Goblin spear" count="4" />
+	<combatant eid="vcc-ent:dndi:monster:239" count="3" />
 	<combatant eid="vcc-ent:pc:kantrex:3" alias="Dragonborn" id="K" />
 	<combatant eid="vcc-ent:pc:magelan:3" id="m" />
 	<combatant eid="vcc-ent:pc:aramil:3" id="af" /> 

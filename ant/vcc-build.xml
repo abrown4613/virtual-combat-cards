@@ -20,6 +20,7 @@
 		<mkdir dir="${package}" />
 		<mkdir dir="${installer}" />
   	<mkdir dir="${installer}/lib" />
+  	<mkdir dir="${installer}/fs-wc" />
   	<mkdir dir="${installer}/sample" />
   	<mkdir dir="${installer}/sample-compendium" />
 	</target>
@@ -41,8 +42,12 @@
   	<copy todir="${installer}/sample">
   	  <fileset dir="sample"/>
   	</copy>
+  	<copy todir="${installer}/fs-wc">
+  	  <fileset dir="fs-wc"/>
+  	</copy>
   	<copy todir="${installer}/sample-compendium">
   	  <fileset dir="sample-compendium" includes="*.xml" />
+  	  <fileset dir="sample-compendium" includes="*.dat" />
   	</copy>
   	<zip destfile="${package}/install.zip" basedir="${installer}" includes="**" />
 	</target>

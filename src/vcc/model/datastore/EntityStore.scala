@@ -159,7 +159,7 @@ object EntityStoreFactory {
   def openStore(esid:EntityStoreID):EntityStore = {
     if(subSchemeMap.isDefinedAt(esid.subScheme)) {
       val builder = subSchemeMap(esid.subScheme)
-      if(!builder.exists(esid)) null
+      if(!builder.exists(esid)) null //FIXME
       else builder.open(esid)
     } else {
       null
