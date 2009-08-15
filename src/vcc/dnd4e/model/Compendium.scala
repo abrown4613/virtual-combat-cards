@@ -19,8 +19,9 @@
 package vcc.dnd4e.model
 
 import vcc.model.datastore._
+import vcc.infra.startup.StartupStep
 
-object Compendium {
+object Compendium extends StartupStep {
   val monsterClassID = DataStoreURI.asEntityClassID("vcc-class:monster")
   val characterClassID = DataStoreURI.asEntityClassID("vcc-class:character")
   var _activeRepository:EntityStore = null
@@ -32,10 +33,13 @@ object Compendium {
   
   def activeRepository: EntityStore = _activeRepository
   
-  def initialize() {
-    EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
-    EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
-  }
+  EntityFactory.registerEntityClass(monsterClassID, MonsterEntityBuilder)
+  EntityFactory.registerEntityClass(characterClassID, CharacterEntityBuilder)
+  
+  def isStartupComplete = 
+    EntityFactory.isClassDefined(monsterClassID) && 
+    EntityFactory.isClassDefined(characterClassID)
+  
   
   def createNewOfficialMonster(id:Int):MonsterEntity = {
     val eid = DataStoreURI.asEntityID("vcc-ent:dndi:monster:"+id)

@@ -20,8 +20,9 @@ package vcc.infra
 
 import org.apache.log4j._
 import org.slf4j.{Logger => SLogger}
+import vcc.infra.startup.StartupStep
 
-object LogService {
+object LogService extends StartupStep {
   
   object level extends Enumeration {
     val Debug = Value("Debug")
@@ -53,4 +54,5 @@ object LogService {
     }
   }
   
+  def isStartupComplete = ! _registeredLogs.isEmpty
 }

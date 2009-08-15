@@ -22,6 +22,7 @@ import scala.actors.Actor.loop
 
 import vcc.controller.transaction._
 import vcc.model.Registry
+import vcc.infra.startup.StartupStep
 
 /**
  * Tracker actor handles the core logic for the event dispatch loop. It controls
@@ -30,9 +31,11 @@ import vcc.model.Registry
  * data to be passed on to the observer.
  * @param controller Action and query logic controller
  */
-class Tracker[C](controller:TrackerController[C]) extends Actor with TransactionChangePublisher {
+class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep with TransactionChangePublisher {
   
-  //private var uia:Actor=null
+  //TODO: More effective validation
+  def isStartupComplete = true 
+  
   private var observers:List[Actor]=Nil
   
   private val _tlog= new TransactionLog[actions.TransactionalAction]()
