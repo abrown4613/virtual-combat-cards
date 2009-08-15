@@ -26,9 +26,11 @@ import org.xhtmlrenderer.resource._
 import org.xhtmlrenderer.swing.AWTFSImage
 import org.xhtmlrenderer.simple.XHTMLPanel 
 
+import javax.swing.ImageIcon
 import java.io.File
+import vcc.infra.startup.StartupStep
 
-object XHTMLPane {
+object XHTMLPane extends StartupStep {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("infra")
 
@@ -42,12 +44,24 @@ object XHTMLPane {
     exit
   }
   
+  private val missingIcon:ImageIcon = {
+    val url = this.getClass.getResource("/vcc/util/swing/missing.png")
+    try {
+      val icon=new javax.swing.ImageIcon(url)
+      if(icon == null) throw new Exception("Can't load image "+url.toString)
+      icon
+    } catch {
+      case s =>
+        s.printStackTrace
+        null
+    }
+  }
+  
   protected object LocalUserAgent extends org.xhtmlrenderer.swing.NaiveUserAgent {
 
-  import javax.swing.ImageIcon
     
   private val imageCache = new XHTMLPane.ContentCache[ImageResource](
-    new ImageResource(AWTFSImage.createImage(vcc.dnd4e.view.IconLibrary.MetalD20.getImage)),
+    new ImageResource(AWTFSImage.createImage(missingIcon.getImage)),
     uri =>{
       logger.debug("SF-UA Requested load of image: {}",uri)
       val iname = uri.substring(uri.lastIndexOf('/')+1).toLowerCase
@@ -126,6 +140,9 @@ object XHTMLPane {
         null
     }
   }
+
+  def isStartupComplete() = (missingIcon != null)
+  
 }
 
 class XHTMLPane extends Component {

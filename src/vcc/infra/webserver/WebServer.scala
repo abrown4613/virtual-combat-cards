@@ -18,12 +18,14 @@
 
 package vcc.infra.webserver
 
+import vcc.infra.startup.StartupStep
+
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.bio.SocketConnector
 import org.mortbay.jetty.servlet.ServletHandler
 import org.mortbay.component._
 
-class WebServer(port:Int) {
+class WebServer(port:Int) extends StartupStep {
 
   protected object  ServerStatus extends LifeCycle.Listener {
 	var running:Boolean = false 
@@ -63,6 +65,7 @@ class WebServer(port:Int) {
   }
   initialize()
   
+  def isStartupComplete() = true
  
   def running = ServerStatus.running
   
@@ -85,4 +88,17 @@ class WebServer(port:Int) {
     handler.addServletWithMapping(classPath,path)
   }
   
+}
+
+object WebServer {
+  
+  import vcc.model.Registry
+
+  def initialize(name:String,port:Int):WebServer = {
+    val ws = new vcc.infra.webserver.WebServer(4143)
+    ws.registerServlet("vcc.app.dndi.CaptureServlet","/capture")
+    Registry.register("webserver",ws)
+    try { ws.start } catch { case s => }
+    ws
+  }
 }
