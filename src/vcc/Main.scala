@@ -20,16 +20,33 @@ package vcc
 
 import vcc.infra.startup._
 import scala.swing.Frame
+import vcc.infra.LogService
 
 object Main {
 
+  def warnFailure(win: java.awt.Window) {
+    import javax.swing.JOptionPane
+    
+    scala.swing.Dialog
+    JOptionPane.showMessageDialog(win,"Virtual Combat Cards initialization failed. Please check launch.log for clues.\n"+
+                                  "Check http://www.exnebula.org/vcc to look for help or report an issue.",
+                                  "Initialization failed",JOptionPane.ERROR_MESSAGE)
+  }
+  
   def main(args : Array[String]) : Unit = {
+
+    LogService.initializeStartupLog()
+    
+    val logger = org.slf4j.LoggerFactory.getLogger("startup")
+
     val frame = SplashWindow.showSplash(vcc.dnd4e.BootStrap)
     if(frame != null) {
       frame.visible = true
-      println("Initialization complete.")
+      logger.info("Initialization complete.")
     } else {
-      println("Initialization failed.")
+      warnFailure(SplashWindow)
+      logger.error("Initialization failed.")
+      exit(1)
     }
   }
 }

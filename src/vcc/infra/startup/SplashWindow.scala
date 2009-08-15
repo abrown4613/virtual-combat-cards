@@ -42,12 +42,20 @@ class StartupException(msg:String) extends Exception(msg)
  */
 trait StartupRoutine {
   
+  def callStartupSimpleBlock(srw:StartupReportWindow,msg:String)(block : => Boolean) {
+	srw.reportProgress(null,"Initializing "+msg)
+	val ss = block
+	Thread.sleep(50)
+	if(ss) srw.reportProgress(null," intitialized successfully")
+	else throw new StartupException(msg)
+  }
+  
   def callStartupStep(srw:StartupReportWindow,msg:String)(block : => StartupStep) {
 	srw.reportProgress(null,"Initializing "+msg)
 	val ss = block
 	Thread.sleep(50)
 	if(ss.isStartupComplete) srw.reportProgress(ss," intitialized successfully")
-	else throw new StartupException("Initialization failed")
+	else throw new StartupException(msg)
   }
   
   def start(srw: StartupReportWindow):SwingFrame
@@ -65,6 +73,7 @@ trait StartupStep {
  */
 object SplashWindow extends JWindow with StartupReportWindow {
   
+  val logger = org.slf4j.LoggerFactory.getLogger("startup")
 
   def reportProgress(obj:AnyRef,msg:String) {
     val cname:String = if(obj!=null) {
@@ -73,6 +82,7 @@ object SplashWindow extends JWindow with StartupReportWindow {
       else name
     } +": " else "" 
 	messageLabel.setText(cname + msg)
+	logger.info(cname + msg)
   }
   
   def ownerWindow:Window = getOwner()
@@ -82,10 +92,8 @@ object SplashWindow extends JWindow with StartupReportWindow {
 	if(url!=null) {
 	  val icon=new ImageIcon(url)
 	  icon
-    } else {
-      println("Failed to load resource: "+resource)
-      exit(1)
-    }
+    } else
+	  vcc.infra.AbnormalEnd(this,"Failed to load resource: "+resource)
   }
   
   private val messageLabel = new JLabel()
@@ -102,9 +110,18 @@ object SplashWindow extends JWindow with StartupReportWindow {
 	val width = 400
 	setBounds((screen.width - width)/2, (screen.height - height)/2,width,height)
 	setVisible(true)
-	val frame = sr.start(this)
-	messageLabel.setText(if(frame==null) "Initialization failed..." else "Initialization completed." )
-	messageLabel.repaint()
+	val frame = try { sr.start(this) } 
+		catch {
+			case e:StartupException =>
+			  logger.error("Failed initialization step: "+e.getMessage)
+              logger.debug("Startup Exception",e)
+			  null
+			case e =>
+			  logger.error("Failed to startup with and exception: ",e.getMessage)
+              logger.debug("Startup Exception",e)
+			  null
+	}
+	messageLabel.setText(if(frame==null) "Initialization failed..." else "Initialization complete." )
     setVisible(false)
     frame
   }

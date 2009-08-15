@@ -17,12 +17,17 @@
 //$Id$
 package vcc.util.swing
 
+import java.awt.{Window,Toolkit}
 import scala.swing._
 import javax.swing.JDialog
 
-abstract class ModalDialog[T] (owner: Frame, title:String) extends UIElement with RootPanel with Publisher
-{
-  override lazy val peer = new JDialog(owner.peer,title,true)
+abstract class ModalDialog[T] (window:Window, title:String) extends UIElement with RootPanel with Publisher {
+  
+  //In order to work with the spash window we use low level AWT Window noa
+  def this(owner: Frame,title:String) {
+    this(owner.peer.getOwner,title)
+  }
+  override lazy val peer = new JDialog(window,title,java.awt.Dialog.ModalityType.APPLICATION_MODAL)
  
   protected var _result:Option[T] = None
   
@@ -39,4 +44,11 @@ abstract class ModalDialog[T] (owner: Frame, title:String) extends UIElement wit
   protected def dialogResult_=(v:Option[T]) { _result = v }
   
   def dialogResult:Option[T] = _result
+  
+  def placeOnScreenCenter() {
+	val screen = Toolkit.getDefaultToolkit.getScreenSize
+    val height = preferredSize.height + 35
+    val width = preferredSize.width + 15
+	peer.setBounds((screen.width - width)/2, (screen.height - height)/2,width,height)
+  }
 }
