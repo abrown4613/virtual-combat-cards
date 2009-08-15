@@ -22,11 +22,15 @@ import vcc.model.Registry
 import vcc.dnd4e.model.Compendium
 
 import vcc.infra.startup._
+import vcc.infra.ConfigurationFinder
+import vcc.infra.LogService
 
 object BootStrap extends StartupRoutine {
   
+  val logger = org.slf4j.LoggerFactory.getLogger("startup")
+  
   def getPropertyAsInt(name:String,default:Int):Int = try {
-    System.getProperties.getProperty(name).toInt
+    System.getProperty(name).toInt
   } catch {
     case _ => default
   }
@@ -34,42 +38,82 @@ object BootStrap extends StartupRoutine {
   val version=new UpdateManager.Version(0,99,0,"RC1") 
 
   def start(srw: StartupReportWindow):scala.swing.Frame = {
-    try {
-	  if(!vcc.util.Configuration.isConfigured) {
-	    println("Can't find the configuration")
-	  }
-      callStartupStep(srw,"Logging") {
-        import vcc.infra.LogService
-        LogService.initializeLog("org.mortbay.log",LogService.level.Info)
-        LogService.initializeLog("infra",LogService.level.Debug)
-        LogService.initializeLog("domain",LogService.level.Debug)
-        LogService.initializeLog("app",LogService.level.Debug)
-        LogService.initializeLog("user",LogService.level.Info)
-        LogService
-      }	
-      // Compendium depends on active Compendium settings
-      callStartupStep(srw,"Compendium") {
+	var createCompendium = false
+	var importSampleCompendium = false
+	logger.info("Starting VCC DND4E components...")
+
+	callStartupStep(srw,"Loading configuration") {
+	    if(!ConfigurationFinder.foundConfiguration) {
+	      logger.info("Can't find the configuration, will configure")
+	      val cdiag = new ConfigurationDialog(srw.ownerWindow,true)
+	      cdiag.visible = true 
+	      val result = cdiag.dialogResult
+	      println(cdiag.dialogResult)
+	      if(result == None) {
+	        logger.warn("Failed to complete configuration, will exit")
+	        return null
+	      } else {
+	    	createCompendium = true
+	    	importSampleCompendium = result.get
+	    	logger.debug("Create compedium requested, import sample? "+importSampleCompendium)
+	      }
+	    }
+	    Configuration.load(ConfigurationFinder.locateFile)
+	    Configuration
+	}
+	callStartupStep(srw,"Logging") {
+	  val logs = Seq("org.mortbay.log","domain","app","infra","user")
+	  val file = new java.io.File(Configuration.baseDirectory.value,"vcc.log")
+	  logger.info("Starting to logging operations to: {}",file)
+	  LogService.initializeLog(logs,file.toString,LogService.level.Debug,Configuration.storeLogs.value) 
+	  LogService
+	}	
+    // Compendium depends on active Compendium settings
+    callStartupStep(srw,"Compendium components") {
         Compendium
-        //FIXME This is just for testing
-        val sampleCompendiumID = vcc.model.datastore.DataStoreURI.directoryEntityStoreIDFromFile(new java.io.File("sample-compendium"))
-        val sampleCompendium = vcc.model.datastore.EntityStoreFactory.openStore(sampleCompendiumID)
-        if(sampleCompendium == null) {
-        	println("Failed to load compendium... exiting")
-        	exit
+    }
+      
+    if(createCompendium) {
+    	callStartupSimpleBlock(srw,"Create user compendium") {
+          import vcc.model.datastore.EntityStoreFactory
+    	  if(EntityStoreFactory.exists(Configuration.compendiumStoreID.value)) {
+    	    logger.warn("Compendium exists, will assume it is valid and attempt to load")
+    	    true
+    	  } else {
+    	    val es = EntityStoreFactory.createStore(Configuration.compendiumStoreID.value)
+    	    if(es == null) {
+    	      logger.error("Failed to create compendium {}",Configuration.compendiumStoreID.value)
+    	      false
+    	    } else {
+    	      //TODO Import
+    	      true
+    	    } 
+    	  }
+    	}
+    }
+    callStartupSimpleBlock(srw,"Load Compendium") {
+        import vcc.model.datastore.{EntityStoreID,EntityStore}
+    	val compendiumID = Configuration.compendiumStoreID.value
+    	logger.info("Opening compendium: {}",compendiumID)
+        val compendium = vcc.model.datastore.EntityStoreFactory.openStore(compendiumID)
+        if(compendium == null) {
+          logger.warn("Failed to load compendium {}, will exit",compendiumID)
+        } else {
+          logger.info("Opened compendium {}",compendiumID)
+          Registry.register("Compendium",compendiumID)
+          Registry.register(compendiumID,compendium)
+          Compendium.setActiveRepository(compendium)
         }	
-        Registry.register(sampleCompendiumID, sampleCompendium)
-        Registry.register("Compendium",sampleCompendiumID)
-        Registry.register("SampleCompendium",sampleCompendiumID)
-        Compendium.setActiveRepository(sampleCompendium)
-        Compendium
-      }
-      callStartupStep(srw,"Web Server") {
+        Registry.get[EntityStoreID]("Compendium").isDefined && Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).isDefined 
+    }
+      
+    callStartupStep(srw,"Web Server") {
         import vcc.infra.webserver.WebServer
         WebServer.initialize("webserver",4143)
     	Registry.get[WebServer]("webserver").get
-      }
+    }
       
-      callStartupStep(srw,"Core Tracker") {
+    callStartupStep(srw,"Core Tracker") {
     	import vcc.controller._
     	import vcc.dnd4e.controller._
     	import vcc.dnd4e.model.TrackerContext
@@ -82,18 +126,13 @@ object BootStrap extends StartupRoutine {
     	})
     	//Make sure it got registered
     	Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]
-  	  }
-      
-      callStartupStep(srw,"XHTMLRenderer") {
-        vcc.util.swing.XHTMLPane
-      }
-    
-      srw.reportProgress(this,"Initialization complete.")
-      new vcc.dnd4e.view.MasterFrame()
-    } catch {
-      case s =>
-        s.printStackTrace()
-        null
     }
+      
+    callStartupStep(srw,"XHTMLRenderer") {
+        vcc.util.swing.XHTMLPane
+    }
+    
+    srw.reportProgress(this,"Initialization complete.")
+    new vcc.dnd4e.view.MasterFrame()
   }
 }

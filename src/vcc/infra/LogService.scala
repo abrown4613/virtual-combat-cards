@@ -24,6 +24,8 @@ import vcc.infra.startup.StartupStep
 
 object LogService extends StartupStep {
   
+  private val inDebugMode = (System.getProperty("vcc.debug")!=null)
+  
   object level extends Enumeration {
     val Debug = Value("Debug")
     val Info = Value("Info")
@@ -33,8 +35,6 @@ object LogService extends StartupStep {
     
   }
   
-  private var _registeredLogs = Set.empty[String]
-  
   protected val mapToLog4J = Map[level.Value,Level](
     level.Debug -> Level.DEBUG,
     level.Info -> Level.INFO,
@@ -43,16 +43,67 @@ object LogService extends StartupStep {
     level.Off -> Level.OFF
   )
   
-  def initializeLog(context:String, lvl: level.Value) {
-    if(!_registeredLogs.contains(context)) {
-	  val log = Logger.getLogger(context)
-      log.setLevel(mapToLog4J(lvl))
-      val fmt = new org.apache.log4j.TTCCLayout()// SimpleLayout()
-      val apdr = new org.apache.log4j.ConsoleAppender(fmt)
-      log.addAppender(apdr)
-      _registeredLogs += context
+  def initializeLog(contexts:Seq[String], filename:String, lvl: level.Value, keep: Boolean) {
+	val fmt = new org.apache.log4j.TTCCLayout()
+	val apdr = if(keep) {
+      val lr = new RollingFileAppender(fmt,filename)
+      lr.setMaxBackupIndex(10)
+      lr.rollOver
+      lr
+	} else {
+	  new FileAppender(fmt,filename,false)
+	}
+	for(context <- contexts) {
+      if(LogManager.exists(context) == null) {
+	    val log = Logger.getLogger(context)
+        log.setLevel(mapToLog4J(lvl))
+
+        if(inDebugMode) {
+          log.addAppender(new ConsoleAppender(fmt))
+          log.info("Logging to "+filename)
+        }
+        log.addAppender(apdr)
+      }
     }
   }
   
-  def isStartupComplete = ! _registeredLogs.isEmpty
+  def initializeStartupLog() {
+    val context = "startup"
+    
+    if(LogManager.exists(context) == null) {
+	  val log = Logger.getLogger(context)
+	  log.setLevel(Level.DEBUG)
+	  if(inDebugMode) log.addAppender(new ConsoleAppender(new SimpleLayout()))
+	  log.addAppender(new FileAppender(new SimpleLayout(),"launch.log",false))
+	}
+  }
+  
+  def isStartupComplete = LogManager.exists("infra") != null
+}
+
+/**
+ * This is a helper object to use to gracefully abort VCC.
+ * It should be only used on errors that are absolutely fatal, and reflect
+ * something wrong int he program, like missing resources and such.
+ */
+object AbnormalEnd {
+  import java.io._
+  
+  def apply(obj:AnyRef, msg:String):Nothing = apply(obj,msg,new Exception("Placeholder"))
+  
+  def apply(obj: AnyRef, msg:String,e:Throwable):Nothing = {
+    def outputMessage(os:PrintStream) {
+      os.println("VCC has ended abnormally, this is most likely due to a program failure")
+      if(obj != null) os.println("Reporting object: "+obj.getClass.getCanonicalName)
+      os.println("Message: "+msg)
+      if(e!=null) e.printStackTrace(os)
+    }
+    try {
+      val out = new PrintStream(new FileOutputStream(new File("abort.log")))
+      if(out!=null) outputMessage(out)
+      out.close()
+    }
+    outputMessage(System.err)
+    exit()
+  }
 }

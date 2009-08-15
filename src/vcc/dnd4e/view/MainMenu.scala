@@ -35,13 +35,19 @@ class MainMenu(uia:Actor) extends MenuBar {
   val tracker = Registry.get[Actor]("tracker").get
   
   var fileMenu=new Menu("File");
-  fileMenu.contents += new MenuItem(Action("Load Party"){
+  fileMenu.contents += new MenuItem(Action("Load Party ..."){
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
       val pml = PartyLoader.loadFromFile(compendiumID,file.get)
       PartyLoader.loadToBattle(compendiumID,pml)                                   
     }
   })
+  fileMenu.contents += new Separator()
+  fileMenu.contents += new MenuItem(Action("Preferences ..."){
+    var cdiag = new vcc.dnd4e.ConfigurationDialog(null,false)
+    cdiag.visible = true
+  })
+  
   val combatMenu = new Menu("Combat")
   combatMenu.contents +=new MenuItem(new Action("Go to First"){
     def apply():Unit={

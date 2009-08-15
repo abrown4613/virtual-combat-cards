@@ -27,6 +27,8 @@ case class EntityStoreID(uri: java.net.URI) {
   private val subURI = new URI(uri.getRawSchemeSpecificPart)
   def subScheme = subURI.getScheme
   def getSubSchemeSpecificPart = subURI.getRawSchemeSpecificPart
+  
+  override def toString():String = uri.toString
 }
 
 object DataStoreURI {
