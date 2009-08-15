@@ -23,7 +23,7 @@ import java.io.File
 
 class DirectoryEntityStoreTest extends GenericStoreTest {
 
-  val dir = new java.io.File(System.getProperty("java.io.tmpdir"),"a7s123")
+  val dir = new java.io.File(System.getProperty("user.home"),"a7s123")
   val storeID = DataStoreURI.asEntityStoreID("vcc-store:directory:"+dir.toURI.toString)
   
   def testReindexFile() {
@@ -54,5 +54,13 @@ class DirectoryEntityStoreTest extends GenericStoreTest {
     }
   }
   
-  
+  def testWindowsPaths() {
+    val path = new java.io.File(System.getProperties.getProperty("user.home"),"vcc")
+    val esid = DataStoreURI.directoryEntityStoreIDFromFile(path)
+    assert(esid!=null)
+    if(EntityStoreFactory.exists(esid)) {
+    	val es = EntityStoreFactory.openStore(esid)
+    	assert(es!=null)
+    }
+  }
 }

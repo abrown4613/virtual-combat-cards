@@ -124,6 +124,8 @@ trait EntityStoreBuilder {
  */
 object EntityStoreFactory {
 
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
+  
   private var subSchemeMap:Map[String,EntityStoreBuilder] = Map(
     "directory" -> DirectoryEntityStore
   )
@@ -147,6 +149,7 @@ object EntityStoreFactory {
     if(subSchemeMap.isDefinedAt(esid.subScheme)) {
       subSchemeMap(esid.subScheme).create(esid)
     } else {
+      logger.debug("Failed to find builder for {}",esid)
       null
     }
   }
@@ -159,9 +162,13 @@ object EntityStoreFactory {
   def openStore(esid:EntityStoreID):EntityStore = {
     if(subSchemeMap.isDefinedAt(esid.subScheme)) {
       val builder = subSchemeMap(esid.subScheme)
-      if(!builder.exists(esid)) null //FIXME
+      if(!builder.exists(esid)) {
+        logger.error("Entity {} does not exist, cannot open it",esid)
+        null //FIXME
+      }
       else builder.open(esid)
     } else {
+      logger.debug("Failed to find builder for {}",esid)
       null
     }
   }

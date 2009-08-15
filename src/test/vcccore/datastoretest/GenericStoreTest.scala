@@ -70,8 +70,9 @@ abstract class GenericStoreTest extends TestCase {
   override def setUp() {
     EntityFactory.registerEntityClass(testClassID, TestEntityBuilder)
     EntityFactory.registerEntityClass(blockClassID, BlockEntityBuilder)
+    assert(storeID!=null,"Must have a valid StoreID")
     val builder = EntityStoreFactory.getEntityStoreBuilder(storeID)
-    assert(builder!=null)
+    assert(builder!=null,"Must get a valid builder")
 
     //Dispose it
     if(builder.exists(storeID)) builder.destroy(storeID)

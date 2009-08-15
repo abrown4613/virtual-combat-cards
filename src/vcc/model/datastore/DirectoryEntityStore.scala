@@ -167,6 +167,7 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
 
 object DirectoryEntityStore extends EntityStoreBuilder {
 
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
     
   private class RepositoryMark(markFile:File) {
 
@@ -259,7 +260,11 @@ object DirectoryEntityStore extends EntityStoreBuilder {
         if( (dir.exists && dir.isDirectory) || ( ! dir.exists) ) dir
         else null
       } else null
-    } catch { case _ => null }
+    } catch { 
+      case e =>
+        logger.debug("Attempt to extract base directory from "+esid +" failed",e)
+        null 
+    }
   }
   
   protected def getMarkerFile(baseDir:File):File = 

@@ -24,9 +24,9 @@ case class EntityID(uri: java.net.URI)
 case class EntityClassID(uri: java.net.URI)
 
 case class EntityStoreID(uri: java.net.URI) {
-  private val subURI = new URI(uri.getSchemeSpecificPart)
+  private val subURI = new URI(uri.getRawSchemeSpecificPart)
   def subScheme = subURI.getScheme
-  def getSubSchemeSpecificPart = subURI.getSchemeSpecificPart
+  def getSubSchemeSpecificPart = subURI.getRawSchemeSpecificPart
 }
 
 object DataStoreURI {
@@ -60,7 +60,7 @@ object DataStoreURI {
   }
   
   def directoryEntityStoreIDFromFile(file:java.io.File):EntityStoreID = {
-    asEntityStoreID("vcc-store:directory:"+file.toURL)
+    asEntityStoreID("vcc-store:directory:"+file.toURI.toString)
   }
 }
 
