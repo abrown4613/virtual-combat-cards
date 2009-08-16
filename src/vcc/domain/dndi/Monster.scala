@@ -47,6 +47,10 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject {
   private var _auras:List[Aura]=Nil
   private var _power:List[Power]=Nil
   
+  def powers = _power.reverse
+  
+  def auras = _auras.reverse
+  
   load(xml)
   
   /**
@@ -191,6 +195,6 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject {
   }
   
   override def toString():String = {
-    "Monster("+_map+"; Aura="+_auras+"; powers="+_power+")"
+    "Monster["+id+"]("+_map+"; Aura="+_auras+"; powers="+_power+")"
   }
 }
