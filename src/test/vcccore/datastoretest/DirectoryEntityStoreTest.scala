@@ -63,4 +63,30 @@ class DirectoryEntityStoreTest extends GenericStoreTest {
     	assert(es!=null)
     }
   }
+  
+  def testBadChangeToOnceValidRepository() {
+    var base = new File("testdata/badstore1")
+    val esid = DataStoreURI.directoryEntityStoreIDFromFile(base)
+    assert(esid != null)
+    assert(EntityStoreFactory.exists(esid))
+    
+    //scala.xml.XML.loadFile(new File(base,"bad.xml"))
+    //Make sure we rescan
+    //new File(base,"index.toc").delete()
+    val es = EntityStoreFactory.openStore(esid)
+    /*
+    val abc = EntityFactory.createInstance(blockClassID,eid0).asInstanceOf[BlockEntity]
+    abc.text.value = "abc"
+    es.store(abc)*/  
+    val ents = es.enumerate(null)
+    assert(!ents.isEmpty)
+    val sum = es.loadEntitySummary(ents.toSeq(0))
+    assert(sum == null, sum)
+    try {
+    } catch {
+      case s:AssertionError => throw s
+      case e => assert(false,"Should not get here"+e)
+    }
+  }
+
 }
