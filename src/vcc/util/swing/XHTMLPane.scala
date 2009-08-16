@@ -132,7 +132,8 @@ object XHTMLPane extends StartupStep {
   def parsePanelDocument(docString:String):Document = {
     val builder = dbfac.newDocumentBuilder()
     try {
-      builder.parse(new java.io.ByteArrayInputStream(docString.getBytes))
+      val docStringMod = if(docString.startsWith("<?xml")) docString else ("<?xml version='1.0' encoding='ISO-8859-1' ?>"+docString)
+      builder.parse(new java.io.ByteArrayInputStream(docStringMod.getBytes))
     } catch {
       case e => 
         logger.debug("Failed to parse document: {}")
