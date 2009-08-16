@@ -105,7 +105,7 @@ class DirectoryEntityStore(esid:EntityStoreID) extends EntityStore {
     val xml = entity.toXML
     val file = new File(baseDir, entity.id.uri.getSchemeSpecificPart.replace(":","-") + ".xml")
     _map = _map + (entity.id -> new Entry(entity.classId,file,null))
-    scala.xml.XML.save(file.toString,xml)
+    scala.xml.XML.saveFull(file.toString,xml,"UTF-8",true,null)
     saveIndexEntry(entity.id,entity.classId,file)
   }
   
