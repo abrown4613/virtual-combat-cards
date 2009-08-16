@@ -29,21 +29,24 @@ object CompendiumView extends Frame {
   
   val window = this
 
+  private val entListPanel = new CompendiumEntitySelectionPanel() 
   val newEntryAction = Action("New Entry ...") {
 	val diag = new NewCombatantDialog(window)
 	diag.visible = true
 	println("Dialog is done"+diag.dialogResult)
+	Dialog.showMessage(entListPanel,"Not implemented yet")
   }
 
   contents = new MigPanel("fill") {
-    add(new CompendiumEntitySelectionPanel(),"span 3,wrap")
-	add(new Button(newEntryAction), "split 4")
+    add(entListPanel,"span 3,wrap")
+	add(new Button(newEntryAction), "split 5")
+	add(new Button(Action("Refresh"){ doEditEntry() }))
 	add(new Button(Action("Edit ..."){ doEditEntry() }))
 	add(new Button(Action("Close") {CompendiumView.visible = false }))
   }
   
   
   def doEditEntry() {
-    
+    Dialog.showMessage(entListPanel ,"Not implemented yet")
   }
 }
