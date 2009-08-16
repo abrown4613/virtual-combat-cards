@@ -29,7 +29,9 @@ abstract class GenericStoreTest extends TestCase {
   val storeID:EntityStoreID
   var entityStore:EntityStore = null
   
-   vcc.infra.LogService.initializeLog(Seq("infra"),System.getProperty("java.io.tmpdir")+"/test.log",vcc.infra.LogService.level.Off,false)
+  
+  vcc.infra.LogService.initializeLog(Seq("infra"),System.getProperty("java.io.tmpdir")+"/test.log",
+                                     if(System.getProperty("vcc.debug")!=null)vcc.infra.LogService.level.Debug else vcc.infra.LogService.level.Debug,false)
   
   class TestEntity(eid:EntityID) extends Entity(eid) {
     val classId = testClassID
