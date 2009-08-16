@@ -18,6 +18,7 @@
 		<mkdir dir="${dist}"/>
   	<mkdir dir="${deplib}"/>
 		<mkdir dir="${package}" />
+		<mkdir dir="${package}/slib" />
 		<mkdir dir="${installer}" />
   	<mkdir dir="${installer}/lib" />
   	<mkdir dir="${installer}/fs-wc" />
@@ -39,6 +40,9 @@
   	<copy todir="${installer}/lib" verbose="true">
 			<fileset refid="deplibs" />
 		</copy>
+  	<copy todir="${package}/slib" verbose="true">
+  		<fileset dir="${deplib}" includes="log4j-1.2.15.jar" />
+    </copy>
   	<copy todir="${installer}/sample">
   	  <fileset dir="sample"/>
   	</copy>
