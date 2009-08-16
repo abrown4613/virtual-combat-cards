@@ -57,7 +57,10 @@ object MonsterImportService {
            logger.error("Exception will processing "+key,e)
        }
      }
+     val xml = MonsterStatBlockBuilder.generate(dndiMonster)
+     monster.statblock.value = xml.toString
      logger.debug("Imported MonsterEntity in XML: {}",monster.toXML)
      es.store(monster)
-   }
+     logger.info("Imported MonsterEntity: {}",monster.eid)
+  }
 }
