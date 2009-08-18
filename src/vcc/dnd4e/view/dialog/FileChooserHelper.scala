@@ -58,7 +58,7 @@ object FileChooserHelper {
    * Return None on a cancel.
    */
   def chooseSaveFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(new java.io.File(System.getProperty("user.dir")))
+    val fileDiag= new JFileChooser(Configuration.baseDirectory.value)
     if(filter!=null) fileDiag.setFileFilter(filter)
     
     val result=fileDiag.showSaveDialog(over)
@@ -74,7 +74,7 @@ object FileChooserHelper {
    * Return None on a cancel.
    */
   def chooseOpenFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(new java.io.File(System.getProperty("user.dir")))
+    val fileDiag= new JFileChooser(Configuration.baseDirectory.value)
     if(filter!=null) fileDiag.setFileFilter(filter)
     
     val result=fileDiag.showOpenDialog(over)
