@@ -41,6 +41,18 @@ object SwingHelper {
     }
   }
   
+  /**
+   * This function will invoke later if the current thread is not the
+   * EventDispath thread, or immediately in the EventDispatchThread.
+   * Use this avoid invokeLater inside and invokeLater
+   * @param f The block to call
+   */
+  def invokeInEventDispatchThread(f: =>Unit) {
+    if(SwingUtilities.isEventDispatchThread()) {
+      f
+    } else invokeLater(f)
+  }
+  
   def openDesktopBrowser(url:java.net.URL) {
     try {
       val dsk=java.awt.Desktop.getDesktop
