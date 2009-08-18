@@ -30,18 +30,20 @@ import vcc.model.Registry
 
 class PartyEditor extends Frame {
   
-  class PartyTableEntry(val eid:EntityID, val name: String, var alias:String, var id:String, var qty:Int, val xp:Int) {
+  class PartyTableEntry(val eid:EntityID, val name: String, var alias:String, var id:String, var qty:Int, val xp:Int) extends Ordered[PartyTableEntry] {
     def toIndividual():Iterable[PartyTableEntry] = (if(qty == 1) Seq(this)
                                                  else (1 to qty).map(e => new PartyTableEntry(eid,name,alias,id,1,xp)))
     
     def toPartyMember():PartyMember = PartyMember(if(id!=null) Symbol(id)else null, alias, eid)
+    
+    def compare(that:PartyTableEntry) = this.name.compare(that.name)
   }
   
   object PartyTableEntryProject extends TableModelRowProjection[PartyTableEntry] {
     val columns:List[(String,java.lang.Class[_])] = List(
       ("ID",classOf[String]),
       ("Name",classOf[String]),
-      ("Alias",classOf[String]),
+      ("Alias/Mini",classOf[String]),
       ("Qty",classOf[Integer]),
       ("XP",classOf[Integer])
     )
@@ -83,7 +85,8 @@ class PartyEditor extends Frame {
     setColumnWidth(3,30,45,60)
     setColumnWidth(4,50,75,100)
   }
-  private val compendiumEntries = new CompendiumEntitySelectionPanel()
+
+  private val compendiumEntries = new CompendiumEntitySelectionPanel
   private val totalXPLabel = new Label()
   recalculateXP(Nil)
   
@@ -101,7 +104,9 @@ class PartyEditor extends Frame {
       recalculateXP(nl)
       partyTableModel.content = nl 
     }
-  }) 
+  })
+  
+  compendiumEntries.doubleClickAction = addButton.action
   
   private val removeButton = new Button(Action(" << Remove"){
 	val sel = table.selection.rows.toSeq
@@ -168,6 +173,7 @@ class PartyEditor extends Frame {
         pe.alias = pm.alias
         pe
       }))
+      println(pml.map(x=>x.name))
       partyTableModel.content = pml
       recalculateXP(pml)
     }
@@ -181,7 +187,7 @@ class PartyEditor extends Frame {
   private def expandEntries(ol:Seq[PartyTableEntry]):Seq[PartyTableEntry] = ol.flatMap[PartyTableEntry](x => x.toIndividual()) 
   
   private def compressEntries(ol:Seq[PartyTableEntry]):Seq[PartyTableEntry] = {
-    if(!collapseCheckBox.selected) {
+    val ul = if(!collapseCheckBox.selected) {
       expandEntries(ol)
     } else {
       var map = scala.collection.mutable.Map.empty[(EntityID,String,String),PartyTableEntry]
@@ -192,6 +198,7 @@ class PartyEditor extends Frame {
       }
       map.map(x => x._2).toSeq
     }
+    scala.util.Sorting.stableSort(ul,(y:PartyTableEntry)=> y).toSeq
   }
   
   private def fireQuantityChange() {

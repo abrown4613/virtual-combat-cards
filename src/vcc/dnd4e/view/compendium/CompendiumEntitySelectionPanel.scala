@@ -22,7 +22,10 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._ 
 
-import vcc.model.datastore.{EntityID,EntitySummary,EntityStore,EntityStoreID}
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+
+import vcc.model.datastore.{EntityID,EntitySummary,EntityStore,EntityStoreID,EntityClassID}
 import vcc.model.Registry
 import vcc.dnd4e.model.{MonsterSummary,CharacterSummary,Compendium}
 
@@ -64,6 +67,7 @@ object CharacterSummaryProjection extends TableModelRowProjection[CharacterSumma
   }
 }
 
+
 class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
@@ -90,15 +94,23 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
  
   private val activeEntityStore = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
  
-  monsterTableModel.content = activeEntityStore.enumerate(Compendium.monsterClassID).toList.map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[MonsterSummary]).filter(x=> x!=null).toSeq
-  characterTableModel.content = activeEntityStore.enumerate(Compendium.characterClassID).toList.map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[CharacterSummary]).filter(x=> x!=null).toSeq 
+  refreshList()
+
+  var doubleClickAction:Action = null
+
+  val mouseAdapter = new MouseAdapter(){
+	override def mouseClicked(e: java.awt.event.MouseEvent){
+	  if (e.getClickCount() == 2 && doubleClickAction != null) doubleClickAction()
+    }}
+  monsterTable.peer.addMouseListener(mouseAdapter)
+  characterTable.peer.addMouseListener(mouseAdapter)
 
   add(monsterButton,"split 4")
   add(characterButton,"wrap")
   add(scrollPane, "span 3,wrap, growx, growy")
   //add(characterScrollPane, "span 3,wrap, growx, growy")
   
-  listenTo(monsterButton,characterButton) 
+  listenTo(monsterButton,characterButton,monsterTable) 
   reactions += {
     case ButtonClicked(this.monsterButton) =>
       scrollPane.contents = monsterTable
@@ -111,4 +123,15 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
     if(activeTable.selection.rows.isEmpty) None 
     else Some(activeTable.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(activeTable.selection.rows.toSeq(0)))
   }
+
+  def entitiesFilteredAndSorted[T](cid: EntityClassID, comp:(T,T)=>Boolean):Seq[T] = {
+    val el = activeEntityStore.enumerate(cid).toList.map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[T]).filter(x=> x!=null)
+    scala.util.Sorting.stableSort(el,comp).toSeq
+  }
+  
+  def refreshList() {
+	monsterTableModel.content = entitiesFilteredAndSorted[MonsterSummary](Compendium.monsterClassID,(x,y)=> x.name < y.name)
+	characterTableModel.content = entitiesFilteredAndSorted[CharacterSummary](Compendium.characterClassID,(x,y)=> x.name < y.name) 
+  }
+  
 }
