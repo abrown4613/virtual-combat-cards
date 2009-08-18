@@ -23,6 +23,7 @@ import scala.xml.{Elem,Node,Text}
 
 trait StatBlockDataSource {
   def extract(string:String):Option[String]
+  def extractGroup(group:String):Seq[StatBlockDataSource]
 }
 
 object StatBlockBuilder {
@@ -63,10 +64,10 @@ object StatBlockBuilder {
       else Nil	
     }
   }
-  case class BoldFormat(key:String) extends Chunk {
+  case class BoldFormat(key:String,sep:Boolean) extends Chunk {
 	def render(source:StatBlockDataSource):Seq[Node] = {
 	  val v = source.extract(key) 
-	  if(v.isDefined) (<b>{v.get}</b>)
+	  if(v.isDefined) (<b>{v.get.formatted(if(sep) " %s " else "%s")}</b>)
       else Nil	
     }
   }
@@ -99,24 +100,34 @@ object StatBlockBuilder {
     override def render(source:StatBlockDataSource):Seq[Node] = (<img src={src} />) 
   }
   
+  case class ImageMap(key:String) extends Chunk {
+    def render(source:StatBlockDataSource):Seq[Node] = {
+      val v = source.extract(key)
+      if(v.isDefined) (<img src={v.get} />)
+      else Nil
+    }
+  }
+  
   def formatChunks(source:StatBlockDataSource)(parts:Chunk*):Seq[Node] = {
     val ns = parts.map(part => part.render(source))
     ns.flatMap(x=>x)
   }
   
-}
-
-abstract class StatBlockBuilder[T] {
-
-  def generate(source:T):Node
-
+  case class Group(group:String,chunks: Chunk*) extends Chunk {
+    def render(source:StatBlockDataSource):Seq[Node] = {
+      val gds = source.extractGroup(group)
+      gds.map(subds => formatChunks(subds)(chunks: _*)).flatMap(x=>x)
+    }
+  }
+  
 }
 
 object MonsterStatBlockBuilder { //extends StatBlockBuilder {
   import StatBlockBuilder._
   
   private val headBlock = Para("flavor",
-        PairInitFmt("Initiative"),PairSpacedFmt("Senses"),Break,
+        Line(PairInitFmt("Initiative"),PairSpacedFmt("Senses")),
+        Group("Auras",Line(BoldFormat("Name",true),TextFormat("description",true))),
           PairFlexFmt("HP"," %s; "),PairSpacedFmt("Bloodied"),Break,
           Line(PairSpacedFmt("Regeneration")),
           PairFlexFmt("AC"," %s; "),PairFlexFmt("Fortitude"," %s, "),PairFlexFmt("Reflex"," %s, "),PairSpacedFmt("Will"),Break,
@@ -133,16 +144,14 @@ object MonsterStatBlockBuilder { //extends StatBlockBuilder {
   
   class MonsterStatBlockDataSource(val monster:Monster) extends StatBlockDataSource {
     def extract(key:String):Option[String] = monster(key.toUpperCase)
-  }
-  
-  def renderPower(power:Monster#Power): Seq[Node] = {
-    List((<p class="flavor alt">{power.name}</p>),(<p class="flavorIndent">{power.desc}</p>))
+    def extractGroup(group:String) = group.toUpperCase match {
+      case "POWERS" => monster.powers.map(new PowerStatBlockDataSource(_))
+      case "AURAS" => monster.auras.map(new AuraStatBlockDataSource(_))
+    }
   }
 
-/*
-  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) {
-    var secondary:String=null
-*/
+  //GATO
+  val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2,x._1)).toSeq: _*)
   
   class PowerStatBlockDataSource(power:Monster#Power) extends StatBlockDataSource {
     def extract(key:String):Option[String] = {
@@ -151,43 +160,41 @@ object MonsterStatBlockBuilder { //extends StatBlockBuilder {
         case "DESCRIPTION" => power.desc
         case "ACTION" => power.action
         case "SECONDARY ATTACK" => power.secondary
-        case "TYPE" => if(power.icon!=null) power.icon.toString else null
+        case "TYPE" => if(power.icon!=null) imageMap(power.icon) else null
         case "KEYWORDS" => power.keywords
         case _ => null
       }
       if(s!=null) Some(s) else None
     }
+    def extractGroup(dontcare:String) = Nil
+  }
+  class AuraStatBlockDataSource(aura:Monster#Aura) extends StatBlockDataSource {
+    def extract(key:String):Option[String] = {
+      val s:String = key.toUpperCase match {
+        case "NAME" => aura.name
+        case "DESCRIPTION" => aura.desc
+        case _ => null
+      }
+      println("Aura => "+key + "value "+s)
+      if(s!=null) Some(s) else None
+    }
+    def extractGroup(dontcare:String) = Nil
   }
   
-  object PowerFormatter extends Chunk {
-    def render(mds:StatBlockDataSource):Seq[Node] = {
-      println("Here")
-      mds match {
-        case mon: MonsterStatBlockDataSource =>
-          val cl = Seq(
-          	Para("flavor alt", TextFormat("Type",true), BoldFormat("Name"),TextFormat("Action",true),IfDefined("Keywords",Image("x.gif"),BoldFormat("Keywords"))),
+  val powerBlock = Seq(
+          	Para("flavor alt", ImageMap("Type"), BoldFormat("Name",true),TextFormat("Action",true),IfDefined("Keywords",Image("x.gif"),BoldFormat("Keywords",true))),
           	Para("flavorIndent", TextFormat("Description",true)), //TODO Handle line break for beholder
           	IfDefined("Secondary Attack",Para("flavor", StaticXML(<i>Secondary Attack</i>)),Para("flavorIndent",TextFormat("Secondary Attack",true)))
            )
-          val pl = for(power <- mon.monster.powers) yield {
-            println(power)
-            formatChunks(new PowerStatBlockDataSource(power))(cl: _*)
-          }  
-          val l:Seq[Node] = pl.flatMap(x=>x)
-          l foreach println
-          l 
-        case s => Nil
-      }
-    }
-  }
+  
   
   def generate(monster:Monster) = {
     val mds = new MonsterStatBlockDataSource(monster)
     (<html><head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
      <body><div id="detail">
       <h1 class="monster">{monster("NAME").get}<span class="type">{monster("TYPE").get + " " + monster("ROLE").get}</span></h1>
-      { formatChunks(mds)(headBlock,PowerFormatter,tailBlock)}
+      { formatChunks(mds)(
+        headBlock,Group("Powers",powerBlock: _*),tailBlock)}
       </div></body></html>)
-//      { monster.powers.map(renderPower).flatMap(x=>x) }
     }
 }
