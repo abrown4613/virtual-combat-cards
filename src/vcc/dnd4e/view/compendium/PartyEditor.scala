@@ -111,11 +111,14 @@ class PartyEditor extends Frame {
   private val removeButton = new Button(Action(" << Remove"){
 	val sel = table.selection.rows.toSeq
 	if(!sel.isEmpty) {
-	  val idx = sel.toSeq(0)
-	  val l = partyTableModel.content.toList
-	  val nl = l - l(idx)
-	  partyTableModel.content = nl
-      recalculateXP(nl)
+	  SwingHelper.invokeLater {
+	    val idx = sel.toSeq(0)
+	    val l = partyTableModel.content.toList
+	    val nl = l - l(idx)
+	    partyTableModel.content = nl
+	    if(!nl.isEmpty) table.selection.rows += (if(idx < nl.length) idx else nl.length -1)
+        recalculateXP(nl)
+	  }
 	}
   })
   
@@ -173,9 +176,10 @@ class PartyEditor extends Frame {
         pe.alias = pm.alias
         pe
       }))
-      println(pml.map(x=>x.name))
-      partyTableModel.content = pml
-      recalculateXP(pml)
+      SwingHelper.invokeLater {
+        partyTableModel.content = pml
+        recalculateXP(pml)
+      }
     }
   }
   
@@ -202,16 +206,16 @@ class PartyEditor extends Frame {
   }
   
   private def fireQuantityChange() {
-    val pml = compressEntries(partyTableModel.content)
-    partyTableModel.content = pml
-    recalculateXP(pml)
+    SwingHelper.invokeLater {
+      val pml = compressEntries(partyTableModel.content)
+      partyTableModel.content = pml
+      recalculateXP(pml)
+    }
   }
   
   private def recalculateXP(pml:Seq[PartyTableEntry]) {
-    SwingHelper.invokeLater {
-	  val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _ )
-	  totalXPLabel.text = "Total XP: "+xp
-	}
+	val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _ )
+	totalXPLabel.text = "Total XP: "+xp
   }
   
 }
