@@ -39,7 +39,7 @@ class ProjectionTableModel[T](val proj:TableModelRowProjection[T]) extends javax
   override def setValueAt(value:java.lang.Object,row:Int,col:Int)=proj.set(col,elem(row),value)
   
   def content_=(content:Seq[T])={
-    SwingHelper.invokeLater {
+    SwingHelper.invokeInEventDispatchThread {
       var s=elem.size
       elem=content;
       if(s>content.size) 
