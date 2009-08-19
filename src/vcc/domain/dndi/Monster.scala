@@ -32,12 +32,49 @@ object Monster {
 /**
  * Base monster load.
  */
-class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject {
+class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockDataSource {
+    
+  def extract(key:String):Option[String] = this(key.toUpperCase)
+  
+  def extractGroup(group:String) = group.toUpperCase match {
+    case "POWERS" => this.powers
+    case "AURAS" => this.auras
+  }
+  
   import vcc.domain.dndi.Parser._
   
   //Contruction elements
-  case class Aura(name:String,desc:String)
-  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) {
+  case class Aura(name:String,desc:String) extends StatBlockDataSource {
+    def extract(key:String):Option[String] = {
+      val s:String = key.toUpperCase match {
+        case "NAME" => name
+        case "DESCRIPTION" => desc
+        case _ => null
+      }
+      println("Aura => "+key + "value "+s)
+      if(s!=null) Some(s) else None
+    }
+    def extractGroup(dontcare:String) = Nil
+  }
+  
+  //TODO: This is an ugly hack. Need to make this nicer.
+  private final val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2,x._1)).toSeq: _*)
+  
+  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) extends StatBlockDataSource {
+    def extract(key:String):Option[String] = {
+      val s:String = key.toUpperCase match {
+        case "NAME" => name
+        case "DESCRIPTION" => desc
+        case "ACTION" => action
+        case "SECONDARY ATTACK" => secondary
+        case "TYPE" => if(icon!=null) imageMap(icon) else null
+        case "KEYWORDS" => keywords
+        case _ => null
+      }
+      if(s!=null) Some(s) else None
+    }
+    def extractGroup(dontcare:String) = Nil
+  
     var secondary:String=null
     
     override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+desc+", "+secondary+")" 
@@ -113,10 +150,10 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject {
    */
   private def extractDescriptionFromBlocks(blocks:List[List[Part]]):String = {
     assert(blocks.tail != Nil)
-    blocks.tail.head match {
-      case Text(desc):: Nil => desc
-      case _ => throw new Exception("Cant find description block")
-    }
+    blocks.tail.head.map(part=> part match {
+      case Text(line) => line.replace('\n',' ')
+      case Break() => "\n"
+    }).mkString("")
   }
  
   /**

@@ -30,6 +30,13 @@ object StatBlockBuilder {
 
   abstract class Chunk {
     def render(source:StatBlockDataSource):Seq[Node]
+    
+    def formatChunks(source:StatBlockDataSource)(parts:Chunk*):Seq[Node] = parts.map(part => part.render(source)).flatMap(x=>x)
+  
+  }
+  
+  case class ChunkGroup(chunks: Chunk*) extends Chunk {
+    def render(source:StatBlockDataSource):Seq[Node] = formatChunks(source)(chunks: _*)
   }
   
   object Break extends Chunk {
@@ -64,6 +71,23 @@ object StatBlockBuilder {
       else Nil	
     }
   }
+
+  case class MultiLineFormat(key:String) extends Chunk {
+	def render(source:StatBlockDataSource):Seq[Node] = {
+	  def breakLines(l:List[Node],brk:Boolean):List[Node] = {
+	    if(l.isEmpty) Nil else { 
+		  if(brk) (<br/>) :: breakLines(l,false)
+		  else l.head :: breakLines(l.tail,true)  
+  	    }
+      }
+	  val v = source.extract(key)
+	  if(v.isDefined) {
+	    val lines = v.get.split("\n").map(Text(_)).toList
+	    breakLines(lines,false)
+	  } else Nil	
+    }
+  }
+
   case class BoldFormat(key:String,sep:Boolean) extends Chunk {
 	def render(source:StatBlockDataSource):Seq[Node] = {
 	  val v = source.extract(key) 
@@ -108,11 +132,6 @@ object StatBlockBuilder {
     }
   }
   
-  def formatChunks(source:StatBlockDataSource)(parts:Chunk*):Seq[Node] = {
-    val ns = parts.map(part => part.render(source))
-    ns.flatMap(x=>x)
-  }
-  
   case class Group(group:String,chunks: Chunk*) extends Chunk {
     def render(source:StatBlockDataSource):Seq[Node] = {
       val gds = source.extractGroup(group)
@@ -122,7 +141,11 @@ object StatBlockBuilder {
   
 }
 
-object MonsterStatBlockBuilder { //extends StatBlockBuilder {
+trait StatBlockBuilder  {
+  def generate(ds:StatBlockDataSource):Node
+}
+
+object MonsterStatBlockBuilder extends StatBlockBuilder {
   import StatBlockBuilder._
   
   private val headBlock = Para("flavor",
@@ -141,60 +164,20 @@ object MonsterStatBlockBuilder { //extends StatBlockBuilder {
           PairSpacedFmt("Con"),PairSpacedFmt("Int"),PairSpacedFmt("Cha"),Break,
           Line(PairSpacedFmt("Equipment"))
       )
-  
-  class MonsterStatBlockDataSource(val monster:Monster) extends StatBlockDataSource {
-    def extract(key:String):Option[String] = monster(key.toUpperCase)
-    def extractGroup(group:String) = group.toUpperCase match {
-      case "POWERS" => monster.powers.map(new PowerStatBlockDataSource(_))
-      case "AURAS" => monster.auras.map(new AuraStatBlockDataSource(_))
-    }
-  }
 
-  //GATO
-  val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2,x._1)).toSeq: _*)
-  
-  class PowerStatBlockDataSource(power:Monster#Power) extends StatBlockDataSource {
-    def extract(key:String):Option[String] = {
-      val s:String = key.toUpperCase match {
-        case "NAME" => power.name
-        case "DESCRIPTION" => power.desc
-        case "ACTION" => power.action
-        case "SECONDARY ATTACK" => power.secondary
-        case "TYPE" => if(power.icon!=null) imageMap(power.icon) else null
-        case "KEYWORDS" => power.keywords
-        case _ => null
-      }
-      if(s!=null) Some(s) else None
-    }
-    def extractGroup(dontcare:String) = Nil
-  }
-  class AuraStatBlockDataSource(aura:Monster#Aura) extends StatBlockDataSource {
-    def extract(key:String):Option[String] = {
-      val s:String = key.toUpperCase match {
-        case "NAME" => aura.name
-        case "DESCRIPTION" => aura.desc
-        case _ => null
-      }
-      println("Aura => "+key + "value "+s)
-      if(s!=null) Some(s) else None
-    }
-    def extractGroup(dontcare:String) = Nil
-  }
-  
-  val powerBlock = Seq(
+  private val powerBlock = Seq(
           	Para("flavor alt", ImageMap("Type"), BoldFormat("Name",true),TextFormat("Action",true),IfDefined("Keywords",Image("x.gif"),BoldFormat("Keywords",true))),
-          	Para("flavorIndent", TextFormat("Description",true)), //TODO Handle line break for beholder
+          	Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
           	IfDefined("Secondary Attack",Para("flavor", StaticXML(<i>Secondary Attack</i>)),Para("flavorIndent",TextFormat("Secondary Attack",true)))
            )
   
   
-  def generate(monster:Monster) = {
-    val mds = new MonsterStatBlockDataSource(monster)
+  def generate(ds:StatBlockDataSource) = {
+    val block = new ChunkGroup(headBlock,Group("Powers",powerBlock: _*),tailBlock)
     (<html><head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
      <body><div id="detail">
-      <h1 class="monster">{monster("NAME").get}<span class="type">{monster("TYPE").get + " " + monster("ROLE").get}</span></h1>
-      { formatChunks(mds)(
-        headBlock,Group("Powers",powerBlock: _*),tailBlock)}
+      <h1 class="monster">{ds.extract("NAME").get}<span class="type">{ds.extract("TYPE").get + " " + ds.extract("ROLE").get}</span></h1>
+      { block.render(ds)}
       </div></body></html>)
     }
 }
