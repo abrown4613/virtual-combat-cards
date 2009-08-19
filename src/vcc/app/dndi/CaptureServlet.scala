@@ -63,7 +63,7 @@ class CaptureServlet extends HttpServlet {
           response.getWriter.println("You sent something that VCC cannot capture.")
       }
     } catch {
-      case ue: UntranslatableException => 
+      case ue: Exception => 
         // XML is ok, but can be parsed so we save it for debuging
         logger.warn("Failed to capture monster",ue)
         val file=java.io.File.createTempFile("capture", ".xml")
