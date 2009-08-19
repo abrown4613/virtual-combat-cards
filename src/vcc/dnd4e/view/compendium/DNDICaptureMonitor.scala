@@ -79,8 +79,8 @@ object DNDICaptureMonitor extends Frame {
   toggleActionState()
   CaptureHoldingArea.addMonsterObserver(new CaptureHoldingArea.CaptureHoldingObserver[Monster] {
      def updateContent(newContent: Seq[Monster]) {
-       monsters = newContent
-       monsterList.listData = newContent.map(monster => monster("NAME").get)
+       monsters = scala.util.Sorting.stableSort[Monster](newContent,(a:Monster,b:Monster)=> { a("NAME").get < b("NAME").get })
+       monsterList.listData = monsters.map(monster => monster("NAME").get)
      }                                   
   })
   
