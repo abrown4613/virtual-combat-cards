@@ -32,7 +32,7 @@ class CombatantCard(tracker:Actor) extends GridPanel(1,1) with ContextualView[Vi
   private val statBlock = new XHTMLPane
   statBlock.minimumSize = new java.awt.Dimension(200,200)
   private val split1=new SplitPane(Orientation.Horizontal,effects,commentPanel)
-  private val split2=new SplitPane(Orientation.Horizontal,new ScrollPane(statBlock) { this.peer.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)} ,split1)
+  private val split2=new SplitPane(Orientation.Horizontal,statBlock,split1)
   split1.peer.setDividerSize(4)
   split1.peer.setDividerLocation(0.5)
   split2.peer.setDividerSize(4)
