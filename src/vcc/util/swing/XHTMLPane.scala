@@ -24,7 +24,7 @@ import javax.xml.parsers._
 
 import org.xhtmlrenderer.resource._
 import org.xhtmlrenderer.swing.AWTFSImage
-import org.xhtmlrenderer.simple.XHTMLPanel 
+import org.xhtmlrenderer.simple.{XHTMLPanel,FSScrollPane} 
 
 import javax.swing.ImageIcon
 import java.io.{File,StringReader}
@@ -146,13 +146,17 @@ object XHTMLPane extends StartupStep {
 }
 
 class XHTMLPane extends Component {
-  
-  override lazy val peer = new XHTMLPanel(XHTMLPane.LocalUserAgent)
 
-  private val xpanel = peer.asInstanceOf[XHTMLPanel]
+  
+  override lazy val peer = new FSScrollPane()
+    
+  private val xpanel = new XHTMLPanel(XHTMLPane.LocalUserAgent)
+  
+  peer.setViewportView(xpanel)
+  peer.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
+  peer.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
 
   xpanel.getSharedContext().getTextRenderer.setSmoothingThreshold(0)
-  xpanel.setAutoscrolls(true)
 
   def setDocumentFromText(str:String) {
       val doc = if(str == "" || str == null) XHTMLPane.blankDocument
