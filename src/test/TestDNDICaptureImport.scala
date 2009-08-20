@@ -50,7 +50,7 @@ class TestDNDICaptureImport extends TestCase {
       assert(xml!=null)
       val pp = new scala.xml.PrettyPrinter(100,2)
       println(pp.formatNodes(xml))
-      scala.xml.XML.saveFull(f.toString,xml,"ISO-8859-1",true,null)
+      scala.xml.XML.saveFull(f.toString,xml,"UTF-8",true,null)
     }
   }
 }
