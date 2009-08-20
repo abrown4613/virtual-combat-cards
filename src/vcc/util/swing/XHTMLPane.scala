@@ -27,7 +27,8 @@ import org.xhtmlrenderer.swing.AWTFSImage
 import org.xhtmlrenderer.simple.XHTMLPanel 
 
 import javax.swing.ImageIcon
-import java.io.File
+import java.io.{File,StringReader}
+import org.xml.sax.InputSource
 import vcc.infra.startup.StartupStep
 
 object XHTMLPane extends StartupStep {
@@ -48,12 +49,10 @@ object XHTMLPane extends StartupStep {
     val url = this.getClass.getResource("/vcc/util/swing/missing.png")
     try {
       val icon=new javax.swing.ImageIcon(url)
-      if(icon == null) throw new Exception("Can't load image "+url.toString)
+      if(icon == null) vcc.infra.AbnormalEnd(this,"Failed to read MissingIcon image",null)
       icon
     } catch {
-      case s =>
-        s.printStackTrace
-        null
+      case s => vcc.infra.AbnormalEnd(this,"Failed to read MissingIcon image",s)
     }
   }
   
@@ -130,10 +129,10 @@ object XHTMLPane extends StartupStep {
    * @return A valid Document or null is something failed
    */
   def parsePanelDocument(docString:String):Document = {
+    
     val builder = dbfac.newDocumentBuilder()
     try {
-      val docStringMod = if(docString.startsWith("<?xml")) docString else ("<?xml version='1.0' encoding='ISO-8859-1' ?>"+docString)
-      builder.parse(new java.io.ByteArrayInputStream(docStringMod.getBytes))
+      builder.parse(new InputSource(new StringReader(docString)))
     } catch {
       case e => 
         logger.debug("Failed to parse document: {}")
@@ -147,11 +146,13 @@ object XHTMLPane extends StartupStep {
 }
 
 class XHTMLPane extends Component {
-  override lazy val peer =  new XHTMLPanel(XHTMLPane.LocalUserAgent)
+  
+  override lazy val peer = new XHTMLPanel(XHTMLPane.LocalUserAgent)
 
   private val xpanel = peer.asInstanceOf[XHTMLPanel]
 
   xpanel.getSharedContext().getTextRenderer.setSmoothingThreshold(0)
+  xpanel.setAutoscrolls(true)
 
   def setDocumentFromText(str:String) {
       val doc = if(str == "" || str == null) XHTMLPane.blankDocument
