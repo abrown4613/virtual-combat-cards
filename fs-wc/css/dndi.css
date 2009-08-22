@@ -101,7 +101,7 @@ body, div, p, th, td, li, dd, input, select, textarea {
 }
 #detail h1 {
     font-size: 1.09em;
-    line-height: 2;
+    line-height: 2; 
     padding-left: 15px;
     margin: 0;
     color: #fff;
@@ -114,7 +114,6 @@ body, div, p, th, td, li, dd, input, select, textarea {
 }
 #detail h1.monster {
     background: #4e5c2e;
-    height:38px;
 }
 #detail h1.dm {
     background: #5c1f34;
@@ -156,8 +155,8 @@ body, div, p, th, td, li, dd, input, select, textarea {
 	display: block;
 	position: relative;
 	z-index: 99;
-	top: -0.75em;
-	height: 1em;
+	top: -0.25em;
+	line-height: 1;
 	font-weight: normal;
 	font-size: 0.917em;
 }
