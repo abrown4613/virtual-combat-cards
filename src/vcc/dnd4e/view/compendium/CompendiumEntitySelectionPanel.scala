@@ -100,7 +100,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
 
   val mouseAdapter = new MouseAdapter(){
 	override def mouseClicked(e: java.awt.event.MouseEvent){
-	  if (e.getClickCount() == 2 && doubleClickAction != null) doubleClickAction()
+	  if (e.getClickCount() % 2 == 0 && doubleClickAction != null) doubleClickAction()
     }}
   monsterTable.peer.addMouseListener(mouseAdapter)
   characterTable.peer.addMouseListener(mouseAdapter)
