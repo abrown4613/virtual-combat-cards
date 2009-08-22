@@ -128,8 +128,9 @@ object BootStrap extends StartupRoutine {
     	Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]
     }
       
-    callStartupStep(srw,"XHTMLRenderer") {
-        vcc.util.swing.XHTMLPane
+    callStartupStep(srw,"User Interface Elements") {
+      vcc.dnd4e.view.compendium.DNDICaptureMonitor
+      vcc.util.swing.XHTMLPane
     }
     
     srw.reportProgress(this,"Initialization complete.")

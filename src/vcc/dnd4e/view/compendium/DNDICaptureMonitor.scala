@@ -70,7 +70,10 @@ object DNDICaptureMonitor extends Frame {
     serverMenu.contents += new MenuItem(stopServerAction)
     mb.contents += serverMenu
     val cacheMenu = new Menu("Cache")
-    cacheMenu.contents += new MenuItem(Action("Clear Cache") { CaptureHoldingArea.clearCachedMonster() })
+    cacheMenu.contents += new MenuItem(Action("Clear Cache") {
+      val ret = Dialog.showConfirmation(stateMessage,"You are about to clear all monsters in your cache, are you sure?","Clear captured monster cache",Dialog.Options.YesNoCancel)
+      if(ret.id == 0) CaptureHoldingArea.clearCachedMonster()
+    })
     cacheMenu.contents += new MenuItem(Action("Load cached entries"){ CaptureHoldingArea.loadCachedMonster()})
     mb.contents += cacheMenu
     mb
