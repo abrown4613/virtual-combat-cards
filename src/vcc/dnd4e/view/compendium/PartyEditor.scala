@@ -122,12 +122,17 @@ class PartyEditor extends Frame {
 	}
   })
   
+  private val clearAllButton = new Button(Action("Clear all"){
+   partyTableModel.content = Nil
+  })
+  
   private val collapseCheckBox = new CheckBox("Collapse similar entries")
   
   contents = new MigPanel("fill,flowy","[350][fill,growprio 0][350,fill]","[]") {
     add(compendiumEntries ,"growy, growx,wrap")
-	add(addButton,"split 2")
-	add(removeButton,"growx,wrap")
+	add(addButton,"split 3")
+	add(removeButton,"growx")
+	add(clearAllButton,"growx,wrap")
 	add(new MigPanel("fill,ins 0") {
 	  add(collapseCheckBox,"")
 	  add(totalXPLabel, "wrap, align right")
@@ -154,7 +159,6 @@ class PartyEditor extends Frame {
     case ButtonClicked(this.collapseCheckBox) => 
       partyTableModel.content =  compressEntries(partyTableModel.content) 
   }
-  
   
   private def doSave() {
     var file=FileChooserHelper.chooseSaveFile(table.peer,FileChooserHelper.partyFilter)
