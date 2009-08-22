@@ -208,6 +208,10 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
           processPower(null,powername,action,keywords,extractDescriptionFromBlocks(blocks))
           blocks=blocks.tail
 
+        case Key(powername)::Icon(IconType.Separator)::Key(keywords)::Nil =>
+          processPower(null,powername,null,keywords,extractDescriptionFromBlocks(blocks))
+          blocks=blocks.tail
+
         case Key(feature)::Nil => 
           processPower(null,feature,null,null,extractDescriptionFromBlocks(blocks))
           blocks=blocks.tail
@@ -217,7 +221,7 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
           var pairs=partsToPairs(blocks.head)
           addToMap(pairs)
           
-        case s => throw new Exception("Shouldn't get here! What to do with: "+s)
+        case s => throw new Exception("Monster parser doesn't know what to do with: "+s)
       }
       blocks=blocks.tail
     }

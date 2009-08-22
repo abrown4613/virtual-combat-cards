@@ -29,6 +29,9 @@ object MonsterImportService {
   
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
   
+  private final val defReformat = Set("AC","REFLEX","WILL","FORTITUDE")
+  private final val reformatRE = """^\s*(\d+)\s*.*""".r
+  
   def importMonster(dndiMonster: Monster) {
      if(dndiMonster==null) return  
      val es = Compendium.activeRepository
@@ -50,8 +53,15 @@ object MonsterImportService {
      for((key,field)<-fieldMap) {
        val v = dndiMonster(key) 
        try {
-    	   if(v.isDefined )field.fromStorageString(v.get)
-    	   else logger.warn("Mapping failed between {} and {}",key,field.datumKey)
+    	   if(v.isDefined) {
+    	     val s = if(defReformat.contains(key)) {
+    	       reformatRE.unapplySeq(v.get) match {
+    	         case Some(List(mv)) => mv
+    	         case _ => v.get
+               }
+    	     } else v.get
+    	     field.fromStorageString(s)
+    	   } else logger.warn("Mapping failed between {} and {}",key,field.datumKey)
        } catch {
          case e => 
            logger.error("Exception will processing "+key,e)
