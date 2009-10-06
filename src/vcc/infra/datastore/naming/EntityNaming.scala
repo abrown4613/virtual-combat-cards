@@ -32,6 +32,8 @@ object EntityID {
  
   def fromName(name:String):EntityID = EntityID(UUID.nameUUIDFromBytes(name.getBytes))
   
+  def generateRandom():EntityID = EntityID(UUID.randomUUID())
+  
   def fromStorageString(s:String):EntityID = {
     if(s.startsWith("vcc-ent:")) 
       try { EntityID(UUID.fromString(s.substring(8))) } catch { case _ => null}

@@ -37,8 +37,7 @@ object MonsterImportService {
   def importMonster(dndiMonster: Monster) {
      if(dndiMonster==null) return  
      val es = Compendium.activeRepository
-     val eid = EntityID.fromName("dndi:monster:"+dndiMonster.id)
-     val monster = new MonsterEntity(eid) 
+     val monster = MonsterEntity.newInstance(dndiMonster.id) 
      logger.debug("Load D&DI Monster: {}",dndiMonster)
      val fieldMap = Map[String,Field[_]](
        "NAME"->monster.name,
