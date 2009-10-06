@@ -22,6 +22,8 @@ import vcc.controller.actions.TransactionalAction
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
 import vcc.controller.ChangePublisher
+import InitiativeTracker.actions._
+import request.InternalInitiativeAction
 
 trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
   this: TransactionalProcessor[TrackerContext] =>
@@ -33,8 +35,6 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
    * We need to rewrite composed initiative operation to their internal versions.
    */
   override def rewriteEnqueue(msg:TransactionalAction) {
-    import InitiativeTracker.actions._
-    import request.InternalInitiativeAction
     msg match {
       case request.Delay(context.InMap(c)) => 
       	msgQueue.enqueue(InternalInitiativeAction(c,StartRound),InternalInitiativeAction(c,Delay))
@@ -73,25 +73,13 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
     case request.MoveBefore(context.InMap(who),context.InMap(before)) =>
       if(who.it.value.state != InitiativeState.Acting && before.it.value.state != InitiativeState.Acting ) {
         sequence.moveBefore(who.id,before.id)
+        advanceDead()
       }
       
     case request.InternalInitiativeAction(cmb,action) =>
       import InitiativeTracker.actions._
       import request.InternalInitiativeAction
       
-      def advanceDead() {
-    	//Close round and out advance dead
-    	sequence.moveDown(cmb.id)
-    	val next=context.map(context.sequence.sequence.head)
-    	if(next.health.status == HealthTracker.Status.Dead) {
-    	  // Need to check if the dead combatant is delay, and end its round accordingly
-    	  if(next.it.value.state == InitiativeState.Delaying) {
-    	    msgQueue.enqueue(InternalInitiativeAction(next,EndRound),InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
-    	  } else {
-    		msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
-          }
-    	}
-      }
       
       val firstp=this.context.map(sequence.sequence.head).id==cmb.id
       var itt=cmb.it.value
@@ -104,12 +92,25 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
     	  case MoveUp => sequence.moveUp(cmb.id)
     	  case ExecuteReady => sequence.moveDown(cmb.id)
     	  case EndRound if(itt.state!=InitiativeState.Delaying)=>
+    	    sequence.moveDown(cmb.id)
     	    advanceDead()
     	  case _ =>
     	}
       } else {
         throw new Exception("Error: Cant process "+(firstp,action)+ " on state "+itt +" of "+cmb.id.name)
       }
+  }
+  def advanceDead() {
+	//Close round and out advance dead
+	val next=context.map(context.sequence.sequence.head)
+	if(next.health.status == HealthTracker.Status.Dead) {
+	  // Need to check if the dead combatant is delay, and end its round accordingly
+	  if(next.it.value.state == InitiativeState.Delaying) {
+		msgQueue.enqueue(InternalInitiativeAction(next,EndRound),InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+	  } else {
+		msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
+	  }
+    }
   }
 }
 

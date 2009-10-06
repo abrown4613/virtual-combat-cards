@@ -19,14 +19,8 @@ package vcc.dnd4e.view
 
 import vcc.dnd4e.model._
 
-/*
-trait UIFormatted {
-  def formattedText():String
-}	
-*/
-
-case class ViewCombatant(id:Symbol,alias:String, name:String,hp:Int,init:Int,defense:DefenseBlock,entity:CombatantEntity) {
-  var health=HealthTracker.createTracker(CharacterHealthDefinition(hp,hp/4,4))
+case class ViewCombatant(id:Symbol,alias:String,entity:CombatantEntity) {
+  var health=HealthTracker.createTracker(entity.healthDef)
   var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
   var info:String=""
   var effects:List[Effect]=Nil
@@ -46,8 +40,8 @@ object ViewCombatantProjection extends vcc.util.swing.TableModelRowProjection[Vi
   def apply(col:Int,comb:ViewCombatant):java.lang.Object= {
     col match {
       case 0 => comb.id.name
-      case 1 => (if(comb.alias!=null) "[" + comb.alias + "] " else "" )+comb.name
-      case 2 => comb.health.currentHP + " / "+comb.hp + (if(comb.health.temporaryHP>0) " +"+comb.health.temporaryHP else "")
+      case 1 => (if(comb.alias!=null) "[" + comb.alias + "] " else "" ) + comb.entity.name
+      case 2 => comb.health.currentHP + " / " + comb.health.base.totalHP + (if(comb.health.temporaryHP > 0) " +" + comb.health.temporaryHP else "")
       case 3 => comb.health.status + (if(comb.health.status==HealthTracker.Status.Dying) ("(" + comb.health.deathStrikes + "/3)") else "!!!".substring(0,comb.health.deathStrikes)) 
       case 4 => int2Integer(comb.initTracker.round)
       case 5 => comb.initTracker.state

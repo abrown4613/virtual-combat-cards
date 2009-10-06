@@ -18,8 +18,10 @@
 package vcc.domain.dndi
 
 import vcc.model.Registry
-import vcc.dnd4e.model.{Compendium,MonsterEntity}
-import vcc.model.datastore.{EntityFactory,EntityID,DataStoreURI,Field}
+import vcc.dnd4e.domain.compendium.{Compendium,MonsterEntity}
+import vcc.infra.datastore.naming._ 
+import vcc.infra.fields._
+
 
 /**
  * This service is used to get Monster form the DNDI Capture model into 
@@ -35,8 +37,8 @@ object MonsterImportService {
   def importMonster(dndiMonster: Monster) {
      if(dndiMonster==null) return  
      val es = Compendium.activeRepository
-     val eid = DataStoreURI.asEntityID("vcc-ent:dndi:monster:"+dndiMonster.id)
-     val monster = EntityFactory.createInstance(Compendium.monsterClassID,eid).asInstanceOf[MonsterEntity]
+     val eid = EntityID.fromName("dndi:monster:"+dndiMonster.id)
+     val monster = new MonsterEntity(eid) 
      logger.debug("Load D&DI Monster: {}",dndiMonster)
      val fieldMap = Map[String,Field[_]](
        "NAME"->monster.name,
@@ -61,7 +63,7 @@ object MonsterImportService {
                }
     	     } else v.get
     	     field.fromStorageString(s)
-    	   } else logger.warn("Mapping failed between {} and {}",key,field.datumKey)
+    	   } else logger.warn("Mapping failed between {} and {}",key,field.id)
        } catch {
          case e => 
            logger.error("Exception will processing "+key,e)
@@ -69,8 +71,7 @@ object MonsterImportService {
      }
      val xml = MonsterStatBlockBuilder.generate(dndiMonster)
      monster.statblock.value = xml.toString
-     logger.debug("Imported MonsterEntity in XML: {}",monster.toXML)
      es.store(monster)
-     logger.info("Imported MonsterEntity: {}",monster.eid)
+     logger.info("Imported DNDI monster {} as MonsterEntity: {}",dndiMonster.id, monster.eid)
   }
 }

@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,28 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e.model
+package vcc.infra.fields
 
-/**
- * A set of defense stats.
- * @param ac Armor class
- * @param fortitude Fortitude defense
- * @param reflex Reflex defense
- * @param will Will defense
- */
-case class DefenseBlock(ac:Int,fortitude:Int,reflex:Int,will:Int) {
-  def toXML = 
-    <defense ac={ac.toString} fortitude={fortitude.toString} reflex={reflex.toString} will={will.toString} />
+class StringField(val fset:FieldSet, override val id:String,override val validator:FieldValidator[String]) extends Field[String](fset,id,validator)  {
+
+  
+  override def toString:String = "StringField("+id+ ":="+ value +")"
 }
 
-object DefenseBlock {
-  import vcc.util.XMLHelper._
-  
-  def fromXML(node: scala.xml.Node): DefenseBlock = 
-    DefenseBlock(
-      nodeSeq2Int(node \ "@ac", 0),
-      nodeSeq2Int(node \ "@fortitude", 0),
-      nodeSeq2Int(node \ "@reflex", 0),
-      nodeSeq2Int(node \ "@will", 0))
+class DefaultStringFieldValidator(rules:ValidationRule[String]*) extends FieldValidator[String](rules: _*) {
+  def fromString(str:String):FieldValue[String] = if(str == null || str == "") Undefined else Defined(str)
 }

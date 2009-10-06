@@ -21,7 +21,7 @@ package vcc.dnd4e.view.compendium
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
-import vcc.dnd4e.model.{CombatantEntity,Compendium}
+import vcc.dnd4e.domain.compendium.{CombatantEntity,Compendium}
 
 class NewCombatantDialog(owner: Frame) extends ModalDialog[CombatantEntity](owner,"New Compendium Entry") {
 
@@ -76,10 +76,12 @@ class NewCombatantDialog(owner: Frame) extends ModalDialog[CombatantEntity](owne
   }
   
   def processOK() {
-    dialogResult = buttonGroup.selected match {
+    dialogResult = buttonGroup.selected match { 
+      /* FIXME 
       case Some(this.characterRadioButton) => Some(Compendium.createNewCharacter)
       case Some(this.customMonsterRadioButton) => Some(Compendium.createNewMonster)
       case Some(this.officialMonsterRadioButton) => Some(Compendium.createNewOfficialMonster(idField.text.toInt))
+       */
       case _ => None
     }
   }

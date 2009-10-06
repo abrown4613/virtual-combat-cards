@@ -71,7 +71,7 @@ class DNDICaptureTest extends TestCase {
     assert(monster!=null)
     assert(monster("NAME")==Some("Ice Archon Hailscourge"))
     assert(monster("HP")==Some("120"),monster("HP"))
-    assert(monster("INITIATIVE")==Some("+11"),monster("INITIATIVE"))
+    assert(monster("INITIATIVE")==Some("11"),monster("INITIATIVE"))
     assert(monster("AC")==Some("30"),monster("AC"))
     assert(monster("REFLEX")==Some("27"),monster("REFLEX"))
   }

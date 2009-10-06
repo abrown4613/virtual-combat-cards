@@ -21,9 +21,9 @@ package vcc.dnd4e.view.compendium
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
-import vcc.model.datastore.{EntityID,EntitySummary,EntityStoreID,EntityStore}
+import vcc.infra.datastore.naming.{EntityID,DataStoreURI}
 
-import vcc.dnd4e.model.{MonsterSummary,CharacterSummary}
+import vcc.dnd4e.domain.compendium._
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.{PartyMember,PartyLoader}
 import vcc.model.Registry
@@ -94,7 +94,7 @@ class PartyEditor extends Frame {
     es match {
         case m: MonsterSummary => new PartyTableEntry(m.eid,m.name,null,null,1,m.xp)
         case c: CharacterSummary => new PartyTableEntry(c.eid,c.name,null,null,1,0)
-        case s: EntitySummary => throw new Exception("Unexpected EntitySummary"+s.classid)
+        case s: EntitySummary => throw new Exception("Unexpected EntitySummary" + s.classid)
     }
   
   private val addButton = new Button(Action("Add to Party >>"){ 
@@ -171,11 +171,11 @@ class PartyEditor extends Frame {
   private def doLoad() {
     var file=FileChooserHelper.chooseOpenFile(table.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
-      val es = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
-      var combs=PartyLoader.loadFromFile(Registry.get[EntityStoreID]("Compendium").get,file.get)
+      val es = Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).get
+      var combs=PartyLoader.loadFromFile(Registry.get[DataStoreURI]("Compendium").get,file.get)
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
-        val pe = entitySummaryToPartyEntry(es.loadEntitySummary(pm.eid))
+        val pe = entitySummaryToPartyEntry(es.getEntitySummary(pm.eid))
         pe.id = if(pm.id!=null )pm.id.name else null
         pe.alias = pm.alias
         pe
@@ -188,7 +188,7 @@ class PartyEditor extends Frame {
   }
   
   private def doAddToCombat() {
-    val esid = Registry.get[EntityStoreID]("Compendium").get
+    val esid = Registry.get[DataStoreURI]("Compendium").get
 	PartyLoader.loadToBattle(esid,expandEntries(partyTableModel.content).map(_.toPartyMember))
   }
 

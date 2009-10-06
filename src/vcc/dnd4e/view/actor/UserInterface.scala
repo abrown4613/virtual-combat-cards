@@ -122,9 +122,9 @@ class UserInterface(tracker:Actor) extends Actor {
           signalContext(_ctx)
           signalSequence(Nil)
         case SetSequence(seq)=>
-          var l=seq.filter(_map.contains(_)).map(_map(_))
+          var l=seq.filter(_map.contains(_)).map(_map(_)).toList
           _seq=l // Save all elements irrespective of health, then filter health and proppagate
-          if(_hidedead) l=l.filter(x=> x.health.status!=HealthTracker.Status.Dead || x.initTracker.state == InitiativeState.Acting)
+          if(_hidedead) l = l.head :: l.tail.filter(x=> x.health.status!=HealthTracker.Status.Dead || x.initTracker.state == InitiativeState.Acting)
           _first=if(l.isEmpty) null else l(0)
           signalSequence(l)
 

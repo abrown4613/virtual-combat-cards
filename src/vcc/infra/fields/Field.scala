@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,12 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.model.datastore
 
-class StringField(override val fset:FieldContainer, override val id:String) extends Field[String](fset,id)  {
+package vcc.infra.fields
 
-  def valueFromStorageString(str:String):Option[String] = if(str == null || value == "") None else Some(str)
+abstract class Field[T](val fieldSet:FieldSet, val id:String, val validator:FieldValidator[T]) {
   
-  override def toString:String = "StringField("+prefix +":"+id+ ":="+ value +")"
+  protected var _value:FieldValue[T] = validator.validate(null)
+  
+  //Must add to FieldSet
+  fieldSet.addField(this)
+  
+  def value:T = _value.get
+  
+  def isDefined:Boolean = _value.isDefined
+  
+  def value_=(v:T) { _value = Defined(v)}
+  
+  def clear() { _value = Undefined }
+  
+  def fromStorageString(str:String) {
+    _value = validator.validate(str)
+  }
+  
+  def storageString:String = if(_value.isDefined) _value.get.toString else null
+
+  def isValid:Boolean = _value.isValid
+  
 }

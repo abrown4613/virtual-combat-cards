@@ -30,6 +30,12 @@ abstract case class HealthDefinition(totalHP:Int,surgeValue:Int,healingSurges:In
   val ctype:CombatantType.Value
 } 
 
+/**
+ * Character health Definition, with means that this char will die at -bloodied, or has three strikes
+ * @param totalHP The total Hitpoints
+ * @param surgeValue Surge value normally 1/4 of HP
+ * @param healingSurges Number os surges
+ */
 case class CharacterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends HealthDefinition(totalHP,surgeValue,healingSurges) {
   val lowerBound= - totalHP/2
   val hasTemporaryHP = true
@@ -42,6 +48,12 @@ case class CharacterHealthDefinition(override val totalHP:Int,override val surge
   }
 }
 
+/**
+ * Monster health Definition, with means that this dies at 0 no strikes
+ * @param totalHP The total Hitpoints
+ * @param surgeValue Surge value normally 1/4 of HP
+ * @param healingSurges Number os surges
+ */
 case class MonsterHealthDefinition(override val totalHP:Int,override val surgeValue:Int,override val healingSurges:Int) extends CharacterHealthDefinition(totalHP,surgeValue,healingSurges) {
   override val lowerBound=0
   override val ctype=CombatantType.Monster
