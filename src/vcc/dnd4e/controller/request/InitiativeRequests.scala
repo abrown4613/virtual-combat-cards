@@ -18,15 +18,17 @@
 package vcc.dnd4e.controller.request
 
 import vcc.controller.actions.{TransactionalAction,QueryAction}
-import vcc.dnd4e.model.{PartyMember,TrackerCombatant,InitiativeTracker}
-import vcc.model.datastore.{EntityStoreID}
+import vcc.dnd4e.model.{PartyMember,TrackerCombatant,InitiativeTracker,CombatantEntityID}
 
 // Builing the combat grid
 
 abstract class EncounterAction extends TransactionalAction
 
-case class AddCombatant(repository:EntityStoreID,member:PartyMember) extends EncounterAction {
-  def description():String = "Add combatant"
+case class CombatantDefinition(id: Symbol, alias:String, ceid: CombatantEntityID) 
+
+case class AddCombatants(combs:Seq[CombatantDefinition]) extends EncounterAction {
+  def description():String = "Add combatants"
+  
 }
 
 case class Enumerate() extends QueryAction

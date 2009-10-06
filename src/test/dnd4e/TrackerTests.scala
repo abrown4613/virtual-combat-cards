@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,15 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.model.datastore
+package test.dnd4e
 
-trait EntitySource {
-  def getData():Iterator[Datum]
-  def classId:EntityClassID
-  def id:EntityID
-}
+import junit.framework._
 
-class ListEntitySource(val classId:EntityClassID,val id:EntityID, lst:Seq[Datum]) extends EntitySource {
-  def getData() = lst.elements
+object TrackerTests {
+
+  def suite: Test = {
+    val suite = new TestSuite
+    suite.addTestSuite(classOf[InitiativeSequenceTest])
+    suite.addTestSuite(classOf[InitiativeRollerTest])
+    suite.addTestSuite(classOf[EffectHandlerTest])
+    suite.addTestSuite(classOf[ContextLoaderTest])
+    suite
+  }
+
+  def main(args : Array[String]) {
+    junit.textui.TestRunner.run(suite);
+  }
 }

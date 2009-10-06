@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,23 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.model.datastore
+  
+package vcc.dnd4e.domain.compendium
 
-class EnumerationConstantNotPresentException(enum:Enumeration,str:String) extends Exception {
-  override def getMessage() = "Enumeration "+enum.getClass.getCanonicalName+ " does not contains value " + str
-}
+import vcc.infra.startup.StartupStep
 
-class EnumerationField[E<:Enumeration](fset:FieldContainer,id:String,enum:E) extends Field[E#Value](fset,id){
+object Compendium extends StartupStep {
+  val monsterClassID = EntityClassID(new java.net.URI("vcc-class:monster"))
+  val characterClassID = EntityClassID(new java.net.URI("vcc-class:character"))
+  var _activeRepository:CompendiumRepository = null
+  val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  def valueFromStorageString(str:String):Option[E#Value] = {
-    if(str==null && str=="") None
-    else {
-      val v=enum.valueOf(str)
-      if(! v.isDefined) throw new EnumerationConstantNotPresentException(enum,str) 
-      v
-    }
+  def setActiveRepository(es: CompendiumRepository) {
+    _activeRepository = es
   }
   
-  override def toString = "EnumerationField("+prefix+":"+id+":= "+ value +")"
+  def activeRepository = _activeRepository
+  
+  def isStartupComplete = true 
+
 }
+

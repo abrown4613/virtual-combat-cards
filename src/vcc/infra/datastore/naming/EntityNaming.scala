@@ -15,24 +15,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.model.datastore
 
+package vcc.infra.datastore.naming
+
+import java.util.UUID
 import java.net.URI
 
-case class EntityID(uri: java.net.URI)
-
-case class EntityClassID(uri: java.net.URI)
-
-case class EntityStoreID(uri: java.net.URI) {
-  private val subURI = new URI(uri.getRawSchemeSpecificPart)
-  def subScheme = subURI.getScheme
-  def getSubSchemeSpecificPart = subURI.getRawSchemeSpecificPart
+case class EntityID(id:UUID) {
+  def uri = new java.net.URI("vcc-ent:"+id)
   
+  def asStorageString:String = "vcc-ent:"+id.toString
+  
+}
+
+object EntityID {
+ 
+  def fromName(name:String):EntityID = EntityID(UUID.nameUUIDFromBytes(name.getBytes))
+  
+  def fromStorageString(s:String):EntityID = {
+    if(s.startsWith("vcc-ent:")) 
+      try { EntityID(UUID.fromString(s.substring(8))) } catch { case _ => null}
+    else
+      null
+  }
+}
+
+case class DataStoreURI(uri:URI) {
+  
+  def asStorateString = uri.toString
+
+  private val subURI = new URI(uri.getRawSchemeSpecificPart)
+  
+  def subScheme = subURI.getScheme
+  
+  def getSubSchemeSpecificPart = subURI.getRawSchemeSpecificPart
+
   override def toString():String = uri.toString
+
 }
 
 object DataStoreURI {
-  
+
   def validateURI(uri:String,scheme:String):java.net.URI = {
 	try {
 	  val u = new java.net.URI(uri)
@@ -46,25 +69,9 @@ object DataStoreURI {
 	}
   }
   
-  def asEntityStoreID(uri:String):EntityStoreID = {
-    val vuri = validateURI(uri,"vcc-store")
-    if(vuri != null) EntityStoreID(vuri) else null
+  def fromStorageString(str:String):DataStoreURI =  {
+    val vuri = validateURI(str,"vcc-store")
+    if(vuri != null) DataStoreURI(vuri) else null
   }
-  
-  def asEntityID(uri:String):EntityID = {
-    val vuri = validateURI(uri,"vcc-ent")
-    if(vuri != null) EntityID(vuri) else null
-  }
-  
-  def asEntityClassID(uri:String):EntityClassID = {
-    val vuri = validateURI(uri,"vcc-class")
-    if(vuri != null) EntityClassID(vuri) else null
-  }
-  
-  def directoryEntityStoreIDFromFile(file:java.io.File):EntityStoreID = {
-    asEntityStoreID("vcc-store:directory:"+file.toURI.toString)
-  }
+
 }
-
-
-

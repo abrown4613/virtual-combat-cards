@@ -69,9 +69,10 @@ class InitiativeSequenceTest extends TestCase {
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    for(cid<-List('A,'B,'C,'D,'E)) {
-    	//FIXME loadHandler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Comb"+cid.name,10,5,CombatantType.Monster){id=cid.name}))
-    }
+    val comb = new CombatantEntity(null,"Comb",MonsterHealthDefinition(10,2,1),5,CombatantType.Monster,null)
+    val ceid = CombatantRepository.registerEntity(comb)
+    val combs = List('A,'B,'C,'D,'E).map(cid => request.CombatantDefinition(cid, cid.name, ceid))
+    loadHandler.dispatch(trans1,request.AddCombatants(combs))
     trans1.commit(trans1pub)
     
     //Setup the test subjects
@@ -351,6 +352,21 @@ class InitiativeSequenceTest extends TestCase {
  
   }
 
+  /*
+   * Deads should auto advance even after move
+   * Fix issue 117 
+   */
+  def testMoveBeforeAndAutoAdvanceDead() {
+    testStartCombat()
+	val s1 = extractCombatSequence()
+	val ai1= extractCombatantInitiatives()
+	assert(s1==List('A,'B,'C,'D,'E),s1)
+
+	killSomeCombatant(List('B,'C))
+	mockTracker.dispatch(request.MoveBefore('A,'D))
+	assert(extractCombatSequence()==List('A,'D,'B,'C,'E),extractCombatSequence)
+  }
+  
   def startRound(who:Symbol) {
 	val init=mockTracker.controller.context.map(who).it.value
 	mockTracker.dispatch(request.StartRound(who))

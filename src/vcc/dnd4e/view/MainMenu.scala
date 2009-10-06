@@ -23,7 +23,7 @@ import scala.actors.Actor
 import vcc.model.Registry
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.PartyLoader
-import vcc.model.datastore.EntityStoreID
+import vcc.infra.datastore.naming.DataStoreURI
 import vcc.dnd4e.controller.request._
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
@@ -31,7 +31,7 @@ import vcc.controller.actions.ClearTransactionLog
 
 class MainMenu(uia:Actor) extends MenuBar {
   
-  val compendiumID = Registry.get[EntityStoreID]("Compendium").get
+  val compendiumID = Registry.get[DataStoreURI]("Compendium").get
   val tracker = Registry.get[Actor]("tracker").get
   
   var fileMenu=new Menu("File");

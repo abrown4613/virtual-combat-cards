@@ -56,7 +56,6 @@ object CaptureHoldingArea {
   private var monsters:List[Monster] = Nil
   private var monstersObserver:List[CaptureHoldingObserver[Monster]] = Nil
   
-  //FIXME: Add real file name here
   private val diskCache = new DiskCache[MonsterCacheEntry]({
 	  val base = new java.io.File(System.getProperty("java.io.tmpdir"),"dndicache")
 	  if(!base.exists) base.mkdirs()

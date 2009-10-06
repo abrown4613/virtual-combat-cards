@@ -15,19 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package vcc.model.datastore
+package vcc.infra.fields
 
-class IntField(override val fset:FieldContainer, override val id:String) extends Field[Int](fset,id) {
+class IntField(val fset:FieldSet, override val id:String, override val validator:FieldValidator[Int]) extends Field[Int](fset,id,validator) {
 
-  def valueFromStorageString(str:String):Option[Int] = {
+  override def toString = "IntField("+id+":= "+ value +")"
+}
+
+class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidator[Int](rules: _*) {
+  def fromString(str:String):FieldValue[Int] = {
     if(str!=null && str!="") {
       try {
-        Some(str.toInt)
+        Defined(str.toInt)
       } catch {
-        case s => throw s
+        case s => Invalid(str,s.getMessage)
       }
-    } else None
+    } else Undefined
   }
+}
 
-  override def toString = "IntField("+prefix+":"+id+":= "+ value +")"
+case class BoundedInteger(range:Range) extends ValidationRule[Int] {
+  def isValid(v:FieldValue[Int]):Option[String] = {
+    if(v match {
+      case Defined(iv) => range.contains(iv)
+      case Undefined => true
+      case _ => false
+    }) None
+    else Some(v + " not in range "+ range)
+  }
 }

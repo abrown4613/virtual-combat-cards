@@ -43,7 +43,7 @@ class CombatantCard(tracker:Actor) extends GridPanel(1,1) with ContextualView[Vi
   def changeContext(nctx:Option[ViewCombatant]) {
     commentPanel.context=nctx
     effects.context=nctx
-    if(nctx.isDefined) statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(nctx.get.entity.eid))
+    if(nctx.isDefined) statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(nctx.get.entity.eid,nctx.get.entity.statBlock))
     else statBlock.setDocumentFromText("") 
   }
 }

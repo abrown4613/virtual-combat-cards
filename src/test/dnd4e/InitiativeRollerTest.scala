@@ -59,9 +59,13 @@ class InitiativeRollerTest extends TestCase {
    10 assert(ilist.contains( GroupInitEntry(0,5,Set('Y)) ))
    20 assert(ilist.contains( GroupInitEntry(0,5,Set('Z)) ))
     */
+    DiceBag seed 1L 
+    val dieRoll = (0 to 6).map( x => DiceBag.D(20)).toList
+    assert(dieRoll == List(6, 9, 8, 14, 15, 5, 15),dieRoll)
+    
     DiceBag seed 1L
     val seq=InitiativeRoller.rollInitiative(true,initList)
-    assert(seq.toList==List('C,'A,'B,'W,'X,'Y,'Z),seq.toList)
+    assert(seq.toList==List('C,'B,'X,'Y,'Z,'A,'W),seq.toList)
     DiceBag seed 1L
     val seq2=InitiativeRoller.rollInitiative(false,initList)
     assert(seq2==List('Z,'X,'W,'C,'B,'Y,'A),seq2)

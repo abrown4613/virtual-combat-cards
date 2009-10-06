@@ -25,9 +25,10 @@ import vcc.util.swing._
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-import vcc.model.datastore.{EntityID,EntitySummary,EntityStore,EntityStoreID,EntityClassID}
+import vcc.infra.datastore.naming.{EntityID,DataStoreURI}
+import vcc.infra.datastore.DataStore
+import vcc.dnd4e.domain.compendium._ 
 import vcc.model.Registry
-import vcc.dnd4e.model.{MonsterSummary,CharacterSummary,Compendium}
 
 object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] {
   val columns:List[(String,java.lang.Class[_])] = List(
@@ -92,7 +93,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
   private val scrollPane = new ScrollPane(monsterTable)
   monsterButton.selected = true
  
-  private val activeEntityStore = Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).get
+  private val activeEntityStore = Compendium.activeRepository
  
   refreshList()
 
@@ -108,7 +109,6 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
   add(monsterButton,"split 4")
   add(characterButton,"wrap")
   add(scrollPane, "span 3,wrap, growx, growy")
-  //add(characterScrollPane, "span 3,wrap, growx, growy")
   
   listenTo(monsterButton,characterButton,monsterTable) 
   reactions += {
@@ -124,14 +124,14 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
     else Some(activeTable.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(activeTable.selection.rows.toSeq(0)))
   }
 
-  def entitiesFilteredAndSorted[T](cid: EntityClassID, comp:(T,T)=>Boolean):Seq[T] = {
-    val el = activeEntityStore.enumerate(cid).toList.map(eid => activeEntityStore.loadEntitySummary(eid).asInstanceOf[T]).filter(x=> x!=null)
-    scala.util.Sorting.stableSort(el,comp).toSeq
+  def sortedSummary[T](el:Seq[T], comp:(T,T)=>Boolean):Seq[T] = {
+    import scala.util.Sorting.stableSort
+    stableSort(el,comp).toSeq
   }
   
   def refreshList() {
-	monsterTableModel.content = entitiesFilteredAndSorted[MonsterSummary](Compendium.monsterClassID,(x,y)=> x.name < y.name)
-	characterTableModel.content = entitiesFilteredAndSorted[CharacterSummary](Compendium.characterClassID,(x,y)=> x.name < y.name) 
+	monsterTableModel.content = sortedSummary[MonsterSummary](Compendium.activeRepository.getMonsterSummaries(),(x,y)=> x.name < y.name)
+	characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries(),(x,y)=> x.name < y.name) 
   }
   
 }

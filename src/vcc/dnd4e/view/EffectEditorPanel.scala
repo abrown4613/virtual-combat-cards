@@ -22,7 +22,7 @@ import util.swing._
 import scala.actors.Actor
 
 import vcc.dnd4e.controller.request
-import vcc.dnd4e.model.Effect
+import vcc.dnd4e.model.{Effect,CombatantEntity,MinionHealthDefinition,CombatantType}
 import vcc.dnd4e.BootStrap
 
 class EffectEditorPanel(uia: Actor,tracker: Actor) extends MigPanel("fillx,hidemode 3") with SequenceView[ViewCombatant] with ContextualView[ViewCombatant]{
@@ -32,10 +32,12 @@ class EffectEditorPanel(uia: Actor,tracker: Actor) extends MigPanel("fillx,hidem
   private var _changing:Boolean = false
   
   case class ActiveCombatant(val c:ViewCombatant) {
-    override def toString()= c.id.name + " - "+c.name
+    override def toString()= c.id.name + " - "+c.entity.name
   }
   
-  private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),null,"Terrain or other",0,0,null,null))
+  val terrainCombatant = CombatantEntity(null,"Terrain or Other",MinionHealthDefinition(),0,CombatantType.Minion,null)
+  
+  private val other=new ActiveCombatant(new ViewCombatant(Symbol("?"),null,terrainCombatant))
   val activeCombo=new ComboBox[ActiveCombatant](List(other))
   private val efpl = if(
     java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>700 &&
@@ -59,7 +61,7 @@ class EffectEditorPanel(uia: Actor,tracker: Actor) extends MigPanel("fillx,hidem
   reactions += {
     case event.SelectionChanged(`activeCombo`)=>
       if(!_changing) uia ! actor.SetActing(activeCombo.selection.item.c.id)
-      switchActive(activeCombo.selection.item.c.name)
+      switchActive(activeCombo.selection.item.c.entity.name)
   }
   
   def updateSequence(seq:Seq[ViewCombatant]):Unit= {

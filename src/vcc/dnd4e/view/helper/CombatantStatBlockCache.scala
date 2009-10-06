@@ -18,10 +18,10 @@
 
 package vcc.dnd4e.view.helper
 
-import vcc.model.datastore.EntityID
-import vcc.dnd4e.model.CombatantEntity
+import vcc.infra.datastore.naming.EntityID
+import vcc.dnd4e.domain.compendium.CombatantEntity
 import vcc.dnd4e.model.CombatantType
-import vcc.dnd4e.model.Compendium
+import vcc.dnd4e.domain.compendium.Compendium
 import org.w3c.dom.Document
 import vcc.util.swing.XHTMLPane
 
@@ -39,29 +39,23 @@ object CombatantStatBlockCache {
     	<head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
     	<body>
     		<div id="detail">
-    		<h1 class={if(ent.combatantType == CombatantType.Character) "player" else "monster" }>{ent.name.value.get}<br /><span class="type"></span></h1>
-    		<p class="flavor"><b>Initiative</b > {ent.initiative.value.get} <br/>
-    		<b>AC</b> {ent.ac.value.get}; <b>Fortitude</b> {ent.fortitude.value.get}, <b>Reflex</b> {ent.reflex.value.get}, <b>Will</b> {ent.will.value.get}<br/></p>
+    		<h1 class={if(ent.combatantType == CombatantType.Character) "player" else "monster" }>{ent.name.value}<br /><span class="type"></span></h1>
+    		<p class="flavor"><b>Initiative</b > {ent.initiative.value} <br/>
+    		<b>AC</b> {ent.ac.value} ; <b>Fortitude</b> {ent.fortitude.value}, <b>Reflex</b> {ent.reflex.value}, <b>Will</b> {ent.will.value}<br/></p>
     		</div>
     	</body>
     </html>).toString
   }
   
-  def getStatBlockDocumentForCombatant(eid:EntityID):Document = {
+  def getStatBlockDocumentForCombatant(eid:EntityID,statBlock:String):Document = {
     if(!cache.isDefinedAt(eid)) {
-      val ent = Compendium.activeRepository.load(eid).asInstanceOf[CombatantEntity]
-      if(ent!=null) {
-        val text = if(ent.statblock.value.isDefined) ent.statblock.value.get else generateMiniBlock(ent)
-        val doc = XHTMLPane.parsePanelDocument(text)
+        val doc = XHTMLPane.parsePanelDocument(statBlock)
         if(doc != null) {
           cache = cache + (eid -> doc)
           doc
         } else {
             XHTMLPane.errorDocument
         }
-      } else {
-        XHTMLPane.errorDocument
-      }
     } else 
     	cache(eid)
   }

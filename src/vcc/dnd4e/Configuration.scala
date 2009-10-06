@@ -22,15 +22,15 @@ import vcc.infra._
 import vcc.infra.startup.StartupStep
 
 import java.io.File
-import vcc.model.datastore.{EntityStoreID,DataStoreURI}
+import vcc.infra.datastore.naming.DataStoreURI
 
 object Configuration extends AbstractConfiguration with StartupStep {
  
   val autoStartWebServer = Property[Boolean]("vcc.dnd4e.autoWebServer","true", x => x == "true")
   val storeLogs = Property[Boolean]("vcc.dnd4e.storeLogs","false", x => x == "true")
   val baseDirectory = Property[File]("vcc.dnd4e.basedir",System.getProperty("user.dir"), x => {new File(x)})
-  val compendiumStoreID = Property[EntityStoreID]("vcc.dnd4e.compendium",null, x => {
-    if(x != null)vcc.model.datastore.DataStoreURI.asEntityStoreID(x) else null
+  val compendiumStoreID = Property[DataStoreURI]("vcc.dnd4e.compendium",null, x => {
+    if(x != null) DataStoreURI.fromStorageString(x) else null
   })
   
   def createDirectoryTree(baseDir:java.io.File):Boolean = {
@@ -48,7 +48,7 @@ object Configuration extends AbstractConfiguration with StartupStep {
     // Got hear means directory is ok
     
     baseDirectory.value = baseDir
-    compendiumStoreID.value = DataStoreURI.directoryEntityStoreIDFromFile(new File(baseDir,"compendium"))
+    compendiumStoreID.value = DataStoreURI.fromStorageString("vcc-store:directory:"+((new File(baseDir,"compendium").toURI)))
     logger.debug("Setting compendium to: {}",compendiumStoreID.value)
     true
   }

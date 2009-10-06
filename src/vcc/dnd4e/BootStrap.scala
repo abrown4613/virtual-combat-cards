@@ -19,11 +19,12 @@ package vcc.dnd4e
 
 import vcc.util.UpdateManager
 import vcc.model.Registry
-import vcc.dnd4e.model.Compendium
+import vcc.dnd4e.domain.compendium.Compendium
 
 import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
+import vcc.infra.datastore.DataStoreFactory
 
 object BootStrap extends StartupRoutine {
   
@@ -75,12 +76,13 @@ object BootStrap extends StartupRoutine {
       
     if(createCompendium) {
     	callStartupSimpleBlock(srw,"Create user compendium") {
-          import vcc.model.datastore.EntityStoreFactory
-    	  if(EntityStoreFactory.exists(Configuration.compendiumStoreID.value)) {
+    	  val dsid = Configuration.compendiumStoreID.value
+    	  val esb = DataStoreFactory.getDataStoreBuilder(dsid)
+    	  if(esb.exists(dsid)) {
     	    logger.warn("Compendium exists, will assume it is valid and attempt to load")
     	    true
     	  } else {
-    	    val es = EntityStoreFactory.createStore(Configuration.compendiumStoreID.value)
+    	    val es = esb.create(dsid)
     	    if(es == null) {
     	      logger.error("Failed to create compendium {}",Configuration.compendiumStoreID.value)
     	      false
@@ -92,10 +94,11 @@ object BootStrap extends StartupRoutine {
     	}
     }
     callStartupSimpleBlock(srw,"Load Compendium") {
-        import vcc.model.datastore.{EntityStoreID,EntityStore}
+        import vcc.infra.datastore.naming.DataStoreURI
+        import vcc.dnd4e.domain.compendium.CompendiumRepository
     	val compendiumID = Configuration.compendiumStoreID.value
     	logger.info("Opening compendium: {}",compendiumID)
-        val compendium = vcc.model.datastore.EntityStoreFactory.openStore(compendiumID)
+        val compendium = new CompendiumRepository(compendiumID)
         if(compendium == null) {
           logger.warn("Failed to load compendium {}, will exit",compendiumID)
         } else {
@@ -104,7 +107,7 @@ object BootStrap extends StartupRoutine {
           Registry.register(compendiumID,compendium)
           Compendium.setActiveRepository(compendium)
         }	
-        Registry.get[EntityStoreID]("Compendium").isDefined && Registry.get[EntityStore](Registry.get[EntityStoreID]("Compendium").get).isDefined 
+        Registry.get[DataStoreURI]("Compendium").isDefined && Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).isDefined 
     }
       
     callStartupStep(srw,"Web Server") {

@@ -21,6 +21,7 @@ import vcc.dnd4e.model._
 import vcc.controller.transaction._
 import vcc.dnd4e.controller._
 import vcc.controller.TransactionalProcessor
+import vcc.dnd4e.controller.request._
 
 class ContextLoaderTest extends TestCase {
   
@@ -33,8 +34,15 @@ class ContextLoaderTest extends TestCase {
     val trans1pub=new SetChangePublisher()
     assert(true)
     
-    //FIXME handler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Figher",40,5,CombatantType.Character){id="A"}))
-    //FIXME handler.dispatch(trans1,request.AddCombatant(new CombatantTemplate("Monster",80,5,CombatantType.Character)))
+    val fighter = CombatantEntity(null,"Fighter",new CharacterHealthDefinition(40,10,5),5,CombatantType.Character,null)
+    val monster = CombatantEntity(null,"Monster",new MonsterHealthDefinition(80,20,1),4,CombatantType.Monster,null)
+    val fighterID = CombatantRepository.registerEntity(fighter)
+    val monsterID = CombatantRepository.registerEntity(monster)
+
+    assert(fighterID != null)
+    assert(monsterID != null)
+    
+    handler.dispatch(trans1,request.AddCombatants(List(CombatantDefinition('A,null,fighterID),CombatantDefinition(null,null,monsterID))))
     
     trans1.commit(trans1pub)
     assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1")))))
