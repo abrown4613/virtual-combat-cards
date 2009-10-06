@@ -71,6 +71,11 @@ class MonsterEntity(eid:EntityID) extends CombatantEntity(eid) {
   val xp = new IntField(this,"base:xp", RequiredIntGreaterZero)
 }
 
+object MonsterEntity {
+  def newInstance() = new MonsterEntity(EntityID.generateRandom())
+  def newInstance(dndID:Int) = new MonsterEntity(EntityID.fromName("dndi:monster:"+ dndID))
+}
+
 case class MonsterSummary(override val eid:EntityID, override val classid: EntityClassID, name:String,level:Int, xp:Int, role:String, minion:Boolean) extends EntitySummary(eid,classid)
 
 object MonsterSummary {
@@ -106,6 +111,10 @@ class CharacterEntity(eid:EntityID) extends CombatantEntity(eid) {
   val charClass = new StringField(this,"base:class", RequiredString)
   val race = new StringField(this,"base:race", RequiredString)
   val level = new IntField(this,"base:level", RequiredIntGreaterZero)
+}
+
+object CharacterEntity {
+  def newInstance():CharacterEntity = new CharacterEntity(EntityID.generateRandom())
 }
 
 case class CharacterSummary(override val eid:EntityID, override val classid: EntityClassID,name:String,level:Int, cclass:String, race:String) extends EntitySummary(eid,classid)
