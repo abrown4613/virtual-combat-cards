@@ -28,6 +28,7 @@ class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidato
       try {
         Defined(str.toInt)
       } catch {
+        case e:NumberFormatException => Invalid(str,"'"+str+"' is not a integer number")
         case s => Invalid(str,s.getMessage)
       }
     } else Undefined
@@ -36,11 +37,21 @@ class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidato
 
 case class BoundedInteger(range:Range) extends ValidationRule[Int] {
   def isValid(v:FieldValue[Int]):Option[String] = {
-    if(v match {
-      case Defined(iv) => range.contains(iv)
-      case Undefined => true
-      case _ => false
-    }) None
-    else Some(v + " not in range "+ range)
+    v match {
+      case Defined(iv) => if(range.contains(iv)) None else Some(iv + " not between "+ range.start + " and "+range.end ) 
+      case Undefined => None
+      case Invalid(raw,reason) => Some(reason)
+    }
   }
 }
+
+case class IntegerGreaterThan(min:Int) extends ValidationRule[Int] {
+  def isValid(v:FieldValue[Int]):Option[String] = {
+    v match {
+      case Invalid(raw,reason) => Some(reason)
+      case Defined(iv) if(iv <= min)=> Some(iv + " must be greater than "+min) 
+      case _ => None
+    }
+  }
+}
+

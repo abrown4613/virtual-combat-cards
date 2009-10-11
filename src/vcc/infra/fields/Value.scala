@@ -25,23 +25,27 @@ abstract sealed class FieldValue[+T] {
   def get:T
   def isDefined:Boolean
   def isValid:Boolean
+  def storageString:String 
 }
 
 case object Undefined extends FieldValue[Nothing] {
   def get:Nothing = throw new UndefinedValueException()
   def isDefined = false
   def isValid = true
+  def storageString = null
 }
 
 final case class Defined[+T](v:T) extends FieldValue[T]{
   def get = v  
   def isDefined = true
   def isValid = true
+  def storageString = v.toString
 }
 
 final case class Invalid[+T](raw:String,reason:String) extends FieldValue[T] {
   def get = throw new InvalidValueException(raw,reason)
   def isDefined = false
   def isValid = false
+  def storageString = raw
 }
 

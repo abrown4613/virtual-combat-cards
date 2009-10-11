@@ -31,13 +31,15 @@ abstract class Field[T](val fieldSet:FieldSet, val id:String, val validator:Fiel
   
   def value_=(v:T) { _value = Defined(v)}
   
+  def fieldValue = _value
+  
   def clear() { _value = Undefined }
   
   def fromStorageString(str:String) {
     _value = validator.validate(str)
   }
   
-  def storageString:String = if(_value.isDefined) _value.get.toString else null
+  def storageString:String = _value.storageString
 
   def isValid:Boolean = _value.isValid
   
