@@ -29,7 +29,7 @@ case class EntitySummary(eid:EntityID, classid:EntityClassID)
 
 object CombatantEntityFields {
   object RequiredString extends DefaultStringFieldValidator(Mandatory())
-  object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(),BoundedInteger(1 to 2000000000))
+  object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(),IntegerGreaterThan(0))
   object RequiredInt extends DefaultIntFieldValidator(Mandatory())
   object AnyInt extends DefaultIntFieldValidator()
   object AnyString extends DefaultStringFieldValidator()

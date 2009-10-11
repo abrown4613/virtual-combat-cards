@@ -22,6 +22,8 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing.MigPanel
 
+import vcc.dnd4e.domain.compendium._
+
 object CompendiumView extends Frame {
   
   title = "Compendium Entries"
@@ -30,15 +32,20 @@ object CompendiumView extends Frame {
   val window = this
 
   private val entListPanel = new CompendiumEntitySelectionPanel() 
+  
   val newEntryAction = Action("New Entry ...") {
 	val diag = new NewCombatantDialog(window)
 	diag.visible = true
 	println("Dialog is done"+diag.dialogResult)
-	Dialog.showMessage(entListPanel,"Not implemented yet")
+	if(diag.dialogResult.isDefined)
+	  doEditEntry(diag.dialogResult.get)
   }
   
   private val editAction= Action("Edit ...") {
-    doEditEntry()
+    if(entListPanel.currentSelection.isDefined) {
+      val ent = Compendium.activeRepository.load(entListPanel.currentSelection.get.eid,false)
+      if(ent != null) doEditEntry(ent)
+    }
   }
   
   entListPanel.doubleClickAction = editAction
@@ -52,7 +59,8 @@ object CompendiumView extends Frame {
   }
   
   
-  def doEditEntry() {
-    Dialog.showMessage(entListPanel ,"Not implemented yet")
+  def doEditEntry(ent:CombatantEntity) {
+    val nd = new CombatantEditorDialog(ent)
+    nd.visible = true
   }
 }
