@@ -29,31 +29,49 @@ import vcc.infra.fields.Field
 class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   title = "Edit Combatant"
   
-  combatant.name.value = "Hello"
   val f = new Form(null)
   
   val saveButton = new Button(Action("Save & Close") {
-    println(f.extractMap)                            
+    println("Field values: "+f.extractMap)                            
   })
   
   f.setChangeAction(field=>{
-    println(field.id+"Form changed")
     saveButton.enabled = f.isValid 
   })
   
-  //new FormTextField("Name",combatant.name.id,combatant.name.fieldValue,f,combatant.name.validator)
-  //new FormTextField("HP",combatant.hp.id,combatant.hp.fieldValue,f,combatant.hp.validator)
   val fs:List[(String,Field[_])]= List(
-    ("Name",combatant.name),
-    ("Hit Points",combatant.hp)
+    ("Name",combatant.name)) :::
+      (combatant match {
+        case monster:MonsterEntity => List(
+          ("Level",monster.level),
+          ("Role",monster.role),
+          ("XP",monster.xp)
+        )
+        case char:CharacterEntity=> List(
+          ("Level",char.level),
+          ("Race",char.race),
+          ("Class",char.charClass)
+        )
+      }) :::
+  List(
+    ("Initiative",combatant.initiative),
+    ("Hit Points",combatant.hp),
+    ("AC",combatant.ac),
+    ("Fortitude",combatant.fortitude),
+    ("Reflex",combatant.reflex),
+    ("Will",combatant.will),
+    ("Stat Block",combatant.statblock)
   )
   fs.foreach(t=> new FormTextField(t._1,t._2,f))
   
+  val statBlock = new TextArea()
   
-  val mp = new MigPanel("fill,debug")
-  f.layout(mp)
-  mp.add(saveButton,"span 3")
-  contents = mp
+  val fc = new MigPanelFormContainter("[50][150,fill][200]")
+  f.layout(fc)
+  contents = new MigPanel("fill,debug") {
+    add(fc,"wrap")
+    add(saveButton,"span 3")
+  }
 }
 
 object TestDialog extends SimpleGUIApplication {
