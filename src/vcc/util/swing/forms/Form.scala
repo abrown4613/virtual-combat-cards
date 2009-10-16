@@ -23,6 +23,11 @@ import vcc.util.swing.MigPanel
 
 import vcc.infra.fields._
 
+
+trait FormFieldContainer {
+  def addFormField(comp:FormField[_])
+}
+
 class Form(val prefix:String) {
   private var fields:List[FormField[_]] = Nil
   private var changeAction: (FormField[_])=>Unit = null
@@ -31,8 +36,8 @@ class Form(val prefix:String) {
     fields = fields ::: List(ff)
   }
   
-  def layout(mp:MigPanel) {
-    for(f<-fields) f.layout(mp)
+  def layout(mp:FormFieldContainer) {
+    for(f<-fields) mp.addFormField(f)
   }
   
   def isValid:Boolean = fields.map(_.hasValidValue).foldLeft(true)(_ && _)
@@ -51,11 +56,13 @@ class Form(val prefix:String) {
 
 trait FormField[T] extends TextComponent {
   private val _errorLabel = new Label("")
-  private val _header = new Label("")
+  private val _headerLabel = new Label("")
   
+  protected[forms] def errorLabel = _errorLabel
+  protected[forms] def headerLabel = _headerLabel
   protected val form:Form
   protected val validator:FieldValidator[T]
-  protected val field:TextComponent
+  protected[forms] val field:TextComponent
   protected val key:String
   
   def id:String = if(form.prefix != null) form.prefix + key else key
@@ -77,7 +84,7 @@ trait FormField[T] extends TextComponent {
 
   
   def setup(header:String,initValue:FieldValue[T]) {
-    _header.text = header
+    _headerLabel.text = header
     form.registerField(this)
     fvalue = initValue
     setFieldState(true)
@@ -89,12 +96,6 @@ trait FormField[T] extends TextComponent {
     field.background = if(fvalue.isValid) java.awt.Color.WHITE else java.awt.Color.PINK
     _errorLabel.text =  if(fvalue.isValid) "" else fvalue.asInstanceOf[Invalid[T]].reason 
   }
-  
-  def layout(mp:MigPanel) {
-    mp.add(_header,"gap rel")
-    mp.add(field,"gap rel, width 33%")
-    mp.add(_errorLabel,"width 33%,wrap")
-  }
 }
 
 class FormTextField[T](header:String, val key:String, fv:FieldValue[T], val form:Form,val validator:FieldValidator[T]) extends TextField with FormField[T] {
@@ -103,4 +104,20 @@ class FormTextField[T](header:String, val key:String, fv:FieldValue[T], val form
     this(label,f.id,f.fieldValue,form,f.validator)
   }
   setup(header,fv)
+}
+
+class FormTextArea[T](header:String, val key:String, fv:FieldValue[T], val form:Form,val validator:FieldValidator[T]) extends TextField with FormField[T] {
+  val field = new TextArea()
+  def this(label:String,f:Field[T],form:Form) {
+    this(label,f.id,f.fieldValue,form,f.validator)
+  }
+  setup(header,fv)
+}
+
+class MigPanelFormContainter(colLayout:String) extends MigPanel("ins 0",colLayout,"") with FormFieldContainer {
+  def addFormField(comp:FormField[_]) {
+    add(comp.headerLabel,"gap rel,align right")
+    add(comp.field,"gap rel")
+    add(comp.errorLabel,"wrap")
+  }
 }

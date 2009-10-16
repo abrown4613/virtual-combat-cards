@@ -26,9 +26,9 @@ class MigPanel(layoutConstrains:String, colConstriants:String, rowConstraints:St
   
   private def layoutManager = peer.getLayout.asInstanceOf[MigLayout]
   
-  def add(c: Component, l: String) { peer.add(c.peer, l) }
+  protected def add(c: Component, l: String) { peer.add(c.peer, l) }
   
-  def add(c: Component) { peer.add(c.peer)}
+  protected def add(c: Component) { peer.add(c.peer)}
   
   protected def addSeparator(title:String) {
     if (title != null && !"".equals(title))
