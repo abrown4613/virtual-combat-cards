@@ -20,13 +20,19 @@ package vcc.dnd4e.domain.compendium
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreFactory
 import vcc.infra.startup.StartupStep
+import scala.ref.WeakReference
+
+trait CompendiumRepositoryObserver {
+  def compendiumChanged()
+}
 
 class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
   
   val dataStore = DataStoreFactory.getDataStoreBuilder(dsuri).open(dsuri)
   private val monsterSummaries = scala.collection.mutable.Map.empty[EntityID,MonsterSummary] 
-  private val characterSummaries = scala.collection.mutable.Map.empty[EntityID,CharacterSummary] 
+  private val characterSummaries = scala.collection.mutable.Map.empty[EntityID,CharacterSummary]
+  private var observers:List[WeakReference[CompendiumRepositoryObserver]] = Nil
   
   initialize()
   
@@ -53,11 +59,16 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
         println("Fields:"+fields)
         null
     }
+    notifyObservers()
   }
   
   def createEntity(classid:EntityClassID,eid:EntityID):CombatantEntity = null
 
-  def store(entity:CombatantEntity):Boolean = false
+  def store(entity:CombatantEntity):Boolean = {
+    val dse = entity.asDataStoreEntity
+    storeSummary(dse.eid,dse.data)
+    dataStore.storeEntity(dse)
+  }
   
   /**
    * Load an CombatantEntity
@@ -103,4 +114,19 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
     null
   }
   
+  def registerObserver(obs:CompendiumRepositoryObserver) {
+    observers = new WeakReference(obs) :: observers 
+  }
+  
+  private def notifyObservers() {
+    observers = observers.map(obs => {
+      if(obs.get.isDefined) {
+        obs.get.get.compendiumChanged
+        obs
+      } else {
+        println("Remove reference "+obs)
+        null
+      }
+    }).filter(obs => obs != null)
+  }
 }

@@ -69,7 +69,7 @@ object CharacterSummaryProjection extends TableModelRowProjection[CharacterSumma
 }
 
 
-class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
+class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") with CompendiumRepositoryObserver {
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
   private val buttonGroup = new ButtonGroup(monsterButton,characterButton)
@@ -94,7 +94,8 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
   monsterButton.selected = true
  
   private val activeEntityStore = Compendium.activeRepository
- 
+  activeEntityStore.registerObserver(this)
+  
   refreshList()
 
   var doubleClickAction:Action = null
@@ -134,4 +135,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1"){
 	characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries(),(x,y)=> x.name < y.name) 
   }
   
+  def compendiumChanged() {
+    refreshList()
+  }
 }
