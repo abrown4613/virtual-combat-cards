@@ -32,7 +32,16 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   val f = new Form(null)
   
   val saveButton = new Button(Action("Save & Close") {
-    println("Field values: "+f.extractMap)                            
+    combatant.loadFromMap(f.extractMap)
+    if(combatant.isValid) {
+      if(Compendium.activeRepository.store(combatant)) {
+        println("Done")
+      } else {
+        println("Error saving")
+      }
+      this.visible = false
+      this.dispose()
+    }
   })
   
   f.setChangeAction(field=>{
@@ -68,15 +77,19 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   
   val fc = new MigPanelFormContainter("[50][150,fill][200]")
   f.layout(fc)
-  contents = new MigPanel("fill,debug") {
+  contents = new MigPanel("fill") {
     add(fc,"wrap")
+//    add(new TextArea(),"width 200,grow y")
+//    add(new vcc.util.swing.XHTMLPane(),"width 200,grow y,wrap")
     add(saveButton,"span 3")
   }
 }
 
 object TestDialog extends SimpleGUIApplication {
-  import vcc.dnd4e.domain.compendium.Compendium
+  import vcc.dnd4e.domain.compendium._
   import vcc.infra.datastore.naming.EntityID
+  import vcc.infra.datastore.naming.DataStoreURI
+  Compendium.setActiveRepository(new CompendiumRepository(DataStoreURI.fromStorageString("vcc-store:directory:file:/C:/temp/vcc/compendium")))
   val m = new MonsterEntity(EntityID.generateRandom)
   m.loadFromMap(Map("stat:hp"->"error","base:name"->"test"))
   val top = new CombatantEditorDialog(m)

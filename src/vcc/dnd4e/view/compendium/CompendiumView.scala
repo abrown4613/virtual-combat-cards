@@ -53,7 +53,6 @@ object CompendiumView extends Frame {
   contents = new MigPanel("fill") {
     add(entListPanel,"span 3,wrap")
 	add(new Button(newEntryAction), "split 5")
-	add(new Button(Action("Refresh"){ entListPanel.refreshList() }))
 	add(new Button(editAction))
 	add(new Button(Action("Close") {CompendiumView.visible = false }),"skip 1")
   }
