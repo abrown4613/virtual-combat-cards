@@ -102,7 +102,19 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
     } else null
   }
   
-  def delete(eid:EntityID):Boolean = false
+  def delete(eid:EntityID):Boolean = {
+    
+    val ret = dataStore.deleteEntity(eid)
+    if(ret) { 
+      logger.debug("Deleted entity {}",eid)
+      characterSummaries -= eid
+      monsterSummaries -= eid
+      notifyObservers()
+    } else {
+      logger.warn("Failed to delete entity {}",eid)
+    }
+    ret
+  }
   
   def getMonsterSummaries():Seq[MonsterSummary] = monsterSummaries.values.toList
 

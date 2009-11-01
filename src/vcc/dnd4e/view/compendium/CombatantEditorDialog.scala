@@ -20,8 +20,9 @@ package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.swing.MigPanel
+import vcc.util.swing.{MigPanel,XHTMLEditorPane}
 import vcc.util.swing.forms._
+
 
 import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
@@ -29,10 +30,10 @@ import vcc.infra.fields.Field
 class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   title = "Edit Combatant"
   
-  val f = new Form(null)
+  private val f = new Form(null)
   
-  val saveButton = new Button(Action("Save & Close") {
-    combatant.loadFromMap(f.extractMap)
+  private val saveButton = new Button(Action("Save & Close") {
+    combatant.loadFromMap(f.extractMap + ( "text:statblock" -> statBlock.text) )
     if(combatant.isValid) {
       if(Compendium.activeRepository.store(combatant)) {
         println("Done")
@@ -48,7 +49,7 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
     saveButton.enabled = f.isValid 
   })
   
-  val fs:List[(String,Field[_])]= List(
+  private val fs:List[(String,Field[_])]= List(
     ("Name",combatant.name)) :::
       (combatant match {
         case monster:MonsterEntity => List(
@@ -59,7 +60,9 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
         case char:CharacterEntity=> List(
           ("Level",char.level),
           ("Race",char.race),
-          ("Class",char.charClass)
+          ("Class",char.charClass),
+          ("Insight",char.insight),
+          ("Perception",char.perception)
         )
       }) :::
   List(
@@ -68,29 +71,22 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
     ("AC",combatant.ac),
     ("Fortitude",combatant.fortitude),
     ("Reflex",combatant.reflex),
-    ("Will",combatant.will),
-    ("Stat Block",combatant.statblock)
+    ("Will",combatant.will)
   )
   fs.foreach(t=> new FormTextField(t._1,t._2,f))
   
-  val statBlock = new TextArea()
+  private val statBlock = new XHTMLEditorPane(combatant.statblock.storageString)
+  private val fc = new MigPanelFormContainter("[50][200,fill][250]")
   
-  val fc = new MigPanelFormContainter("[50][150,fill][200]")
   f.layout(fc)
+  
+  private val tabPane = new TabbedPane {
+    pages += new TabbedPane.Page("Data",fc)
+    pages += new TabbedPane.Page("Stat Block", statBlock)
+  }
+  
   contents = new MigPanel("fill") {
-    add(fc,"wrap")
-//    add(new TextArea(),"width 200,grow y")
-//    add(new vcc.util.swing.XHTMLPane(),"width 200,grow y,wrap")
+    add(tabPane,"wrap,growy,growx")
     add(saveButton,"span 3")
   }
-}
-
-object TestDialog extends SimpleGUIApplication {
-  import vcc.dnd4e.domain.compendium._
-  import vcc.infra.datastore.naming.EntityID
-  import vcc.infra.datastore.naming.DataStoreURI
-  Compendium.setActiveRepository(new CompendiumRepository(DataStoreURI.fromStorageString("vcc-store:directory:file:/C:/temp/vcc/compendium")))
-  val m = new MonsterEntity(EntityID.generateRandom)
-  m.loadFromMap(Map("stat:hp"->"error","base:name"->"test"))
-  val top = new CombatantEditorDialog(m)
 }

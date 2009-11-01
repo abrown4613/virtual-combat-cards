@@ -111,6 +111,8 @@ class CharacterEntity(eid:EntityID) extends CombatantEntity(eid) {
   val charClass = new StringField(this,"base:class", RequiredString)
   val race = new StringField(this,"base:race", RequiredString)
   val level = new IntField(this,"base:level", RequiredIntGreaterZero)
+  val perception = new IntField(this,"skill:perception", AnyInt)
+  val insight = new IntField(this,"skill:insight", AnyInt)
 }
 
 object CharacterEntity {
