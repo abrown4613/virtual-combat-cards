@@ -28,7 +28,10 @@ import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
 
 class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
-  title = "Edit Combatant"
+  
+  title = "Edit Combatant: " + (if(combatant.name.isValid) combatant.name.storageString else "")
+  
+  iconImage = vcc.dnd4e.view.IconLibrary.MetalD20.getImage
   
   private val f = new Form(null)
   
@@ -46,7 +49,8 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   })
   
   f.setChangeAction(field=>{
-    saveButton.enabled = f.isValid 
+    saveButton.enabled = f.isValid
+    if(field.id == combatant.name.id) title = "Edit Combatant: "+field.storageString
   })
   
   private val fs:List[(String,Field[_])]= List(
