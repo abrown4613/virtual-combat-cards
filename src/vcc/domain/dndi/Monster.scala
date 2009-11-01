@@ -51,7 +51,6 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
         case "DESCRIPTION" => desc
         case _ => null
       }
-      println("Aura => "+key + "value "+s)
       if(s!=null) Some(s) else None
     }
     def extractGroup(dontcare:String) = Nil
@@ -140,8 +139,6 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
    * Add power to the list of powers
    */
   protected def processPower(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) {
-    //println((if(icon!=null) "["+icon+"] " else "")+name+" "+(if(action!=null)action else "")+(if(keywords!=null)" * "+keywords else ""))
-    //println("   "+desc)
     _power=Power(icon,name,action, keywords, desc) :: _power
   }
   
@@ -171,6 +168,7 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
     addToMap(head)
 
     var blocks=(xml \ "P").filter(node=> !(node \ "@class" isEmpty)).map(block=>parse(block.child)).toList
+    println(blocks)
     while(blocks!=Nil) {
       //println("Block\n\t"+blocks.head)
       blocks.head match {

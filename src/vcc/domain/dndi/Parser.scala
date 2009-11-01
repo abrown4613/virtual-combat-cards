@@ -46,6 +46,7 @@ object Parser {
     val Melee=Value("Melee")
     val Close=Value("Close")
     val Area = Value("Area")
+    val MeleeRange=Value("Melee/Range")
     val Unknown=Value("?")
     
     /**
@@ -57,6 +58,7 @@ object Parser {
       "s3.gif"-> RangeBasic,
       "s2.gif"-> MeleeBasic,
       "s1.gif"-> CloseBasic,
+      "mr.gif"-> MeleeRange,
       "z4a.gif" -> Area,
       "z3a.gif" -> Range,
       "z2a.gif" -> Melee,
@@ -175,6 +177,7 @@ object Parser {
   def mergeText(parts:List[Part]):List[Part]= {
     parts match {
       case (ta:Text)::(tb: Text) :: rest => mergeText((ta+tb)::rest)
+      case Icon(IconType.Melee)::Icon(IconType.Range):: rest => Icon(IconType.MeleeRange) :: mergeText(rest)
       case part :: rest => part :: mergeText(rest)
       case Nil => Nil
     }
