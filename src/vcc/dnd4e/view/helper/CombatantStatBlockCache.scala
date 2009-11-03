@@ -34,19 +34,6 @@ object CombatantStatBlockCache {
 
   private var cache = Map.empty[EntityID,Document]
 
-  def generateMiniBlock(ent:CombatantEntity):String = {
-    (<html>
-    	<head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
-    	<body>
-    		<div id="detail">
-    		<h1 class={if(ent.combatantType == CombatantType.Character) "player" else "monster" }>{ent.name.value}<br /><span class="type"></span></h1>
-    		<p class="flavor"><b>Initiative</b > {ent.initiative.value} <br/>
-    		<b>AC</b> {ent.ac.value} ; <b>Fortitude</b> {ent.fortitude.value}, <b>Reflex</b> {ent.reflex.value}, <b>Will</b> {ent.will.value}<br/></p>
-    		</div>
-    	</body>
-    </html>).toString
-  }
-  
   def getStatBlockDocumentForCombatant(eid:EntityID,statBlock:String):Document = {
     if(!cache.isDefinedAt(eid)) {
         val doc = XHTMLPane.parsePanelDocument(statBlock)
