@@ -23,7 +23,6 @@ import scala.swing.event._
 import vcc.util.swing.{MigPanel,XHTMLEditorPane}
 import vcc.util.swing.forms._
 
-
 import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
 
@@ -35,13 +34,13 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   
   private val f = new Form(null)
   
-  private val saveButton = new Button(Action("Save & Close") {
+  private val saveButton:Button = new Button(Action("Save & Close") {
     combatant.loadFromMap(f.extractMap + ( "text:statblock" -> statBlock.text) )
     if(combatant.isValid) {
       if(Compendium.activeRepository.store(combatant)) {
-        println("Done")
+        // Ok
       } else {
-        println("Error saving")
+        Dialog.showMessage(saveButton,"Failed to save entity to the repository.","Save failed",Dialog.Message.Error,null)
       }
       this.visible = false
       this.dispose()
@@ -64,22 +63,31 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
         case char:CharacterEntity=> List(
           ("Level",char.level),
           ("Race",char.race),
-          ("Class",char.charClass),
-          ("Insight",char.insight),
-          ("Perception",char.perception)
+          ("Class",char.charClass)
         )
       }) :::
-  List(
-    ("Initiative",combatant.initiative),
-    ("Hit Points",combatant.hp),
-    ("AC",combatant.ac),
-    ("Fortitude",combatant.fortitude),
-    ("Reflex",combatant.reflex),
-    ("Will",combatant.will)
-  )
+      List(
+        ("Initiative",combatant.initiative),
+        ("Hit Points",combatant.hp),
+        ("AC",combatant.ac),
+        ("Fortitude",combatant.fortitude),
+        ("Reflex",combatant.reflex),
+        ("Will",combatant.will)) :::
+      (combatant match {
+        case char:CharacterEntity=> List(
+          ("Insight",char.insight),
+          ("Perception",char.perception),
+          ("Senses",char.senses)
+        )
+        case _ => Nil
+        })    
+
   fs.foreach(t=> new FormTextField(t._1,t._2,f))
   
-  private val statBlock = new XHTMLEditorPane(combatant.statblock.storageString)
+  private val statBlock:XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, Action("Generate"){
+	statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
+	statBlock.sync()
+  })
   private val fc = new MigPanelFormContainter("[50][200,fill][250]")
   
   f.layout(fc)

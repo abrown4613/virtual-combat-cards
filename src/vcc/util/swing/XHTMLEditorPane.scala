@@ -21,10 +21,12 @@ import scala.swing._
 import scala.swing.event._
 
 class XHTMLEditorPane(starttext:String,otherActions:Action *) extends MigPanel("fill","[200][200]","[][300]"){
+  
   private val xhtmlPane = new XHTMLPane()
   private val editPane = new TextArea(starttext)
+  
+  // Construction
   xhtmlPane.setDocumentFromText(starttext)
-  println(otherActions)
   add(new Button(Action("Preview"){xhtmlPane.setDocumentFromText(editPane.text)}),
       if(otherActions.isEmpty) "span 2,wrap" else "span 2, split " + otherActions.length + 1)
   otherActions.foreach {x => add(new Button(x),if(x == otherActions.last) "wrap" else "")}
@@ -33,10 +35,8 @@ class XHTMLEditorPane(starttext:String,otherActions:Action *) extends MigPanel("
   
   def text:String = editPane.text
   def text_=(txt:String) { editPane.text = txt }
-}
-
-object TestPanel extends SimpleGUIApplication {
-  val top = new MainFrame { 
-    contents = new XHTMLEditorPane("<html><body><p>Hello</p></body></html>", Action("One"){println("One")}, Action("Two"){println("Two")}, Action("Three"){println("Three")})
+  
+  def sync() {
+    xhtmlPane.setDocumentFromText(editPane.text)
   }
 }
