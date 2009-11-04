@@ -85,7 +85,11 @@ object CombatantEntity {
 	  case character:CharacterEntity => CharacterHealthDefinition(comp.hp.value,comp.hp.value/4,15) //TODO (add surege count)
 	  case s => throw new Exception("Unexpected Entity type: "+s) 
 	}
-  	val statBlock = SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+  	val statBlock = if(comp.statblock.isDefined) {
+  	  comp.statblock.value
+  	} else {
+  	  SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+    }
   	CombatantEntity(comp.eid,comp.name.value,healthDef,comp.initiative.value,comp.combatantType,statBlock)
   }
 }
