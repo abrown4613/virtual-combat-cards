@@ -28,6 +28,8 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   import org.xml.sax.Attributes
   import javax.xml.parsers.SAXParserFactory
   
+  val logger = org.slf4j.LoggerFactory.getLogger("infra")
+  
   val saxFactory = SAXParserFactory.newInstance
   class EntityParser(expectedEntityID:EntityID) extends org.xml.sax.helpers.DefaultHandler {
     private var eid:EntityID = null
@@ -89,7 +91,7 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   def storeEntity(ent:DataStoreEntity):Boolean = {
     val sortedKeys = scala.util.Sorting.stableSort[String](ent.data.keys.toList,(a:String,b:String) => a < b)
     val file = getFile(ent.eid)
-    val os:java.io.PrintWriter = new PrintWriter(new FileWriter(file))
+    val os:java.io.PrintWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file),"UTF-8")) 
     os.println("<?xml version='1.0' encoding='UTF-8' ?>")
     os.println("<entity id='"+ent.eid.asStorageString +"'>")
     for(key <- sortedKeys) 
@@ -111,10 +113,16 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   }
    
   def extractEntityData(keys:Set[String]):Seq[(EntityID,Map[String,String])] = {
-    enumerateEntities.map(eid => try { loadXMLFile(eid) } catch { case _ => null}).filter(x => x != null).map(ent=> {
-      val (eid,data) = ent
-      val fields = Map((for((id,value) <- data if(keys.contains(id))) yield (id,value)).toSeq: _*)
-      (eid,fields)
+    enumerateEntities.map(eid => try { 
+        loadXMLFile(eid) 
+      } catch { 
+        case s => 
+          logger.warn("Failed to load {} reason: {}",eid,s.getMessage)
+          null
+      }).filter(x => x != null).map(ent=> {
+        val (eid,data) = ent
+        val fields = Map((for((id,value) <- data if(keys.contains(id))) yield (id,value)).toSeq: _*)
+        (eid,fields)
     })
   }
    
