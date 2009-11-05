@@ -49,6 +49,7 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   
   f.setChangeAction(field=>{
     saveButton.enabled = f.isValid
+    generateAction.enabled = f.isValid
     if(field.id == combatant.name.id) title = "Edit Combatant: "+field.storageString
   })
   
@@ -84,13 +85,18 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
 
   fs.foreach(t=> new FormTextField(t._1,t._2,f))
   
-  private val statBlock:XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, Action("Generate"){
-	statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
-	statBlock.sync()
-  })
+  private val generateAction = Action("Generate"){
+    val defined = statBlock.text.length > 1
+    if(( defined && Dialog.showConfirmation(statBlock,"This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?","Overwrite current statblock",Dialog.Options.YesNo) == Dialog.Result.Yes) ||  !defined ) {
+	  statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
+	  statBlock.sync()
+    }
+  }
+  private val statBlock:XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
   private val fc = new MigPanelFormContainter("[50][200,fill][250]")
   
   f.layout(fc)
+  generateAction.enabled = f.isValid
   
   private val tabPane = new TabbedPane {
     pages += new TabbedPane.Page("Data",fc)
