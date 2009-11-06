@@ -27,6 +27,7 @@ object Monster {
                        "AC", "Fortitude", "Reflex", "Will",
                        "Immune", "Resist", "Vulnerable",
                        "Saving Throws","Speed",  "Action Points")
+  val reSecondary = """^Secondary Attack\s*(.*)\s*$""".r
 }
 
 /**
@@ -68,15 +69,17 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
         case "SECONDARY ATTACK" => secondary
         case "TYPE" => if(icon!=null) imageMap(icon) else null
         case "KEYWORDS" => keywords
+        case "SECONDARY KEYWORDS" => secondaryKeywords
         case _ => null
       }
       if(s!=null) Some(s) else None
     }
     def extractGroup(dontcare:String) = Nil
   
-    var secondary:String=null
+    var secondary:String = null
+    var secondaryKeywords:String = null
     
-    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+desc+", "+secondary+")" 
+    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+desc+", "+secondaryKeywords+secondary+")" 
   }
   
   private var _map=Map.empty[String,String]
@@ -168,7 +171,6 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
     addToMap(head)
 
     var blocks=(xml \ "P").filter(node=> !(node \ "@class" isEmpty)).map(block=>parse(block.child)).toList
-    println(blocks)
     while(blocks!=Nil) {
       //println("Block\n\t"+blocks.head)
       blocks.head match {
@@ -192,10 +194,11 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
           processPower(null,powername,action,null,extractDescriptionFromBlocks(blocks))
           blocks=blocks.tail
           
-        case Emphasis("Secondary Attack")::Nil =>
+        case Emphasis(Monster.reSecondary(comment))::Nil =>
           // A secondary attack
           assert(_power.head != Nil && _power.head.secondary==null)
           _power.head.secondary=extractDescriptionFromBlocks(blocks)
+          _power.head.secondaryKeywords = if(comment == "") null else comment
           blocks=blocks.tail
           
         case Icon(icon)::Key(powername)::Text(action)::Icon(IconType.Separator)::Key(keywords)::Nil =>
@@ -226,6 +229,7 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
     // Fix minion HP and Role
     if(_map.contains("HP")&& _map("HP").startsWith("1;")) _map = _map + ("HP" ->"1")
     if(_map.contains("ROLE")&& _map("ROLE") == "Minion") _map = _map + ("ROLE" ->"No Role")
+    
   }
   
   def apply(attribute: String):Option[String] = {
