@@ -53,6 +53,7 @@ abstract class CombatantEntity(val eid:EntityID) extends FieldSet(eid) {
   val will = new IntField(this,"stat:will", AnyInt) 
   
   val statblock = new StringField(this,"text:statblock", AnyString)
+  val comment = new StringField(this,"text:comment", AnyString)
   
   override def asDataStoreEntity:DataStoreEntity = {
     val es = super.asDataStoreEntity

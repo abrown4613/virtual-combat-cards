@@ -32,6 +32,15 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
   
   iconImage = vcc.dnd4e.view.IconLibrary.MetalD20.getImage
   
+  peer.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE)
+  listenTo(this)
+  reactions += {
+    case WindowClosing(win) =>
+      if(Dialog.showConfirmation(tabPane, "Are you sure you want to exit without saving the changes to the combatant?", "Exit without saving?",Dialog.Options.YesNo) == Dialog.Result.Yes) {
+    	this.dispose
+      }
+  }
+  
   private val f = new Form(null)
   
   private val saveButton:Button = new Button(Action("Save & Close") {
@@ -81,7 +90,8 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
           ("Senses",char.senses)
         )
         case _ => Nil
-        })    
+        }) ::: 
+     List(("Comment",combatant.comment))
 
   fs.foreach(t=> new FormTextField(t._1,t._2,f))
   
