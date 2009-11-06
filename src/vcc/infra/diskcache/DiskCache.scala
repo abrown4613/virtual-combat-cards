@@ -45,10 +45,9 @@ class DiskCache[T <: DiskCacheable](val dir:File, builder:DiskCacheBuilder[T]) {
   def loadAll():Seq[T] = {
     val dirIter = new vcc.util.DirectoryIterator(dir,false)
     val l = for(file <- dirIter if(file.isFile)) yield {
-      println("Read"+file)
       builder.loadFromFile(file)
     }
-    l.toList
+    l.filter(x => x != null).toList
   }
   def clear() {
     val dirIter = new vcc.util.DirectoryIterator(dir,false)

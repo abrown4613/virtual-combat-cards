@@ -27,17 +27,26 @@ import scala.xml.Node
  * and serve as an access point to both application and User interface
  */
 object CaptureHoldingArea {
+  
+  val logger = org.slf4j.LoggerFactory.getLogger("app")
+  
   trait CaptureHoldingObserver[T] {
 	def updateContent(objects:Seq[T])
   }
 
   object XMLLoader extends DiskCacheBuilder[MonsterCacheEntry] {
     def loadFromFile(file:java.io.File):MonsterCacheEntry = {
-      val xml = scala.xml.XML.load(new java.io.FileInputStream(file))
-       val dndiObject = DNDInsiderCapture.load(xml)
-      dndiObject match {
-        case monster: Monster => new MonsterCacheEntry(monster,xml)
-        case _ => null
+      try {
+        val xml = scala.xml.XML.load(new java.io.FileInputStream(file))
+        val dndiObject = DNDInsiderCapture.load(xml)
+        dndiObject match {
+          case monster: Monster => new MonsterCacheEntry(monster,xml)
+          case _ => null
+        }
+      } catch {
+        case e => 
+          logger.warn("Failed to load file {} reason: {}",file,e.getMessage)
+          null
       }
     }
   }
