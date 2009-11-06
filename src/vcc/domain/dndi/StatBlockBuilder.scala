@@ -168,7 +168,7 @@ object MonsterStatBlockBuilder extends StatBlockBuilder {
   private val powerBlock = Seq(
           	Para("flavor alt", ImageMap("Type"), BoldFormat("Name",true),TextFormat("Action",true),IfDefined("Keywords",Image("x.gif"),BoldFormat("Keywords",true))),
           	Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
-          	IfDefined("Secondary Attack",Para("flavor", StaticXML(<i>Secondary Attack</i>)),Para("flavorIndent",TextFormat("Secondary Attack",true)))
+          	IfDefined("Secondary Attack",Para("flavor", StaticXML(<i>Secondary Attack</i>),TextFormat("secondary keywords",true)),Para("flavorIndent",TextFormat("Secondary Attack",true)))
            )
   
   
