@@ -36,7 +36,7 @@ object SimpleStatBlockBuilder extends StatBlockBuilder {
     )
 
   def generate(ds:StatBlockDataSource) = {
-    val block = new ChunkGroup(headBlock,tailBlock)
+    val block = new ChunkGroup(headBlock,tailBlock,Para(null,PairFlexFmt("Comment",": %s")))
     (<html><head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
      <body><div id="detail">
       <h1 class={if(ds.extract("PCLASS").isDefined) "player" else "monster"  }>{ds.extract("NAME").get}<span class="type">{ds.extract("TYPE").get + " " + ds.extract("ROLE").get}</span></h1>
@@ -72,6 +72,7 @@ class FormFieldStatBlockSource(f:Form) extends StatBlockDataSource {
     case "TYPE" => if(values.isDefinedAt("base:class")) extract("RACE") else extract("ISMINION")
     case "ROLE" => if(values.isDefinedAt("base:class")) extract("PCLASS") else extract("MROLE")
     case "ISMINION" => Some(if(values.getOrElse("stat:hp","1") == "1") "Minion" else "Standard")
+    case "COMMENT" => wrapExtract("text:comment")
     case _ => None
   }
   def extractGroup(group:String):Seq[StatBlockDataSource] = Nil
