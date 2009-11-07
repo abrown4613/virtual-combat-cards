@@ -47,8 +47,6 @@ class StoreBuilder extends DataStoreBuilder {
   private def getPath(esid:DataStoreURI):File = {
     val uri = new java.net.URI(esid.getSubSchemeSpecificPart)
     val file = new File(uri)
-    println("**** FILE TO LOAD ****"+file)
-    println("Exists: "+file.exists())
     file
   }
   

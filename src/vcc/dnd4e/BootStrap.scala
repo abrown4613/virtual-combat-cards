@@ -49,7 +49,6 @@ object BootStrap extends StartupRoutine {
 	      val cdiag = new ConfigurationDialog(srw.ownerWindow,true)
 	      cdiag.visible = true 
 	      val result = cdiag.dialogResult
-	      println(cdiag.dialogResult)
 	      if(result == None) {
 	        logger.warn("Failed to complete configuration, will exit")
 	        return null

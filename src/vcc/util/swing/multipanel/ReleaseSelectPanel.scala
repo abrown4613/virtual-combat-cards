@@ -73,7 +73,6 @@ class ReleaseSelectPanel(releases:Seq[(Symbol,Release)]) extends MigPanel("") wi
       case r: Release => Some(r)
       case None => None
       case s => 
-        println("Custome Panel release" + s) 
         None
     }
   }

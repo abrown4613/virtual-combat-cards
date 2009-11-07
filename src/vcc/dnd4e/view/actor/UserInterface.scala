@@ -40,6 +40,8 @@ class UserInterface(tracker:Actor) extends Actor {
   
   type T=ViewCombatant
   
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
+  
   private var _hidedead=false
   private var _seq:Seq[T]=Nil
   private var _ctx:Option[T]=None
@@ -153,7 +155,8 @@ class UserInterface(tracker:Actor) extends Actor {
         case SetActing(other) =>
           if(_acting != None) changeActing(None)
           
-        case s => println("UIA: Unhandled message:" + s)
+        case s => 
+          logger.error("UIA: Unhandled message:" + s)
       }
     }
   }

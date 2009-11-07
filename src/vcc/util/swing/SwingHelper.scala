@@ -18,6 +18,9 @@
 package vcc.util.swing
 
 object SwingHelper {
+  
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
+  
   import javax.swing.SwingUtilities
   
   def makeRunnable(f: =>Unit):java.lang.Runnable =
@@ -58,7 +61,7 @@ object SwingHelper {
       val dsk=java.awt.Desktop.getDesktop
       dsk.browse(url.toURI)
     }catch {
-      case _ => println("Failed to open browser on URL: "+url)
+      case e => logger.error("Failed to open browser on URL: "+url,e)
     }
   }
 }

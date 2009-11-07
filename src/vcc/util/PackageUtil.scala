@@ -22,6 +22,9 @@ import java.util.zip._
 import java.security.MessageDigest
 
 object PackageUtil {
+  
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra") 
+  
   def fileMD5Sum(file:File):String =  {
 	val digest = MessageDigest.getInstance("MD5");
 	val buffer = new Array[Byte](8192);
@@ -66,15 +69,14 @@ object PackageUtil {
       while (zipentry != null) { 
     	//for each entry to be extracted
         val entryName = zipentry.getName()
-        System.out.println("Extracting file: "+entryName)
+        logger.info("Extracting file: "+entryName)
         var n:Int=0
         val newFile = new File(entryName);
         val directory = newFile.getParent();
         
         val dest=new File(destdir,entryName)
         if(zipentry.isDirectory()) {
-        	// TO Nothing
-          println("Creating directory: "+entryName)
+          logger.info("Creating directory: "+entryName)
           if(!dest.exists) dest.mkdir()
           if(dest.exists && !dest.isDirectory) throw new Exception("Zip contains directory "+entryName + " which is not a directory")
         } else {
@@ -97,5 +99,4 @@ object PackageUtil {
      	e.printStackTrace();
    }
   }
-  
 }

@@ -34,6 +34,7 @@ import vcc.infra.startup.StartupStep
 class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep with TransactionChangePublisher {
   
   //TODO: More effective validation
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
   def isStartupComplete = true 
   
   private var observers:List[Actor]=Nil
@@ -59,7 +60,7 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
       trans.commit(this) 
       if(!trans.isEmpty) {
         _tlog.store(action,trans)
-        println("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
+        logger.info("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
       }
     } else if(_composedAction!=null ) {
       //save transaction into the composed action
@@ -95,9 +96,9 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
         	closeTransaction(ta,trans)
           } catch {
             case e => 
-              println("An exception occured while processing: "+ ta)
+              logger.warn("An exception occured while processing: "+ ta,e)
               e.printStackTrace(System.out)
-              println("Rolling back transaction")
+              logger.warn("Rolling back transaction")
               if(trans.state == Transaction.state.Active)trans.cancel()
           }
           
@@ -129,7 +130,8 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
         case actions.ClearTransactionLog() =>
           _tlog.clear
           
-        case s=>println("Error: Tracker receive:"+s)
+        case s=>
+          logger.warn("Error: Tracker can't handle this event: "+s)
       }
     }
   }

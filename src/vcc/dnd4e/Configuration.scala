@@ -63,11 +63,13 @@ import java.awt.Window
 class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Boolean](owner,"Virtual Combat Cards Configuration") {
   
   Configuration.dumpToLog()
+  
+  private val logger = org.slf4j.LoggerFactory.getLogger("startup")  
 
   private val homeDirRadioButton = new RadioButton("Use home directory")
   private val vccDirRadioButton = new RadioButton("Virtual Combat Cards directory")
-  private val importSample = new CheckBox("Import sample data to you compendium")
-  importSample.selected = true
+  //private val importSample = new CheckBox("Import sample data to you compendium")
+  //importSample.selected = true
   private val storeButtonGroup = new ButtonGroup(homeDirRadioButton,vccDirRadioButton)
   storeButtonGroup.select(homeDirRadioButton)
 
@@ -89,7 +91,7 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
       add(new Label("Directory: "+userHome),"wrap,gapleft 35")
       add(vccDirRadioButton,"wrap,gapleft 10")
       add(new Label("Directory: "+vccHome),"wrap,gapleft 35")
-      add(importSample,"wrap, gaptop rel, gapleft 10, gapbottom unrel")
+      //add(importSample,"wrap, gaptop rel, gapleft 10, gapbottom unrel")
       startWebServerCheck.selected = true
     } 
     addSeparator("Runtime options ")
@@ -109,7 +111,7 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
     
     if(initial) {
       if(!Configuration.createDirectoryTree(dir)) {
-        println("Failed to create data structure")
+        logger.error("Failed to create data structure")
         return
       }
     }
@@ -118,6 +120,6 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
     Configuration.storeLogs.value = logStore.selected
     
     Configuration.save(cFile)
-    dialogResult = Some(importSample.selected)
+    dialogResult = Some(false) //Some(importSample.selected)
   }
 }
