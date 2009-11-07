@@ -26,6 +26,9 @@ import scala.actors.Actor.{actor,loop,react,receive}
 import vcc.util.Downloader
 
 class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with AbstractPanel[File] {
+  
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
+  
   add(new Label("Downloading: "+url),"wrap")
   private val progress=new ProgressBar()
   private val cancelButton=new Button("Cancel")
@@ -57,7 +60,7 @@ class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with Abstract
 	      remote ! msg
 	      running = false
 	    case s =>
-	      println(s)
+	      logger.warn("DownloadPanel unhandled event: "+s)
 	  }
 	}
   }
@@ -73,7 +76,6 @@ class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with Abstract
   
   reactions += {
     case b:ButtonClicked => 
-    	println(b)
       	dActor ! Downloader.Cancel()
   }
 
@@ -82,7 +84,7 @@ class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with Abstract
       case 'COMPLETE => targetFile
       case 'CANCEL => null
       case s => 
-        println("Failed with: "+s)
+        logger.warn("DowloadPanel, faile download with: "+s)
       	null
     }
 }

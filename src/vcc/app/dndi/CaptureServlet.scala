@@ -67,7 +67,7 @@ class CaptureServlet extends HttpServlet {
         // XML is ok, but can be parsed so we save it for debuging
         logger.warn("Failed to capture monster",ue)
         val file=java.io.File.createTempFile("capture", ".xml")
-        println("Write to file"+file.getAbsolutePath)
+        logger.warn("Write to file"+file.getAbsolutePath)
         scala.xml.XML.save(file.getAbsolutePath,xml,"UTF-8")
         logger.warn("Failed capture informations saved at: {}",file.getAbsolutePath)
         response.getWriter().println("Could not process capture correctly. Save XML to "+file.getAbsoluteFile+ ". If you thing the information should be captured, report an bug on http://www.exnebula.org/vcc and send us the file.")

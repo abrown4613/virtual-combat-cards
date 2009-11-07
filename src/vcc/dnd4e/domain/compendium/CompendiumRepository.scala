@@ -55,8 +55,8 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
         val ent = CharacterSummary.fromFieldMap(eid,fields)
         if(ent != null) characterSummaries += (eid ->ent)
       case s =>
-        println("Can't handle: "+s)
-        println("Fields:"+fields)
+        logger.warn("Can't handle: "+s)
+        logger.warn("Fields:"+fields)
         null
     }
     notifyObservers()
@@ -136,7 +136,6 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
         obs.get.get.compendiumChanged
         obs
       } else {
-        println("Remove reference "+obs)
         null
       }
     }).filter(obs => obs != null)

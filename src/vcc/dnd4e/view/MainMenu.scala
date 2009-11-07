@@ -33,6 +33,7 @@ class MainMenu(uia:Actor) extends MenuBar {
   
   val compendiumID = Registry.get[DataStoreURI]("Compendium").get
   val tracker = Registry.get[Actor]("tracker").get
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
   
   var fileMenu=new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party ..."){
@@ -115,11 +116,11 @@ class MainMenu(uia:Actor) extends MenuBar {
 
   helpMenu.contents += new MenuItem(Action("Check for Updates ..."){
     SwingHelper.invokeInOtherThread {
-      println("Update manager: Starting update")
+      logger.info("Update manager: Starting update")
       val url=System.getProperty("vcc.update.url","http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
-      println("Update manager: Fetch version from URL: "+url)
+      logger.info("Update manager: Fetch version from URL: "+url)
       vcc.util.UpdateManager.runUpgradeProcess(new java.net.URL(url))
-      println("Update manager: End update")
+      logger.info("Update manager: End update")
     }
   })
 

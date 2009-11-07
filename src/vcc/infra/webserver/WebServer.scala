@@ -27,29 +27,31 @@ import org.mortbay.component._
 
 class WebServer(port:Int) extends StartupStep {
 
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
+  
   protected object  ServerStatus extends LifeCycle.Listener {
 	var running:Boolean = false 
  
 	def lifeCycleFailure(event: LifeCycle, cause: Throwable) {
-	  println("Server Failed")
+	  logger.info("Server Failed")
     }
            
     def lifeCycleStarted(event: LifeCycle) {
-      println("Server started")
+      logger.info("Server started")
       running = true
     }
            
     def lifeCycleStarting(event: LifeCycle) {
-      println("Server starting")
+      logger.info("Server starting")
     }
     
     def lifeCycleStopped(event: LifeCycle) {
-      println("Server stopped")
+      logger.info("Server stopped")
       running = false
     }
            
     def lifeCycleStopping(event: LifeCycle) {
-      println("Server stoping")
+      logger.info("Server stoping")
     }
   }
 

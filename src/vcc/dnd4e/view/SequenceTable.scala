@@ -54,7 +54,7 @@ class SequenceTable(uia:Actor,tracker:Actor) extends ScrollPane with ContextualV
             Effect(c.id, Condition.Mark(c.id,false),false,
             		Effect.Duration.RoundBound(c.id,Effect.Duration.Limit.EndOfNextTurn,false)))
           }
-        case s => println(s)
+        case s => // Do notthing
       }
     }
   })
