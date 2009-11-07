@@ -95,6 +95,7 @@ class PartyEditor extends Frame {
         case m: MonsterSummary => new PartyTableEntry(m.eid,m.name,null,null,1,m.xp)
         case c: CharacterSummary => new PartyTableEntry(c.eid,c.name,null,null,1,0)
         case s: EntitySummary => throw new Exception("Unexpected EntitySummary" + s.classid)
+        case null => null
     }
   
   private val addButton = new Button(Action("Add to Party >>"){ 
@@ -176,10 +177,12 @@ class PartyEditor extends Frame {
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
         val pe = entitySummaryToPartyEntry(es.getEntitySummary(pm.eid))
-        pe.id = if(pm.id!=null )pm.id.name else null
-        pe.alias = pm.alias
-        pe
-      }))
+        if(pe != null) {
+          pe.id = if(pm.id!=null )pm.id.name else null
+          pe.alias = pm.alias
+          pe
+        } else null
+      }).filter(_ != null))
       SwingHelper.invokeLater {
         partyTableModel.content = pml
         recalculateXP(pml)
