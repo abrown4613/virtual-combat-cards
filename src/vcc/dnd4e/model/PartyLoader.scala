@@ -95,15 +95,24 @@ object PartyLoader {
 	val tracker = Registry.get[scala.actors.Actor]("tracker").get
 	val es = Registry.get[CompendiumRepository](esid).get
 	val idMap = scala.collection.mutable.Map.empty[EntityID,CombatantEntityID]
-    val cds = for(pm <- members) yield {
+    val cds:Seq[CombatantDefinition] = (for(pm <- members) yield {
       if(!idMap.isDefinedAt(pm.eid)) {
-        val ent = CombatantEntity.fromCompendiumCombatantEntity(es.load(pm.eid,true).asInstanceOf[CompendiumCombatantEntity])
-    	val ceid = CombatantRepository.registerEntity(ent)
-    	idMap += (pm.eid -> ceid)
+        val cent = es.load(pm.eid,true).asInstanceOf[CompendiumCombatantEntity]
+        if(cent == null) {
+          logger.error("PartyLoader: failed to load entity {}",pm.eid)
+          null.asInstanceOf[CombatantDefinition]
+        } else {
+          val ent = CombatantEntity.fromCompendiumCombatantEntity(cent)
+    	  val ceid = CombatantRepository.registerEntity(ent)
+    	  if(ent != null) idMap += (pm.eid -> ceid)
+        }
       }
-      val ceid = idMap(pm.eid)
-      CombatantDefinition(pm.id,pm.alias,idMap(pm.eid))
-    }
+      if(idMap.isDefinedAt(pm.eid)) {
+        val ceid = idMap(pm.eid)
+        CombatantDefinition(pm.id,pm.alias,idMap(pm.eid))
+      } else 
+        null
+    }).filter(x=> x!= null)
     tracker ! AddCombatants(cds)
   }
 }

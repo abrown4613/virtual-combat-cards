@@ -40,6 +40,7 @@ class MainMenu(uia:Actor) extends MenuBar {
     var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
       val pml = PartyLoader.loadFromFile(compendiumID,file.get)
+      println("Loaded party: "+pml)
       PartyLoader.loadToBattle(compendiumID,pml)                                   
     }
   })
