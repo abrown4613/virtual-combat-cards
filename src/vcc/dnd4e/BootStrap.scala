@@ -95,9 +95,31 @@ object BootStrap extends StartupRoutine {
     callStartupSimpleBlock(srw,"Load Compendium") {
         import vcc.infra.datastore.naming.DataStoreURI
         import vcc.dnd4e.domain.compendium.CompendiumRepository
-    	val compendiumID = Configuration.compendiumStoreID.value
+        import javax.swing.JOptionPane
+    	
+        val compendiumID = Configuration.compendiumStoreID.value
     	logger.info("Opening compendium: {}",compendiumID)
-        val compendium = new CompendiumRepository(compendiumID)
+    
+        val compendium = try { 
+          new CompendiumRepository(compendiumID)  
+        } catch {
+          case e => 
+            logger.error("Failed compendium load",e)
+     	    val ret = JOptionPane.showConfirmDialog(srw.ownerWindow,
+              "Failed to open Compendium. This may be due to missing files or directory. You may have accidentally\n" +
+              "removed the compendium directory. Virtual Combat Cards can create an empty Compendium folder.\n"+
+              "Selecting yes will recreate a blank compendium, or no to cancel this run (you will see another error message)."+
+              "\n\nCreate new empty compendium directory?",
+              "Failed to open Compendium",
+              JOptionPane.YES_NO_OPTION)
+            if(ret == 0) { 
+              logger.info("Creating new repository at : {}",compendiumID)
+              val esb = DataStoreFactory.getDataStoreBuilder(compendiumID)
+              esb.create(compendiumID)
+              new CompendiumRepository(compendiumID)
+            } else 
+              null
+        }
         if(compendium == null) {
           logger.warn("Failed to load compendium {}, will exit",compendiumID)
         } else {

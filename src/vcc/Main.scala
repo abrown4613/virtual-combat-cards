@@ -27,7 +27,6 @@ object Main {
   def warnFailure(win: java.awt.Window) {
     import javax.swing.JOptionPane
     
-    scala.swing.Dialog
     JOptionPane.showMessageDialog(win,"Virtual Combat Cards initialization failed. Please check launch.log for clues.\n"+
                                   "Check http://www.exnebula.org/vcc to look for help or report an issue.",
                                   "Initialization failed",JOptionPane.ERROR_MESSAGE)
