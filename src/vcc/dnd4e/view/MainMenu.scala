@@ -115,6 +115,11 @@ class MainMenu(uia:Actor) extends MenuBar {
     dsk.browse(new java.net.URL("http://www.exnebula.org/vcc/manual").toURI)
   })
 
+  helpMenu.contents += new MenuItem(Action("Firefox plugin"){
+    val dsk=java.awt.Desktop.getDesktop
+    dsk.browse(new java.net.URL("http://www.exnebula.org/vcc/plugin").toURI)
+  })
+
   helpMenu.contents += new MenuItem(Action("Check for Updates ..."){
     SwingHelper.invokeInOtherThread {
       logger.info("Update manager: Starting update")

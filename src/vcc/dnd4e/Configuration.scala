@@ -84,7 +84,7 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
   
   private val mpanel =new MigPanel("") {
     if(initial) {
-      add(new Label("Could not find you Virtual Combat Cards configuration, select option below to create one."),"w 400, h 30, gapbottom 5, wrap")
+      add(new Label("<html><body><p>Could not find your Virtual Combat Cards configuration, select from the options below to create a configuration.</p></body></html>"),"w 400, h 30, gapbottom 5, wrap")
       addSeparator("Your Compendium ")
       add(new Label("Please specify where you want to store you data:"),"wrap, gaptop rel, gapleft 10")
       add(homeDirRadioButton,"wrap,gapleft 10")
