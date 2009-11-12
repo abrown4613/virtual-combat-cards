@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 	
   <property name="classpath"  value="bin"/>
-  <property name="version" value="1.0.0-RC1" />
+  <property name="version" value="1.0.0" />
   <property name="dist" value="dist" />
 	<property name="package" value="${dist}/package" />
 	<property name="deplib" value="${dist}/deplib" />
