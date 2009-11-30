@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e
 
-import vcc.util.UpdateManager
+import vcc.util.{UpdateManager,PackageUtil}
 import vcc.model.Registry
 import vcc.dnd4e.domain.compendium.Compendium
 
@@ -36,7 +36,7 @@ object BootStrap extends StartupRoutine {
     case _ => default
   }
 
-  val version=new UpdateManager.Version(1,0,0,null) 
+  val version=new UpdateManager.Version(1,1,0,null) 
 
   def start(srw: StartupReportWindow):scala.swing.Frame = {
 	var createCompendium = false
@@ -56,7 +56,7 @@ object BootStrap extends StartupRoutine {
 	      } else {
 	    	createCompendium = true
 	    	importSampleCompendium = result.get
-	    	logger.debug("Create compedium requested, import sample? "+importSampleCompendium)
+	    	logger.debug("Create compendium requested, import sample? "+importSampleCompendium)
 	      }
 	    }
 	    Configuration.load(ConfigurationFinder.locateFile)
@@ -88,6 +88,14 @@ object BootStrap extends StartupRoutine {
     	      false
     	    } else {
     	      //TODO Import
+    		  val sampleFile = new java.io.File(UpdateManager.getInstallDirectory,"sample-comp.zip")
+    	      if(importSampleCompendium) {
+    	    	logger.info("Importing sample compendium from {} if it exists.",sampleFile)
+    	        if(sampleFile.exists) {
+    	          logger.debug("Extracting sample data")
+    	          PackageUtil.extractFilesFromZip(sampleFile,Configuration.baseDirectory.value)
+                }
+    	      }
     	      true
     	    } 
     	  }

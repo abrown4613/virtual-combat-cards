@@ -30,6 +30,7 @@ import javax.swing.ImageIcon
 import java.io.{File,StringReader}
 import org.xml.sax.InputSource
 import vcc.infra.startup.StartupStep
+import vcc.util.UpdateManager
 
 object XHTMLPane extends StartupStep {
 
@@ -58,13 +59,14 @@ object XHTMLPane extends StartupStep {
   
   protected object LocalUserAgent extends org.xhtmlrenderer.swing.NaiveUserAgent {
 
+  private def getBaseDirectory():File = UpdateManager.getInstallDirectory
     
   private val imageCache = new XHTMLPane.ContentCache[ImageResource](
     new ImageResource(AWTFSImage.createImage(missingIcon.getImage)),
     uri =>{
       logger.debug("SF-UA Requested load of image: {}",uri)
       val iname = uri.substring(uri.lastIndexOf('/')+1).toLowerCase
-      val file = new File("fs-wc/images",iname)
+      val file = new File(new File(getBaseDirectory,"fs-wc/images"),iname)
       logger.debug("SF-UA Image {} mapped to {}",uri,file)
       if(file.exists && file.canRead && file.isFile) {
     	try { 
@@ -87,7 +89,7 @@ object XHTMLPane extends StartupStep {
     
     override def getCSSResource(uri:String):CSSResource = {
       logger.debug("SF-UA request CSSResource for URI: {}",uri)
-      val file = new java.io.File("fs-wc/css",uri)
+      val file = new File(new File(getBaseDirectory,"fs-wc/css"),uri)
       logger.debug("SF-UA URI {} mapped to file {}",uri,file)
       if(file.exists && file.canRead && file.isFile) {
         logger.debug("SF-UA Reading CSS file: {}",file)

@@ -83,8 +83,8 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
 
   private val homeDirRadioButton = new RadioButton("Use home directory")
   private val vccDirRadioButton = new RadioButton("Virtual Combat Cards directory")
-  //private val importSample = new CheckBox("Import sample data to you compendium")
-  //importSample.selected = true
+  private val importSample = new CheckBox("Import sample data to you compendium")
+  importSample.selected = true
   private val storeButtonGroup = new ButtonGroup(homeDirRadioButton,vccDirRadioButton)
   storeButtonGroup.select(homeDirRadioButton)
 
@@ -106,7 +106,7 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
       add(new Label("Directory: "+userHome),"wrap,gapleft 35")
       add(vccDirRadioButton,"wrap,gapleft 10")
       add(new Label("Directory: "+vccHome),"wrap,gapleft 35")
-      //add(importSample,"wrap, gaptop rel, gapleft 10, gapbottom unrel")
+      add(importSample,"wrap, gaptop rel, gapleft 10, gapbottom unrel")
       startWebServerCheck.selected = true
     } 
     addSeparator("Runtime options ")
@@ -131,7 +131,7 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
       }
     }
     
-    Configuration.baseDirectory.value = if(homeDirRadioButton.selected) userHome else new File(".")
+    Configuration.baseDirectory.value = if(homeDirRadioButton.selected) userHome else new File("userdata")
     val uri = if(homeDirRadioButton.selected)
     	DataStoreURI.fromStorageString("vcc-store:directory:file:$HOME/vcc/compendium")
       else
@@ -143,6 +143,6 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
     Configuration.storeLogs.value = logStore.selected
     Configuration.save(cFile)
     Configuration.load(cFile)
-    dialogResult = Some(false) //Some(importSample.selected)
+    dialogResult = Some(importSample.selected)
   }
 }
