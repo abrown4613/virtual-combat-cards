@@ -99,7 +99,6 @@ class StoreBuilder extends DataStoreBuilder {
     if(!uri.isOpaque) return esid
     val newUri:URI = uri.getRawSchemeSpecificPart match {
       case `re`(repl,path) =>
-        println(uri.getRawSchemeSpecificPart +  "Found "+repl + " and path "+ path)
         if(replace.isDefinedAt(repl)) replace(repl).resolve(path)
         else null
       case _ => (new File(".")).toURI.resolve(uri.getRawSchemeSpecificPart)
