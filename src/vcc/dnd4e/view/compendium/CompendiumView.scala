@@ -20,7 +20,7 @@ package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.swing.MigPanel
+import vcc.util.swing.{MigPanel,SwingHelper}
 
 import vcc.dnd4e.domain.compendium._
 
@@ -66,6 +66,8 @@ object CompendiumView extends Frame {
   
   def doEditEntry(ent:CombatantEntity) {
     val nd = new CombatantEditorDialog(ent)
+    SwingHelper.centerFrameOnScreen(nd)
     nd.visible = true
+    
   }
 }

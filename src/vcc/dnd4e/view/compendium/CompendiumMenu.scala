@@ -18,14 +18,17 @@
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
+import vcc.util.swing.SwingHelper
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
   this.contents += new MenuItem(Action("View Entries ...") {
+    SwingHelper.centerFrameOnScreen(CompendiumView)
     CompendiumView.visible = true
   })
   this.contents += new MenuItem(CompendiumView.newEntryAction)
   this.contents += new MenuItem(Action("Edit Parties ...") {
     val partyEditor = new PartyEditor(director)
+    SwingHelper.centerFrameOnScreen(partyEditor)
     partyEditor.visible = true
   })
   this.contents += new MenuItem(Action("D&D Insider Capture ...") {

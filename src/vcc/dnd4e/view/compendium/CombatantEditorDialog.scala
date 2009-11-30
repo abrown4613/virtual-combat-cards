@@ -117,4 +117,5 @@ class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
     add(tabPane,"wrap,growy,growx")
     add(saveButton,"span 3")
   }
+
 }
