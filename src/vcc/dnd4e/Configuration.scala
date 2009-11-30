@@ -23,6 +23,7 @@ import vcc.infra.startup.StartupStep
 
 import java.io.File
 import vcc.infra.datastore.naming.DataStoreURI
+import vcc.infra.datastore.DataStoreFactory
 
 object Configuration extends AbstractConfiguration with StartupStep {
  
@@ -30,8 +31,26 @@ object Configuration extends AbstractConfiguration with StartupStep {
   val storeLogs = Property[Boolean]("vcc.dnd4e.storeLogs","false", x => x == "true")
   val baseDirectory = Property[File]("vcc.dnd4e.basedir",System.getProperty("user.dir"), x => {new File(x)})
   val compendiumStoreID = Property[DataStoreURI]("vcc.dnd4e.compendium",null, x => {
-    if(x != null) DataStoreURI.fromStorageString(x) else null
+    if(x != null) {
+      expandDataStoreURI(DataStoreURI.fromStorageString(x))
+    } else null
   })
+  
+  def expandDataStoreURI(baseEsid:DataStoreURI):DataStoreURI = {
+    if(baseEsid == null) return null
+	val dsb = DataStoreFactory.getDataStoreBuilder(baseEsid)
+	if(dsb != null) {
+	  if(dsb.isResolvedDataStoreURI(baseEsid)) 
+		baseEsid
+	  else {
+		logger.info("Configuration: Will expand ESID: {}",baseEsid)
+		val modEsid = dsb.resolveDataStoreURI(baseEsid,Map("HOME"->new File(System.getProperty("user.home")).toURI,"BASE"->baseDirectory.value.toURI))
+		logger.info("Configuration: Expanded to: {}",modEsid)
+		modEsid
+	  }
+	} else 
+	  null
+  }
   
   def createDirectoryTree(baseDir:java.io.File):Boolean = {
     if(baseDir.exists && ! baseDir.isDirectory ) {
@@ -46,10 +65,6 @@ object Configuration extends AbstractConfiguration with StartupStep {
       }
     }
     // Got hear means directory is ok
-    
-    baseDirectory.value = baseDir
-    compendiumStoreID.value = DataStoreURI.fromStorageString("vcc-store:directory:"+((new File(baseDir,"compendium").toURI)))
-    logger.debug("Setting compendium to: {}",compendiumStoreID.value)
     true
   }
   
@@ -116,10 +131,18 @@ class ConfigurationDialog(owner:Window,initial:Boolean) extends ModalDialog[Bool
       }
     }
     
+    Configuration.baseDirectory.value = if(homeDirRadioButton.selected) userHome else new File(".")
+    val uri = if(homeDirRadioButton.selected)
+    	DataStoreURI.fromStorageString("vcc-store:directory:file:$HOME/vcc/compendium")
+      else
+    	DataStoreURI.fromStorageString("vcc-store:directory:file:userdata/compendium")
+    logger.debug("Setting compendium to: {}",uri.toString)
+    Configuration.compendiumStoreID.value = uri
+    
     Configuration.autoStartWebServer.value = startWebServerCheck.selected
     Configuration.storeLogs.value = logStore.selected
-    
     Configuration.save(cFile)
+    Configuration.load(cFile)
     dialogResult = Some(false) //Some(importSample.selected)
   }
 }

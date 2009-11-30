@@ -56,7 +56,7 @@ object InitiativeTracker {
   }
 
 }
-case class InitiativeTracker(round:Int,state:vcc.dnd4e.model.InitiativeState.Value) {
+case class InitiativeTracker(round:Int,state:vcc.dnd4e.model.InitiativeState.Value) extends CombatantAspect {
   import InitiativeTracker.actions
 
   /**

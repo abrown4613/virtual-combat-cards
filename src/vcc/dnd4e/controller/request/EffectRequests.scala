@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.controller.request
 
-import vcc.controller.actions.{TransactionalAction,QueryAction} 
+import vcc.controller.message.{TransactionalAction} 
 import vcc.dnd4e.model.{Effect,Condition}
 
 case class AddEffect(to:Symbol,effect:Effect) extends TransactionalAction {

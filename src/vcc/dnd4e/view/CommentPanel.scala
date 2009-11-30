@@ -21,25 +21,44 @@ import swing._
 import event._
 import javax.swing.BorderFactory
 import vcc.dnd4e.controller._
+import vcc.dnd4e.controller.request.SetComment
 import util.swing.MigPanel
+import vcc.infra.docking.{DockableComponent,DockID}
+import vcc.dnd4e.model.{CombatantState,CombatState,CombatStateObserver,CombatStateChanges}
 
-class CommentPanel(val controller:actors.Actor) extends MigPanel("fill","","") with ContextualView[ViewCombatant]{
+class CommentPanel(director:PanelDirector, isTarget:Boolean) extends MigPanel("fill,ins 0","","") 
+  with ContextObserver with CombatStateObserver with DockableComponent {
   private var _hasChanged=false
   private var _updating=false
-  private var edit=new TextArea {
+  private val edit=new TextArea {
     enabled=false
   }
+  
+  private var context:Option[Symbol] = None
+
+  private var state:CombatState = director.currentState
+  
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
 
-  add(new Label("Comments and Notes"),"wrap")
+  val dockTitle = if(isTarget) "Target Notes" else "Source Notes"
+  
+  val dockRootComponent = this.peer
+  
+  val dockFocusComponent = edit.peer
+  
+  val dockID = if(isTarget) DockID("tgt-notes") else DockID("src-notes")
+  
+  @deprecated
+  val debug = new Label(context.toString)
+  
   add(new ScrollPane {
     border=BorderFactory.createLoweredBevelBorder
     contents=edit
   },"growx,growy")
-  
+ 
   listenTo(edit)
   reactions += {
-    case FocusLost(edit:TextArea,opt,state) if(_hasChanged) =>
+    case FocusLost(edit:TextArea,opt,temp) if(_hasChanged) =>
       sendChange()
     case ValueChanged(edit) =>
       if(!_updating) _hasChanged=true
@@ -48,16 +67,30 @@ class CommentPanel(val controller:actors.Actor) extends MigPanel("fill","","") w
   private def sendChange() {
     if(_hasChanged) {
       _hasChanged=false
-      controller ! actions.SetComment(context.id,edit.text)
+      director requestAction SetComment(context.get,edit.text)
     }
-          
   }
   
-  def changeContext(context:Option[ViewCombatant]) = {
-    _updating=true
-    if(_hasChanged) sendChange()
-    edit.text=if(context.isDefined) context.get.info else ""
-    edit.enabled=context!=None
-    _updating=false
+  def changeContext(nctx:Option[Symbol],isTarget:Boolean) {
+    if(this.isTarget == isTarget) {
+      if(_hasChanged) sendChange()
+      context = nctx
+      updateCombatant(nctx)
+      edit.enabled=context!=None      
+    }
+
+  }
+  
+  private def updateCombatant(nctx:Option[Symbol]) {
+	_updating=true
+	edit.text = if(context.isDefined && state.combatantMap.isDefinedAt(context.get)) state.combatantMap(context.get).info else ""
+	_updating=false
+  }
+  
+  def combatStateChanged(newState:CombatState,changes:CombatStateChanges) {
+   state = newState
+   if(context.isDefined && changes.changesTo(context.get).contains(CombatantState.part.Note)) {
+      updateCombatant(context)
+   }
   }
 }

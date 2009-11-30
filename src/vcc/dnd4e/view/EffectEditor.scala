@@ -19,9 +19,7 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import util.swing._
-import scala.actors.Actor
-
-import vcc.dnd4e.model.{Effect,Condition}
+import vcc.dnd4e.model.{Effect,Condition,CombatantState}
 
 /**
  * A combo box option that included the infomartion to display and what to 
@@ -29,14 +27,14 @@ import vcc.dnd4e.model.{Effect,Condition}
  * @param text To appear on the ComboBox
  * @param generate A function form (source,target)=> Duration
  */
-case class DurationComboEntry(text:String,generate: (ViewCombatant,ViewCombatant)=>Effect.Duration) {
+case class DurationComboEntry(text:String,generate: (CombatantState,CombatantState)=>Effect.Duration) {
   override def toString():String=text
 }
 
 trait EffectSubPanelComboOption {
   val name:String 
   
-  def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition
+  def generateEffect(source:CombatantState,target:CombatantState):Condition
   
   def saveMemento():Any
   
@@ -77,7 +75,7 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
     private val descField=new TextField()
     add(descField,"growx, h 22!")
     visible=false
-    def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition ={
+    def generateEffect(source:CombatantState,target:CombatantState):Condition ={
       Condition.Generic(descField.text)
     }
     
@@ -101,7 +99,7 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
     add(permanentMarkCheck)
     visible=false
 
-    def generateEffect(source:ViewCombatant,target:ViewCombatant):Condition ={
+    def generateEffect(source:CombatantState,target:CombatantState):Condition ={
       Condition.Mark(Symbol(markerText.selection.item),permanentMarkCheck.selected)
     }
     
@@ -182,7 +180,7 @@ class EffectEditor(parent:EffectEditorPanel) extends MigPanel("fillx, gap 2 2, i
   /**
    * Make sure Add button is enabled only with context active
    */
-  def setContext(nctx:Option[ViewCombatant]) {
+  def setContext(nctx:Option[CombatantState]) {
     addButton.enabled=nctx.isDefined
   }
   

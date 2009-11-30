@@ -19,31 +19,29 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import util.swing._
-
-import scala.actors.Actor
 import helper.CombatantStatBlockCache
+import infra.docking._
 
-class CombatantCard(tracker:Actor) extends GridPanel(1,1) with ContextualView[ViewCombatant] {
+class CombatantCard(diretor:PanelDirector,isTarget:Boolean) extends GridPanel(1,1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
 
+  def changeContext(nctx:Option[Symbol],isTarget:Boolean) {
+    if(this.isTarget == isTarget) {
+      val cmb = combatState.getCombatant(nctx)
+      if(cmb.isDefined) {
+        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.get.entity.eid,cmb.get.entity.statBlock))
+      }
+      else statBlock.setDocumentFromText("") 
+    }
+  }
+  
   minimumSize = new java.awt.Dimension(300,400)
   
-  private val effects=new EffectViewPanel(tracker)
-  private val commentPanel= new view.CommentPanel(tracker)
   private val statBlock = new XHTMLPane
   statBlock.minimumSize = new java.awt.Dimension(200,200)
-  private val split1=new SplitPane(Orientation.Horizontal,effects,commentPanel)
-  private val split2=new SplitPane(Orientation.Horizontal,statBlock,split1)
-  split1.peer.setDividerSize(4)
-  split1.peer.setDividerLocation(0.5)
-  split2.peer.setDividerSize(4)
-  split2.peer.setDividerLocation(300)
+  contents += statBlock
+    
+  val dockID = DockID(if(isTarget) "tgt-block" else "src-block")
+  val dockTitle = if(isTarget) "Target" else "Source"
+  val dockFocusComponent = statBlock.peer
   
-  contents += split2
-  
-  def changeContext(nctx:Option[ViewCombatant]) {
-    commentPanel.context=nctx
-    effects.context=nctx
-    if(nctx.isDefined) statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(nctx.get.entity.eid,nctx.get.entity.statBlock))
-    else statBlock.setDocumentFromText("") 
-  }
 }

@@ -61,15 +61,4 @@ class UpdateManagerTest extends TestCase {
       case _ =>
     }
   }
-
-  def testDownload() {
-    var file= new java.io.File(System.getProperty("java.io.tmpdir"),"robots.txt")
-    file.delete()
-    assert(!file.exists)
-    val res=UpdateManager.downloadFile(new URL("http://www.exnebula.org/robots.txt"),file)
-    assert(res,"Download failed")
-    assert(file.exists)
-    assert(file.canRead)
-    assert(file.isFile)
-  }
 }

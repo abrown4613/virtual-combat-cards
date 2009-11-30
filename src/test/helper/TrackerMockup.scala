@@ -19,17 +19,45 @@ package test.helper
 
 import vcc.controller._
 import vcc.controller.transaction._
+import vcc.controller.message.TransactionalAction
+
+/**
+ * 
+ */
+trait ActionRecorder {
+  def actionsExecuted:List[TransactionalAction]
+}
+
+/**
+ * This is a TransactionaProcessor that accumulates internal actions
+ * for scrutiny.
+ */
+trait ActionAccumulator[C] extends TransactionalProcessor[C]{
+  self: TransactionalProcessor[C] =>
+  
+  var actionsProcessed:List[TransactionalAction]=Nil
+  
+  override def rewriteEnqueue(action:TransactionalAction) {
+    actionsProcessed=Nil
+    super.rewriteEnqueue(action)
+  }
+  
+  addHandler {
+    case msg =>
+      actionsProcessed= actionsProcessed ::: List(msg)
+  }
+}
+
 /**
  * Tracker mockup has several utility methods to help test action handlers and publishers. It is on
  * and actor so it works syncronly.
  */
 class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionChangePublisher {
 
-  private var pbuf:TrackerResponseBuffer=null
+  private var lastObserverMessage:Any = null
   
   def publishChange(changes:Seq[ChangeNotification]) {
-    pbuf=new TrackerResponseBuffer()
-    controller.publish(changes,pbuf)
+    lastObserverMessage = controller.publish(changes)
   }
   
   /**
@@ -38,7 +66,7 @@ class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionC
    * @param msg The message to be dispatched
    * @return Open transaction, either otrans if it was valid, or a new one.
    */
-  def dispatchWithoutCommit(otrans:Transaction, msg:actions.TransactionalAction):Transaction = {
+  def dispatchWithoutCommit(otrans:Transaction, msg:TransactionalAction):Transaction = {
     val trans=if(otrans==null) new Transaction() else otrans
     controller.dispatch(trans,msg)
     trans
@@ -47,13 +75,11 @@ class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionC
   /**
    * Dispatch and action and commit transaction
    */
-  def dispatch(msg:actions.TransactionalAction) {
+  def dispatch(msg:TransactionalAction) {
     val trans=new Transaction()
     controller.dispatch(trans,msg)
     trans.commit(this)
   }
-  
-  
   
   /**
    * Commit the transaction
@@ -65,5 +91,5 @@ class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionC
   /**
    * Return the last TrackerResponseBuffer's message that would be sent
    */
-  def lastChangeMessages = pbuf.messages
+  def lastChangeMessages = lastObserverMessage
 }

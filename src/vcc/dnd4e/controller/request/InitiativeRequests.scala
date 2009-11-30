@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.controller.request
 
-import vcc.controller.actions.{TransactionalAction,QueryAction}
+import vcc.controller.message.{TransactionalAction}
 import vcc.dnd4e.model.{PartyMember,TrackerCombatant,InitiativeTracker,CombatantEntityID}
 
 // Builing the combat grid
@@ -30,8 +30,6 @@ case class AddCombatants(combs:Seq[CombatantDefinition]) extends EncounterAction
   def description():String = "Add combatants"
   
 }
-
-case class Enumerate() extends QueryAction
 
 case class ClearCombatants(all:Boolean) extends EncounterAction {
   def description():String = "Clear "+(if(all) "all combatants" else "monsters")

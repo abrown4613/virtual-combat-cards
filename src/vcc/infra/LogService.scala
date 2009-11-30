@@ -24,28 +24,32 @@ import vcc.infra.startup.StartupStep
 
 object LogService extends StartupStep {
   
-  private val inDebugMode = (System.getProperty("vcc.debug")!=null)
+  private val inDebugMode = (System.getProperty("vcc.console")!=null)
   
   object level extends Enumeration {
-    val Debug = Value("Debug")
-    val Info = Value("Info")
-    val Error = Value("Error")
-    val Fatal = Value("Fatal")
-    val Off = Value("Off")
+    val Debug = Value("DEBUG")
+    val Info = Value("INFO")
+    val Warn = Value("WARN")
+    val Error = Value("ERROR")
+    val Fatal = Value("FATAL")
+    val Off = Value("OFF")
     
   }
   
   protected val mapToLog4J = Map[level.Value,Level](
     level.Debug -> Level.DEBUG,
     level.Info -> Level.INFO,
+    level.Warn -> Level.WARN,
     level.Error -> Level.ERROR,
     level.Fatal -> Level.FATAL,
     level.Off -> Level.OFF
   )
   
-  def initializeLog(contexts:Seq[String], filename:String, lvl: level.Value, keep: Boolean) {
+  def initializeLog(contexts:Seq[String], filename:String, defaultLevel: level.Value, keep: Boolean) {
+    val logger = org.slf4j.LoggerFactory.getLogger("startup")
 	val fmt = new org.apache.log4j.TTCCLayout()
-	val apdr = if(keep) {
+	
+    val apdr = if(keep) {
       val lr = new RollingFileAppender(fmt,filename)
       lr.setMaxBackupIndex(10)
       lr.rollOver
@@ -53,18 +57,25 @@ object LogService extends StartupStep {
 	} else {
 	  new FileAppender(fmt,filename,false)
 	}
+    logger.info("Logging to {}",filename)
 	for(context <- contexts) {
       if(LogManager.exists(context) == null) {
 	    val log = Logger.getLogger(context)
+	    
+	    val lvl = level.valueOf(System.getProperty("vcc.log."+context)) match {
+	    			  case None => defaultLevel
+	    			  case Some(l) => l
+	    		}
+	    logger.debug("Log level for {} is {}",context,lvl)
         log.setLevel(mapToLog4J(lvl))
 
         if(inDebugMode) {
           log.addAppender(new ConsoleAppender(fmt))
-          log.info("Logging to "+filename)
         }
         log.addAppender(apdr)
       }
-    }
+	}
+    logger.warn("Hello")
   }
   
   def initializeStartupLog() {

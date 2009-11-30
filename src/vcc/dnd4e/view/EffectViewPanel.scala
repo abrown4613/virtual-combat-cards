@@ -20,41 +20,59 @@ package vcc.dnd4e.view
 import scala.swing._
 import util.swing._
 
-import scala.actors.Actor
 import vcc.dnd4e.model.{Effect,Condition}
-import vcc.dnd4e.controller.request
+import vcc.dnd4e.controller.request._
+import vcc.infra.docking._
+import vcc.dnd4e.model.{CombatState,CombatStateObserver,CombatStateChanges}
 
-class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualView[ViewCombatant]
+class EffectViewPanel(director:PanelDirector, isTarget:Boolean) extends MigPanel("fill,ins 2") 
+ with ContextObserver with ScalaDockableComponent with CombatStateObserver 
 {
   private val sustainButton=new Button("Sustain")
-  sustainButton.enabled=false
+    sustainButton.enabled=false
+  
   private val cancelButton=new Button("Cancel Effect")
-  cancelButton.enabled=false
+    cancelButton.enabled=false
+
+  private var context:Option[Symbol] = None
+  
+  private var state = director.currentState
+  
+  val dockTitle = if(isTarget) "Effect on Target" else "Effect on Source"
+  
+  val dockID = DockID(if(isTarget) "tgt-effects" else "src-effects")
   
   val effectTable=new RowProjectionTable[(Symbol,Int,Effect)]() with CustomRenderedRowProjectionTable[(Symbol,Int,Effect)]{
 	val labelFormatter= tabular.EffectTableColorer
-    projection=new vcc.util.swing.ProjectionTableModel[(Symbol,Int,Effect)](new tabular.EffectTableProjection(tracker))
+    projection=new vcc.util.swing.ProjectionTableModel[(Symbol,Int,Effect)](new tabular.EffectTableProjection(director))
     autoResizeMode=Table.AutoResizeMode.Off
     selection.intervalMode=Table.IntervalMode.Single
-    //model=effectModel
     setColumnWidth(0,25)
     setColumnWidth(1,50,50,100)
     setColumnWidth(2,200)
   }
   
-  add(new Label("Active Effects"),"wrap")
-  add(new ScrollPane(effectTable),"growy,growprio 50,h 50:150,wrap")
-  add(sustainButton,"split 3")
+  val dockFocusComponent = effectTable.peer
+  
+  add(new ScrollPane(effectTable),"growy,growprio 100,h 50:150,wrap")
+  add(sustainButton,"split 3,growprio 0")
   add(cancelButton)
   
   listenTo(effectTable.selection)
   listenTo(sustainButton,cancelButton)
+  KeystrokeBinder.bindKeystrokeAction(effectTable,false,KeystrokeBinder.FocusCondition.WhenFocused,javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE,0),
+                                  	  Action(dockID.name+".cancel") {
+	  									cancelButton.doClick
+	  									effectTable.requestFocus()
+	  								  })
+  KeystrokeBinder.unbindKeystroke(effectTable,false,KeystrokeBinder.FocusCondition.WhenAncestorFocused,"F2")
+  KeystrokeBinder.unbindKeystroke(effectTable,false,KeystrokeBinder.FocusCondition.WhenAncestorFocused,"F8")
   
   reactions += {
     case event.ButtonClicked(this.sustainButton) =>
-      tracker ! request.SustainEffect(context.id,effectTable.selection.rows.toSeq(0))
+      director requestAction SustainEffect(context.get,effectTable.selection.rows.toSeq(0))
     case event.ButtonClicked(this.cancelButton) =>
-      tracker ! request.CancelEffect(context.id,effectTable.selection.rows.toSeq(0))
+      director requestAction CancelEffect(context.get,effectTable.selection.rows.toSeq(0))
     case event.TableRowsSelected(this.effectTable,rng,opt) =>
       val sel=effectTable.selection.rows
       if(sel.isEmpty) {
@@ -70,13 +88,24 @@ class EffectViewPanel(tracker:Actor) extends MigPanel("fillx") with ContextualVi
   /**
    * Update table according to context
    */
-  def changeContext(nctx:Option[ViewCombatant]) {
-    nctx match {
-      case Some(c) => 
-        SwingHelper.invokeLater{
-          effectTable.content= (0 to c.effects.length-1).map(pos=>(c.id,pos,c.effects(pos)))
-        }
-      case None =>
+  def changeContext(nctx:Option[Symbol],isTarget:Boolean) {
+    if(this.isTarget == isTarget) {
+      context = nctx
+      updateTable()
     }
+  }
+  
+  private def updateTable() {
+    state.getCombatant(context) match {
+      case Some(cmb) =>
+        effectTable.content = (0 to cmb.effects.length-1).map(pos=>(cmb.id,pos,cmb.effects(pos)))
+      case None =>
+        effectTable.content = Nil
+    }
+  }
+  
+  def combatStateChanged(newState:CombatState,changes:CombatStateChanges) {
+    state = newState
+    updateTable()
   }
 }

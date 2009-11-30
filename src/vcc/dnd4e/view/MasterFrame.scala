@@ -19,33 +19,48 @@ package vcc.dnd4e.view
 
 import scala.actors.Actor
 import scala.swing._
-
+import scala.swing.event.WindowClosing
 import vcc.model.Registry
+import vcc.infra.docking._
+import vcc.dnd4e.model.CombatStateObserver
+import vcc.util.swing.KeystrokeContainer
 
-class MasterFrame extends MainFrame{
-
+class MasterFrame extends Frame {
+  val docker = new CustomDockingAdapter()
   val tracker = Registry.get[Actor]("tracker").get
 
-  var uia=new vcc.dnd4e.view.actor.UserInterface(tracker)
-  
-  val commandPanel= new vcc.dnd4e.view.CombatantActionPanel(uia,tracker)
-  val seqTable = new vcc.dnd4e.view.SequenceTable(uia,tracker)
-  seqTable.minimumSize = new java.awt.Dimension(300,200)
-  val card=new vcc.dnd4e.view.CombatantCard(tracker)
-  val statusBar=new StatusBar(uia)
-  
-  // Register panel with UIA
-  uia.addSequenceListener(seqTable)
-  uia.addSequenceListener(commandPanel)
-  uia.addContextListener(commandPanel)
-  uia.addContextListener(commandPanel.effectEditorPanel)
-  uia.addContextListener(seqTable)
-  uia.addContextListener(card)
-  uia.setStatusBar(statusBar)
-  uia.start
-  tracker ! vcc.controller.actions.AddObserver(uia)
+  val statusBar=new StatusBar()
+  val csm = new vcc.dnd4e.model.CombatStateManager(tracker)
+  val director = new PanelDirector(tracker,csm,statusBar)
+
+  val docks = List[DockableComponent](
+    new DamageCommandPanel(director), 
+    new InitiativePanel(director),
+    new EffectEditorPanel(director),
+    new vcc.dnd4e.view.SequenceTable(director),
+    //Targt panels
+    new vcc.dnd4e.view.CombatantCard(director,true),
+    new EffectViewPanel(director,true),
+    new CommentPanel(director,true),
+    // Source Panel
+    new vcc.dnd4e.view.CombatantCard(director,false),
+    new EffectViewPanel(director,false),
+    new CommentPanel(director,false)
+  )
 
   title = "Virtual Combat Cards"
+
+  peer.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE)
+  listenTo(this)
+  reactions += {
+    case WindowClosing(win) =>
+      if(System.getProperty("vcc.quickexit")!=null ||
+         Dialog.showConfirmation(Component.wrap(this.peer.getRootPane), "Quitting Virtual Combat Cards will mean you loose all the combat information.\nAre you sure?", "Quit?",Dialog.Options.YesNo) == Dialog.Result.Yes) {
+    	this.dispose
+        System.exit(1)
+      }
+  }
+  
     
   preferredSize= {
 	val toolkit = java.awt.Toolkit.getDefaultToolkit();
@@ -55,15 +70,38 @@ class MasterFrame extends MainFrame{
 	else
 		new java.awt.Dimension(800,600) 
   }
-  val split = new SplitPane(Orientation.Vertical,seqTable,card)
-  split.peer.setDividerSize(4)
-  split.peer.setDividerLocation(440)
-    
-  contents= new BorderPanel {
-	  add(commandPanel,BorderPanel.Position.West)
-      add(split,BorderPanel.Position.Center)
-      add(new MainMenu(uia),BorderPanel.Position.North)
-      add(statusBar,BorderPanel.Position.South)
-      iconImage=IconLibrary.MetalD20.getImage()
+  
+  //Register Dock with PanelDirector
+  for(dock <- docks) {
+    if(dock.isInstanceOf[ContextObserver]) director.registerContextObserver(dock.asInstanceOf[ContextObserver])
+    if(dock.isInstanceOf[CombatStateObserver]) director.registerStateObserver(dock.asInstanceOf[CombatStateObserver])
+    if(dock.isInstanceOf[PaneDirectorPropertyObserver]) director.registerPropertyObserver(dock.asInstanceOf[PaneDirectorPropertyObserver])
   }
+
+  val mainMenu = new MainMenu(director,docker,this)
+
+  for((dock,keystroke) <-docks.zip(List("F1","F2","F3","F5","F6","F7","F8","alt F6","alt F7","alt F8"))) {
+	 docker.addDockable(dock)
+     mainMenu.addToDockRestoreMenu(new MenuItem(new DockableRestoreAction(docker,dock.dockID,dock.dockTitle)))
+     val fma = new MenuItem(new DockableFocusAction(docker,dock.dockID,dock.dockTitle))
+     if(keystroke!=null) fma.peer.setAccelerator(javax.swing.KeyStroke.getKeyStroke(keystroke))
+     mainMenu.addToDockRestoreFocusMenu(fma)
+  }
+  
+  menuBar = mainMenu
+  
+  contents= new BorderPanel {
+      peer.add(docker.setup(null),java.awt.BorderLayout.CENTER)
+      add(statusBar,BorderPanel.Position.South)
+      background = java.awt.Color.BLUE
+  }
+  iconImage=IconLibrary.MetalD20.getImage()
+  
+  //Last operations
+  vcc.util.swing.SwingHelper.invokeLater {
+    for(dock <- docks)
+      if(dock.isInstanceOf[KeystrokeContainer]) dock.asInstanceOf[KeystrokeContainer].registerKeystroke
+  }
+  docker.loadLayoutOrDefault()
+  
 }

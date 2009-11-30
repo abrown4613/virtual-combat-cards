@@ -17,9 +17,9 @@
 //$Id$
 package vcc.dnd4e.controller
 
-import vcc.controller.{TransactionalProcessor,ChangePublisher}
+import vcc.controller.{TransactionalProcessor}
 import vcc.controller.transaction._
-import vcc.controller.actions.TransactionalAction
+import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
 import vcc.dnd4e.controller.request._
@@ -44,7 +44,7 @@ trait TrackerContextHandler {
       // It's an old combatant salvage old heath and Initiative
       val oc=context.map(nc.id)
       nc.health = oc.health.replaceHealthDefinition(nc.health.base)
-      nc.it =oc.it
+      nc.it.value = oc.it.value
       nc.effects=oc.effects
     } else {
       context.sequence add id
@@ -77,74 +77,18 @@ trait TrackerContextHandler {
     }
     
     // HEALTH Tracking
-    case vcc.dnd4e.controller.actions.ApplyDamage(InMap(c),amnt) =>
+    case ApplyDamage(InMap(c),amnt) =>
       c.health=c.health.applyDamage(amnt)
-    case vcc.dnd4e.controller.actions.HealDamage(InMap(c),amnt) =>
+    case HealDamage(InMap(c),amnt) =>
       c.health=c.health.heal(amnt)
-    case vcc.dnd4e.controller.actions.SetTemporaryHP(InMap(c),amnt) =>
+    case SetTemporaryHP(InMap(c),amnt) =>
       c.health=c.health.setTemporaryHitPoints(amnt,false)
-    case vcc.dnd4e.controller.actions.FailDeathSave(InMap(c)) =>
+    case FailDeathSave(InMap(c)) =>
       c.health=c.health.failDeathSave()
-    case vcc.dnd4e.controller.actions.Undie(InMap(c)) => c.health=c.health.raiseFromDead
+    case Undie(InMap(c)) => c.health=c.health.raiseFromDead
       
-    case vcc.dnd4e.controller.actions.SetComment(InMap(c),text)=>
+    case SetComment(InMap(c),text)=>
       c.info=text
       
   }
-}
-  
-class DefaultChangePublisher extends ChangePublisher[TrackerContext] {
-  /**
-   * Publish changes to the observers
-   */
-  def publish(context:TrackerContext, changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
-    changes.foreach {
-      //TODO: Move out
-      case CombatantUpdate(comb, s:InitiativeTracker) => buffer ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
-
-      case RosterUpdate(map) => enumerate(context,map,buffer)
-      case CombatantUpdate(comb, h:HealthTracker) => buffer ! vcc.dnd4e.view.actor.SetHealth(comb,h)
-      case CombatantUpdate(comb, info:String) => buffer  ! vcc.dnd4e.view.actor.SetInformation(comb,info)
-      //TODO: Move out
-      case s:vcc.dnd4e.view.actor.SetSequence => buffer ! s
-      case _ => //Ignore to avoid exception
-    }
-  }
-
-  private def enumerate(context:TrackerContext,map:Map[Symbol,TrackerCombatant],buffer:vcc.controller.TrackerResponseBuffer) {
-    TrackerContextEnumerator.enumerate(context,buffer)
-    // Return ids to generator, 
-    // TODO: This is not a publishing aspect shoudl be somewhere else? 
-    for(id<-context.idgen.leasedSymbols) {
-      if(!context.map.contains(id)) context.idgen.returnToPool(id)
-    }
-    for(id<-map.map(_._1))
-        if(context.idgen.contains(id)) context.idgen.removeFromPool(id)
-  }
-}
-
-object TrackerContextEnumerator {
-  def enumerate(context:TrackerContext,buffer:vcc.controller.TrackerResponseBuffer) { 
-    buffer ! vcc.dnd4e.view.actor.ClearSequence()
-    for(x<-context.map.map(_._2)) { 
-      buffer ! vcc.dnd4e.view.actor.Combatant(vcc.dnd4e.view.ViewCombatant(x.id,x.alias,x.entity))
-      buffer ! vcc.dnd4e.view.actor.SetHealth(x.id,x.health)
-      buffer ! vcc.dnd4e.view.actor.SetInitiative(x.id,x.it.value)
-      buffer ! vcc.dnd4e.view.actor.SetInformation(x.id,x.info)
-    }
-    buffer ! vcc.dnd4e.view.actor.SetSequence(context.sequence.sequence)
-  }
-}
-
-import vcc.controller.QueryActionHandler
-import vcc.controller.actions.QueryAction
-
-class TrackerQueryHandler(context:TrackerContext) extends QueryActionHandler(context){
-  val query:PartialFunction[QueryAction,Unit]= {
-    case vcc.dnd4e.controller.actions.QueryCombatantMap(func) =>
-      obs reply context.map.map(x=>func(x._2)).toList
-    case request.Enumerate()=> 
-      TrackerContextEnumerator.enumerate(context,obs)
-  }		
-
 }

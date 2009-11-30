@@ -19,6 +19,7 @@ package vcc.infra.datastore.directory
 
 import vcc.infra.datastore.naming._
 import java.io.File
+import java.net.URI
 
 class StoreBuilder extends DataStoreBuilder {
   
@@ -84,4 +85,26 @@ class StoreBuilder extends DataStoreBuilder {
     !exists(esid)
   }
 
+  def isResolvedDataStoreURI(esid:DataStoreURI):Boolean = {
+    val uri = new java.net.URI(esid.getSubSchemeSpecificPart)
+    !uri.isOpaque
+  }
+  
+  /**
+   * This method provides a means of expanding existant DataStoreURI that are not resolved
+   */
+  def resolveDataStoreURI(esid:DataStoreURI,replace:Map[String,URI]):DataStoreURI = {
+    val uri = new java.net.URI(esid.getSubSchemeSpecificPart)
+    val re = """^\$(\w+)\/(.*)$""".r
+    if(!uri.isOpaque) return esid
+    val newUri:URI = uri.getRawSchemeSpecificPart match {
+      case `re`(repl,path) =>
+        println(uri.getRawSchemeSpecificPart +  "Found "+repl + " and path "+ path)
+        if(replace.isDefinedAt(repl)) replace(repl).resolve(path)
+        else null
+      case _ => (new File(".")).toURI.resolve(uri.getRawSchemeSpecificPart)
+    }
+    if(newUri != null) DataStoreURI.fromStorageString("vcc-store:directory:"+newUri.toString)
+    else null
+  }
 }

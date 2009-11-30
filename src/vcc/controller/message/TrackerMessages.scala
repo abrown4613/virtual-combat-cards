@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,9 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e.controller.response
+package vcc.controller.message
 
-import vcc.dnd4e.model._
+trait TransactionalAction {
+  def description():String
+}
 
-case class UpdateEffects(who:Symbol,effects:List[Effect])
+@deprecated 
+case class StartTransaction(desc:String)
+
+@deprecated 
+case class EndTransaction(desc:String)
+
+trait TrackerControlMessage
+case class AddObserver(obs:scala.actors.Actor) extends TrackerControlMessage
+case class ClearTransactionLog() extends TrackerControlMessage
+case class Undo() extends TrackerControlMessage
+case class Redo() extends TrackerControlMessage

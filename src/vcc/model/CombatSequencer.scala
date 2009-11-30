@@ -21,17 +21,15 @@ import vcc.controller.transaction._
 
 /**
  * Control the sequence of combatants, includes a list of combatant in sequence
- * and a set of Combatant in reserve.
+ * and a set of Combatant in reserve. This object contains Undoable and send out
+ * a CombatSequenceChanged notification.
  */
-class CombatSequencer extends ChangeNotifier {
+class CombatSequencer[C <: ChangeNotification](notification: List[Symbol]=>C ) extends ChangeNotifier {
   type T=Symbol
   private var _sequence= new Undoable[List[T]](Nil,x=>ChangeNotificationPromise(this))
   private var _reserve= new Undoable[Set[T]](Set.empty[T],x=>ChangeNotificationPromise(this))
   
-  def createNotification():ChangeNotification = {
-    vcc.dnd4e.view.actor.SetSequence(this.sequence.toSeq)
-  }
-  
+  def createNotification():ChangeNotification = notification(this.sequence)
   
   /**
    * Move to combatant to end of sequence, just before reserve

@@ -42,7 +42,8 @@ object BootStrap extends StartupRoutine {
 	var createCompendium = false
 	var importSampleCompendium = false
 	logger.info("Starting VCC DND4E components...")
-
+	logger.debug("VCC version {} starting",version)
+ 
 	callStartupStep(srw,"Loading configuration") {
 	    if(!ConfigurationFinder.foundConfiguration) {
 	      logger.info("Can't find the configuration, will configure")
@@ -138,17 +139,12 @@ object BootStrap extends StartupRoutine {
     }
       
     callStartupStep(srw,"Core Tracker") {
-    	import vcc.controller._
-    	import vcc.dnd4e.controller._
-    	import vcc.dnd4e.model.TrackerContext
+    	import vcc.controller.Tracker
+    	import vcc.dnd4e.controller.TrackerController
 
-    	val t = Tracker.initialize(new TrackerController(new TrackerContext){
-    	  addQueryHandler(new vcc.dnd4e.controller.TrackerQueryHandler(context))
-    	  addPublisher(new vcc.dnd4e.controller.DefaultChangePublisher())
-    	  val processor= new vcc.controller.TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler with TrackerContextHandler with InitiativeActionHandler
-    	  addPublisher(new vcc.dnd4e.controller.TrackerEffectPublisher(context))
-    	})
-    	//Make sure it got registered
+    	val t = Tracker.initialize(new TrackerController)
+
+        //Make sure it got registered
     	Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]
     }
       

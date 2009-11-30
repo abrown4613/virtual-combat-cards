@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,18 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e.view
+package vcc.dnd4e.view.tabular
 
-import vcc.util.swing.ProjectionTableLabelFormatter
-import vcc.dnd4e.model.CombatantType
+import vcc.util.swing.{ProjectionTableLabelFormatter}
+import vcc.dnd4e.model.{CombatantType,CombatantState,CombatState}
 
-object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewCombatant] {
+class CombatantStateTableColorer(var acting:Option[Symbol]) extends ProjectionTableLabelFormatter[CombatantState] {
   import java.awt.Color
   import vcc.dnd4e.model.InitiativeState._
   import vcc.dnd4e.model.HealthTracker.Status._
   
-  private val cellFont=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN,14)
+  private val fontSize = if(java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight()>7000) 14 else 12
+  private val cellFont=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN,fontSize)
+  private val cellFontBold=new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD,fontSize)
 
   // Pair[Color,Color]  where (background,foreground)
   private val grayed=(Color.LIGHT_GRAY,Color.BLACK)
@@ -45,11 +47,11 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
     label.setForeground(cp._2)
   }
   
-  def render(label:javax.swing.JLabel, col:Int, isSelected:Boolean, cmb: ViewCombatant):Unit = {
-    var is=cmb.initTracker.state
+  def render(label:javax.swing.JLabel, col:Int, isSelected:Boolean, cmb: CombatantState):Unit = {
+    var is=cmb.init.state
     var hs=cmb.health.status
     val normalBack=if(cmb.isCharacter) charBackground else normal
-    label.setFont(cellFont)
+    label.setFont(if(acting.isDefined && acting.get == cmb.id) cellFontBold else cellFont)
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label,col match {
       case 0 => if(cmb.isCharacter) charCallout else monsterCallout
@@ -69,4 +71,9 @@ object ViewCombatantTableColorer extends ProjectionTableLabelFormatter[ViewComba
       case _ => normalBack
     })
   }
+  
+  def updateActing(nctx:Option[Symbol]) {
+    acting = nctx
+  }
 }
+
