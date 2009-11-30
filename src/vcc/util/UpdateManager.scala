@@ -18,6 +18,7 @@
 package vcc.util
 
 import java.net.URL
+import java.io.File
 import org.xml.sax.InputSource
 import scala.xml.XML
 import vcc.util.swing.SwingHelper
@@ -112,7 +113,6 @@ object UpdateManager {
   def runUpgradeProcess(url:java.net.URL) {
 
 	import vcc.util.swing.multipanel.ReleaseSelectPanel
-    import java.io.File
     
     def scanForVersions(afile:File): List[(Symbol,Release)] = {
       val rels=checkAvailableVersions(new InputSource(new java.io.FileInputStream(afile)))
@@ -138,7 +138,7 @@ object UpdateManager {
     
 	umd.showMessage(false, "Checking for a new version...")
 
-	val afile = umd.downloadFile(url, java.io.File.createTempFile("vcc",".xml") )
+	val afile = umd.downloadFile(url, File.createTempFile("vcc",".xml") )
     if(afile!=null) {
       var releases=scanForVersions(afile)
       if(releases.length>0) {
@@ -153,7 +153,7 @@ object UpdateManager {
             umd.showMessage(false,"Checking and unpacking downloaded file...")
             // We have the file
             if(checkFileMD5Sum(dfile, release.md5)) {
-              PackageUtil.extractFilesFromZip(dfile,new File(System.getProperty("user.dir")))
+              PackageUtil.extractFilesFromZip(dfile,getInstallDirectory)
               umd.showMessage(true,"<html><body>Download and extraction completed successfully.<p>To update Virtual Combat Cards, exit and restart it.</body></html>")
             } else {
               umd.showMessage(true,"<html><body>Downloaded file seems to be corrupted. <p> Download and extract manually or report a bug on the site</body></html>")
@@ -174,4 +174,11 @@ object UpdateManager {
 	umd.dispose()
   }
 
+  /**
+   * Returns a File which points to the directory in which VCC Binary installation is
+   * located.
+   * @returm File The VCC install directory
+   */
+  def getInstallDirectory():File = new File(System.getProperty("vcc.install", System.getProperty("user.dir",".")))
+  
 }

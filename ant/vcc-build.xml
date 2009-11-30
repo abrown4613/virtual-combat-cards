@@ -42,6 +42,8 @@
 			<fileset refid="deplibs" />
 		</copy>
 		
+		<copy todir="${installer}" verbose="true" file="ant/sample-comp.zip" />
+		
 		<copy todir="${installer}" verbose="true">
 			<fileset refid="readme" />
 		</copy>
