@@ -17,11 +17,13 @@
 //$Id$
 package vcc.util.swing
 
+import java.awt.{Desktop,Toolkit}
+import javax.swing.SwingUtilities
+import scala.swing.Frame
+
 object SwingHelper {
   
   private val logger = org.slf4j.LoggerFactory.getLogger("infra")
-  
-  import javax.swing.SwingUtilities
   
   def makeRunnable(f: =>Unit):java.lang.Runnable =
     new java.lang.Runnable {
@@ -64,5 +66,13 @@ object SwingHelper {
       case e => logger.error("Failed to open browser on URL: "+url,e)
     }
   }
+  
+  def centerFrameOnScreen(frame:Frame) {
+	val screen = Toolkit.getDefaultToolkit.getScreenSize
+    val height = frame.preferredSize.height
+    val width = frame.preferredSize.width
+	frame.peer.setBounds((screen.width - width)/2, (screen.height - height)/2,width,height)
+  }
+  
 }
 

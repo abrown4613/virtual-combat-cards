@@ -56,6 +56,7 @@ class NewCombatantDialog(owner: Frame) extends ModalDialog[CombatantEntity](owne
     add(new Button(cancelAction))
   }
   minimumSize = new java.awt.Dimension(250,200)
+  placeOnScreenCenter()
   
   private def toggleOkAction() {
     okAction.enabled = if(idField.enabled)
