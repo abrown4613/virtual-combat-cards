@@ -24,9 +24,12 @@ import vcc.controller.transaction._
 class TrackerContext {
   val idgen= new IDGenerator(1,50)
   
-  val sequence=new CombatSequencer
+  val sequence=new CombatSequencer[SequenceChange]( x => SequenceChange(x.toSeq) )
   
-  private var _undo_map=new Undoable[Map[Symbol,TrackerCombatant]](Map.empty[Symbol,TrackerCombatant],un=>RosterUpdate(un.value))
+  private var _undo_map=new Undoable[Map[Symbol,TrackerCombatant]](
+    Map.empty[Symbol,TrackerCombatant],
+    un=>RosterUpdate(Map(un.value.map(me =>(me._1 ->me._2.toState())).toSeq:_*))
+  )
   
   def map_=(m:Map[Symbol,TrackerCombatant])(implicit trans:Transaction)= _undo_map.value=m
   def map = _undo_map.value

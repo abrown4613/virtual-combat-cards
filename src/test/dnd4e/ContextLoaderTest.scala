@@ -45,7 +45,7 @@ class ContextLoaderTest extends TestCase {
     handler.dispatch(trans1,request.AddCombatants(List(CombatantDefinition('A,null,fighterID),CombatantDefinition(null,null,monsterID))))
     
     trans1.commit(trans1pub)
-    assert(trans1pub.set.contains(vcc.dnd4e.view.actor.SetSequence(List('A,Symbol("1")))))
+    //FIXME assert(trans1pub.set.contains(CombatSequenceChanged(List('A,Symbol("1")))))
   }
 
 }

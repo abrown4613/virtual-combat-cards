@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,9 +15,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e.view
 
-trait SequenceView[T] {
-  def updateSequence(seq:Seq[T]):Unit
+package vcc.infra.docking
+
+import java.io.{OutputStream,InputStream}
+
+case class DockID(name:String)
+
+trait DockingActionController {
+  
+  def restore(dock:DockID)
+  
+  def restoreFocus(dock:DockID)
+  
+  def storeLayout(os:OutputStream)
+  
+  def restoreLayout(in:InputStream)
+  
+  def restoreDefaultLayout()
 }
+
+import scala.swing.Action
+
+class DockableRestoreAction(docker:DockingActionController,id:DockID,text:String) extends Action(text) {
+  def apply() {
+	docker.restore(id)
+  }
+}
+
+class DockableFocusAction(docker:DockingActionController,id:DockID,text:String) extends Action(text) {
+  def apply() {
+	docker.restoreFocus(id)
+  }
+}
+
+

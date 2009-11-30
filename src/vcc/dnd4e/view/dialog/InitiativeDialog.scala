@@ -17,15 +17,16 @@
 //$Id$
 package vcc.dnd4e.view.dialog
 
-
+import java.awt.Window
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
 
 import vcc.util.DiceBag
-import vcc.dnd4e.controller._
+import vcc.dnd4e.model.CombatantState
+import scala.util.Sorting
 
-class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
+class InitiativeDialog(window:Frame,director:PanelDirector) extends ModalDialog[Seq[Symbol]](window,"Roll Initiative") {
 
   val initTable=new vcc.util.swing.ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
   val table= new EnhancedTable {
@@ -38,32 +39,21 @@ class InitiativeDialog(tracker:scala.actors.Actor) extends DialogFrame {
     setColumnWidth(3,35)
     setColumnWidth(4,70)
   }	
-  title="Roll Initative"
   
   private val groupCheckbox= new CheckBox("Group similar (same name and initiative bonus)")
-  contents= new MigPanel("flowy") {
-    add( new ScrollPane {contents=table}, "growx,growy")
-    add(groupCheckbox)
+  contents= new MigPanel("") {
+    add( new ScrollPane {contents=table}, "growx,growy,wrap")
+    add(groupCheckbox,"wrap")
+    add(new Button(okAction),"split 3")
+    add(new Button(cancelAction),"")
   }
   minimumSize=new java.awt.Dimension(360,400)
-  listenTo(this)
-  reactions += {
-    case DialogClosed(diag,false) if(diag==this)=>
-      val seq=helper.InitiativeRoller.rollInitiative(groupCheckbox.selected,initTable.content.toList)
-      tracker ! request.StartCombat(seq)
-  }
 
-  // This will build my entries based on TrackerCombatant
-  def buildEntryFromCombatant(cmb:vcc.dnd4e.model.TrackerCombatant):InitiativeDialogEntry = {
-    new InitiativeDialogEntry(cmb.id,cmb.name,cmb.init,0,false)
-  }
-  
-  override def visible_=(state:Boolean) {
-    if(state) {
-      var resp=(tracker !? actions.QueryCombatantMap(buildEntryFromCombatant)).asInstanceOf[List[InitiativeDialogEntry]]
-      var arr=scala.util.Sorting.stableSort[InitiativeDialogEntry](resp,(a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name})
-      initTable.content = arr.toSeq
-    }
-    super.visible=state
+  initTable.content = Sorting.stableSort[InitiativeDialogEntry](
+    director.currentState.combatantSequence.map(cmb=>new InitiativeDialogEntry(cmb.id,cmb.entity.name,cmb.entity.initiative,0,false)).toList,
+    (a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name}).toSeq
+    
+  def processOK() {
+    dialogResult = Some(helper.InitiativeRoller.rollInitiative(groupCheckbox.selected,initTable.content.toList))
   }
 }

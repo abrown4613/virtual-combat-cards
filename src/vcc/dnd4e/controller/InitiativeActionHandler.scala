@@ -18,10 +18,9 @@
 package vcc.dnd4e.controller
 
 import vcc.controller.TransactionalProcessor
-import vcc.controller.actions.TransactionalAction
+import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
-import vcc.controller.ChangePublisher
 import InitiativeTracker.actions._
 import request.InternalInitiativeAction
 
@@ -111,15 +110,5 @@ trait InitiativeActionHandler extends TransactionalProcessor[TrackerContext]{
 		msgQueue.enqueue(InternalInitiativeAction(next,StartRound),InternalInitiativeAction(next,EndRound))
 	  }
     }
-  }
-}
-
-class InitiativeChangePublisher(context:TrackerContext) extends ChangePublisher[TrackerContext] {
-  def publish(context:TrackerContext, changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
-    changes.foreach {
-      case s:vcc.dnd4e.view.actor.SetSequence => buffer ! s
-      case CombatantUpdate(comb, s:InitiativeTracker) => buffer ! vcc.dnd4e.view.actor.SetInitiative(comb,s)
-      case _ =>
-    }	
   }
 }

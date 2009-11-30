@@ -19,11 +19,24 @@ package vcc.dnd4e.model
 
 import vcc.controller.transaction._
 
-case class CombatantUpdate(comb:Symbol, obj:Any) extends ChangeNotification
-case class RosterUpdate(obj:Map[Symbol,TrackerCombatant]) extends ChangeNotification
+trait CombatantAspect 
+
+case class CombatantComment(text:String) extends CombatantAspect
+
+//Change notifications in a closed class
+abstract sealed class CombatStateChange extends ChangeNotification
+
+case class CombatantUpdate(comb:Symbol, obj:CombatantAspect) extends CombatStateChange
+
+case class RosterUpdate(obj:Map[Symbol,CombatantState]) extends CombatStateChange
+
+case class SequenceChange(seq:Seq[Symbol]) extends CombatStateChange
+
+case class CombatStateChanged(change:Seq[CombatStateChange])
+
 
 class TrackerCombatant(val id:Symbol, val alias:String, val name:String,val healthDef:HealthDefinition,val init:Int, val ctype:CombatantType.Value, val entity:CombatantEntity ) {
-  private var _health=new Undoable[HealthTracker](HealthTracker.createTracker(healthDef),(uv)=>CombatantUpdate(id,uv.value))
+  private val _health=new Undoable[HealthTracker](HealthTracker.createTracker(healthDef),(uv)=>CombatantUpdate(id,uv.value))
   
   def health= _health.value
   def health_=(nh:HealthTracker)(implicit trans:Transaction) {
@@ -31,13 +44,13 @@ class TrackerCombatant(val id:Symbol, val alias:String, val name:String,val heal
     this
   }
   
-  private val _info= new Undoable[String]("",uv=>{CombatantUpdate(id,uv.value)})
+  private val _info= new Undoable[String]("",uv=>{CombatantUpdate(id,CombatantComment(uv.value))})
   def info= _info.value
   def info_=(str:String)(implicit trans:Transaction) { _info.value=str; this }
   
-  var it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
+  val it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
   
-  private var _effects=new Undoable[EffectList](EffectList(Nil),uv=>{CombatantUpdate(id,uv.value)})
+  private val _effects=new Undoable[EffectList](EffectList(Nil),uv=>{CombatantUpdate(id,uv.value)})
   
   /**
    * Return the lists of active effect on the list.
@@ -50,4 +63,5 @@ class TrackerCombatant(val id:Symbol, val alias:String, val name:String,val heal
     this 
   }
   
+  def toState():CombatantState  = CombatantState(id,alias,entity,_health.value,it.value,info,effects.effects) 
 }

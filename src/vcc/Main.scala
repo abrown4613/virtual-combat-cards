@@ -21,6 +21,7 @@ package vcc
 import vcc.infra.startup._
 import scala.swing.Frame
 import vcc.infra.LogService
+import vcc.util.swing.SwingHelper
 
 object Main {
 
@@ -40,7 +41,7 @@ object Main {
 
     val frame = SplashWindow.showSplash(vcc.dnd4e.BootStrap)
     if(frame != null) {
-      frame.visible = true
+      SwingHelper.invokeLater{frame.visible = true}
       logger.info("Initialization complete.")
     } else {
       warnFailure(SplashWindow)

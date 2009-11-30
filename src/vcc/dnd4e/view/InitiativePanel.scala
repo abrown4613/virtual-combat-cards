@@ -19,109 +19,158 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import scala.swing.event._
-import scala.actors.Actor
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller._
-import util.swing.MigPanel
-import util.swing.ExplicitModelComboBox
-import util.swing.ContainterComboBoxModel
-import vcc.util.swing.{KeystrokeActionable,FocusCondition}
+import vcc.dnd4e.controller.request._
+import vcc.util.swing.{MigPanel,KeystrokeContainer,KeystrokeBinder,ClickButtonAction,ExplicitModelComboBox,ContainterComboBoxModel}
+import vcc.infra.docking._
 
-class InitiativePanel(tracker:Actor) extends MigPanel("flowx","[50%,fill][50%,fill]","") with ContextualView[ViewCombatant] with SequenceView[ViewCombatant]{
-  private val startRound_btn=new Button("Start Round") with KeystrokeActionable
+
+class InitiativePanel(director:PanelDirector) extends MigPanel("flowx,ins 2,hidemode 3","[20%,fill][40%,fill][40%,fill]","") 
+ with CombatStateObserver with ContextObserver with ScalaDockableComponent with KeystrokeContainer 
+{
+  private val startRound_btn=new Button("Start turn")
   startRound_btn.tooltip=("Start round of the first combatant")
-  startRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"alt S",Action("Start round") { startRound_btn.doClick() })
 
-  private val endRound_btn=new Button("End Round") with KeystrokeActionable
+  private val endRound_btn=new Button("End turn")
   endRound_btn.tooltip=("End round of the first combatant")
-  endRound_btn.bindKeystrokeAction(FocusCondition.WhenWindowFocused,"alt E",Action("End round") { endRound_btn.doClick() })
 
-  private val moveUp_btn=new Button("Move Up & Start Round")
+  private val moveUp_btn=new Button("Move up & Start turn")
   private val delay_btn=new Button("Delay")
-  private val ready_btn=new Button("Ready Action")
-  private val executeReady_btn=new Button("Execute Ready")
+  			  delay_btn.tooltip = "Delay the round of the first combatant"
+  private val ready_btn=new Button("Ready action")
+  			  ready_btn.tooltip = "Ready an action for the first combatant"
+  private val executeReady_btn=new Button("Execute ready")
+              executeReady_btn.tooltip = "Make a combatant that is ready execute its action, first combatant needs to be acting"
   private val moveBefore_btn=new Button("Move")
   private val moveLabel=new Label("Move select combatant before:")
-  moveLabel.horizontalAlignment= scala.swing.Alignment.Right
+              moveLabel.horizontalAlignment= scala.swing.Alignment.Right
+  private val firstLabel=new Label("First can:")
+              firstLabel.horizontalAlignment= scala.swing.Alignment.Right
+  private val targetLabel=new Label("Target can:")
+              targetLabel.horizontalAlignment= scala.swing.Alignment.Right
   private val candidateBefore = new ContainterComboBoxModel[String](Nil)
   private val before_Combo=new ExplicitModelComboBox[String](candidateBefore)
   
   moveBefore_btn.tooltip = "Move select combatant to a position before the combatant selected on the combo box to the left"
 
-  private var _first:ViewCombatant=null
-  private var _seq:List[ViewCombatant]=Nil
+  private var context:Option[Symbol] = None
+  private var _first:CombatantState=null
+  private var combatState:CombatState = director.currentState
   
   xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
-  contents+=startRound_btn
-  add(endRound_btn,"wrap, grow")
-  contents+=delay_btn
-  add(moveUp_btn,"wrap")
-  contents+=executeReady_btn
+  add(firstLabel,"align right")
+  add(startRound_btn,"")
+  add(endRound_btn,"")
+  add(delay_btn,"wrap")
   add(ready_btn,"wrap")
-  add(moveLabel,"align right")
+  add(targetLabel,"align right")
+  add(executeReady_btn)
+  add(moveUp_btn,"wrap")
+  add(moveLabel,"align right,span 2")
   add(before_Combo,"split 2")
   add(moveBefore_btn)
-  border=javax.swing.BorderFactory.createTitledBorder("Initiative Actions")
   
-  for(x<-contents) { listenTo(x); x.enabled= x.isInstanceOf[Label] }
+  for(x<-contents) listenTo(x)
+
+  updatePanel()
   
   reactions+= {
     case ButtonClicked(this.startRound_btn) if(_first!=null) => 
-      tracker ! request.StartRound(_first.id)
-      Thread.sleep(100)
-      changeContext(Some(context))
+      director requestAction StartRound(_first.id)
     case ButtonClicked(this.endRound_btn) if(_first!=null) => 
-      tracker ! request.EndRound(_first.id)
-      Thread.sleep(100)
-      changeContext(Some(context)) //TODO: This is a hack
-    case ButtonClicked(this.moveUp_btn) => tracker ! request.MoveUp(context.id)
-    case ButtonClicked(this.delay_btn) => tracker ! request.Delay(context.id)
-    case ButtonClicked(this.executeReady_btn) => tracker ! request.ExecuteReady(context.id)
-    case ButtonClicked(this.ready_btn) => tracker ! request.Ready(context.id)
+      director requestAction EndRound(_first.id)
+    case ButtonClicked(this.ready_btn) if(_first!=null) => 
+      director requestAction request.Ready(_first.id)
+    case ButtonClicked(this.delay_btn) if(_first!=null) => 
+      director requestAction request.Delay(_first.id)
+
+    case ButtonClicked(this.moveUp_btn) => 
+      director requestAction request.MoveUp(context.get)
+    case ButtonClicked(this.executeReady_btn) => 
+      director requestAction request.ExecuteReady(context.get)
+    
     case ButtonClicked(this.moveBefore_btn) if(before_Combo.item!=null)=>
-      tracker ! request.MoveBefore(context.id,Symbol(before_Combo.item))
+      director requestAction MoveBefore(context.get,Symbol(before_Combo.item))
   }
   
-  def changeContext(nctx:Option[ViewCombatant]) = {
-    if(nctx.isDefined) {
-      var itt=nctx.get.initTracker
-      var first=(nctx.get==_first)
-      var state=nctx.get.initTracker.state
+  def changeContext(nctx:Option[Symbol],isTarget:Boolean) = {
+    if(isTarget) {
+      context = nctx
+    }
+    if(nctx.isDefined && isTarget) updatePanel()
+  }
+  private def updatePanel() {
+    val cmbo = combatState.getCombatant(context)
+    if(cmbo.isDefined) {
+      val comb = cmbo.get
+	  val itt=comb.init
+      val first=(context.get == _first.id)
+      val state=itt.state
       if(_first!=null) {
-    	startRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.StartRound)
-    	endRound_btn.enabled=_first.initTracker.canTransform(true,InitiativeTracker.actions.EndRound)
+    	startRound_btn.enabled = _first.init.canTransform(true,InitiativeTracker.actions.StartRound)
+    	endRound_btn.enabled = _first.init.canTransform(true,InitiativeTracker.actions.EndRound)
+    	delay_btn.enabled = _first.init.canTransform(true,InitiativeTracker.actions.StartRound)
+    	ready_btn.enabled = _first.init.canTransform(true,InitiativeTracker.actions.Ready)
       } else {
-        startRound_btn.enabled=false
-        endRound_btn.enabled=false
+        startRound_btn.enabled = false
+        endRound_btn.enabled = false
+        delay_btn.enabled = false
+        ready_btn.enabled = false
       }
-      moveBefore_btn.enabled = nctx.get.initTracker.state!=InitiativeState.Acting && nctx.get.initTracker.state!=InitiativeState.Reserve
-      before_Combo.enabled=moveBefore_btn.enabled
-      moveLabel.enabled=moveBefore_btn.enabled
-      ready_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.Ready)
-      moveLabel.text="Move ["+ nctx.get.id.name  +"] before:"
-      
-      //endRound_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.EndRound)
+      moveBefore_btn.enabled = state != InitiativeState.Acting && state != InitiativeState.Reserve
+      before_Combo.enabled = moveBefore_btn.enabled
+      moveLabel.enabled = moveBefore_btn.enabled
+
       moveUp_btn.enabled=(
-        itt.canTransform(first,InitiativeTracker.actions.MoveUp) && (
-          ((state==InitiativeState.Delaying) && (_first.initTracker.state!=InitiativeState.Acting)) ||
-          ((state==InitiativeState.Ready) && (_first.initTracker.state==InitiativeState.Acting)) ||
-          (state==InitiativeState.Reserve && (_first.initTracker.state!=InitiativeState.Acting))
-          ));
-      delay_btn.enabled=itt.canTransform(first,InitiativeTracker.actions.StartRound)
-      executeReady_btn.enabled=(itt.canTransform(first,InitiativeTracker.actions.ExecuteReady)&& _first.initTracker.state==InitiativeState.Acting)
+        itt.canTransform(first,InitiativeTracker.actions.MoveUp) && (_first != null && (
+          ((state==InitiativeState.Delaying) && (_first.init.state!=InitiativeState.Acting)) ||
+          ((state==InitiativeState.Ready) && (_first.init.state==InitiativeState.Acting)) ||
+          (state==InitiativeState.Reserve && (_first.init.state!=InitiativeState.Acting))
+          )));
+      executeReady_btn.enabled=(itt.canTransform(first,InitiativeTracker.actions.ExecuteReady)&& _first.init.state==InitiativeState.Acting)
       
       // Get possible combatant to move before, exclude acting and reserver combatants
-      val before=_seq.filter {c=> c.initTracker.state!=InitiativeState.Acting && c.initTracker.state!=InitiativeState.Reserve }.map{c=>c.id.name}
+      val before=combatState.combatantSequence.filter {c=> c.init.state!=InitiativeState.Acting && c.init.state!=InitiativeState.Reserve }.map{c=>c.id.name}
       candidateBefore.contents = before
       before_Combo.selection.index = -1
+
+      toggleFirstButton(endRound_btn.enabled)
     } else {
-      moveLabel.text="Move select combatant before:"
-      for(x<-this.contents) { x.enabled=false; }
+      for(x<-this.contents if(x.isInstanceOf[Button])) { 
+        x.enabled=false
+      }
+      toggleFirstButton(false)
     }
-  }
-  def updateSequence(seq:Seq[ViewCombatant]):Unit= {
-    _first=if(seq.isEmpty)null else seq(0)
-    _seq=seq.toList
+    firstLabel.text = if(_first != null) "["+ _first.id.name +"] can:" else "First can:"
+    targetLabel.text = if(context.isDefined) "["+ context.get.name +"] can:" else "Target can:"
+    moveLabel.text=if(context.isDefined) "Move [ "+ context.get.name +" ] before:" else "Move target before:"
   }
   
+  private def toggleFirstButton(canEnd:Boolean) {
+	endRound_btn.visible = canEnd
+    ready_btn.visible = canEnd
+    startRound_btn.visible = ! canEnd
+    delay_btn.visible = ! canEnd
+  }
+  
+  def combatStateChanged(newState:CombatState,changes:CombatStateChanges) {
+    _first = if(newState.combatantSequence.isEmpty) null else newState.combatantSequence(0)
+    combatState=newState
+    updatePanel()
+  }
+  
+  val dockID = DockID("initiative")
+  val dockTitle = "Initiative Actions"
+  
+  def dockFocusComponent:javax.swing.JComponent = {
+    for(x <- contents) {
+      if(x.peer.isInstanceOf[javax.swing.JButton] && x.enabled) return x.peer
+    }
+    null
+  }
+  def registerKeystroke() {
+    KeystrokeBinder.bindKeystrokeAction(startRound_btn,true,KeystrokeBinder.FocusCondition.WhenWindowFocused,"alt S",new ClickButtonAction("init.start",startRound_btn))
+    KeystrokeBinder.bindKeystrokeAction(endRound_btn,true,KeystrokeBinder.FocusCondition.WhenWindowFocused,"alt E",new ClickButtonAction("init.end",endRound_btn))
+  }
 }

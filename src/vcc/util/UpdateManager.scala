@@ -101,40 +101,7 @@ object UpdateManager {
   def checkAvailableVersions(url: URL):Seq[Release] = {
     val stream=url.openStream()
 	checkAvailableVersions(new InputSource(stream))
-  }
-  
-  /**
-   * Download URL to file.
-   * @param url URL pointing to the file
-   * @param to File to be saved.
-   * @return True if downlaod happened correctly
-   */
-  @deprecated
-  def downloadFile(url: URL, to: java.io.File):Boolean = {
-    var is:java.io.InputStream=null
-    var os:java.io.OutputStream=null
-    try {
-      is=url.openStream()
-      val buf=new Array[Byte](1024)
-      if(to.createNewFile) {
-        os=new java.io.FileOutputStream(to)
-        var sz=is.read(buf)
-        while(sz>0) {
-          os.write(buf,0,sz)
-          sz=is.read(buf)
-        }
-        os.close()
-      }
-      is.close()
-      to.exists
-    } catch {
-      case _ =>
-        if(is!=null) is.close()
-        if(os!=null) os.close()
-        if(to.exists) to.delete()
-        false
-    }
-  }
+  }  
   
   /**
    * Fetch available version then allow user to download choosen versiona 

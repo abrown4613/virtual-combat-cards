@@ -20,6 +20,8 @@ package vcc.infra.datastore
 
 import naming._
 
+import java.net.URI
+
 case class DataStoreEntity(eid:EntityID,data:Map[String,String])
 
 class DataStoreIOException(msg:String,exception:Throwable) extends Exception(msg,exception)
@@ -53,6 +55,10 @@ trait DataStoreBuilder {
   def exists(esid:DataStoreURI):Boolean
   
   def destroy(esid:DataStoreURI):Boolean
+  
+  def isResolvedDataStoreURI(esid:DataStoreURI):Boolean
+  
+  def resolveDataStoreURI(dsu:DataStoreURI,replace:Map[String,URI]):DataStoreURI 
 }   
 
 

@@ -17,8 +17,8 @@
 //$Id$
 package vcc.dnd4e.controller
 
-import vcc.controller.actions.TransactionalAction
-import vcc.controller.{ChangePublisher,TransactionalProcessor}
+import vcc.controller.message.TransactionalAction
+import vcc.controller.{TransactionalProcessor}
 
 import vcc.dnd4e.model._
 import vcc.dnd4e.controller.request._
@@ -50,14 +50,4 @@ trait TrackerEffectHandler {
         comb.effects=comb.effects.processDelay(ally,c.id)
       })
   }                                                                               
-}
-
-class TrackerEffectPublisher(context:TrackerContext) extends ChangePublisher[TrackerContext] {
-  def publish(context:TrackerContext, changes:Seq[vcc.controller.transaction.ChangeNotification],buffer:vcc.controller.TrackerResponseBuffer) {
-    changes.foreach {
-      case CombatantUpdate(c,el:EffectList)=>
-        buffer ! response.UpdateEffects(c,el.effects)
-      case _ =>
-    }	
-  }
 }

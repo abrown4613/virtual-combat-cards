@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 	
   <property name="classpath"  value="bin"/>
-  <property name="version" value="1.0.0" />
+  <property name="version" value="1.1.0" />
   <property name="dist" value="dist" />
 	<property name="package" value="${dist}/package" />
 	<property name="deplib" value="${dist}/deplib" />
@@ -14,6 +14,9 @@
 		<exclude name="vccrun.jar"/>
 	</fileset>
 
+	<fileset id="readme" dir="ant">
+		<include name="*LICENSE.txt" />
+	</fileset>
 	<target name="treestruct">
 		<mkdir dir="${dist}"/>
   	<mkdir dir="${deplib}"/>
@@ -22,8 +25,6 @@
 		<mkdir dir="${installer}" />
   	<mkdir dir="${installer}/lib" />
   	<mkdir dir="${installer}/fs-wc" />
-  	<mkdir dir="${installer}/sample" />
-  	<mkdir dir="${installer}/sample-compendium" />
 	</target>
 	
 	<target name="vccjar">
@@ -34,30 +35,35 @@
 	</target>
 
 
-	<target name="installzip" depends="treestruct,vccjar">
+	<target name="install-dir" depends="treestruct">
 		<copy todir="${installer}/lib" file="ant/library.lst" />
 		
   	<copy todir="${installer}/lib" verbose="true">
 			<fileset refid="deplibs" />
 		</copy>
+		
+		<copy todir="${installer}" verbose="true">
+			<fileset refid="readme" />
+		</copy>
+		
   	<copy todir="${package}/slib" verbose="true">
   		<fileset dir="${deplib}" includes="log4j-1.2.15.jar" />
     </copy>
-  	<copy todir="${installer}/sample">
-  	  <fileset dir="sample"/>
-  	</copy>
   	<copy todir="${installer}/fs-wc">
   	  <fileset dir="fs-wc"/>
   	</copy>
-  	<copy todir="${installer}/sample-compendium">
-  	  <fileset dir="sample-compendium" includes="*.xml" />
-  	  <fileset dir="sample-compendium" includes="*.dat" />
-  	</copy>
+  </target>
+  	
+	<target name="installzip" depends="install-dir,vccjar">
   	<zip destfile="${package}/install.zip" basedir="${installer}" includes="**" />
 	</target>
 
-	<target name="patch-installzip" depends="treestruct,vccjar">
-  	<zip destfile="${package}/install.zip" basedir="${installer}" includes="lib/vcc.jar" />
+	<target name="patch-installzip" depends="install-dir,vccjar">
+  	<zip destfile="${package}/install.zip" basedir="${installer}"><!-- -->
+  		<include name="lib/vcc.jar" />
+  		<include name="lib/idw-gpl.jar" />
+  		<include name="lib/library.lst" />
+  	</zip>
 	</target>
 	
 	
@@ -85,6 +91,7 @@
 	</target>
 	
 	<target name="clean">
-  	<deltree dir="${dist}"/>
+  	<deltree dir="${dist}/installer"/>
+  	<deltree dir="${dist}/package"/>
   </target>
 </project>

@@ -20,7 +20,7 @@ package vcc.dnd4e.model
 /**
  * This power
  */
-case class EffectList(effects:List[Effect]) {
+case class EffectList(effects:List[Effect]) extends CombatantAspect {
   
   def add(effect:Effect):EffectList = {
     def addMark(effect:Effect,effects:List[Effect]):List[Effect] = {

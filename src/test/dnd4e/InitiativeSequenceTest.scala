@@ -20,46 +20,36 @@ package test.dnd4e
 import junit.framework.TestCase
 import vcc.controller.TransactionalProcessor
 import vcc.controller.TrackerController
-import vcc.controller.transaction.Transaction
-import vcc.controller.actions.TransactionalAction
+import vcc.controller.transaction.{Transaction,ChangeNotification}
+import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.model._
 import InitiativeState._
 import vcc.dnd4e.controller._
-
-//TODO: Must deprecate
-import  vcc.dnd4e.view.actor._ 
-
 import test.helper._
 
-trait ActionRecorder {
-  def actionsExecuted:List[TransactionalAction]
-}
-
-trait ActionAccumulator extends TransactionalProcessor[TrackerContext]{
-  self: TransactionalProcessor[TrackerContext] =>
-  
-  var actionsProcessed:List[TransactionalAction]=Nil
-  
-  override def rewriteEnqueue(action:TransactionalAction) {
-    actionsProcessed=Nil
-    super.rewriteEnqueue(action)
+trait CombatStateChangedExtrator[C] {
+  self: TrackerMockup[C] =>
+  /**
+   * This is a helper function for the tests it will return the content of the state changes,
+   * if it is a CombatStateChange
+   */
+  def extractCombatStateChanges():Seq[CombatStateChange] = {
+    self.lastChangeMessages match {
+      case CombatStateChanged(changes) => changes.toSeq
+      case _ => Nil
+    }
   }
-  
-  addHandler {
-    case msg =>
-      actionsProcessed= actionsProcessed ::: List(msg)
-  }
-}
 
+}
 
 class InitiativeSequenceTest extends TestCase {
-  var mockTracker:TrackerMockup[TrackerContext] with ActionRecorder =null
+  var mockTracker:TrackerMockup[TrackerContext] with ActionRecorder with CombatStateChangedExtrator[TrackerContext] =null
   val seqMatcher = new Matcher[Seq[Symbol]]({
-  	case SetSequence(seq) =>seq
+  	case SequenceChange(seq) =>seq
   })
 
   val initMatcher = new Matcher[(Symbol,InitiativeTracker)]({
-  	case SetInitiative(comb,s) =>(comb,s)
+  	case CombatantUpdate(comb,s:InitiativeTracker) =>(comb,s)
   })
   
   override def setUp() {
@@ -76,14 +66,11 @@ class InitiativeSequenceTest extends TestCase {
     trans1.commit(trans1pub)
     
     //Setup the test subjects
-    mockTracker=new TrackerMockup(new TrackerController(context) with ActionRecorder  {
-      //addHandler(new TrackerEffectHandler(context))
-      val processor= new TransactionalProcessor[TrackerContext](context) with InitiativeActionHandler with ActionAccumulator
-
-      addPublisher(new InitiativeChangePublisher(context))
+    mockTracker=new TrackerMockup[TrackerContext](new TrackerController(context) with ActionRecorder with TrackerControllerValidatingPublisher[TrackerContext] {
+      val processor= new TransactionalProcessor[TrackerContext](context) with InitiativeActionHandler with ActionAccumulator[TrackerContext]
       
       def actionsExecuted:List[TransactionalAction]= processor.actionsProcessed
-    }) with ActionRecorder {
+    }) with ActionRecorder with CombatStateChangedExtrator[TrackerContext] {
       def actionsExecuted:List[TransactionalAction] = this.controller.asInstanceOf[ActionRecorder].actionsExecuted
     }
   }
@@ -386,14 +373,14 @@ class InitiativeSequenceTest extends TestCase {
   } 
   
   def sequenceUnchanged() {
-    mockTracker.lastChangeMessages match {
+    mockTracker.extractCombatStateChanges match {
       case seqMatcher.findAll() => assert(true)
       case seqMatcher.findAll(x @ _*) => assert(false, "should not have changed sequence")
     }
   }
   
   def extractCombatSequence() = {
-    mockTracker.lastChangeMessages match {
+    mockTracker.extractCombatStateChanges match {
       case seqMatcher.findAll(iseq) => iseq
       case _ => 
         assert(false,"Cant get new sequence list for matcher "+seqMatcher)
@@ -402,7 +389,7 @@ class InitiativeSequenceTest extends TestCase {
   }
   
   def extractCombatantInitiatives():Seq[(Symbol,InitiativeTracker)] = {
-    mockTracker.lastChangeMessages match {
+    mockTracker.extractCombatStateChanges match {
       case initMatcher.findAll(iseq @ _*) => iseq
     }
   }

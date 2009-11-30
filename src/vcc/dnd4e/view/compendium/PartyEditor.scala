@@ -25,10 +25,11 @@ import vcc.infra.datastore.naming.{EntityID,DataStoreURI}
 
 import vcc.dnd4e.domain.compendium._
 import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.dnd4e.model.{PartyMember,PartyLoader}
+import vcc.dnd4e.model.{PartyMember,PartyFile}
 import vcc.model.Registry
+import vcc.dnd4e.view.helper.PartyLoader
 
-class PartyEditor extends Frame {
+class PartyEditor(director:PanelDirector) extends Frame {
   
   class PartyTableEntry(val eid:EntityID, val name: String, var alias:String, var id:String, var qty:Int, val xp:Int) extends Ordered[PartyTableEntry] {
     def toIndividual():Iterable[PartyTableEntry] = (if(qty == 1) Seq(this)
@@ -165,7 +166,7 @@ class PartyEditor extends Frame {
     var file=FileChooserHelper.chooseSaveFile(table.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
       val pml = expandEntries(partyTableModel.content).map(_.toPartyMember())
-      PartyLoader.saveToFile(null,file.get,pml)
+      PartyFile.saveToFile(file.get,pml)
     }    
   }
   
@@ -173,7 +174,7 @@ class PartyEditor extends Frame {
     var file=FileChooserHelper.chooseOpenFile(table.peer,FileChooserHelper.partyFilter)
     if(file.isDefined) {
       val es = Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).get
-      var combs=PartyLoader.loadFromFile(Registry.get[DataStoreURI]("Compendium").get,file.get)
+      var combs=PartyLoader.validatePartyLoadAndWarn(menuBar,PartyFile.loadFromFile(file.get))
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
         val pe = entitySummaryToPartyEntry(es.getEntitySummary(pm.eid))
@@ -191,8 +192,7 @@ class PartyEditor extends Frame {
   }
   
   private def doAddToCombat() {
-    val esid = Registry.get[DataStoreURI]("Compendium").get
-	PartyLoader.loadToBattle(esid,expandEntries(partyTableModel.content).map(_.toPartyMember))
+	PartyLoader.loadToBattle(director,this.menuBar,expandEntries(partyTableModel.content).map(_.toPartyMember))
   }
 
   private def expandEntries(ol:Seq[PartyTableEntry]):Seq[PartyTableEntry] = ol.flatMap[PartyTableEntry](x => x.toIndividual()) 

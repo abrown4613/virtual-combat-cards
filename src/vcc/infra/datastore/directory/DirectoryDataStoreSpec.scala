@@ -22,6 +22,7 @@ import org.specs._
 import org.specs.runner.JUnit4
 import vcc.infra.datastore.DataStoreSpec
 import vcc.infra.datastore.naming._
+import java.io.File
 
 class DirectoryDataStoreTest extends JUnit4(DirectoryDataStoreSpec)
 
@@ -54,4 +55,60 @@ object DirectoryDataStoreSpec extends DataStoreSpec {
       ef must_== Nil
     }
   }
+  
+  "Directory DataStoryURI" should {
+    "accept absolute URI" in {
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb must notBeNull
+      dsb.isResolvedDataStoreURI(testStoreURI) must beTrue
+    }
+    
+    "leave absolute URI unchanged " in {
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb must notBeNull
+      dsb.isResolvedDataStoreURI(testStoreURI) must beTrue
+      dsb.resolveDataStoreURI(testStoreURI,Map()) must_== testStoreURI
+    }
+    "replace a variable to become absolute" in {
+      val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path")
+      val repl = (new java.io.File(".")).toURI
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb.isResolvedDataStoreURI(baseURI) must beFalse
+      val resolved = dsb.resolveDataStoreURI(baseURI,Map("VAL"->repl))
+      resolved must notBeNull
+      dsb.isResolvedDataStoreURI(resolved) must beTrue
+    }
+
+    "replace a variable to become absolute" in {
+      val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path/to/some")
+      val repl = (new File(System.getProperty("java.io.tmpdir"))).toURI
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb.isResolvedDataStoreURI(baseURI) must beFalse
+      val resolved = dsb.resolveDataStoreURI(baseURI,Map("VAL"->repl))
+      resolved must notBeNull
+      dsb.isResolvedDataStoreURI(resolved) must beTrue
+      resolved.uri.toString must_== "vcc-store:directory:"+repl.toString+"path/to/some"
+    }
+
+    "replace relative URL with current dir + path" in {
+      val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:path/to/some.sa")
+      val pwd = new File(System.getProperty("user.dir"))
+      val repl = pwd.toURI
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb.isResolvedDataStoreURI(baseURI) must beFalse
+      val resolved = dsb.resolveDataStoreURI(baseURI,Map())
+      resolved must notBeNull
+      dsb.isResolvedDataStoreURI(resolved) must beTrue
+      resolved.uri.toString must_== "vcc-store:directory:"+(new File(pwd,"path/to/some.sa").toURI.toString)
+    }
+    "must return null if it cant be resolved" in {
+      val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path/to/some")
+      val repl = (new File(".")).toURI
+      val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
+      dsb.isResolvedDataStoreURI(baseURI) must beFalse
+      dsb.resolveDataStoreURI(baseURI,Map("OTHER"->repl)) must beNull
+    }
+    
+  }
+  
 }

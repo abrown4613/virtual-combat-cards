@@ -19,8 +19,9 @@ package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.TableModelRowProjection
 import vcc.dnd4e.model.{Effect,Condition}
+import vcc.dnd4e.controller.request.UpdateEffect
 
-class EffectTableProjection(tracker:scala.actors.Actor) extends TableModelRowProjection[(Symbol,Int,Effect)]{
+class EffectTableProjection(director:PanelDirector) extends TableModelRowProjection[(Symbol,Int,Effect)]{
   
   val columns:List[(String,java.lang.Class[_])] = List(
     ("Src",classOf[String]),
@@ -37,6 +38,6 @@ class EffectTableProjection(tracker:scala.actors.Actor) extends TableModelRowPro
   
   val setter:PartialFunction[(Int,(Symbol,Int,Effect),Any),Unit]= {
     case (2,(who,pos,Effect(_,Condition.Generic(x),_,_)),newvalue) =>
-      tracker ! vcc.dnd4e.controller.request.UpdateEffect(who,pos,Condition.Generic(newvalue.asInstanceOf[String]))
+      director requestAction UpdateEffect(who,pos,Condition.Generic(newvalue.asInstanceOf[String]))
   }
 }

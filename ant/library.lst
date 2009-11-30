@@ -9,4 +9,5 @@ log4j-1.2.15.jar
 slf4j-api-1.5.8.jar
 slf4j-log4j12-1.5.8.jar
 core-renderer.jar
+idw-gpl.jar
 vcc.jar

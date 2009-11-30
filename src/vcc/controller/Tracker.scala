@@ -23,6 +23,7 @@ import scala.actors.Actor.loop
 import vcc.controller.transaction._
 import vcc.model.Registry
 import vcc.infra.startup.StartupStep
+import vcc.controller.message.TransactionalAction
 
 /**
  * Tracker actor handles the core logic for the event dispatch loop. It controls
@@ -31,7 +32,7 @@ import vcc.infra.startup.StartupStep
  * data to be passed on to the observer.
  * @param controller Action and query logic controller
  */
-class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep with TransactionChangePublisher {
+class Tracker(controller:TrackerController[_]) extends Actor with StartupStep with TransactionChangePublisher {
   
   //TODO: More effective validation
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
@@ -39,11 +40,11 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
   
   private var observers:List[Actor]=Nil
   
-  private val _tlog= new TransactionLog[actions.TransactionalAction]()
+  private val _tlog= new TransactionLog[TransactionalAction]()
   
-  class ComposedAction(val name:String) extends actions.TransactionalAction {
-    private var acts:List[actions.TransactionalAction] =Nil
-    def add(act:actions.TransactionalAction) {
+  class ComposedAction(val name:String) extends TransactionalAction {
+    private var acts:List[TransactionalAction] =Nil
+    def add(act:TransactionalAction) {
       acts=act::acts
     }
     def description():String= name
@@ -54,7 +55,7 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
   
   def startTransaction() = if(_composedAction!=null) _composedAction.transaction else new Transaction()
   
-  def closeTransaction(action:actions.TransactionalAction, trans:Transaction) {
+  def closeTransaction(action:TransactionalAction, trans:Transaction) {
     if(_composedAction==null || (_composedAction eq action)) {
       //Need to close composed transcation or a simple transaction
       trans.commit(this) 
@@ -68,28 +69,21 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
     }
   }
   
-  private def sendToObservers(mbuf:TrackerResponseBuffer) {
-    for(obs<-observers) {
-      for(msg<-mbuf.messages) obs ! msg
-    }
-  }
-  
   /**
    * Publish changes to the observers
    */
   def publishChange(changes:Seq[ChangeNotification]) {
-    val pbuf=new TrackerResponseBuffer()
-    controller.publish(changes,pbuf)
-    sendToObservers(pbuf)
+    val msg = controller.publish(changes)
+    for(obs<-observers) obs ! msg
   }
   
   def act()={
     loop {
       react {
-        case actions.AddObserver(obs) => 
+        case message.AddObserver(obs) => 
           observers=obs::observers
           
-        case ta:actions.TransactionalAction => 
+        case ta:TransactionalAction => 
           val trans=startTransaction()
           try {
         	controller.dispatch(trans,ta)
@@ -99,35 +93,30 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
               logger.warn("An exception occured while processing: "+ ta,e)
               e.printStackTrace(System.out)
               logger.warn("Rolling back transaction")
-              if(trans.state == Transaction.state.Active)trans.cancel()
+              if(trans.state == Transaction.state.Active) trans.cancel()
           }
           
-        case actions.StartTransaction(tname) =>
+        case message.StartTransaction(tname) =>
           if(_composedAction==null)
             _composedAction=new ComposedAction(tname)
           else
             throw new Exception("Cant nest transaction")
-        case actions.EndTransaction(tname) => 
+        case message.EndTransaction(tname) => 
           if(_composedAction!=null) {
             if(_composedAction.name==tname) { 
               if(_composedAction.transaction.state == Transaction.state.Active) closeTransaction(_composedAction,_composedAction.transaction)
               _composedAction=null
             } else throw new Exception("Tranction name mismatch, expected"+_composedAction.name+" found "+tname)
           } else throw new Exception("Not in compound transaction")
-        case qa:actions.QueryAction =>
-          val buf=new TrackerResponseBuffer()
-          controller.processQuery(qa,buf)
-          if(buf.replyMessage!=null) reply(buf.replyMessage)
-          sendToObservers(buf)
-        case actions.Undo() =>
+        case message.Undo() =>
           try {
             _tlog.rollback(this)
           } catch { case s:TransactionLogOutOfBounds => }
-        case actions.Redo() =>
+        case message.Redo() =>
           try {
             _tlog.rollforward(this)
           } catch { case s:TransactionLogOutOfBounds => }
-        case actions.ClearTransactionLog() =>
+        case message.ClearTransactionLog() =>
           _tlog.clear
           
         case s=>
@@ -138,7 +127,7 @@ class Tracker[C](controller:TrackerController[C]) extends Actor with StartupStep
 }
 
 object Tracker {
-  def initialize[C](tc:TrackerController[C]):Tracker[C] = {
+  def initialize(tc:TrackerController[_]):Tracker = {
     val tracker=new Tracker(tc)
     Registry.register[Actor]("tracker",tracker)
     tracker.start

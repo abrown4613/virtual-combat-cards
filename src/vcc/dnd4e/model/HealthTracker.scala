@@ -124,7 +124,7 @@ case class HealthTrackerDelta(damage:Int,temporaryHP:Int,deathStrikes:Int,spentS
  * @param surges Sure
  * @param bas 
  */
-case class HealthTracker(currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int,base:HealthDefinition) {
+case class HealthTracker(currentHP:Int,temporaryHP:Int,deathStrikes:Int,surges:Int,base:HealthDefinition) extends CombatantAspect {
   
   private def boundedChange(amnt:Int):Int = { 
     val n=currentHP+amnt;

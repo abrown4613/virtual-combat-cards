@@ -20,15 +20,17 @@ package test
 import junit.framework.TestCase
 
 import vcc.model.CombatSequencer
+import vcc.controller.transaction.ChangeNotification
 
 class CombatSequencerTest extends TestCase {
 
-  var seq:CombatSequencer=null
+  var seq:CombatSequencer[_]=null
+  
   implicit val trans= new vcc.controller.transaction.Transaction
   
   
   override def setUp():Unit = {
-    seq=new CombatSequencer
+    seq=new CombatSequencer[ChangeNotification]( x => null)
     for(x<-List('a,'b,'c,'d,'e,'f)) seq add x
     for(x<-List('c,'d)) seq moveDown x
     for(x<-List('b,'a)) seq moveUp x
@@ -39,7 +41,7 @@ class CombatSequencerTest extends TestCase {
   }
   
   def testAdd {
-    var seq=new CombatSequencer
+    var seq=new CombatSequencer[ChangeNotification]( x => null)
     
     assert(seq.sequence==Nil)
     assert(seq.reserve==Set.empty[Symbol])
@@ -73,7 +75,7 @@ class CombatSequencerTest extends TestCase {
   }
   
   def testRotate() {
-    var seq1=new CombatSequencer
+    var seq1=new CombatSequencer[ChangeNotification]( x => null)
     // Should work 
     seq1.rotate 
     assert(seq1.sequence==Nil, "Wrong: "+seq1.sequence)
