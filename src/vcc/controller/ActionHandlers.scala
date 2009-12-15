@@ -32,7 +32,13 @@ class TransactionalProcessor[C](val context:C) {
   /**
    * This is the transaction holder, should only be used internally
    */
-  protected implicit var trans:Transaction=null
+  protected implicit var trans:Transaction = null
+  
+  /**
+   * All commands must have a source, this will allow handlers
+   * to request information from the source
+   */
+  protected var source:CommandSource = null
   
   /**
    * A list of handler PartialFunctions that should be added in traits.
@@ -50,9 +56,10 @@ class TransactionalProcessor[C](val context:C) {
   /**
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
-  def dispatch(transaction:Transaction,action:TransactionalAction):Unit = { 
+  def dispatch(transaction:Transaction,source:CommandSource, action:TransactionalAction):Unit = { 
     rewriteEnqueue(action)
     trans=transaction
+    this.source = source
     try {
       while(!msgQueue.isEmpty) {
     	val msg=msgQueue.dequeue

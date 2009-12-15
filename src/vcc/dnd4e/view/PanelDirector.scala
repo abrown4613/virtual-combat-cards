@@ -21,6 +21,8 @@ import model._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage,TransactionalAction}
 import scala.actors.Actor
+import vcc.controller.CommandSource
+import vcc.controller.message.Command
 
 trait ContextObserver {
   def changeContext(nctx:Option[Symbol],isTarget:Boolean)
@@ -54,7 +56,7 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This compenent act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker:Actor,csm:CombatStateManager,statusBar:StatusBar) extends CombatStateObserver {
+class PanelDirector(tracker:Actor,csm:CombatStateManager,statusBar:StatusBar) extends CombatStateObserver with CommandSource {
 
   private var combatState = csm.currentState
   private var combatStateObserver:List[CombatStateObserver] = Nil
@@ -127,7 +129,7 @@ class PanelDirector(tracker:Actor,csm:CombatStateManager,statusBar:StatusBar) ex
    * @param action A TransactionalAction message
    */
   def requestAction(action:TransactionalAction) {
-    tracker ! action
+    tracker ! Command(this,action)
   }
 
   def requestControllerOperation(action:TrackerControlMessage) {

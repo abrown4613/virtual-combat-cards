@@ -19,7 +19,7 @@ package test.dnd4e
 
 import junit.framework.TestCase
 import vcc.controller.TransactionalProcessor
-import vcc.controller.TrackerController
+import vcc.controller.{TrackerController,CommandSource}
 import vcc.controller.transaction.{Transaction,ChangeNotification}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.model._
@@ -52,6 +52,8 @@ class InitiativeSequenceTest extends TestCase {
   	case CombatantUpdate(comb,s:InitiativeTracker) =>(comb,s)
   })
   
+  var source:CommandSource = null
+  
   override def setUp() {
     val context=new TrackerContext()
     val loadHandler=new TransactionalProcessor(context) with TrackerContextHandler
@@ -62,7 +64,7 @@ class InitiativeSequenceTest extends TestCase {
     val comb = new CombatantEntity(null,"Comb",MonsterHealthDefinition(10,2,1),5,CombatantType.Monster,null)
     val ceid = CombatantRepository.registerEntity(comb)
     val combs = List('A,'B,'C,'D,'E).map(cid => request.CombatantDefinition(cid, cid.name, ceid))
-    loadHandler.dispatch(trans1,request.AddCombatants(combs))
+    loadHandler.dispatch(trans1,source,request.AddCombatants(combs))
     trans1.commit(trans1pub)
     
     //Setup the test subjects
@@ -76,7 +78,7 @@ class InitiativeSequenceTest extends TestCase {
   }
   
   def testStartCombat() {
-	mockTracker.dispatch(request.StartCombat(Seq('A,'B,'C,'D)))
+	mockTracker.dispatch(source,request.StartCombat(Seq('A,'B,'C,'D)))
 	val s1 = extractCombatSequence()
 	val ai1= extractCombatantInitiatives()
 	assert(s1==List('A,'B,'C,'D,'E),s1)
@@ -89,7 +91,7 @@ class InitiativeSequenceTest extends TestCase {
   
   def testEndCombat() {
     testStartCombat()
-    mockTracker.dispatch(request.EndCombat())
+    mockTracker.dispatch(source,request.EndCombat())
 	val ai1= extractCombatantInitiatives()
 	val binit=InitiativeTracker(0,InitiativeState.Reserve)
 	assert(ai1.contains('A,binit))
@@ -104,7 +106,7 @@ class InitiativeSequenceTest extends TestCase {
    */
   def testDelay() {
 	testStartCombat()
-	mockTracker.dispatch(request.Delay('A))
+	mockTracker.dispatch(source,request.Delay('A))
 	val ci1=extractCombatantInitiatives()
 	assert(ci1.contains('A,InitiativeTracker(1,Delaying)))
 	val s1=extractCombatSequence()
@@ -113,7 +115,7 @@ class InitiativeSequenceTest extends TestCase {
 	startRound('B)
 	endRound('B,List('C,'D,'A,'B,'E))
  
-	mockTracker.dispatch(request.MoveUp('A))
+	mockTracker.dispatch(source,request.MoveUp('A))
 	val ci4=extractCombatantInitiatives()
 	assert(ci4.contains('A,InitiativeTracker(1,Acting)))
 	val s4=extractCombatSequence()
@@ -121,7 +123,7 @@ class InitiativeSequenceTest extends TestCase {
  
 	endRound('A,List('C,'D,'B,'A,'E))
 
-	mockTracker.dispatch(request.Delay('C))
+	mockTracker.dispatch(source,request.Delay('C))
 	val ci2=extractCombatantInitiatives()
 	assert(ci2.contains('C,InitiativeTracker(1,Delaying)))
 	assert(extractCombatSequence()==List('D,'B,'A,'C,'E))
@@ -136,7 +138,7 @@ class InitiativeSequenceTest extends TestCase {
 	endRound('A,List('C,'D,'B,'A,'E))
  
 	// The delaying guy C has to end last round, so sequence does not change
-    mockTracker.dispatch(request.EndRound('C))
+    mockTracker.dispatch(source,request.EndRound('C))
 	sequenceUnchanged()
 	assert(extractCombatantInitiatives().contains('C,InitiativeTracker(1,Waiting)),extractCombatantInitiatives())
   }
@@ -146,7 +148,7 @@ class InitiativeSequenceTest extends TestCase {
 
 	startRound('A)
  
-	mockTracker.dispatch(request.Ready('A))
+	mockTracker.dispatch(source,request.Ready('A))
 	val ci2=extractCombatantInitiatives()
 	assert(ci2.contains('A,InitiativeTracker(1,Ready)))
 	assert(extractCombatSequence()==List('B,'C,'D,'A,'E))
@@ -160,7 +162,7 @@ class InitiativeSequenceTest extends TestCase {
  	endRound('B,List('C,'D,'A,'B,'E))
 
  	startRound('C)
- 	mockTracker.dispatch(request.ExecuteReady('A))
+ 	mockTracker.dispatch(source,request.ExecuteReady('A))
 	val ci3=extractCombatantInitiatives()
 	assert(ci3==List(('A,InitiativeTracker(1,Waiting))),ci3)
 	assert(extractCombatSequence()==List('C,'D,'B,'A,'E))
@@ -183,12 +185,12 @@ class InitiativeSequenceTest extends TestCase {
     testStartCombat()
     killSomeCombatant(List('B,'C))
 
-    mockTracker.dispatch(request.StartRound('A))
+    mockTracker.dispatch(source,request.StartRound('A))
 	val ci1=extractCombatantInitiatives()
 	assert(ci1.contains('A,InitiativeTracker(1,Acting)))
 	sequenceUnchanged()
 
-	mockTracker.dispatch(request.EndRound('A))
+	mockTracker.dispatch(source,request.EndRound('A))
 	val ci3=extractCombatantInitiatives()
 	assert(ci3.contains('A,InitiativeTracker(1,Waiting)))
 	assert(ci3.contains('B,InitiativeTracker(1,Waiting)))
@@ -208,7 +210,7 @@ class InitiativeSequenceTest extends TestCase {
     testStartCombat()
     killSomeCombatant(List('B,'C))
 
-    mockTracker.dispatch(request.Delay('A))
+    mockTracker.dispatch(source,request.Delay('A))
 	val ci1=extractCombatantInitiatives()
 	assert(ci1.contains('A,InitiativeTracker(1,Delaying)))
 	assert(ci1.contains('B,InitiativeTracker(1,Waiting)))
@@ -228,12 +230,12 @@ class InitiativeSequenceTest extends TestCase {
     testStartCombat()
     killSomeCombatant(List('B,'C))
 
-    mockTracker.dispatch(request.StartRound('A))
+    mockTracker.dispatch(source,request.StartRound('A))
 	val ci1=extractCombatantInitiatives()
 	assert(ci1.contains('A,InitiativeTracker(1,Acting)))
 	sequenceUnchanged()
 
-    mockTracker.dispatch(request.Ready('A))
+    mockTracker.dispatch(source,request.Ready('A))
 	val ci2=extractCombatantInitiatives()
 	assert(ci2.contains(('A,InitiativeTracker(1,InitiativeState.Ready))))
 	assert(ci2.contains(('B,InitiativeTracker(1,Waiting))))
@@ -255,10 +257,10 @@ class InitiativeSequenceTest extends TestCase {
     
 
     startRound('A)
-    mockTracker.dispatch(request.Ready('A))
+    mockTracker.dispatch(source,request.Ready('A))
 	assert(extractCombatantInitiatives().contains('A,InitiativeTracker(1,InitiativeState.Ready)))
 
-	mockTracker.dispatch(request.Delay('B))
+	mockTracker.dispatch(source,request.Delay('B))
 	assert(extractCombatantInitiatives().contains('B,InitiativeTracker(1,InitiativeState.Delaying)))
 
 	assert(extractCombatSequence()==List('C,'D,'A,'B,'E))
@@ -278,7 +280,7 @@ class InitiativeSequenceTest extends TestCase {
   
   def testMoveOutOfReserve() {
     testStartCombat()
-    mockTracker.dispatch(request.MoveUp('E))
+    mockTracker.dispatch(source,request.MoveUp('E))
 	assert(extractCombatSequence()==List('E,'A,'B,'C,'D))
 	assert(extractCombatantInitiatives().contains('E,InitiativeTracker(1,Acting)))
   }
@@ -300,39 +302,39 @@ class InitiativeSequenceTest extends TestCase {
 	startRound('A)
 
 	// Move A before D, this must fail because A is acting
-	mockTracker.dispatch(request.MoveBefore('A,'D))
+	mockTracker.dispatch(source,request.MoveBefore('A,'D))
 	sequenceUnchanged()
  
 	// Move D befora A, must fail since A is acting
-	mockTracker.dispatch(request.MoveBefore('D,'A))
+	mockTracker.dispatch(source,request.MoveBefore('D,'A))
 	sequenceUnchanged()
 
 	// Move F befora D, must fail because 'F is not in the sequence
-	mockTracker.dispatch(request.MoveBefore('D,'A))
+	mockTracker.dispatch(source,request.MoveBefore('D,'A))
 	sequenceUnchanged()
 
  	// Move E befora B, must fail since E is in reserve
-	mockTracker.dispatch(request.MoveBefore('E,'B))
+	mockTracker.dispatch(source,request.MoveBefore('E,'B))
 	sequenceUnchanged()
 
   	// Move B befora B, must fail since move the same
-	mockTracker.dispatch(request.MoveBefore('B,'B))
+	mockTracker.dispatch(source,request.MoveBefore('B,'B))
 	sequenceUnchanged()
 
 	// Move D befora B, should work
-	mockTracker.dispatch(request.MoveBefore('D,'B))
+	mockTracker.dispatch(source,request.MoveBefore('D,'B))
 	val ci2=extractCombatantInitiatives()
 	assert(ci2==Nil,ci2)
 	assert(extractCombatSequence()==List('A,'D,'B,'C,'E),extractCombatSequence)
 
 	// Move C befora E, must fail since E is in reserve
-	mockTracker.dispatch(request.MoveBefore('C,'E))
+	mockTracker.dispatch(source,request.MoveBefore('C,'E))
 	sequenceUnchanged()
 
 	endRound('A,List('D,'B,'C,'A,'E))
 
 	// Move D before B (move back), should work 
-	mockTracker.dispatch(request.MoveBefore('D, 'C))
+	mockTracker.dispatch(source,request.MoveBefore('D, 'C))
 	val ci3=extractCombatantInitiatives()
 	assert(ci3==Nil,ci3)
 	assert(extractCombatSequence()==List('B,'D,'C,'A,'E))
@@ -350,13 +352,13 @@ class InitiativeSequenceTest extends TestCase {
 	assert(s1==List('A,'B,'C,'D,'E),s1)
 
 	killSomeCombatant(List('B,'C))
-	mockTracker.dispatch(request.MoveBefore('A,'D))
+	mockTracker.dispatch(source,request.MoveBefore('A,'D))
 	assert(extractCombatSequence()==List('A,'D,'B,'C,'E),extractCombatSequence)
   }
   
   def startRound(who:Symbol) {
 	val init=mockTracker.controller.context.map(who).it.value
-	mockTracker.dispatch(request.StartRound(who))
+	mockTracker.dispatch(source,request.StartRound(who))
 	val ci=extractCombatantInitiatives()
 	assert(ci.contains(who,init.transform(true,InitiativeTracker.actions.StartRound)))
 	sequenceUnchanged()
@@ -364,7 +366,7 @@ class InitiativeSequenceTest extends TestCase {
   
   def endRound(who:Symbol,nseq:Seq[Symbol]) {
 	val init=mockTracker.controller.context.map(who).it.value
-	mockTracker.dispatch(request.EndRound(who))
+	mockTracker.dispatch(source,request.EndRound(who))
 	val ci=extractCombatantInitiatives()
 	assert(ci.contains(who,init.transform(true,InitiativeTracker.actions.EndRound)))
 	val s2=extractCombatSequence()

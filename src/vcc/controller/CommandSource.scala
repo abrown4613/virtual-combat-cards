@@ -15,16 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.controller.message
+package vcc.controller
 
-trait TransactionalAction {
-  def description():String
+trait CommandSource {
+
 }
-
-case class Command(from:CommandSource,action:TransactionalAction)
-
-trait TrackerControlMessage
-case class AddObserver(obs:scala.actors.Actor) extends TrackerControlMessage
-case class ClearTransactionLog() extends TrackerControlMessage
-case class Undo() extends TrackerControlMessage
-case class Redo() extends TrackerControlMessage
