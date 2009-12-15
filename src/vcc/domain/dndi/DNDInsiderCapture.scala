@@ -17,41 +17,74 @@
 //$Id$
 package vcc.domain.dndi
 
+import scala.xml.{Node,NodeSeq}
+
 object DNDInsiderCapture {
-  final val colTrim=new scala.util.matching.Regex("^:?\\s*(\\S.*\\S)\\s*$")
-  final val flexiIntReg=new scala.util.matching.Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
-  
-  /**
-   * Extract int form fields like:
-   * + 20
-   * - 5
-   * - 11 ,
-   */
-  def flexiToInt(s:String):Option[Int] = {
-    s match {
-      case this.flexiIntReg(signal,number)=> Some(if(signal=="-") - number.toInt else number.toInt)
-      case _ => None
-    }
-  } 
-  
-  def captureTrim(s:String):String = {
-    s match {
-      case this.colTrim(r) => r
-      case s => s
-    }
-  }
 
   def load(xml:scala.xml.Node):DNDIObject = {
     if(xml==null) return null
     
-    val id = try {(xml \ "@id").toString.toInt } catch { case _ => 0}
-    (xml \\ "H1" \"@class").toString match {
-      case "monster" => new Monster(xml,id)
-      case _ => null
+    val id = getIdFromXML(xml)
+    if(id.isDefined) {
+      val reader:BlockReader = getTypeFromXML(xml) match {
+        case Some("monster") => new MonsterBuilder(new Monster(id.get))
+        case _ => null
+      }
+      val blocks = Parser.parseBlockElements(xml.child,true)
+      for(blk<-blocks) {
+    	  reader.processBlock(blk)
+      }
+      reader.getObject
+    } else {
+      return null
     }
   }
+    
+  def getTypeFromXML(xml:Node):Option[String] = {
+    if((xml \ "H1").isEmpty) None
+    else {
+      val hclass = (xml \ "H1")(0) \ "@class"
+      if(hclass.isEmpty) None
+      else Some(hclass.text)
+    }
+  }
+
+  def getIdFromXML(xml:Node):Option[Int] = {
+    if(xml.label == "DIV") { 
+       if((xml \ "@id").isEmpty) None
+       else try {
+         Some((xml \ "@id")(0).toString.toInt) 
+       } catch { 
+         case _ => None
+       }
+    } else None
+  }
+  
+  private final val reSpaces = "[\\s\\n\\r\u00a0]+".r
+  private final val fixBadXML1 = " \\\\=\"\"".r
+  
+  /**
+   * Get a Servlet request data InputStream and load it to a filtered String.
+   * It removes bad backslash and reduces several &nnbsp; (Unicode \u00a0), \n, \r to a single space.
+   * @param in InputStream, most likely from Servlet request.getInputStream
+   * @return The filter UTF-8 block
+   */
+  def pluginInputStreamAsFilteredString(in:java.io.InputStream):String =  {
+    val bout = new java.io.ByteArrayOutputStream();
+    val buffer = new Array[Byte](1024);
+    var len = 0
+    while({len = in.read(buffer); len} > 0) {
+	  bout.write(buffer, 0, len);
+    }
+    val data = bout.toByteArray()
+    var rawStr = new String(data,"UTF-8")
+    rawStr = reSpaces.replaceAllIn(rawStr," ")
+    fixBadXML1.replaceAllIn(rawStr,"")
+  }
+
 }
 
 trait DNDIObject {
+  val id:Int
   def apply(attribute:String):Option[String]
 }

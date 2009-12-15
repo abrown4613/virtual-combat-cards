@@ -38,17 +38,32 @@ class CaptureServlet extends HttpServlet {
 	response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
   }		
 
+
   override protected def doPost(request: HttpServletRequest, response: HttpServletResponse) {
 	response.setContentType("text/html");
 	response.setStatus(HttpServletResponse.SC_OK);
 	logger.debug("Request: {}",request.toString)
+	val xmlRaw = DNDInsiderCapture.pluginInputStreamAsFilteredString(request.getInputStream)
+	logger.debug("Raw stream data: "+xmlRaw)
 	val xml=try {
-	  scala.xml.XML.load(request.getInputStream)
+	  scala.xml.XML.loadString(xmlRaw)
     } catch {
       case s =>
         logger.warn("Failed to parse XML",s)
+        logger.debug("XML Raw: {}",xmlRaw)
         throw s
-    }  
+    }
+ 
+ 
+    if(System.getProperty("vcc.dndi.captureall") != null) {
+      val otype = DNDInsiderCapture.getTypeFromXML(xml)
+      val oid = DNDInsiderCapture.getIdFromXML(xml)
+      if(otype.isDefined && oid.isDefined) {
+    	CaptureStore.storeObject(otype.get,oid.get,vcc.dnd4e.Configuration.baseDirectory.value,xml)
+      }
+      
+    }
+ 
     try {
       logger.debug("Parsed XML is: {}",xml)
       val dndiObject = DNDInsiderCapture.load(xml)
@@ -60,7 +75,9 @@ class CaptureServlet extends HttpServlet {
           //val log = org.mortbay.log.Logger.getLogger(null)
           response.getWriter().println("Captured monster "+monster("NAME").get);
         case null =>
-          response.getWriter.println("You sent something that VCC cannot capture.")
+          val otype = DNDInsiderCapture.getTypeFromXML(xml)
+          if(otype.isDefined) response.getWriter.println("VCC cannot capture '"+ otype.get + "' entries yet.")
+          else response.getWriter.println("You sent something that VCC cannot capture.")
       }
     } catch {
       case ue: Exception => 

@@ -1,3 +1,4 @@
+//$Id$
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -20,6 +21,7 @@ package vcc.app.dndi
 import vcc.domain.dndi.{Monster,DNDInsiderCapture}
 import vcc.infra.diskcache._
 import scala.xml.Node
+import java.io.{File,FileInputStream}
 
 
 /**
@@ -37,7 +39,8 @@ object CaptureHoldingArea {
   object XMLLoader extends DiskCacheBuilder[MonsterCacheEntry] {
     def loadFromFile(file:java.io.File):MonsterCacheEntry = {
       try {
-        val xml = scala.xml.XML.load(new java.io.FileInputStream(file))
+        val rawXML = DNDInsiderCapture.pluginInputStreamAsFilteredString(new FileInputStream(file))
+        val xml = scala.xml.XML.loadString(rawXML)
         val dndiObject = DNDInsiderCapture.load(xml)
         dndiObject match {
           case monster: Monster => new MonsterCacheEntry(monster,xml)
@@ -66,7 +69,7 @@ object CaptureHoldingArea {
   private var monstersObserver:List[CaptureHoldingObserver[Monster]] = Nil
   
   private val diskCache = new DiskCache[MonsterCacheEntry]({
-	  val base = new java.io.File(System.getProperty("java.io.tmpdir"),"dndicache")
+	  val base = new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value,"dndicache/monster")
 	  if(!base.exists) base.mkdirs()
       base
     },XMLLoader)
@@ -92,5 +95,22 @@ object CaptureHoldingArea {
   
   protected def notifyObservers() {
     monstersObserver.foreach {obs => obs.updateContent(monsters)}
+  }
+}
+
+object CaptureStore {
+  import java.io.File
+  //import scala.xml.Node
+  val logger = org.slf4j.LoggerFactory.getLogger("app")
+
+  def storeObject(otype:String, oid:Int, baseDir:File, node:Node):Boolean = {
+    val targetDir = new File(baseDir,"/dndicache/"+otype)
+    if(!targetDir.exists) targetDir.mkdirs()
+    if(targetDir.exists) {
+      val file = new File(targetDir,otype+"-"+oid+".xml")
+      scala.xml.XML.save(file.getAbsolutePath,node,"UTF-8")
+      logger.debug("Saved {} with id={} to: {}",Seq(otype,oid.toString,file.toString).toArray)
+      file.exists && file.isFile && file.canRead
+    } else false
   }
 }

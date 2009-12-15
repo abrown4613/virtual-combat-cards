@@ -2,7 +2,7 @@
 <project name="VCC" default="dist" basedir="..">
 	
   <property name="classpath"  value="bin"/>
-  <property name="version" value="1.1.0" />
+  <property name="version" value="1.1.1" />
   <property name="dist" value="dist" />
 	<property name="package" value="${dist}/package" />
 	<property name="deplib" value="${dist}/deplib" />
@@ -63,8 +63,6 @@
 	<target name="patch-installzip" depends="install-dir,vccjar">
   	<zip destfile="${package}/install.zip" basedir="${installer}"><!-- -->
   		<include name="lib/vcc.jar" />
-  		<include name="lib/idw-gpl.jar" />
-  		<include name="lib/library.lst" />
   	</zip>
 	</target>
 	
