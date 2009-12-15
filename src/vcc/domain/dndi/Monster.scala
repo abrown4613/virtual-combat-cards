@@ -21,28 +21,6 @@ import scala.util.matching.Regex
 import scala.xml.{Node,NodeSeq,Text=>XmlText,Elem}
 
 object Monster {
-  val reXP= new Regex("\\s*XP\\s*(\\d+)\\s*")
-  val reLevel= new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
-  val primaryStats=Set("Initiative", "Senses", "HP", "Bloodied",
-                       "AC", "Fortitude", "Reflex", "Will",
-                       "Immune", "Resist", "Vulnerable",
-                       "Saving Throws","Speed",  "Action Points")
-  val reSecondary = """^Secondary Attack\s*(.*)\s*$""".r
-}
-
-/**
- * Base monster load.
- */
-class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockDataSource {
-    
-  def extract(key:String):Option[String] = this(key.toUpperCase)
-  
-  def extractGroup(group:String) = group.toUpperCase match {
-    case "POWERS" => this.powers
-    case "AURAS" => this.auras
-  }
-  
-  import vcc.domain.dndi.Parser._
   
   //Contruction elements
   case class Aura(name:String,desc:String) extends StatBlockDataSource {
@@ -58,16 +36,19 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
   }
   
   //TODO: This is an ugly hack. Need to make this nicer.
+  @deprecated
   private final val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2,x._1)).toSeq: _*)
   
-  case class Power(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) extends StatBlockDataSource {
+  case class Power(icon:Seq[Parser.IconType.Value],name:String,action: String, keywords:String) extends StatBlockDataSource {
     def extract(key:String):Option[String] = {
       val s:String = key.toUpperCase match {
         case "NAME" => name
-        case "DESCRIPTION" => desc
+        case "DESCRIPTION" => description
         case "ACTION" => action
         case "SECONDARY ATTACK" => secondary
-        case "TYPE" => if(icon!=null) imageMap(icon) else null
+        //FIXME
+        case "TYPE" if(icon!=null && !icon.isEmpty) => 
+          icon.map(i => Parser.IconType.iconToImage(i)).mkString(";")
         case "KEYWORDS" => keywords
         case "SECONDARY KEYWORDS" => secondaryKeywords
         case _ => null
@@ -76,168 +57,197 @@ class Monster(xml:scala.xml.Node, val id:Int) extends DNDIObject with StatBlockD
     }
     def extractGroup(dontcare:String) = Nil
   
+    var description: String = null
     var secondary:String = null
     var secondaryKeywords:String = null
     
-    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+desc+", "+secondaryKeywords+secondary+")" 
+    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+description+", "+secondaryKeywords+secondary+")" 
+  }  
+
+}
+
+/**
+ * Base monster load.
+ */
+class Monster(val id:Int) extends DNDIObject with StatBlockDataSource {
+    
+  def extract(key:String):Option[String] = this(key.toUpperCase)
+  
+  def extractGroup(group:String) = group.toUpperCase match {
+    case "POWERS" => this.powers
+    case "AURAS" => this.auras
   }
+  
+  import vcc.domain.dndi.Parser._
   
   private var _map=Map.empty[String,String]
-  private var _auras:List[Aura]=Nil
-  private var _power:List[Power]=Nil
+  private var _auras:List[Monster.Aura]=Nil
+  private var _power:List[Monster.Power]=Nil
   
-  def powers = _power.reverse
-  
-  def auras = _auras.reverse
-  
-  load(xml)
-  
-  /**
-   * Extract text form spans, this is a in depth search and the output
-   * will be pairs of the SPAN class and the first Text entry.
-   */
-  private def flattenSpan(xml:scala.xml.NodeSeq):List[(String,String)] = {
-    var l:List[(String,String)]=Nil 
-    
-    l = (for(span<- xml \\ "SPAN") yield {
-      ( (span \ "@class").first.toString, span.first.child(0).toString.trim)
-    }).toList
-    ("name",(xml\"#PCDATA").toString.trim):: l
-  }
-  
-  /**
-   * Extract xp, level and role from compose text of the header
-   */
-  private def normalizeTitle(l:List[(String,String)]): List[(String,String)] = {
-    l match {
-      case ("xp",Monster.reXP(xp)):: rest => ("xp",xp) :: normalizeTitle(rest)
-      case ("level",Monster.reLevel(lvl,role)):: rest => ("level",lvl)::("role",role):: normalizeTitle(rest)
-      case p :: rest => p :: normalizeTitle(rest)
-      case Nil => Nil
-    }
-  }
+  def powers = _power
+  def auras = _auras
 
-  /**
-   * Replace Break() in descriptin for \n and merge text. This should create a large block
-   */
-  private def formatDescription(parts:List[Part]) = {
-    val t=Parser.mergeText(parts.map(x=> if(x==Break()) Text("\n") else x))
-    t match {
-      case Text(text) :: Nil => text
-      case _ => throw new Exception("Description should be a single text block "+t)
-    }
-  }
-  
-  /**
-   * Primary block includes auras, that become pais, need to pull them out
-   */
-  private def processPrimaryBlock(pairs: List[(String,String)]) {
-    for( (k,v)<- pairs ) {
-      if(Monster.primaryStats(k))  _map = _map + (k.toUpperCase->v)
-      else _auras=Aura(k,v)::_auras
-    }
-  }
-  
-  /**
-   * Add power to the list of powers
-   */
-  protected def processPower(icon:Parser.IconType.Value,name:String,action: String, keywords:String, desc:String) {
-    _power=Power(icon,name,action, keywords, desc) :: _power
-  }
-  
-  /**
-   * Descriptions of powers come on the following block, this is used to extract them
-   */
-  private def extractDescriptionFromBlocks(blocks:List[List[Part]]):String = {
-    assert(blocks.tail != Nil)
-    blocks.tail.head.map(part=> part match {
-      case Text(line) => line.replace('\n',' ')
-      case Break() => "\n"
-    }).mkString("")
-  }
- 
-  /**
-   * Add key value pairs into the _map variable. Key will be turned into uppercase
-   */
-  private def addToMap(items: List[(String,String)]) {
-    for((k,v)<- items) { _map = _map + (k.toUpperCase -> v)}
-  }
-  
-  /**
-   * This is the main load function, that is called for the construction of this object
-   */
-  private def load(xml:scala.xml.Node) {
-    val head=normalizeTitle(flattenSpan((xml \\ "H1").first))
-    addToMap(head)
-
-    var blocks=(xml \ "P").filter(node=> !(node \ "@class" isEmpty)).map(block=>parse(block.child)).toList
-    while(blocks!=Nil) {
-      //println("Block\n\t"+blocks.head)
-      blocks.head match {
-        case Key("Initiative") :: rest => processPrimaryBlock(partsToPairs(blocks.head))
-
-        case Key("Description")::rest => 
-          // This case is needed because of Break in the description
-          _map = _map + ("DESCRIPTION" -> formatDescription(rest))
-          
-        case Key("Equipment")::rest => 
-          // This case is needed because of Break in the description
-          _map = _map + ("EQUIPMENT" -> formatDescription(rest))
-        
-        case Icon(icon)::Key(powername)::Text(action)::Nil =>
-          // Power without keywords (like pseudo dragon fly by)
-          processPower(icon,powername,action,null,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-
-        case Key(powername)::Text(action)::Nil =>
-          // Power without keyword or Icon (like Goblin Tactics)
-          processPower(null,powername,action,null,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-          
-        case Emphasis(Monster.reSecondary(comment))::Nil =>
-          // A secondary attack
-          assert(_power.head != Nil && _power.head.secondary==null)
-          _power.head.secondary=extractDescriptionFromBlocks(blocks)
-          _power.head.secondaryKeywords = if(comment == "") null else comment
-          blocks=blocks.tail
-          
-        case Icon(icon)::Key(powername)::Text(action)::Icon(IconType.Separator)::Key(keywords)::Nil =>
-          processPower(icon,powername,action,keywords,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-          
-        case Key(powername)::Text(action)::Icon(IconType.Separator)::Key(keywords)::Nil =>
-          processPower(null,powername,action,keywords,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-
-        case Key(powername)::Icon(IconType.Separator)::Key(keywords)::Nil =>
-          processPower(null,powername,null,keywords,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-
-        case Key(feature)::Nil => 
-          processPower(null,feature,null,null,extractDescriptionFromBlocks(blocks))
-          blocks=blocks.tail
-          
-        case Key("Alignment")::rest => 
-          // This case is needed because of Break in the description
-          var pairs=partsToPairs(blocks.head)
-          addToMap(pairs)
-          
-        case s => throw new Exception("Monster parser doesn't know what to do with: "+s)
-      }
-      blocks=blocks.tail
-    }
-    // Fix minion HP and Role
-    if(_map.contains("HP")&& _map("HP").startsWith("1;")) _map = _map + ("HP" ->"1")
-    if(_map.contains("ROLE")&& _map("ROLE") == "Minion") _map = _map + ("ROLE" ->"No Role")
-    
-  }
-  
   def apply(attribute: String):Option[String] = {
     if(_map.contains(attribute)) Some(_map(attribute))
     else None
   }
   
+  private [dndi] def set(attribute:String,value:String) {
+    // Normalize some cases here:
+    val normAttr = attribute.toUpperCase
+    val normValue:String = normAttr match {
+      case "HP" if(value.startsWith("1;")) => "1"
+      case "ROLE" if(value == "Minion") => "No Role"
+      case _ => value
+    }
+    _map = _map + (normAttr -> normValue)
+  } 
+  
+  private [dndi] def addAura(name:String,desc:String):Monster.Aura = {
+    val a = new Monster.Aura(name,desc)
+    _auras = _auras ::: List(a)
+    a
+  } 
+  
+  protected[dndi] def addPower(icons:Seq[Parser.IconType.Value],name:String,action: String, keywords:String):Monster.Power = {
+    val p = Monster.Power(icons,name,action, keywords)
+    _power= _power ::: List(p)
+    p
+  }
+  
   override def toString():String = {
     "Monster["+id+"]("+_map+"; Aura="+_auras+"; powers="+_power+")"
   }
+}
+
+import Parser._
+trait BlockReader {
+  
+  def processBlock(block:BlockElement):Boolean
+  
+  def getObject:DNDIObject
+}
+
+class MonsterBuilder(monster:Monster) extends BlockReader{
+  
+  final val reXP= new Regex("\\s*XP\\s*(\\d+)\\s*")
+  final val reLevel= new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
+  final val reSecondary = """^Secondary Attack\s*(.*)\s*$""".r
+  final val primaryStats=Set("Initiative", "Senses", "HP", "Bloodied",
+                       		"AC", "Fortitude", "Reflex", "Will",
+                       		"Immune", "Resist", "Vulnerable",
+                       		"Saving Throws","Speed",  "Action Points")
+  
+  private var _lastPower:Monster.Power = null
+
+  private var _nextIsSecondary = false
+  
+  def getObject:DNDIObject = monster
+
+  /**
+   * Extract xp, level and role from compose text of the header
+   */
+  private def normalizeTitle(l:List[(String,String)]): List[(String,String)] = {
+    l match {
+      case ("xp",this.reXP(xp)):: rest => ("xp",xp) :: normalizeTitle(rest)
+      case ("level",this.reLevel(lvl,role)):: rest => ("level",lvl)::("role",role):: normalizeTitle(rest)
+      case p :: rest => p :: normalizeTitle(rest)
+      case Nil => Nil
+    }
+  }
+  
+  /**
+   * Add key value pairs into the _map variable. Key will be turned into uppercase
+   */
+  private def addToMap(items: List[(String,String)]) {
+    for((k,v)<- items) { monster.set(k,v) }
+  }
+
+  /**
+   * Primary block includes auras, that become pais, need to pull them out
+   */
+  private def processPrimaryBlock(pairs: List[(String,String)]) {
+    for( (k,v)<- pairs ) {
+      if(primaryStats(k))  monster.set(k,v)
+      else monster.addAura(k,v)
+    }	
+  }
+
+  
+
+  object PowerHeader {
+    def unapply(parts:List[Part]):Option[(List[IconType.Value],String,String,String)] = {
+	  var p = breakToSpace(parts)
+	  var icons:List[IconType.Value] = Nil
+      
+	  while(!p.isEmpty && p.head.isInstanceOf[Icon]) {
+	    icons = p.head.asInstanceOf[Icon].itype :: icons
+        p = p.tail
+	  }
+   
+	  val name:String = p match {
+	    case Key(text) :: rest if(text != "Equipment") => // Need this check to avoid skipping equipments
+	      text
+	    case _ => return None 
+	  }
+	  p = p.tail
+	  val action:String = p match {
+	    case Text(text)::rest =>
+	      p = p.tail //Advance for last part
+	      text
+	    case _	=> null
+	  }
+	  val keywords:String = p match {
+	    case Icon(IconType.Separator) :: Key(text) :: Nil => text
+	    case Nil => null
+	    case _ => return None
+	  }
+      Some((icons,name,action,keywords))
+    }
+  }
+
+  def processBlock(block:BlockElement):Boolean = {
+    block match {
+      case HeaderBlock("H1#monster",pairs) => addToMap(normalizeTitle(pairs))
+      case Block("P#flavor", parts @ Key("Initiative"):: _ ) =>
+        processPrimaryBlock(partsToPairs(parts))
+      
+      case Block("P#flavor alt", parts) =>
+        parts match {
+          case PowerHeader(icons,name,action,keywords) =>
+            _lastPower = monster.addPower(icons,name,action,keywords)
+
+          case Key("Equipment"):: SingleTextBreakToSpace(text) => 
+          	monster.set("Equipment",text)
+          
+          case Key("Alignment")::rest => 
+          	addToMap(partsToPairs(parts))
+
+          case s => throw new Exception("Failed to process!! "+s)
+          	return false
+        }
+      case Block("P#flavorIndent", SingleTextBreakToNewLine(text)) if(_lastPower != null)=> 
+        // This is a power description 
+        if(_nextIsSecondary) {
+          _lastPower.secondary = text
+          _nextIsSecondary = false
+        } else {
+          _lastPower.description = text
+        }
+      case Block("P#flavor",Emphasis(this.reSecondary(comment))::Nil) if(_lastPower != null) => 
+          // A secondary attack
+          _nextIsSecondary = true
+          _lastPower.secondaryKeywords = if(comment == "") null else comment
+
+      case Block("P#flavor", parts @ Key("Description")::SingleTextBreakToNewLine(text)) => 
+        monster.set("Description",text)
+          
+      case Block("P#",Emphasis(text)::Nil) => monster.set("comment",(text))
+      case NonBlock(dontcare) => // Don't care
+      case s =>
+        throw new Exception("Failed to process: "+s)
+        return false  
+    }
+    true
+  }  
 }

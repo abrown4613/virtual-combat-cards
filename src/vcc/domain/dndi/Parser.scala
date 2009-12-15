@@ -18,8 +18,10 @@
 package vcc.domain.dndi
 
 import scala.util.matching.Regex
+import scala.xml.{Node,NodeSeq}
 
-class UntranslatableException(node:scala.xml.Node) extends Exception("Cant translate node: "+node)
+
+class UntranslatableException(node:scala.xml.Node,e:Throwable) extends Exception("Cant translate node: "+node,e)
 
 /**
  * Converts XML nodes form DNDInsiderCapture into a series os Parts.
@@ -27,6 +29,8 @@ class UntranslatableException(node:scala.xml.Node) extends Exception("Cant trans
  * 
  */
 object Parser {
+  
+  private val logger = org.slf4j.LoggerFactory.getLogger("domain")
   
   final val reColonTrim = new Regex("^[:\\s]*(.*?)[;\\s]*$")
   final val reFlexiInt = new Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
@@ -46,7 +50,7 @@ object Parser {
     val Melee=Value("Melee")
     val Close=Value("Close")
     val Area = Value("Area")
-    val MeleeRange=Value("Melee/Range")
+    val Bullet = Value("*")
     val Unknown=Value("?")
     
     /**
@@ -54,16 +58,34 @@ object Parser {
      */
     final val imageDirectory=Map(
       "x.gif"-> Separator,
-      "s4.gif"-> AreaBasic,
-      "s3.gif"-> RangeBasic,
-      "s2.gif"-> MeleeBasic,
       "s1.gif"-> CloseBasic,
-      "mr.gif"-> MeleeRange,
-      "z4a.gif" -> Area,
-      "z3a.gif" -> Range,
+      "s2.gif"-> MeleeBasic,
+      "s3.gif"-> RangeBasic,
+      "s4.gif"-> AreaBasic,
+      "z1.gif" -> Close,
+      "z1a.gif" -> Close,
+      "z2.gif" -> Melee,
       "z2a.gif" -> Melee,
-      "z1a.gif" -> Close
+      "z3.gif" -> Range,
+      "z3a.gif" -> Range,
+      "z4.gif" -> Area,
+      "z4a.gif" -> Area,
+      "bullet.gif" -> Bullet
     ) 
+    
+    final val iconToImage = Map (
+      Separator -> "x.gif",
+      CloseBasic -> "s1.gif",
+      MeleeBasic -> "s2.gif",
+      RangeBasic -> "s3.gif",
+      AreaBasic -> "s4.gif",
+      Close -> "z1a.gif",
+      Melee  -> "z2a.gif",
+      Range -> "z3a.gif",
+      Area -> "z4a.gif",
+      Bullet  -> "bullet.gif",
+      Unknown -> "x.gif"
+    )
     
     /**
      * Extractor to get a Icon out of a img with the proper image name.
@@ -102,6 +124,17 @@ object Parser {
       } else None
     }
   }
+  
+  object IconSet { 
+    def unapplySeq(parts:List[Part]):Option[Seq[IconType.Value]] = {
+      parts match {
+        case Icon(icon1):: Icon(icon2) :: rest => Some(Seq(icon1,icon2))
+        case Icon(icon)::rest => Some(Seq(icon))
+        case r => Some(Seq())
+      } 
+      None
+    }
+  }
 
   /**
    * Root of all parser tokens
@@ -122,11 +155,14 @@ object Parser {
      * and put some whitespace when needed
      */
     def +(that:Text) = {
-      if(this.text.length==0) that  // Case for trim that return Text("") 
-      else if(that.text(0).isLetter || that.text(0).isDigit) 
-        Text(this.text+" "+that.text)
+      val thist = this.text
+      val thatt = that.text
+      if(thist.length==0) that  // Case for trim that return Text("")
+      else if(thatt.length==0) this
+      else if(thatt.first.isWhitespace || thist.last.isWhitespace) 
+        Text(thist+thatt)
       else
-        Text(this.text+that.text)
+        Text(thist+" "+thatt)
     }
   }
   /**
@@ -144,6 +180,16 @@ object Parser {
    */
   case class Emphasis(text:String) extends Part
   
+  abstract class BlockElement
+  
+  case class Block(name:String,parts:List[Part]) extends BlockElement
+  
+  case class NonBlock(parts:List[Part]) extends BlockElement
+  
+  case class HeaderBlock(name:String,pairs:List[(String,String)]) extends BlockElement
+  
+  case class NestedBlocks(name:String,blocks:List[BlockElement]) extends BlockElement
+  
   /**
    * Transform a simple node into a Part token. This will lift A tags, B to Keys, 
    * images to icon, recharge dice to text, and attempt several triming to get rid
@@ -152,22 +198,25 @@ object Parser {
   def parseNode(node:scala.xml.Node):Part = {
     
     def processString(str:String): String = {
-      reSpaces.replaceAllIn(str," ") match {
+      str match {
         case reFlexiInt(sign,value) => if("-" == sign) sign+value else value
         case reColonTrim(text) => text
         case nomatch => nomatch
       }
     }
-    
     node match {
       case <BR></BR> => Break()
-      case <B>{text}</B> => Key(text.toString.trim)
-      case <A>{text}</A> => Text(text.toString.trim)
-      case <I>{text}</I> => Emphasis(text.toString.trim)
+      case bi @ <B><IMG/></B>  => parseNode(bi.child(0))
+      case <B>{text @ _*}</B> => Key(processString(parseToText(text)))
+      case <B>{text}</B> => Key(processString(parseToText(text)))  //Go figure (need because o bi above)
+      case <A>{text}</A> => Text(processString(parseToText(text)))
+      case <I>{i @ _*}</I> => Emphasis(processString(parseToText(i)))
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
-      case scala.xml.Text(text) => Text(processString(text).trim)
-      case s => throw new UntranslatableException(node)
+      case scala.xml.Text(text) => Text(processString(text))
+      case s => 
+        logger.debug("Failed to match "+s)
+        throw new UntranslatableException(node,null)
     }
   }
   
@@ -177,12 +226,51 @@ object Parser {
   def mergeText(parts:List[Part]):List[Part]= {
     parts match {
       case (ta:Text)::(tb: Text) :: rest => mergeText((ta+tb)::rest)
-      case Icon(IconType.Melee)::Icon(IconType.Range):: rest => Icon(IconType.MeleeRange) :: mergeText(rest)
       case part :: rest => part :: mergeText(rest)
       case Nil => Nil
     }
   }
   
+  
+  /**
+   * This is an extractor that will get all the text and replace Break for 
+   * new line. Returning a single text.
+   */
+  object SingleTextBreakToNewLine {
+    def unapply(parts:List[Part]):Option[String] = {
+      Parser.breakToNewLine(parts) match {
+        case Text(text)::Nil =>
+          Some(text)
+        case Nil => Some("")
+        case _ => None
+      }
+    }
+  }
+  
+  /**
+   * This is an extractor that will get all the text and replace Break for 
+   * new line. Returning a single text.
+   */
+  object SingleTextBreakToSpace {
+    def unapply(parts:List[Part]):Option[String] = {
+      Parser.breakToSpace(parts) match {
+        case Text(text)::Nil =>
+          Some(text)
+        case _ => None
+      }
+    }
+  }
+  
+  /**
+   * Replace Break() in descriptin for \n and merge text. Will return a list of parts without the Break
+   */
+  def breakToNewLine(parts:List[Part]) = mergeText(parts.map(x=> if(x==Break()) Text("\n") else x))
+  
+  /**
+   * Replace Break() in descriptin for \n and merge text. Will return a list of parts without the Break
+   */
+  def breakToSpace(parts:List[Part]) = mergeText(parts.map(x=> if(x==Break()) Text(" ") else x))
+
   /**
    * Transform a NodeSeq into a list of parts, with text properly merged.
    */
@@ -191,6 +279,24 @@ object Parser {
     else mergeText((nodes.map(parseNode)).toList)
   }
   
+  
+  /**
+   * Parse to text will remove links and return a text string
+   */
+  def parseToText(nodes:NodeSeq):String = {
+    var s = new StringBuffer("")
+    val ss = nodes.map(
+      _ match {
+        case IconType(icon) =>  "["+icon.toString+"]" 
+        case <I>{parts @ _*}</I> => parseToText(parts)
+        case <B>{parts @ _*}</B> => parseToText(parts)
+        case <A>{parts @ _*}</A> => parseToText(parts)
+        case node => node.text 
+       }
+    )
+    ss.mkString("")
+  }
+
   /**
    * Transform a list of paris of type Key,Text and optional breaks into 
    * a list of key,value pairs.
@@ -203,4 +309,88 @@ object Parser {
       case s => throw new Exception("List contains unexpected parts: "+s)
     }
   }
+
+  
+  private def flattenSpans(xml:scala.xml.NodeSeq):List[(String,String)] = {
+    var l:List[(String,String)]=Nil 
+    
+    l = (for(span<- xml \\ "SPAN") yield {
+      ( (span \ "@class").first.toString, span.first.child(0).toString.trim)
+    }).toList
+    ("name",(xml\"#PCDATA").toString.trim):: l
+  }
+
+  
+  private final val blockElements = Set("BLOCKQUOTE","P","H2","SPAN")
+  
+  private def elementClassAttr(node:Node) = node.label +"#" + (if((node \ "@class").isEmpty) "" else (node \ "@class")(0).text)
+  
+  /**
+   * This is a set of partial functions to be applied in order trying to convert the
+   * XML into a standar format. It removes some of the oddities in the DND Insider site.
+   */
+  private val blockStrategies:List[(String,PartialFunction[Node,BlockElement])] = List(
+    ("H1 to HeaderBlock",{
+      case node @ <H1>{_*}</H1> => HeaderBlock(elementClassAttr(node),flattenSpans(node))
+    }),
+    ("Misplaced Publish message",{
+       case span @ <SPAN>{_*}</SPAN> if((span \\ "P" \ "I").text.startsWith("First"))=>
+         val l = parse(span.child.filter(n => n.label != "P"))
+         logger.warn("Removing misplaced publishing information: "+(span \\ "P"))
+         Block(elementClassAttr(span),l)
+    }),
+    ("Power Span",{
+      case span @ <SPAN>{first,_*}</SPAN> if((span \ "@class").text == "power" && first.label == "H1")=>
+        NestedBlocks(elementClassAttr(span),parseBlockElements(span.child,true))
+    }),
+    ("Block Level Elements", {
+      case node if(blockElements.contains(node.label)) => Block(elementClassAttr(node),parse(node.child))
+    }),
+    ("NonBlock",{
+      case bi @ <B><IMG/></B>  => NonBlock(parse(bi.child))
+      case <B>{child @ _* }</B> => NonBlock(List(Key(parseToText(child))))
+      case <BR/> => NonBlock(List(Break()))
+      case scala.xml.Text(txt) => NonBlock(List(Text(txt))) 
+      case s => NonBlock(parse(s))
+    })
+  )
+  
+  
+  /**
+   * 
+   */
+  def parseBlockElement(node:Node,strict:Boolean):BlockElement = {
+    for((name,rule) <- blockStrategies) {
+		if(rule.isDefinedAt(node)) {
+	      logger.debug("Applying rule: '{}' to: {}",name,node)
+	      val ret =  try { 
+	        rule(node)
+	      } catch {
+	      	case e if(strict) =>
+	      	  logger.warn("Failed to apply rule: '{}' to: {}",name,node)
+	      	  throw new UntranslatableException(node,e)
+	      	case e => 
+	      	  logger.warn("Failed to apply rule '{}' will skip reason",name,e)
+	      	  null
+	      }
+	   	  if(ret!=null) return ret
+	    }
+	}
+    if(strict) throw new UntranslatableException(node,null)
+    else {
+      logger.warn("Ignoring, since no rule will convert : {}",node)
+      null
+    }
+  }
+  
+  def parseBlockElements(nodes:NodeSeq,strict:Boolean):List[BlockElement] = {
+    nodes.map(node=>try { 
+      parseBlockElement(node,strict) 
+    } catch { 
+      case e =>
+        if(strict) throw e
+        else null
+    }).filter(x => x!=null).toList
+  }
 }
+

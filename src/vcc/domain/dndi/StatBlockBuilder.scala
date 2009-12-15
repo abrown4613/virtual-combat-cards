@@ -127,7 +127,9 @@ object StatBlockBuilder {
   case class ImageMap(key:String) extends Chunk {
     def render(source:StatBlockDataSource):Seq[Node] = {
       val v = source.extract(key)
-      if(v.isDefined) (<img src={v.get} />)
+      if(v.isDefined) {
+        v.get.split(";").map{ src => (<img src={src}/>)}
+      }
       else Nil
     }
   }
