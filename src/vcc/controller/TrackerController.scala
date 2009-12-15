@@ -29,8 +29,8 @@ abstract class TrackerController[C](val context:C) {
   /**
    * Process a TransactionalAction through all handlers in sequence.
    */
-  def dispatch(trans:transaction.Transaction,msg:message.TransactionalAction) {
-    processor.dispatch(trans,msg)
+  def dispatch(trans:transaction.Transaction,source:CommandSource, msg:message.TransactionalAction) {
+    processor.dispatch(trans,source,msg)
   }
     
   /**

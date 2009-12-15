@@ -20,12 +20,13 @@ import junit.framework.TestCase
 import vcc.dnd4e.model._
 import vcc.controller.transaction._
 import vcc.dnd4e.controller._
-import vcc.controller.TransactionalProcessor
+import vcc.controller.{TransactionalProcessor,CommandSource}
 import vcc.dnd4e.controller.request._
 
 class ContextLoaderTest extends TestCase {
   
   var context=new TrackerContext()
+  var source:CommandSource = null
   
   def testLoadCombatant {
     //TODO: This is not the real way to do it, much better, but needs improvement
@@ -42,7 +43,7 @@ class ContextLoaderTest extends TestCase {
     assert(fighterID != null)
     assert(monsterID != null)
     
-    handler.dispatch(trans1,request.AddCombatants(List(CombatantDefinition('A,null,fighterID),CombatantDefinition(null,null,monsterID))))
+    handler.dispatch(trans1,source,request.AddCombatants(List(CombatantDefinition('A,null,fighterID),CombatantDefinition(null,null,monsterID))))
     
     trans1.commit(trans1pub)
     //FIXME assert(trans1pub.set.contains(CombatSequenceChanged(List('A,Symbol("1")))))
