@@ -36,7 +36,7 @@ object BootStrap extends StartupRoutine {
     case _ => default
   }
 
-  val version=new UpdateManager.Version(1,1,1,null) 
+  val version=new UpdateManager.Version(1,2,0,"dev") 
 
   def start(srw: StartupReportWindow):scala.swing.Frame = {
 	var createCompendium = false
