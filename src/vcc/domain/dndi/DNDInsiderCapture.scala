@@ -79,7 +79,19 @@ object DNDInsiderCapture {
     val data = bout.toByteArray()
     var rawStr = new String(data,"UTF-8")
     rawStr = reSpaces.replaceAllIn(rawStr," ")
-    fixBadXML1.replaceAllIn(rawStr,"")
+    rawStr = fixBadXML1.replaceAllIn(rawStr,"")
+
+    var intag = false
+    var chars = new Array[Char](rawStr.length)
+    rawStr.getChars(0,chars.length,chars,0)
+    for(i <- 0 to chars.length - 1) {
+      if(intag) {
+        if(chars(i).isLetter || chars(i) == '/') chars(i) = chars(i).toUpperCase
+        else intag = false
+      } else if(chars(i) == '<') intag = true
+    }
+    val finalStr = new String(chars)
+    finalStr
   }
 
 }
