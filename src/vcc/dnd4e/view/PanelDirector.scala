@@ -136,4 +136,9 @@ class PanelDirector(tracker:Actor,csm:CombatStateManager,statusBar:StatusBar) ex
     tracker ! action
   }
   
+  def actionCompleted(msg:String) {
+  }
+  
+  def actionCancelled(reason:String) {
+  }
 }

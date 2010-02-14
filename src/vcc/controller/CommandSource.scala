@@ -19,4 +19,7 @@ package vcc.controller
 
 trait CommandSource {
 
+  def actionCompleted(msg:String)
+  
+  def actionCancelled(reason:String)
 }
