@@ -64,12 +64,14 @@ class Tracker(controller:TrackerController[_]) extends Actor with StartupStep wi
         		_tlog.store(action,trans)
         		logger.info("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
         	}
+        	from.actionCompleted(action.description)
           } catch {
             case e => 
               logger.warn("An exception occured while processing: "+ action,e)
               e.printStackTrace(System.out)
               logger.warn("Rolling back transaction")
               if(trans.state == Transaction.state.Active) trans.cancel()
+              from.actionCancelled(e.getMessage)
           }
         case message.Undo() =>
           try {

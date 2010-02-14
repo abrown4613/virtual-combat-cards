@@ -49,6 +49,95 @@ class ContextLoaderTest extends TestCase {
     //FIXME assert(trans1pub.set.contains(CombatSequenceChanged(List('A,Symbol("1")))))
   }
 
+  import vcc.controller.Tracker
+  import vcc.controller.transaction.ChangeNotification
+  import vcc.controller.message._
+
+  def testRealTracker() {
+    val tracker = Tracker.initialize(new vcc.controller.TrackerController(context) {
+      val processor = new TransactionalProcessor(context) with TrackerContextHandler
+      def publish(changes:Seq[ChangeNotification]):Any = {
+      }
+    })
+    assert(tracker != null)
+    val fighter = CombatantEntity(null,"Fighter",new CharacterHealthDefinition(40,10,5),5,CombatantType.Character,null)
+    val fighterID = CombatantRepository.registerEntity(fighter)
+    
+    //tracker ! Command(null,request.AddCombatants(List(CombatantDefinition('A,null,fighterID))))
+    new TestCommandSource(tracker) onComplete {
+      changes => 
+      	println("Called me with changes "+changes)
+        Thread.sleep(500)
+        //assert(false,"Failed because I want to")
+    } onCancel {
+      reason =>
+      	println("Cancelled with reason")
+    } dispatch(request.AddCombatants(List(CombatantDefinition('A,null,fighterID))))
+  }
+}
+
+import vcc.controller.Tracker
+import vcc.controller.message.{TransactionalAction,Command}
+import scala.actors.Actor._
+import scala.actors.Actor
+import scala.actors.OutputChannel
+
+class TestCommandSource(val tracker:Tracker) extends CommandSource {
+
+  val core = actor {
+    var run = true
+    var from:OutputChannel[Any]= null
+    while(run) {
+      println("Running ....")
+      receive {
+        case c:Command =>
+          from = sender
+          println("From : "+from)
+          tracker ! c
+          println("Sent "+c)
+        case ('COMPLETE,msg) => 
+          println("Here")
+          from ! msg
+          run = false
+        case ('CANCEL,reason) =>
+          from ! reason
+          run = false
+      }
+    }
+    println("Exiting source actor")
+  }
+  
+  private var completeBlock:Seq[ChangeNotification]=>Unit = null
+  private var cancelBlock:String=>Unit = null
+  
+  def onComplete(block: Seq[ChangeNotification]=>Unit):TestCommandSource = {
+    completeBlock = block
+    this
+  }
+
+  def onCancel(block: String=>Unit):TestCommandSource = {
+    cancelBlock = block
+    this
+  }
+  
+  def dispatch(action:TransactionalAction):Any = {
+    println("Sending "+action)
+    val r = core !? Command(this,action)
+    println("Reply was " + r)
+    r
+  }
+  
+  def actionCancelled(reason:String) {
+    if(cancelBlock != null) cancelBlock(reason)
+    core ! ('CANCEL,reason)
+  }
+  
+  def actionCompleted(msg:String) {
+    println("Complete called")
+    if(completeBlock != null) completeBlock(Nil)
+    core ! ('COMPLETE,msg)
+  }
+  
 }
 
 class SetChangePublisher extends TransactionChangePublisher {
