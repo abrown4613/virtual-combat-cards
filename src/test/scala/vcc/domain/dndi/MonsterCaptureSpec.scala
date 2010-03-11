@@ -108,14 +108,14 @@ object MonsterCaptureSpec extends Specification {
     }
     "capture power with Key Text Separator Key " in {
       val phl = (<P class="flavor alt"><B>Rod Arc</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif" /><B>Arcane, Implement, Lightning</B></P>)
-      val pdl = (<P class="flavorIndent">Birdy ignores the target’s cover; 10;  </P>)
+      val pdl = (<P class="flavorIndent">Birdy ignores the targetâ€™s cover; 10;  </P>)
       reader.processBlock(Parser.parseBlockElement(phl,true)) must beTrue
       reader.processBlock(Parser.parseBlockElement(pdl,true)) must beTrue
       monster.powers mustNot beEmpty
       val p = monster.powers(0)
       p.name must_== "Rod Arc"
       p.icon must beEmpty
-      p.description must_== "Birdy ignores the target’s cover; 10" // Note: Trim will remove the last ;
+      p.description must_== "Birdy ignores the targetâ€™s cover; 10" // Note: Trim will remove the last ;
       p.action must_== "(standard, at-will)"
       p.keywords must_== "Arcane, Implement, Lightning" 
     }                                                                                       
