@@ -20,6 +20,7 @@ package vcc.dnd4e.view.dialog
 import javax.swing.{JComponent,JFileChooser,JOptionPane}
 import javax.swing.filechooser.{FileFilter,FileNameExtensionFilter}
 import java.io.File
+import vcc.model.Registry
 
 /**
  * Series of utility methods for creating dailogs
@@ -52,18 +53,24 @@ object FileChooserHelper {
     } else 
       Some(file)
   }
-  
+
+  private def getWorkDirectory():File = {
+    val lastDir = Registry.get[File]("lastDirectory")
+    if(lastDir.isDefined) lastDir.get
+    else Configuration.baseDirectory.value
+  }
   /**
    * Open a Save Dialog, get file, and normlize name to add extension.
    * Return None on a cancel.
    */
   def chooseSaveFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(Configuration.baseDirectory.value)
+    val fileDiag= new JFileChooser(getWorkDirectory)
     if(filter!=null) fileDiag.setFileFilter(filter)
     
     val result=fileDiag.showSaveDialog(over)
     if(result==JFileChooser.APPROVE_OPTION) {
       var file=normalizeFileName(fileDiag.getSelectedFile,filter)
+      Registry.register("lastDirectory",fileDiag.getSelectedFile.getParentFile)
       confirmOverwrite(file)
     } else 
       None
@@ -74,13 +81,14 @@ object FileChooserHelper {
    * Return None on a cancel.
    */
   def chooseOpenFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(Configuration.baseDirectory.value)
+    val fileDiag= new JFileChooser(getWorkDirectory)
     if(filter!=null) fileDiag.setFileFilter(filter)
     
     val result=fileDiag.showOpenDialog(over)
-    if(result==JFileChooser.APPROVE_OPTION) 
+    if(result==JFileChooser.APPROVE_OPTION) {
+      Registry.register("lastDirectory",fileDiag.getSelectedFile.getParentFile)
       Some(fileDiag.getSelectedFile)
-    else 
+    } else
       None
   }
 
