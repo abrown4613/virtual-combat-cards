@@ -20,6 +20,11 @@
 package vcc.domain.dndi
 
 import org.specs.runner.JUnit4
+import org.specs.runner.JUnitSuiteRunner
+import org.junit.runner.RunWith
 
+@RunWith(classOf[JUnitSuiteRunner])  // Needed to run test in IDEA
 class MonsterCaptureTest extends JUnit4(MonsterCaptureSpec)
+
+@RunWith(classOf[JUnitSuiteRunner])
 class XMLParserTest extends JUnit4(XMLParserSpec)

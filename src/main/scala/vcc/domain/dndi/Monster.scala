@@ -19,10 +19,11 @@ package vcc.domain.dndi
 
 import scala.util.matching.Regex
 import scala.xml.{Node,NodeSeq,Text=>XmlText,Elem}
+import vcc.domain.dndi.Monster.PowerDescriptionSupplement
 
 object Monster {
   
-  //Contruction elements
+  //Construction elements
   case class Aura(name:String,desc:String) extends StatBlockDataSource {
     def extract(key:String):Option[String] = {
       val s:String = key.toUpperCase match {
@@ -38,30 +39,51 @@ object Monster {
   //TODO: This is an ugly hack. Need to make this nicer.
   @deprecated
   private final val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2,x._1)).toSeq: _*)
+
+  case class PowerDescriptionSupplement(emphasis:String,text:String) extends StatBlockDataSource {
+
+    def extract(key:String):Option[String] = {
+      val s:String = key.toUpperCase match {
+        case "HEADER" => emphasis
+        case "DESCRIPTION" => text
+        case _ => null
+      }
+      if(s!=null) Some(s) else None
+    }
+
+    def extractGroup(dontcare:String) = Nil
   
+  }
+
   case class Power(icon:Seq[Parser.IconType.Value],name:String,action: String, keywords:String) extends StatBlockDataSource {
+
+    private var _supplemnt:List[PowerDescriptionSupplement] = Nil
+    
     def extract(key:String):Option[String] = {
       val s:String = key.toUpperCase match {
         case "NAME" => name
         case "DESCRIPTION" => description
         case "ACTION" => action
-        case "SECONDARY ATTACK" => secondary
         //FIXME
         case "TYPE" if(icon!=null && !icon.isEmpty) => 
           icon.map(i => Parser.IconType.iconToImage(i)).mkString(";")
         case "KEYWORDS" => keywords
-        case "SECONDARY KEYWORDS" => secondaryKeywords
         case _ => null
       }
       if(s!=null) Some(s) else None
     }
-    def extractGroup(dontcare:String) = Nil
-  
+
+    def extractGroup(key:String) = if(key.toUpperCase == "POWER DESCRIPTION SUPPLEMENT") this._supplemnt.toSeq else Nil
+
     var description: String = null
-    var secondary:String = null
-    var secondaryKeywords:String = null
-    
-    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+description+", "+secondaryKeywords+secondary+")" 
+
+    def addDescriptionSupplement(sup:PowerDescriptionSupplement) {
+      _supplemnt = _supplemnt ::: List(sup)
+    }
+
+    override def toString:String = "Power("+icon+", "+name+", "+action+", "+keywords+", "+description+", "+this._supplemnt+")"
+
+    def supplement = _supplemnt
   }  
 
 }
@@ -140,7 +162,7 @@ class MonsterBuilder(monster:Monster) extends BlockReader{
   
   private var _lastPower:Monster.Power = null
 
-  private var _nextIsSecondary = false
+  private var _powerSupplement:String = null
   
   def getObject:DNDIObject = monster
 
@@ -228,16 +250,16 @@ class MonsterBuilder(monster:Monster) extends BlockReader{
         }
       case Block("P#flavorIndent", SingleTextBreakToNewLine(text)) if(_lastPower != null)=> 
         // This is a power description 
-        if(_nextIsSecondary) {
-          _lastPower.secondary = text
-          _nextIsSecondary = false
+        if(_powerSupplement != null) {
+          _lastPower.addDescriptionSupplement(PowerDescriptionSupplement(_powerSupplement,text))
+          _powerSupplement = null
         } else {
           _lastPower.description = text
         }
-      case Block("P#flavor",Emphasis(this.reSecondary(comment))::Nil) if(_lastPower != null) => 
+      case Block("P#flavor",Emphasis(comment)::Nil) if(_lastPower != null) => 
           // A secondary attack
-          _nextIsSecondary = true
-          _lastPower.secondaryKeywords = if(comment == "") null else comment
+          _powerSupplement = comment
+          //_lastPower.secondaryKeywords = if(comment == "") null else comment
 
       case Block("P#flavor", parts @ Key("Description")::SingleTextBreakToNewLine(text)) => 
         monster.set("Description",text)
