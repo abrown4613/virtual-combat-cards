@@ -64,38 +64,50 @@ object StatBlockBuilder {
     def format(s:String) = s.formatted(fmt)
   }
 
-  case class TextFormat(key:String,sep:Boolean) extends Chunk {
-	def render(source:StatBlockDataSource):Seq[Node] = {
-	  val v = source.extract(key) 
-	  if(v.isDefined) Seq(Text(v.get.formatted(if(sep) " %s " else "%s")))
-      else Nil	
+  case class TextFormat(key: String, sep: Boolean) extends Chunk {
+    def render(source: StatBlockDataSource): Seq[Node] = {
+      val v = source.extract(key)
+      if (v.isDefined) Seq(Text(v.get.formatted(if (sep) " %s " else "%s")))
+      else Nil
     }
   }
 
-  case class MultiLineFormat(key:String) extends Chunk {
-	def render(source:StatBlockDataSource):Seq[Node] = {
-	  def breakLines(l:List[Node],brk:Boolean):List[Node] = {
-	    if(l.isEmpty) Nil else { 
-		  if(brk) (<br/>) :: breakLines(l,false)
-		  else l.head :: breakLines(l.tail,true)  
-  	    }
+  case class MultiLineFormat(key: String) extends Chunk {
+    def render(source: StatBlockDataSource): Seq[Node] = {
+      def breakLines(l: List[Node], brk: Boolean): List[Node] = {
+        if (l.isEmpty) Nil else {
+          if (brk) (<br/>) :: breakLines(l, false)
+          else l.head :: breakLines(l.tail, true)
+        }
       }
-	  val v = source.extract(key)
-	  if(v.isDefined) {
-	    val lines = v.get.split("\n").map(Text(_)).toList
-	    breakLines(lines,false)
-	  } else Nil	
+      val v = source.extract(key)
+      if (v.isDefined) {
+        val lines = v.get.split("\n").map(Text(_)).toList
+        breakLines(lines, false)
+      } else Nil
     }
   }
 
-  case class BoldFormat(key:String,sep:Boolean) extends Chunk {
-	def render(source:StatBlockDataSource):Seq[Node] = {
-	  val v = source.extract(key) 
-	  if(v.isDefined) (<b>{v.get.formatted(if(sep) " %s " else "%s")}</b>)
-      else Nil	
+  case class BoldFormat(key: String, sep: Boolean) extends Chunk {
+    def render(source: StatBlockDataSource): Seq[Node] = {
+      val v = source.extract(key)
+      if (v.isDefined) (<b>
+        {v.get.formatted(if (sep) " %s " else "%s")}
+      </b>)
+      else Nil
     }
   }
-  
+
+  case class EmphasisFormat(key: String, sep: Boolean) extends Chunk {
+    def render(source: StatBlockDataSource): Seq[Node] = {
+      val v = source.extract(key)
+      if (v.isDefined) (<i>
+        {v.get.formatted(if (sep) " %s " else "%s")}
+      </i>)
+      else Nil
+    }
+  }
+
   case class StaticXML(xml:Node) extends Chunk {
     def render(source:StatBlockDataSource):Seq[Node] = Seq(xml)
   }
@@ -168,12 +180,12 @@ object MonsterStatBlockBuilder extends StatBlockBuilder {
       )
 
   private val powerBlock = Seq(
-          	Para("flavor alt", ImageMap("Type"), BoldFormat("Name",true),TextFormat("Action",true),IfDefined("Keywords",Image("x.gif"),BoldFormat("Keywords",true))),
-          	Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
-          	IfDefined("Secondary Attack",Para("flavor", StaticXML(<i>Secondary Attack</i>),TextFormat("secondary keywords",true)),Para("flavorIndent",TextFormat("Secondary Attack",true)))
-           )
-  
-  
+    Para("flavor alt", ImageMap("Type"), BoldFormat("Name", true), TextFormat("Action", true), IfDefined("Keywords", Image("x.gif"), BoldFormat("Keywords", true))),
+    Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
+    Group("POWER DESCRIPTION SUPPLEMENT", Para("flavor", EmphasisFormat("header", false)), Para("flavorIndent", TextFormat("description", false)))
+    )
+
+
   def generate(ds:StatBlockDataSource) = {
     val block = new ChunkGroup(headBlock,Group("Powers",powerBlock: _*),tailBlock)
     (<html><head><link rel="stylesheet" type="text/css" href="dndi.css" /></head>
