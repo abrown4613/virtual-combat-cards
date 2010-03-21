@@ -33,6 +33,8 @@ object FileChooserHelper {
    */
   val partyFilter=new javax.swing.filechooser.FileNameExtensionFilter("XML Files","peml","xml")
   
+  val characterBuilderFilter=new javax.swing.filechooser.FileNameExtensionFilter("Character Builder Files","dnd4e")
+
   protected def normalizeFileName(file:File,filter:FileFilter):File = {
     filter match {
       case `partyFilter` => 

@@ -1,6 +1,7 @@
 //$Id$
+
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,75 +26,110 @@ import vcc.dnd4e.model.CombatantType
 
 case class EntityClassID(uri: java.net.URI)
 
-case class EntitySummary(eid:EntityID, classid:EntityClassID)
+case class EntitySummary(eid: EntityID, classid: EntityClassID)
 
 object CombatantEntityFields {
   object RequiredString extends DefaultStringFieldValidator(Mandatory())
-  object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(),IntegerGreaterThan(0))
+  object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(), IntegerGreaterThan(0))
   object RequiredInt extends DefaultIntFieldValidator(Mandatory())
   object AnyInt extends DefaultIntFieldValidator()
   object AnyString extends DefaultStringFieldValidator()
 }
 
-abstract class CombatantEntity(val eid:EntityID) extends FieldSet(eid) {
-  import CombatantEntityFields._ 
-  
-  val classID:EntityClassID
-  
-  def combatantType: CombatantType.Value
-  
-  val name = new StringField(this,"base:name", RequiredString)
- 
-  val initiative = new IntField(this,"stat:initiative", RequiredInt)
-  val hp = new IntField(this,"stat:hp", RequiredIntGreaterZero)
+abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
+  import CombatantEntityFields._
 
-  val ac = new IntField(this,"stat:ac", AnyInt)
-  val fortitude = new IntField(this,"stat:fortitude", AnyInt)
-  val reflex = new IntField(this,"stat:reflex", AnyInt)
-  val will = new IntField(this,"stat:will", AnyInt) 
-  
-  val statblock = new StringField(this,"text:statblock", AnyString)
-  val comment = new StringField(this,"text:comment", AnyString)
-  
-  override def asDataStoreEntity:DataStoreEntity = {
+  val classID: EntityClassID
+
+  def combatantType: CombatantType.Value
+
+  val name = new StringField(this, "base:name", RequiredString)
+
+  val initiative = new IntField(this, "stat:initiative", RequiredInt)
+  val hp = new IntField(this, "stat:hp", RequiredIntGreaterZero)
+
+  val ac = new IntField(this, "stat:ac", AnyInt)
+  val fortitude = new IntField(this, "stat:fortitude", AnyInt)
+  val reflex = new IntField(this, "stat:reflex", AnyInt)
+  val will = new IntField(this, "stat:will", AnyInt)
+
+  val statblock = new StringField(this, "text:statblock", AnyString)
+  val comment = new StringField(this, "text:comment", AnyString)
+
+  override def asDataStoreEntity: DataStoreEntity = {
     val es = super.asDataStoreEntity
-    DataStoreEntity(es.eid, es.data + ("classid"->classID.uri.toString))
+    DataStoreEntity(es.eid, es.data + ("classid" -> classID.uri.toString))
   }
 }
 
-class MonsterEntity(eid:EntityID) extends CombatantEntity(eid) {
+/**
+ * This service will create a combatant entity from a DataStoreEntity
+ */
+object CombatantEntityBuilder {
+
+  protected val entityFactory:PartialFunction[(EntityID,String),CombatantEntity] = {
+    case (eid,"vcc-class:monster") => new MonsterEntity(eid)
+    case (eid,"vcc-class:character") => new CharacterEntity(eid)
+  }
+
+  /**
+   * Inform if this type of DataStoreEntity is can be built by this builder.
+   * @param dse The Entity you wish to build
+   * @return true if it can be built
+   */
+  def canHandle(dse:DataStoreEntity) = entityFactory.isDefinedAt(null,dse.data.getOrElse("classid",null))
+
+  /**
+   * Build the entity
+   * @param dse must be a non-null entity that can be handled (see <code>canHandle</code>)
+   * @return A valid entity or null otherwise
+   */
+  def buildEntity(dse: DataStoreEntity): CombatantEntity = {
+    if(dse != null && canHandle(dse)) {
+      val ent = entityFactory(dse.eid,dse.data("classid"))
+      ent.loadFromMap(dse.data)
+      ent
+    } else {
+      null
+    }
+  }
+
+}
+
+class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
   import CombatantEntityFields._
   val classID = Compendium.monsterClassID
-  
-  def combatantType = if(hp==1) CombatantType.Minion else CombatantType.Monster
-  
-  val role = new StringField(this,"base:role", RequiredString)
-  val level = new IntField(this,"base:level", RequiredIntGreaterZero)
-  val xp = new IntField(this,"base:xp", RequiredIntGreaterZero)
+
+  def combatantType = if (hp == 1) CombatantType.Minion else CombatantType.Monster
+
+  val role = new StringField(this, "base:role", RequiredString)
+  val level = new IntField(this, "base:level", RequiredIntGreaterZero)
+  val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
 }
 
 object MonsterEntity {
   def newInstance() = new MonsterEntity(EntityID.generateRandom())
-  def newInstance(dndID:Int) = new MonsterEntity(EntityID.fromName("dndi:monster:"+ dndID))
+
+  def newInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:monster:" + dndID))
 }
 
-case class MonsterSummary(override val eid:EntityID, override val classid: EntityClassID, name:String,level:Int, xp:Int, role:String, minion:Boolean) extends EntitySummary(eid,classid)
+case class MonsterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, xp: Int, role: String, minion: Boolean) extends EntitySummary(eid, classid)
 
 object MonsterSummary {
   import CombatantEntityFields._
-  
+
   private object template extends FieldSet(null) {
-	val name = new StringField(this,"base:name", RequiredString)
-    val role = new StringField(this,"base:role", RequiredString)
-	val level = new IntField(this,"base:level", RequiredIntGreaterZero)
-	val xp = new IntField(this,"base:xp", RequiredIntGreaterZero)
-    val hp = new IntField(this,"stat:hp", RequiredIntGreaterZero)
+    val name = new StringField(this, "base:name", RequiredString)
+    val role = new StringField(this, "base:role", RequiredString)
+    val level = new IntField(this, "base:level", RequiredIntGreaterZero)
+    val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
+    val hp = new IntField(this, "stat:hp", RequiredIntGreaterZero)
   }
 
-  def fromFieldMap(eid:EntityID,fields:Map[String,String]) = {
+  def fromFieldMap(eid: EntityID, fields: Map[String, String]) = {
     template.clear()
-	template.loadFromMap(fields)
-    if(fields("classid") == "vcc-class:monster" && template.isValid)
+    template.loadFromMap(fields)
+    if (fields("classid") == "vcc-class:monster" && template.isValid)
       MonsterSummary(eid,
         Compendium.monsterClassID,
         template.name.value,
@@ -105,40 +141,39 @@ object MonsterSummary {
   }
 }
 
-class CharacterEntity(eid:EntityID) extends CombatantEntity(eid) {
+class CharacterEntity(eid: EntityID) extends CombatantEntity(eid) {
   import CombatantEntityFields._
   val combatantType = CombatantType.Character
   val classID = Compendium.characterClassID
-  val charClass = new StringField(this,"base:class", RequiredString)
-  val race = new StringField(this,"base:race", RequiredString)
-  val level = new IntField(this,"base:level", RequiredIntGreaterZero)
-  val perception = new IntField(this,"skill:perception", AnyInt)
-  val insight = new IntField(this,"skill:insight", AnyInt)
-  val senses = new StringField(this,"base:senses", AnyString)
+  val charClass = new StringField(this, "base:class", RequiredString)
+  val race = new StringField(this, "base:race", RequiredString)
+  val level = new IntField(this, "base:level", RequiredIntGreaterZero)
+  val perception = new IntField(this, "skill:perception", AnyInt)
+  val insight = new IntField(this, "skill:insight", AnyInt)
+  val senses = new StringField(this, "base:senses", AnyString)
 
 }
 
 object CharacterEntity {
-  def newInstance():CharacterEntity = new CharacterEntity(EntityID.generateRandom())
+  def newInstance(): CharacterEntity = new CharacterEntity(EntityID.generateRandom())
 }
 
-case class CharacterSummary(override val eid:EntityID, override val classid: EntityClassID,name:String,level:Int, cclass:String, race:String) extends EntitySummary(eid,classid)
+case class CharacterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, cclass: String, race: String) extends EntitySummary(eid, classid)
 
 object CharacterSummary {
-
   import CombatantEntityFields._
-  
+
   private object template extends FieldSet(null) {
-	val name = new StringField(this,"base:name", RequiredString)
-    val charClass = new StringField(this,"base:class", RequiredString)
-	val race = new StringField(this,"base:race", RequiredString)
-	val level = new IntField(this,"base:level", RequiredIntGreaterZero)
-  }  
-   
-  def fromFieldMap(eid:EntityID,fields:Map[String,String]) = {
+    val name = new StringField(this, "base:name", RequiredString)
+    val charClass = new StringField(this, "base:class", RequiredString)
+    val race = new StringField(this, "base:race", RequiredString)
+    val level = new IntField(this, "base:level", RequiredIntGreaterZero)
+  }
+
+  def fromFieldMap(eid: EntityID, fields: Map[String, String]) = {
     template.clear()
     template.loadFromMap(fields)
-    if(fields("classid") == "vcc-class:character" && template.isValid)  
+    if (fields("classid") == "vcc-class:character" && template.isValid)
       CharacterSummary(eid,
         Compendium.characterClassID,
         template.name.value,

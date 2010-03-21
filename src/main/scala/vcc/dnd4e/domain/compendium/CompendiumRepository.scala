@@ -77,28 +77,23 @@ class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
    * @return The entity if it is found and respects the mustBeValid option
    */
   def load(eid:EntityID,mustBeValid:Boolean):CombatantEntity = {
-    def getEmptyEntity(eid:EntityID, fields:Map[String,String]):CombatantEntity = {
-      fields.getOrElse("classid", null) match {
-        case "vcc-class:monster" => new MonsterEntity(eid)
-        case "vcc-class:character" => new CharacterEntity(eid)
-        case s => 
-          logger.warn("Entity loaded with unknown class {}",s)
-          null
-      }
-    }
     val dse = dataStore.loadEntity(eid)
+    logger.debug("Loaded Entity {} from datastore, content: {}",eid,dse)
+    
     if(dse != null) {
-      logger.debug("Loaded Entity {} from datastore, content: {}",eid,dse)
-      val ent = getEmptyEntity(dse.eid,dse.data)
-      logger.debug("Empty container {}",ent)
-      if(ent!=null) {
-        ent.loadFromMap(dse.data)
-        logger.debug("Loaded entity, is it valid? {}",ent.isValid)
-        ent.dump(logger)
+      if(CombatantEntityBuilder.canHandle(dse)) {
+        val ent = CombatantEntityBuilder.buildEntity(dse)
+        if(ent!=null) {
+          logger.debug("Loaded entity, is it valid? {}",ent.isValid)
+          ent.dump(logger)
+        }
+        if(mustBeValid) {
+          if(ent != null && ent.isValid) ent else null
+        } else ent
+      } else {
+        logger.warn("Entity loaded with unknown class {}",dse.data.getOrElse("classid","<no classid found>"))
+        null
       }
-      if(mustBeValid)
-    	if(ent != null && ent.isValid) ent else null
-      else ent
     } else null
   }
   
