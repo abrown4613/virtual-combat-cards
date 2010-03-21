@@ -23,7 +23,7 @@ import org.specs.runner.JUnit4
 import naming._
 
 abstract class DataStoreSpec extends Specification {
-  
+
   protected var storeID:DataStoreURI = null
   var aDataStore:DataStore = null
   val eid1 = EntityID.fromName("eid:1")
@@ -34,7 +34,7 @@ abstract class DataStoreSpec extends Specification {
   private var partStoreID = Map.empty[Symbol,DataStoreURI]
   
   def generateStoreID():DataStoreURI
-  
+
   def getStoreID(part:Symbol) = {
     if(!partStoreID.isDefinedAt(part)) {
       partStoreID = partStoreID + (part -> generateStoreID())
@@ -42,8 +42,10 @@ abstract class DataStoreSpec extends Specification {
     partStoreID(part)
   }
   
-  
   "the DataStoreFactory" should {
+
+    storeID = generateStoreID()
+    
     "provide a builder" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
       dsb must notBeNull
@@ -55,14 +57,17 @@ abstract class DataStoreSpec extends Specification {
         dsb2 must beEqual(dsb)
     }
   }
-  
-  setSequential()
-  
+
+  //setSequential()
+
   var adsb:DataStoreBuilder = null
-  "a DataStoreBuilder" ->-(beforeContext{
+
+  val dsbContext = beforeContext{
     storeID = getStoreID('DataStoreBuilder)
     adsb = DataStoreFactory.getDataStoreBuilder(storeID)
-  })should {
+  }
+
+  "a DataStoreBuilder" ->-(dsbContext)should {
     "prove the store does not exists before creating" in { adsb.exists(storeID) must beFalse }
     "not open a store that does not exists" in { adsb.open(storeID) must beNull }
     "create a store" in { adsb.create(storeID) must notBeNull }

@@ -19,14 +19,19 @@
 package vcc.infra.datastore.directory
 
 import org.specs._
-import org.specs.runner.JUnit4
-import vcc.infra.datastore.DataStoreSpec
+import runner.{JUnitSuiteRunner, JUnit4}
 import vcc.infra.datastore.naming._
 import java.io.File
+import org.junit.runner.RunWith
+import vcc.infra.datastore.{DataStoreFactory, DataStoreSpec}
 
+@RunWith(classOf[JUnitSuiteRunner])
 class DirectoryDataStoreTest extends JUnit4(DirectoryDataStoreSpec)
 
 object DirectoryDataStoreSpec extends DataStoreSpec {
+
+  shareVariables()
+  
   def generateStoreID() = {
     val file = new java.io.File(System.getProperty("java.io.tmpdir"),"test"+(new scala.util.Random().nextInt())+".dsd")
     DataStoreURI.fromStorageString("vcc-store:directory:"+ file.toURL.toURI.toString)
@@ -36,13 +41,15 @@ object DirectoryDataStoreSpec extends DataStoreSpec {
   val badTestEntity = Seq("notxml","noid","extra-xml-entity","bad-encoding","missing-datum-id","bad-xml","id-mismatch").map(x=>EntityID.fromName(x))
   
   val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:"+testStore.toURL.toURI.toString)
-  "DirectoryDataStore on a test directory" ->-(beforeContext {
+  val storeContext = beforeContext {
     storeID = testStoreURI
     val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
     dsb.exists(storeID) must beTrue
     aDataStore = dsb.open(storeID)
     aDataStore must notBeNull
-  }) should {
+  }
+
+  "DirectoryDataStore on a test directory" ->-(storeContext) should {
     "have list all bad files" in {
       aDataStore.enumerateEntities() must containAll(badTestEntity)
     }
@@ -55,7 +62,7 @@ object DirectoryDataStoreSpec extends DataStoreSpec {
       ef must_== Nil
     }
   }
-  
+
   "Directory DataStoryURI" should {
     "accept absolute URI" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
