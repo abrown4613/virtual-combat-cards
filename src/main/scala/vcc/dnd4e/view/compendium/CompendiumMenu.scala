@@ -19,13 +19,38 @@ package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import vcc.util.swing.SwingHelper
+import vcc.dnd4e.view.dialog.FileChooserHelper
+import vcc.domain.dndi.CharacterBuilderImporter
+import java.io.FileInputStream
+import vcc.dnd4e.domain.compendium.{CombatantEntityBuilder, Compendium}
+import vcc.dnd4e.view.PanelDirector
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
+
+  val logger = org.slf4j.LoggerFactory.getLogger("user")
+
+  this.contents += new MenuItem(Action("Import Character Builder File..."){
+    var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)
+    if(file.isDefined) {
+      try {
+        val dse = CharacterBuilderImporter.loadFromStream(new FileInputStream(file.get))
+        val ent = CombatantEntityBuilder.buildEntity(dse)
+        Compendium.activeRepository.store(ent)
+      } catch {
+        case e =>
+          logger.warn("Failed to load file "+file.get.getAbsolutePath+": reason",e)
+          Dialog.showMessage(this, "Failed to load "+ file.get.getAbsoluteFile +".\nThe file may be corrupt or invalid.", "Failed to import file",Dialog.Message.Error,null)
+      }
+    }
+  })
+
   this.contents += new MenuItem(Action("View Entries ...") {
     SwingHelper.centerFrameOnScreen(CompendiumView)
     CompendiumView.visible = true
   })
+
   this.contents += new MenuItem(CompendiumView.newEntryAction)
+
   this.contents += new MenuItem(Action("Edit Parties ...") {
     val partyEditor = new PartyEditor(director)
     SwingHelper.centerFrameOnScreen(partyEditor)
