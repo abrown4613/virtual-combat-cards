@@ -64,6 +64,7 @@ class ContextLoaderTest extends TestCase {
     val fighterID = CombatantRepository.registerEntity(fighter)
     
     //tracker ! Command(null,request.AddCombatants(List(CombatantDefinition('A,null,fighterID))))
+    /*
     new TestCommandSource(tracker) onComplete {
       changes => 
       	println("Called me with changes "+changes)
@@ -73,6 +74,8 @@ class ContextLoaderTest extends TestCase {
       reason =>
       	println("Cancelled with reason")
     } dispatch(request.AddCombatants(List(CombatantDefinition('A,null,fighterID))))
+    */
+    0
   }
 }
 
@@ -82,7 +85,8 @@ import scala.actors.Actor._
 import scala.actors.Actor
 import scala.actors.OutputChannel
 
-class TestCommandSource(val tracker:Tracker) extends CommandSource {
+//FIXME
+abstract class TestCommandSource(val tracker:Tracker) extends CommandSource {
 
   val core = actor {
     var run = true
@@ -96,7 +100,7 @@ class TestCommandSource(val tracker:Tracker) extends CommandSource {
           tracker ! c
           println("Sent "+c)
         case ('COMPLETE,msg) => 
-          println("Here")
+          println("Here actor")
           from ! msg
           run = false
         case ('CANCEL,reason) =>
