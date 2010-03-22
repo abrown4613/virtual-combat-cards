@@ -18,160 +18,195 @@
 package vcc.util
 
 import java.net.URL
-import java.io.File
 import org.xml.sax.InputSource
 import scala.xml.XML
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.BootStrap
+import java.io.{InputStream, File}
 
 /**
  * Utility functions to help with update manager
  */
 object UpdateManager {
-  
+
   /**
    * This is based on Drupal project versioning, we assume all version field are Int
    * except extra (which is a nullable string)
    */
-  case class Version(major:Int, minor:Int, patch:Int, extra:String) extends Ordered[Version] {
-    def compare(that:Version):Int = {
-      var dif=this.major-that.major
-      if(dif==0) dif=this.minor-that.minor
-      if(dif==0) dif=this.patch-that.patch
-      if(dif==0)
-        if(this.extra != null && that.extra != null) dif = this.extra.compare(that.extra)
-        else if(this.extra!=null) dif = -1
-        else if(that.extra!=null) dif = 1
-      dif 
+  case class Version(major: Int, minor: Int, patch: Int, extra: String) extends Ordered[Version] {
+    def compare(that: Version): Int = {
+      var dif = this.major - that.major
+      if (dif == 0) dif = this.minor - that.minor
+      if (dif == 0) dif = this.patch - that.patch
+      if (dif == 0)
+        if (this.extra != null && that.extra != null) dif = this.extra.compare(that.extra)
+        else if (this.extra != null) dif = -1
+        else if (that.extra != null) dif = 1
+      dif
     }
- 
-  	def versionString:String = major +"."+minor+"."+patch+ (if(extra!=null) "-"+extra else "")
-   
-  	def isPatch(other:Version):Boolean = {
-  	  ((this.major==other.major) && (this.minor == other.minor) && this.patch > other.patch)
-  	}
+
+    def versionString: String = major + "." + minor + "." + patch + (if (extra != null) "-" + extra else "")
+
+    def isPatch(other: Version): Boolean = {
+      ((this.major == other.major) && (this.minor == other.minor) && this.patch > other.patch)
+    }
   }
-  
+
+  object Version {
+    private val fullVersion = """(\d+)\.(\d+)\.(\d+)(\-\w+)?""".r
+    private val partialVersion = """(\d+)\.(\d+)(\-\w+)?""".r
+
+    /**
+     * Load a version from a string
+     */
+    def fromString(str: String): Version = {
+      str match {
+        case fullVersion(major, minor, patch, qualif) =>
+          val mqualif = if (qualif != null) qualif.substring(1) else null
+          Version(major.toInt, minor.toInt, patch.toInt, mqualif)
+        case partialVersion(major, minor, qualif) =>
+          val mqualif = if (qualif != null) qualif.substring(1) else null
+          Version(major.toInt, minor.toInt, 0, mqualif)
+        case _ => null
+      }
+    }
+
+    /**
+     * Loads a version file and extract the version from it
+     */
+    def fromVersionFileFromStream(resource: InputStream): Version = {
+      try {
+        val vxml = XML.load(new InputSource(resource))
+        println(vxml)
+        if(vxml.label == "version") this.fromString(vxml.text) else null
+      } catch {
+        case _ => null
+      }
+    }
+  }
+
   /**
-   * Case class containing basic information on a release, based on Drupal.org 
+   *  Case class containing basic information on a release, based on Drupal.org
    * release-history format
    * @param version A version string, e.g. 0.99.1
    * @param download URL to download file
    * @param md5 MD4 signature for file
    * @param info URL to release note
    */
-  case class Release(version:Version, download:URL, md5:String, info:URL) 
-  
+  case class Release(version: Version, download: URL, md5: String, info: URL)
+
   //TODO: Maybe get all the release information, since this could be used for a controlled download
+
   /**
    * Collect version information from a stream, which should point to a XML file. This
    * can be a URL on a remote site. Only published versions should be returned.
    * @param stream The InputSource for the XML file
    * @return A valid current Version or null if something went wrong.
    */
-  def checkAvailableVersions(stream: InputSource):Seq[Release] = {
-    val release= XML.load(stream)
+  def checkAvailableVersions(stream: InputSource): Seq[Release] = {
+    val release = XML.load(stream)
     val useUnpublished = System.getProperty("vcc.update.unpublished") != null
-    
-    val releases:Seq[Release] = (release \\ "release").map { release => 
-      val major = XMLHelper.nodeSeq2Int(release \ "version_major",0)
-      val minor = XMLHelper.nodeSeq2Int(release \ "version_minor",0)
-      val patch = XMLHelper.nodeSeq2Int(release \ "version_patch",0)
-      val extra = XMLHelper.nodeSeq2String(release \ "version_extra",null)
-      val download = XMLHelper.nodeSeq2String(release \ "download_link",null)
-      val md5 = XMLHelper.nodeSeq2String(release \ "mdhash",null)
-      val info = XMLHelper.nodeSeq2String(release \ "release_link",null)
 
-      if((! useUnpublished && XMLHelper.nodeSeq2String(release \ "status")!= "published") || download == null) null
-      else Release(
-        Version(major,minor,patch,extra),
-          if(download!=null)new URL(download) else null,
+    val releases: Seq[Release] = (release \\ "release").map {
+      release =>
+        val major = XMLHelper.nodeSeq2Int(release \ "version_major", 0)
+        val minor = XMLHelper.nodeSeq2Int(release \ "version_minor", 0)
+        val patch = XMLHelper.nodeSeq2Int(release \ "version_patch", 0)
+        val extra = XMLHelper.nodeSeq2String(release \ "version_extra", null)
+        val download = XMLHelper.nodeSeq2String(release \ "download_link", null)
+        val md5 = XMLHelper.nodeSeq2String(release \ "mdhash", null)
+        val info = XMLHelper.nodeSeq2String(release \ "release_link", null)
+
+        if ((!useUnpublished && XMLHelper.nodeSeq2String(release \ "status") != "published") || download == null) null
+        else Release(
+          Version(major, minor, patch, extra),
+          if (download != null) new URL(download) else null,
           md5,
-          if(info!=null)new URL(info) else null
-      	)
-    }.filter(r=> r != null)
-    assert(releases!=null)
+          if (info != null) new URL(info) else null
+          )
+    }.filter(r => r != null)
+    assert(releases != null)
     releases
-  } 
-  
+  }
+
   /**
    * Get version information based on an URL
    * @param URL to the site that contains a Drupal.org release-history XML file
    * @return A valid current Version or null if something went wrong.
    */
-  def checkAvailableVersions(url: URL):Seq[Release] = {
-    val stream=url.openStream()
-	checkAvailableVersions(new InputSource(stream))
-  }  
-  
+  def checkAvailableVersions(url: URL): Seq[Release] = {
+    val stream = url.openStream()
+    checkAvailableVersions(new InputSource(stream))
+  }
+
   /**
    * Fetch available version then allow user to download choosen versiona 
    * and leave the version ready to update on next launch.
    * @param url URL to fecth available versions
    * @return Success or failure
    */
-  def runUpgradeProcess(url:java.net.URL) {
+  def runUpgradeProcess(url: java.net.URL) {
 
-	import vcc.util.swing.multipanel.ReleaseSelectPanel
-    
-    def scanForVersions(afile:File): List[(Symbol,Release)] = {
-      val rels=checkAvailableVersions(new InputSource(new java.io.FileInputStream(afile)))
+    import vcc.util.swing.multipanel.ReleaseSelectPanel
+
+    def scanForVersions(afile: File): List[(Symbol, Release)] = {
+      val rels = checkAvailableVersions(new InputSource(new java.io.FileInputStream(afile)))
       afile.delete()
 
-      rels.filter(r => { r.version > BootStrap.version}).map({ rel=>
-        if(rel.version.extra != null) ('RC,rel)
-        else if(rel.version.isPatch(BootStrap.version)) ('PATCH,rel)
-        else ('UPGRADE,rel)
+      rels.filter(r => {r.version > BootStrap.version}).map({
+        rel =>
+          if (rel.version.extra != null) ('RC, rel)
+          else if (rel.version.isPatch(BootStrap.version)) ('PATCH, rel)
+          else ('UPGRADE, rel)
       }).toList
-	}
- 
-	def checkFileMD5Sum(file:File, md5sum:String):Boolean = {
-	  val chkSum = PackageUtil.fileMD5Sum(file)
-	  md5sum.toLowerCase == chkSum.toLowerCase
     }
-	val umd= new scala.swing.Frame() with vcc.util.swing.MultiPanel {
-        title = "Update Virtual Combat Cards"
-        minimumSize= new java.awt.Dimension(300,200)
-        iconImage = vcc.dnd4e.view.IconLibrary.MetalD20.getImage
-	}
-	umd.visible=true
-    
-	umd.showMessage(false, "Checking for a new version...")
 
-	val afile = umd.downloadFile(url, File.createTempFile("vcc",".xml") )
-    if(afile!=null) {
-      var releases=scanForVersions(afile)
-      if(releases.length>0) {
-    	val releaseOpt=umd.customPanel(new ReleaseSelectPanel(releases))
-     
-    	if(releaseOpt.isDefined) {	  
-          val release=releaseOpt.get
-          
-          
-          val dfile=umd.downloadFile(release.download, java.io.File.createTempFile("vcc",".zip") )
-          if(dfile!=null) {
-            umd.showMessage(false,"Checking and unpacking downloaded file...")
+    def checkFileMD5Sum(file: File, md5sum: String): Boolean = {
+      val chkSum = PackageUtil.fileMD5Sum(file)
+      md5sum.toLowerCase == chkSum.toLowerCase
+    }
+    val umd = new scala.swing.Frame() with vcc.util.swing.MultiPanel {
+      title = "Update Virtual Combat Cards"
+      minimumSize = new java.awt.Dimension(300, 200)
+      iconImage = vcc.dnd4e.view.IconLibrary.MetalD20.getImage
+    }
+    umd.visible = true
+
+    umd.showMessage(false, "Checking for a new version...")
+
+    val afile = umd.downloadFile(url, File.createTempFile("vcc", ".xml"))
+    if (afile != null) {
+      var releases = scanForVersions(afile)
+      if (releases.length > 0) {
+        val releaseOpt = umd.customPanel(new ReleaseSelectPanel(releases))
+
+        if (releaseOpt.isDefined) {
+          val release = releaseOpt.get
+
+          val dfile = umd.downloadFile(release.download, java.io.File.createTempFile("vcc", ".zip"))
+          if (dfile != null) {
+            umd.showMessage(false, "Checking and unpacking downloaded file...")
             // We have the file
-            if(checkFileMD5Sum(dfile, release.md5)) {
-              PackageUtil.extractFilesFromZip(dfile,getInstallDirectory)
-              umd.showMessage(true,"<html><body>Download and extraction completed successfully.<p>To update Virtual Combat Cards, exit and restart it.</body></html>")
+            if (checkFileMD5Sum(dfile, release.md5)) {
+              PackageUtil.extractFilesFromZip(dfile, getInstallDirectory)
+              umd.showMessage(true, "<html><body>Download and extraction completed successfully.<p>To update Virtual Combat Cards, exit and restart it.</body></html>")
             } else {
-              umd.showMessage(true,"<html><body>Downloaded file seems to be corrupted. <p> Download and extract manually or report a bug on the site</body></html>")
+              umd.showMessage(true, "<html><body>Downloaded file seems to be corrupted. <p> Download and extract manually or report a bug on the site</body></html>")
               SwingHelper.openDesktopBrowser(release.info)
             }
           } else {
-        	umd.showMessage(true,"Download failed or cancelled.")
+            umd.showMessage(true, "Download failed or cancelled.")
           }
-    	} else {
-    	  // No version selected
-    	}
+        } else {
+          // No version selected
+        }
       } else {
-        umd.showMessage(true,"Your version is up to date.")
+        umd.showMessage(true, "Your version is up to date.")
       }
     } else {
-      umd.showMessage(true,"<html><body>Failed to download Releases history from:<br>"+url+"</body></html>")
+      umd.showMessage(true, "<html><body>Failed to download Releases history from:<br>" + url + "</body></html>")
     }
-	umd.dispose()
+    umd.dispose()
   }
 
   /**
@@ -179,6 +214,6 @@ object UpdateManager {
    * located.
    * @returm File The VCC install directory
    */
-  def getInstallDirectory():File = new File(System.getProperty("vcc.install", System.getProperty("user.dir",".")))
-  
+  def getInstallDirectory(): File = new File(System.getProperty("vcc.install", System.getProperty("user.dir", ".")))
+
 }

@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-dnd4e</artifactId>
-    <version>1.2-SNAPSHOT</version>
-    <inceptionYear>2008</inceptionYear>
+    <version>1.2.0-SNAPSHOT</version>
+    <inceptionYear>2009</inceptionYear>
     <properties>
         <scala.version>2.7.7</scala.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -157,6 +157,31 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>maven-replacer-plugin</artifactId>
+                <version>1.3</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                        <configuration>
+                            <file>src/main/resources/version.xml</file>
+                            <replacements>
+                                <replacement>
+                                    <token>VERSION</token>
+                                    <value>${project.version}</value>
+                                </replacement>
+                            </replacements>
+                            <outputFile>target/classes/vcc/version.xml</outputFile>
+                        </configuration>
+
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.2-beta-5</version>
