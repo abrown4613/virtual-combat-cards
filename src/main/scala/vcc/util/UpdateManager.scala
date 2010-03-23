@@ -77,7 +77,6 @@ object UpdateManager {
     def fromVersionFileFromStream(resource: InputStream): Version = {
       try {
         val vxml = XML.load(new InputSource(resource))
-        println(vxml)
         if(vxml.label == "version") this.fromString(vxml.text) else null
       } catch {
         case _ => null
