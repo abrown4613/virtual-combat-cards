@@ -1,0 +1,34 @@
+<component xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.0 http://maven.apache.org/xsd/component-1.1.0.xsd">
+    <fileSets>
+        <fileSet>
+            <directory>target/vcc-${project.version}-vccrun</directory>
+            <lineEnding>keep</lineEnding>
+            <outputDirectory>slib</outputDirectory>
+            <includes>
+                <include>log4j-1*.jar</include>
+            </includes>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+        <fileSet>
+            <directory>target/vcc-${project.version}-vccrun</directory>
+            <lineEnding>keep</lineEnding>
+            <outputDirectory>.</outputDirectory>
+            <fileMode>0755</fileMode>
+            <excludes>
+                <exclude>*.jar</exclude>
+            </excludes>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+    </fileSets>
+    <files>
+        <file>
+            <source>target/vcc-${project.version}-vccrun/vcc-run.jar</source>
+            <outputDirectory>.</outputDirectory>
+            <destName>vccrun.jar</destName>
+            <fileMode>0755</fileMode>
+        </file>
+    </files>
+</component>

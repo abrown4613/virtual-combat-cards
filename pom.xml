@@ -132,7 +132,7 @@
         </dependency>
         <dependency>
             <groupId>org.exnebula</groupId>
-            <artifactId>vcc-launcher</artifactId>
+            <artifactId>vcc-run</artifactId>
             <version>1.1.1</version>
         </dependency>
     </dependencies>
@@ -211,8 +211,10 @@
                         </goals>
                         <configuration>
                             <descriptors>
-                                <descriptor>src/main/assembly/bundle.xml</descriptor>
-                                <descriptor>src/main/assembly/full-install.xml</descriptor>
+                                <descriptor>src/main/assembly/bundle-full.xml</descriptor>
+                                <descriptor>src/main/assembly/bundle-patch.xml</descriptor>
+                                <descriptor>src/main/assembly/release-full.xml</descriptor>
+                                <descriptor>src/main/assembly/release-patch.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
