@@ -21,8 +21,7 @@ package vcc.dnd4e.domain.compendium
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.model.Registry
-import vcc.dnd4e.model.CombatantType
+import vcc.dnd4e.model.common.CombatantType
 
 case class EntityClassID(uri: java.net.URI)
 
@@ -66,10 +65,9 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
  * This service will create a combatant entity from a DataStoreEntity
  */
 object CombatantEntityBuilder {
-
-  protected val entityFactory:PartialFunction[(EntityID,String),CombatantEntity] = {
-    case (eid,"vcc-class:monster") => new MonsterEntity(eid)
-    case (eid,"vcc-class:character") => new CharacterEntity(eid)
+  protected val entityFactory: PartialFunction[(EntityID, String), CombatantEntity] = {
+    case (eid, "vcc-class:monster") => new MonsterEntity(eid)
+    case (eid, "vcc-class:character") => new CharacterEntity(eid)
   }
 
   /**
@@ -77,7 +75,7 @@ object CombatantEntityBuilder {
    * @param dse The Entity you wish to build
    * @return true if it can be built
    */
-  def canHandle(dse:DataStoreEntity) = entityFactory.isDefinedAt(null,dse.data.getOrElse("classid",null))
+  def canHandle(dse: DataStoreEntity) = entityFactory.isDefinedAt(null, dse.data.getOrElse("classid", null))
 
   /**
    * Build the entity
@@ -85,8 +83,8 @@ object CombatantEntityBuilder {
    * @return A valid entity or null otherwise
    */
   def buildEntity(dse: DataStoreEntity): CombatantEntity = {
-    if(dse != null && canHandle(dse)) {
-      val ent = entityFactory(dse.eid,dse.data("classid"))
+    if (dse != null && canHandle(dse)) {
+      val ent = entityFactory(dse.eid, dse.data("classid"))
       ent.loadFromMap(dse.data)
       ent
     } else {

@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -17,35 +18,29 @@
  */
 package vcc.dnd4e.controller
 
-import vcc.controller.{TrackerController=>AbstractTrackerController}
 import vcc.controller.TransactionalProcessor
 import vcc.controller.transaction.ChangeNotification
-import vcc.dnd4e.controller._
 import vcc.dnd4e.model.TrackerContext
-import vcc.dnd4e.model.{CombatStateChanged,CombatStateChange}
+import vcc.dnd4e.model.{CombatStateChanged, CombatStateChange}
 
 /**
- * This Mixin implement the <code>publish</code> method required for a TrackerController, it will
+ * This Mixin implement the <code>publish</code> method required for a AbstractTrackerController, it will
  * simply cast all objects to the CombatStateChange and make sure every changes was accounted for.
  */
-trait TrackerControllerValidatingPublisher[C] extends AbstractTrackerController[C] {
-  
-  def publish(changes:Seq[ChangeNotification]):Any = {
-    val c:Seq[CombatStateChange] = for(change <- changes if(change.isInstanceOf[CombatStateChange])) yield { 
+trait TrackerControllerValidatingPublisher {
+  def publish(changes: Seq[ChangeNotification]): Any = {
+    val c: Seq[CombatStateChange] = for (change <- changes if (change.isInstanceOf[CombatStateChange])) yield {
       change.asInstanceOf[CombatStateChange]
     }
     assert(c.length == changes.length)
     CombatStateChanged(c.toList.toSeq)
   }
-    
+
 }
 
 /**
- * This is the DND4E TrackerController with all need traits and implementation.
+ * This is the DND4E AbstractTrackerController with all need traits and implementation.
  */
-class TrackerController() extends AbstractTrackerController[TrackerContext](new TrackerContext()) 
-  with TrackerControllerValidatingPublisher[TrackerContext] 
-{
-    val processor= new TransactionalProcessor[TrackerContext](context) with TrackerEffectHandler with TrackerContextHandler with InitiativeActionHandler
-  
-}
+class TrackerControllerImpl() extends TransactionalProcessor[TrackerContext](new TrackerContext())
+        with TrackerControllerValidatingPublisher with TrackerEffectHandler with TrackerContextHandler with InitiativeActionHandler
+

@@ -1,0 +1,438 @@
+package vcc.dnd4e.domain.tracker.transactional
+
+/**
+ * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
+import org.specs.Specification
+import org.junit.runner.RunWith
+import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs.mock.Mockito
+import vcc.controller.transaction.{ChangeNotification, Transaction}
+import vcc.dnd4e.domain.tracker.common._
+import vcc.infra.test.TransactionChangeLogger
+
+@RunWith(classOf[JUnitSuiteRunner])
+class InitiativeOrderTest extends JUnit4(InitiativeOrderSpec)
+
+
+object InitiativeOrderSpec extends Specification with Mockito {
+  val combA = CombatantID("A")
+  val combB = CombatantID("B")
+  val combC = CombatantID("C")
+  val combD = CombatantID("D")
+  val combE = CombatantID("E")
+
+  val ioa0 = InitiativeOrderID(combA, 0)
+  val ioa1 = InitiativeOrderID(CombatantID("A"), 1)
+  val iob = InitiativeOrderID(combB, 0)
+  val ioc = InitiativeOrderID(combC, 0)
+  val iod = InitiativeOrderID(combD, 0)
+  val ioe = InitiativeOrderID(combE, 0)
+
+  var aOrder: InitiativeOrder = null
+
+  implicit var aTrans: Transaction = null
+
+  var changeLog: TransactionChangeLogger = null
+
+  val emptyOrder = beforeContext {
+    aTrans = new Transaction()
+    aOrder = new InitiativeOrder()
+    changeLog = new TransactionChangeLogger()
+  }
+
+  "an empty InitiatveOrder" ->- (emptyOrder) should {
+
+    "set a simple InitiativeDefinition" in {
+      val iDef = InitiativeDefinition(combA, 10, List(14))
+      aOrder.setInitiative(iDef)
+      aTrans.commit(changeLog)
+      changeLog.changes must notBeEmpty
+      changeLog.changes must contain(InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0)))
+      changeLog.changes must contain(InitiativeOrderChange(List(ioa0)))
+    }
+
+    "not define a head for initiative robin upon add" in {
+      val iDef = InitiativeDefinition(combA, 10, List(14))
+      aOrder.setInitiative(iDef)
+      aTrans.commit(changeLog)
+
+      changeLog.changes must notExist(x => x.isInstanceOf[InitiativeOrderFirstChange])
+    }
+
+    "must fail on redefinition on an initative definition" in {
+      val iDef = InitiativeDefinition(combA, 10, List(14))
+      aOrder.setInitiative(iDef)
+      val iDef2 = InitiativeDefinition(combA, 9, List(12))
+      aOrder.setInitiative(iDef2) must throwAn[Exception]
+    }
+
+    "must set a compound InitiativeDefinition" in {
+      val iDef = InitiativeDefinition(combA, 10, List(14, 25))
+      aOrder.setInitiative(iDef)
+      aTrans.commit(changeLog)
+      changeLog.changes must notBeEmpty
+      changeLog.changes must contain(InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0)))
+      changeLog.changes must contain(InitiativeTrackerChange(ioa1, InitiativeTracker.initialTracker(ioa1)))
+      changeLog.changes must contain(InitiativeOrderChange(List(ioa1, ioa0)))
+    }
+
+    "preserve the baseList form undo to redo" in {
+      aOrder.setInitiative(InitiativeDefinition(combA, 10, List(14, 25)))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+      aTrans.redo(changeLog)
+
+      aTrans = new Transaction()
+      aOrder.setInitiative(InitiativeDefinition(combB, 10, List(17)))
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderChange(List(ioa1, iob, ioa0)))
+    }
+
+    "preserver random tie break between calls" in {
+      // This is needed to make sure that initiative are in order (no random part)
+      val iDef1 = InitiativeDefinition(combA, 10, List(14, 14, 14, 14, 14))
+      val iDef2 = InitiativeDefinition(combB, 10, List(14, 14, 14, 14, 14))
+      aOrder.setInitiative(iDef1)
+      aOrder.setInitiative(iDef2) mustNot throwA[Exception]
+    }
+
+    "throw exception on a startCombat on an empty robin" in {
+      aOrder.startCombat() must throwA[NoSuchElementException]
+    }
+  }
+
+  val loadedOrder = beforeContext {
+    aTrans = new Transaction()
+    aOrder = new InitiativeOrder()
+    changeLog = new TransactionChangeLogger()
+
+    aOrder.setInitiative(InitiativeDefinition(combA, 10, List(14, 9)))
+    aOrder.setInitiative(InitiativeDefinition(combB, 10, List(10)))
+    aOrder.setInitiative(InitiativeDefinition(combC, 8, List(18)))
+    aOrder.setInitiative(InitiativeDefinition(combD, 4, List(7)))
+    aTrans.commit(changeLog)
+    aTrans = new Transaction()
+  }
+
+  val loadedAndStartedOrder = beforeContext {
+    aTrans = new Transaction()
+    aOrder = new InitiativeOrder()
+    changeLog = new TransactionChangeLogger()
+
+    aOrder.setInitiative(InitiativeDefinition(combA, 10, List(14, 9)))
+    aOrder.setInitiative(InitiativeDefinition(combB, 10, List(10)))
+    aOrder.setInitiative(InitiativeDefinition(combC, 8, List(18)))
+    aOrder.setInitiative(InitiativeDefinition(combD, 4, List(7)))
+    aOrder.startCombat()
+    aTrans.commit(changeLog)
+    aTrans = new Transaction()
+  }
+
+
+  "a loaded InitiativeOrder" ->- (loadedOrder) should {
+
+    "have a container for each Initiative order" in {
+      val ioids = Seq(ioa0, ioa1, iob, ioc, iod)
+      ioids.foreach(x => aOrder.initiativeTrackerFor(x) must notBeNull)
+    }
+
+    "throw exception for non-existant object" in {
+      aOrder.initiativeTrackerFor(InitiativeOrderID(combE, 0)) must throwA[NoSuchElementException]
+    }
+
+    "have a new tracker after commiting" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
+      aTrans.commit(changeLog)
+      aOrder.initiativeTrackerFor(ioe) must_== InitiativeTracker.initialTracker(ioe)
+    }
+
+    "not return an added tracker after undoing it's add" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      aOrder.initiativeTrackerFor(ioe) must throwA[NoSuchElementException]
+    }
+
+    "change an InitiativeTracker and propagate" in {
+      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting))
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting)))
+    }
+
+    "undo the change of an InitiativeTracker" in {
+      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 0, InitiativeTracker.state.Waiting)))
+    }
+
+    "propagate to null the InitiativeTracker when undoing an add" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeTrackerChange(ioe, null))
+      aOrder.initiativeTrackerFor(ioe) must throwA[NoSuchElementException]
+    }
+
+    "propagate the old tracker the InitiativeTracker when redoing an add" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+      aTrans.redo(changeLog)
+
+      changeLog.changes must contain(InitiativeTrackerChange(ioe, InitiativeTracker.initialTracker(ioe)))
+      aOrder.initiativeTrackerFor(ioe) must_== InitiativeTracker.initialTracker(ioe)
+    }
+  }
+
+  private def startCombatWrapper() {
+    val trans = new Transaction()
+    aOrder.startCombat()(trans)
+    trans.commit(changeLog)
+  }
+
+  private def wrapInTransaction(f: Transaction => Unit): Seq[ChangeNotification] = {
+    val trans = new Transaction()
+    f(trans)
+    trans.commit(changeLog)
+    changeLog.changes
+  }
+
+  "an InitiativeOrder as a round robin of order entries" ->- (loadedOrder) should {
+
+    "go to the first combatant on the order on a startCombat" in {
+      aOrder.startCombat()
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+    }
+
+    "fail to rotate if not started" in {
+      aOrder.rotate() must throwA[IllegalStateException]
+    }
+
+    "undo a startCombat command" in {
+      aOrder.startCombat()
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderFirstChange(null))
+    }
+
+    "update the robin when someone is added and propagate" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(35))) //And 
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioe, ioc, ioa0, iob, ioa1, iod)))
+    }
+
+    "undo the robin change for adding an intiative" in {
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+    }
+
+    "not accept moveBefore if the combat has not started" in {
+      aOrder.moveBefore(iod, ioa0) must throwA[IllegalStateException]
+    }
+
+    "remove a combatant information from the order" in {
+      aOrder.removeCombatant(combA)
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa0, null)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa1, null)))
+      aOrder.initiativeTrackerFor(ioa0) must throwA[NoSuchElementException]
+    }
+
+    "allow adding the same combatant after it has been removed" in {
+      aOrder.removeCombatant(combA)
+      aTrans.commit(changeLog)
+      aTrans = new Transaction()
+      aOrder.setInitiative(InitiativeDefinition(combA, 1, List(2)))
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod, ioa0)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0))))
+    }
+
+    "undo remove combatant from order" in {
+      aOrder.removeCombatant(combA)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0))))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa1, InitiativeTracker.initialTracker(ioa1))))
+    }
+
+    "redo the removal a combatant information from the order" in {
+      aOrder.removeCombatant(combA)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+      aTrans.redo(changeLog)
+
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa0, null)))
+      changeLog.changes must contain((InitiativeTrackerChange(ioa1, null)))
+    }
+
+    "clear the entire order" in {
+      aOrder.clearOrder()
+      aTrans.commit(changeLog)
+
+      changeLog.changes must containAll(List(InitiativeOrderChange(Nil)))
+      List(ioa0, ioa1, iob, ioc, iod).foreach(e => changeLog.changes must contain(InitiativeTrackerChange(e, null)))
+    }
+  }
+
+  "a loaded InitiativeOrder" ->- (loadedAndStartedOrder) should {
+
+    "not allow the removal of a Combatant " in {
+      aOrder.removeCombatant(combA) must throwA[IllegalStateException]
+    }
+
+    "rotate the log and indicate this" in {
+      aOrder.rotate()
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+    }
+
+    "undo the rotation and propagate" in {
+      aOrder.rotate()
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+    }
+
+    "preserve the reorder internal when adding after a reorder should " in {
+      //We need to add fake transaction to make sure we preserve data
+      //This transaction will be undone
+      aOrder.moveBefore(ioc, iod)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      aTrans = new Transaction()
+      aOrder.moveBefore(iod, ioa0)
+      aTrans.commit(changeLog)
+
+      aTrans = new Transaction()
+      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(17))) // Add after C
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioe, iod, ioa0, iob, ioa1)))
+    }
+
+    "preserve the reorder internal when reordering after another reorder" in {
+      //We need to add fake transaction to make sure we preserve data
+      //This transaction will be undone
+      aOrder.moveBefore(ioc, iod)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      // This one is for keeping
+      aTrans = new Transaction
+      aOrder.moveBefore(iod, ioa0)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+      aTrans.redo(changeLog)
+
+      aTrans = new Transaction()
+      aOrder.moveBefore(iob, iod)
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod, ioa0, ioa1)))
+    }
+
+    "update the robin when a reorder is done and propagate" in {
+      aOrder.moveBefore(iod, ioa0)
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iod, ioa0, iob, ioa1)))
+    }
+
+    "not change head on reorder moves to the first slot" in {
+      aOrder.moveBefore(iod, ioc)
+      aTrans.commit(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(iod, ioc, ioa0, iob, ioa1)))
+      changeLog.changes must notExist(x => x.isInstanceOf[InitiativeOrderFirstChange])
+    }
+
+    "undo the reorder robin change and propagate" in {
+      aOrder.moveBefore(iod, ioa0)
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+    }
+
+    "clear the entire order" in {
+      aOrder.clearOrder()
+      aTrans.commit(changeLog)
+
+      changeLog.changes must containAll(List(InitiativeOrderFirstChange(null), InitiativeOrderChange(Nil)))
+      List(ioa0, ioa1, iob, ioc, iod).foreach(e => changeLog.changes must contain(InitiativeTrackerChange(e, null)))
+    }
+
+    "undo clearOrder" in {
+      aOrder.clearOrder()
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+      List(ioa0, ioa1, iob, ioc, iod).foreach(e => changeLog.changes must contain(InitiativeTrackerChange(e, InitiativeTracker.initialTracker(e))))
+    }
+
+    "redo a undone clearOrder" in {
+      aOrder.clearOrder()
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+      aTrans.redo(changeLog)
+
+      changeLog.changes must containAll(List(InitiativeOrderFirstChange(null), InitiativeOrderChange(Nil)))
+      List(ioa0, ioa1, iob, ioc, iod).foreach {
+        e =>
+          aOrder.initiativeTrackerFor(e) must throwA[NoSuchElementException]
+          changeLog.changes must contain(InitiativeTrackerChange(e, null))
+      }
+    }
+
+    "allow adding a cleared combatant after clearOrder" in {
+      // Make sure we cleared inner structures
+      aOrder.clearOrder()
+      aOrder.setInitiative(InitiativeDefinition(combC, 3, List(17))) mustNot throwA[Exception]
+    }
+
+    "allow adding a cleared combatant after clearOrder after a moveBefore" in {
+      // Make sure we cleared inner structures
+      aOrder.moveBefore(ioc, iod)
+      aOrder.clearOrder()
+      aOrder.setInitiative(InitiativeDefinition(combC, 3, List(17))) mustNot throwA[Exception]
+    }
+  }
+}

@@ -1,3 +1,5 @@
+//$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -14,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+
 
 package vcc.domain.dndi
 
@@ -27,8 +29,6 @@ trait StatBlockDataSource {
 }
 
 object StatBlockBuilder {
-  val xmlLineBreak = scala.xml.Text("\n")
-
   abstract class Chunk {
     def render(source: StatBlockDataSource): Seq[Node]
 
@@ -41,14 +41,16 @@ object StatBlockBuilder {
   }
 
   object Break extends Chunk {
-    def render(source: StatBlockDataSource) = Seq(<br/>, xmlLineBreak)
+    def render(source: StatBlockDataSource) = Seq(<br/>)
   }
 
   abstract class PartFormatter(key: String) extends Chunk {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
       if (v.isDefined) {
-        Seq((<b>{key}</b>), Text(format(v.get)))
+        Seq((<b>
+          {key}
+        </b>), Text(format(v.get)))
       } else Nil
     }
 
@@ -94,7 +96,9 @@ object StatBlockBuilder {
   case class BoldFormat(key: String, sep: Boolean) extends Chunk {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
-      if (v.isDefined) (<b>{v.get.formatted(if (sep) " %s " else "%s")}</b>)
+      if (v.isDefined) (<b>
+        {v.get.formatted(if (sep) " %s " else "%s")}
+      </b>)
       else Nil
     }
   }
@@ -102,7 +106,9 @@ object StatBlockBuilder {
   case class EmphasisFormat(key: String, sep: Boolean) extends Chunk {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
-      if (v.isDefined) (<i>{v.get.formatted(if (sep) " %s " else "%s")}</i>)
+      if (v.isDefined) (<i>
+        {v.get.formatted(if (sep) " %s " else "%s")}
+      </i>)
       else Nil
     }
   }
@@ -114,13 +120,15 @@ object StatBlockBuilder {
   case class Line(parts: Chunk*) extends Chunk {
     override def render(source: StatBlockDataSource) = {
       val s = formatChunks(source)(parts: _*)
-      if (!s.isEmpty) (s ++ <br/> ++ xmlLineBreak)
+      if (!s.isEmpty) (s ++ <br/>)
       else s
     }
   }
 
   case class Para(pclass: String, parts: Chunk*) extends Chunk {
-    override def render(source: StatBlockDataSource) = Seq(<p class={pclass}>{formatChunks(source)(parts: _*)}</p>, xmlLineBreak)
+    override def render(source: StatBlockDataSource) = (<p class={pclass}>
+      {formatChunks(source)(parts: _*)}
+    </p>)
   }
 
   case class Div(divClass: String, parts: Chunk*) extends Chunk {
@@ -182,7 +190,7 @@ object MonsterStatBlockBuilder extends StatBlockBuilder {
 
   private val powerBlock = Seq(
     Para("flavor alt", ImageMap("Type"), BoldFormat("Name", true), TextFormat("Action", true), IfDefined("Keywords", Image("x.gif"), BoldFormat("Keywords", true))),
-    Para("flavorIndent", MultiLineFormat("Description")),
+    Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
     Group("POWER DESCRIPTION SUPPLEMENT", Para("flavor", EmphasisFormat("header", false)), Para("flavorIndent", TextFormat("description", false)))
     )
 
@@ -196,10 +204,10 @@ object MonsterStatBlockBuilder extends StatBlockBuilder {
       <body>
         <div id="detail">
           <h1 class="monster">
-            {ds.extract("NAME").get}
-            <span class="type"> {ds.extract("TYPE").get + " " + ds.extract("ROLE").get}</span>
-          </h1>
-          {block.render(ds)}
+            {ds.extract("NAME").get}<span class="type">
+            {ds.extract("TYPE").get + " " + ds.extract("ROLE").get}
+          </span>
+          </h1>{block.render(ds)}
         </div>
       </body>
     </html>)

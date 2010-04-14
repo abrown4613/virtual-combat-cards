@@ -31,72 +31,73 @@ import vcc.controller.message.TransactionalAction
  * It will dispatch actions and query to the controller handlers, and will gather return
  * data to be passed on to the observer.
  * @param controller Action and query logic controller
+ * @param _tlog The object to contain the Transaction
  */
-class Tracker(controller:TrackerController[_]) extends Actor with StartupStep with TransactionChangePublisher {
-  
+class Tracker(controller: TrackerController, _tlog: TransactionLog[TransactionalAction]) extends Actor with StartupStep with TransactionChangePublisher {
+  def this(controller: TrackerController) = this (controller, new TransactionLog[TransactionalAction]())
+
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
-  def isStartupComplete = true 
-  
-  private var observers:List[Actor]=Nil
-  
-  private val _tlog= new TransactionLog[TransactionalAction]()  
-  
+
+  def isStartupComplete = true
+
+  private var observers: List[Actor] = Nil
+
   /**
    * Publish changes to the observers
    */
-  def publishChange(changes:Seq[ChangeNotification]) {
+  def publishChange(changes: Seq[ChangeNotification]) {
     val msg = controller.publish(changes)
-    for(obs<-observers) obs ! msg
+    for (obs <- observers) obs ! msg
   }
-  
-  def act()={
+
+  def act() = {
     loop {
       react {
-        case message.AddObserver(obs) => 
-          observers=obs::observers
-          
-        case message.Command(from,action) => 
-          val trans= new Transaction()
+        case message.AddObserver(obs) =>
+          observers = obs :: observers
+
+        case message.Command(from, action) =>
+          val trans = new Transaction()
           try {
-        	controller.dispatch(trans,from,action)
-        	trans.commit(this) 
-        	if(!trans.isEmpty) {
-        		_tlog.store(action,trans)
-        		logger.info("TLOG["+ _tlog.length +"] Added transaction: "+ _tlog.pastActions.head.description)
-        	}
-        	from.actionCompleted(action.description)
+            controller.dispatch(trans, from, action)
+            trans.commit(this)
+            if (!trans.isEmpty) {
+              _tlog.store(action, trans)
+              logger.info("TLOG[" + _tlog.length + "] Added transaction: " + _tlog.pastActions.head.description)
+            }
+            from.actionCompleted(action.description)
           } catch {
-            case e => 
-              logger.warn("An exception occured while processing: "+ action,e)
+            case e =>
+              logger.warn("An exception occured while processing: " + action, e)
               e.printStackTrace(System.out)
               logger.warn("Rolling back transaction")
-              if(trans.state == Transaction.state.Active) trans.cancel()
+              if (trans.state == Transaction.state.Active) trans.cancel()
               from.actionCancelled(e.getMessage)
           }
         case message.Undo() =>
           try {
             _tlog.rollback(this)
-          } catch { case s:TransactionLogOutOfBounds => }
+          } catch {case s: TransactionLogOutOfBounds =>}
         case message.Redo() =>
           try {
             _tlog.rollforward(this)
-          } catch { case s:TransactionLogOutOfBounds => }
+          } catch {case s: TransactionLogOutOfBounds =>}
         case message.ClearTransactionLog() =>
           _tlog.clear
-          
-        case s=>
-          logger.warn("Error: Tracker can't handle this event: "+s)
+
+        case s =>
+          logger.warn("Error: Tracker can't handle this event: " + s)
       }
     }
   }
 }
 
 object Tracker {
-  def initialize(tc:TrackerController[_]):Tracker = {
-    val tracker=new Tracker(tc)
-    Registry.register[Actor]("tracker",tracker)
+  def initialize(tc: TrackerController): Tracker = {
+    val tracker = new Tracker(tc)
+    Registry.register[Actor]("tracker", tracker)
     tracker.start
     tracker
   }
-  
+
 }

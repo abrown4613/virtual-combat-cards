@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -17,33 +18,34 @@
  */
 package vcc.dnd4e.model
 
+import common._
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.domain.compendium.{CombatantEntity=>CompendiumCombatantEntity,MonsterEntity,CharacterEntity} 
+import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
 import vcc.dnd4e.view.compendium.SimpleStatBlockBuilder
 import vcc.domain.dndi.StatBlockDataSource
 
-case class CombatantEntityID(ceid:Int)
+case class CombatantEntityID(ceid: Int)
 
-case class CombatantEntity(eid:EntityID, name:String, healthDef:HealthDefinition, initiative:Int, ctype:CombatantType.Value, statBlock:String) 
+case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String)
 
-
-class CompendiumCombatantEntityDataSource(comb:CompendiumCombatantEntity) extends StatBlockDataSource {
+class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity) extends StatBlockDataSource {
   import vcc.infra.fields._
-  
-  private def valueExtract[_](v:Field[_]):Option[String] = {
-    if(v.isDefined) Some(v.storageString)
+
+  private def valueExtract[_](v: Field[_]): Option[String] = {
+    if (v.isDefined) Some(v.storageString)
     else None
   }
-  def extract(key:String):Option[String] = {
-    val vkey = key.toUpperCase 
+
+  def extract(key: String): Option[String] = {
+    val vkey = key.toUpperCase
     comb match {
-      case monster:MonsterEntity =>
+      case monster: MonsterEntity =>
         vkey match {
-          case "TYPE" => if(monster.hp == 1) Some("Minion") else Some("Standard")
+          case "TYPE" => if (monster.hp == 1) Some("Minion") else Some("Standard")
           case "ROLE" => valueExtract(monster.role)
           case s => extractCommon(vkey)
         }
-      case char:CharacterEntity => 
+      case char: CharacterEntity =>
         vkey match {
           case "PCLASS" => valueExtract(char.charClass)
           case "TYPE" => valueExtract(char.race)
@@ -55,21 +57,23 @@ class CompendiumCombatantEntityDataSource(comb:CompendiumCombatantEntity) extend
         }
       case _ => None //ERROR
     }
-  }  
-  def extractCommon(key:String):Option[String] = {
-    key match { 
-    case "NAME" => valueExtract(comb.name)
-    case "HP" => valueExtract(comb.hp)
-    case "INITIATIVE" => valueExtract(comb.initiative)
-    case "AC" => valueExtract(comb.ac)
-    case "WILL" => valueExtract(comb.will)
-    case "REFLEX" => valueExtract(comb.reflex)
-    case "FORTITUDE" => valueExtract(comb.fortitude)
-    case _ => None
+  }
+
+  def extractCommon(key: String): Option[String] = {
+    key match {
+      case "NAME" => valueExtract(comb.name)
+      case "HP" => valueExtract(comb.hp)
+      case "INITIATIVE" => valueExtract(comb.initiative)
+      case "AC" => valueExtract(comb.ac)
+      case "WILL" => valueExtract(comb.will)
+      case "REFLEX" => valueExtract(comb.reflex)
+      case "FORTITUDE" => valueExtract(comb.fortitude)
+      case _ => None
     }
   }
-  def extractGroup(group:String):Seq[StatBlockDataSource] = Nil
-  
+
+  def extractGroup(group: String): Seq[StatBlockDataSource] = Nil
+
 }
 
 
@@ -79,18 +83,18 @@ object CombatantEntity {
   /**
    * Build a valid comabant form a CompendiumEntity
    */
-  def fromCompendiumCombatantEntity(comp:CompendiumCombatantEntity):CombatantEntity = {
-	val healthDef:HealthDefinition = comp match {
-	  case monster:MonsterEntity => MonsterHealthDefinition(monster.hp.value,monster.hp.value/4,(monster.level.value+9)/10)
-	  case character:CharacterEntity => CharacterHealthDefinition(comp.hp.value,comp.hp.value/4,15) //TODO (add surege count)
-	  case s => throw new Exception("Unexpected Entity type: "+s) 
-	}
-  	val statBlock = if(comp.statblock.isDefined) {
-  	  comp.statblock.value
-  	} else {
-  	  SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+  def fromCompendiumCombatantEntity(comp: CompendiumCombatantEntity): CombatantEntity = {
+    val healthDef: HealthDefinition = comp match {
+      case monster: MonsterEntity => MonsterHealthDefinition(monster.hp.value, monster.hp.value / 4, (monster.level.value + 9) / 10)
+      case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value, comp.hp.value / 4, 15) //TODO (add surege count)
+      case s => throw new Exception("Unexpected Entity type: " + s)
     }
-  	CombatantEntity(comp.eid,comp.name.value,healthDef,comp.initiative.value,comp.combatantType,statBlock)
+    val statBlock = if (comp.statblock.isDefined) {
+      comp.statblock.value
+    } else {
+      SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+    }
+    CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
   }
 }
 
@@ -100,24 +104,23 @@ object CombatantEntity {
  * and the tracks. 
  */
 object CombatantRepository {
-  
   private var nextID = 1
-  
-  private val ents = scala.collection.mutable.Map.empty[CombatantEntityID,CombatantEntity]
-  
+
+  private val ents = scala.collection.mutable.Map.empty[CombatantEntityID, CombatantEntity]
+
   /**
    * Return the entity defined by the ceid parameter
    * @param ceid CombantantEntityID local to this repository
    * @return A CombatantEntity or null 
    */
-  def getEntity(ceid:CombatantEntityID):CombatantEntity = if(ents.isDefinedAt(ceid)) ents(ceid) else null
-  
+  def getEntity(ceid: CombatantEntityID): CombatantEntity = if (ents.isDefinedAt(ceid)) ents(ceid) else null
+
   /**
    * Return the entity defined by the ceid parameter
    * @param ce CombantantEntity to be stored, no critic is done on existing objects
    * @return The new object CombatantEntityID
    */
-  def registerEntity(ce:CombatantEntity):CombatantEntityID = {
+  def registerEntity(ce: CombatantEntity): CombatantEntityID = {
     synchronized {
       val neid = CombatantEntityID(nextID)
       nextID = nextID + 1
@@ -125,5 +128,5 @@ object CombatantRepository {
       neid
     }
   }
-  
+
 }

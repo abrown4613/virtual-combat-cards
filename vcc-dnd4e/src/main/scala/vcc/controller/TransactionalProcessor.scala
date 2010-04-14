@@ -25,55 +25,54 @@ import vcc.controller.message.TransactionalAction
  * process an action. They are all called in sequence, and should be defined via
  * traits in order to access context and transaction fields.
  */
-class TransactionalProcessor[C](val context:C) {
-  
+abstract class TransactionalProcessor[C](val context: C) extends TrackerController {
   protected val msgQueue = new scala.collection.mutable.Queue[TransactionalAction]
-  
+
   /**
    * This is the transaction holder, should only be used internally
    */
-  protected implicit var trans:Transaction = null
-  
+  protected implicit var trans: Transaction = null
+
   /**
    * All commands must have a source, this will allow handlers
    * to request information from the source
    */
-  protected var source:CommandSource = null
-  
+  protected var source: CommandSource = null
+
   /**
    * A list of handler PartialFunctions that should be added in traits.
    */
-  private var handlers:List[PartialFunction[TransactionalAction,Unit]]=Nil
-  
-  def addHandler(handler:PartialFunction[TransactionalAction,Unit]) {
-    handlers=handlers:::List(handler)
+  private var handlers: List[PartialFunction[TransactionalAction, Unit]] = Nil
+
+  def addHandler(handler: PartialFunction[TransactionalAction, Unit]) {
+    handlers = handlers ::: List(handler)
   }
- 
-  def rewriteEnqueue(action:TransactionalAction) {
+
+  def rewriteEnqueue(action: TransactionalAction) {
     msgQueue.enqueue(action)
   }
-  
+
   /**
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
-  def dispatch(transaction:Transaction,source:CommandSource, action:TransactionalAction):Unit = { 
+  def dispatch(transaction: Transaction, source: CommandSource, action: TransactionalAction): Unit = {
     rewriteEnqueue(action)
-    trans=transaction
+    trans = transaction
     this.source = source
     try {
-      while(!msgQueue.isEmpty) {
-    	val msg=msgQueue.dequeue
-    	for(hndl<-handlers) {
-    		if(hndl.isDefinedAt(msg)) hndl.apply(msg)
-    	}
+      while (!msgQueue.isEmpty) {
+        val msg = msgQueue.dequeue
+        for (hndl <- handlers) {
+          if (hndl.isDefinedAt(msg)) hndl.apply(msg)
+        }
       }
     } catch {
       // We had an exception, flush message buffer to avoid leaving trash messages
-      case e => 
+      case e =>
         msgQueue.clear()
         throw e
     }
-    trans=null
+    trans = null
   }
-  
+
 }

@@ -22,29 +22,29 @@ import vcc.controller.transaction._
 import vcc.controller.message.TransactionalAction
 
 /**
- * 
+ *
  */
 trait ActionRecorder {
-  def actionsExecuted:List[TransactionalAction]
+  def actionsExecuted: List[TransactionalAction]
 }
 
 /**
  * This is a TransactionaProcessor that accumulates internal actions
  * for scrutiny.
  */
-trait ActionAccumulator[C] extends TransactionalProcessor[C]{
+trait ActionAccumulator[C] extends TransactionalProcessor[C] {
   self: TransactionalProcessor[C] =>
-  
-  var actionsProcessed:List[TransactionalAction]=Nil
-  
-  override def rewriteEnqueue(action:TransactionalAction) {
-    actionsProcessed=Nil
+
+  var actionsProcessed: List[TransactionalAction] = Nil
+
+  override def rewriteEnqueue(action: TransactionalAction) {
+    actionsProcessed = Nil
     super.rewriteEnqueue(action)
   }
-  
+
   addHandler {
     case msg =>
-      actionsProcessed= actionsProcessed ::: List(msg)
+      actionsProcessed = actionsProcessed ::: List(msg)
   }
 }
 
@@ -52,14 +52,13 @@ trait ActionAccumulator[C] extends TransactionalProcessor[C]{
  * Tracker mockup has several utility methods to help test action handlers and publishers. It is on
  * and actor so it works syncronly.
  */
-class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionChangePublisher {
+class TrackerMockup[C](val controller: TrackerController) extends TransactionChangePublisher {
+  private var lastObserverMessage: Any = null
 
-  private var lastObserverMessage:Any = null
-  
-  def publishChange(changes:Seq[ChangeNotification]) {
+  def publishChange(changes: Seq[ChangeNotification]) {
     lastObserverMessage = controller.publish(changes)
   }
-  
+
   /**
    * Dispatch and action and return the transaction not committed
    * @param otrans An open transaction, if null a new transaction will be created
@@ -67,28 +66,28 @@ class TrackerMockup[C](val controller:TrackerController[C]) extends TransactionC
    * @param msg The message to be dispatched
    * @return Open transaction, either otrans if it was valid, or a new one.
    */
-  def dispatchWithoutCommit(otrans:Transaction, from:CommandSource, msg:TransactionalAction):Transaction = {
-    val trans=if(otrans==null) new Transaction() else otrans
-    controller.dispatch(trans,from,msg)
+  def dispatchWithoutCommit(otrans: Transaction, from: CommandSource, msg: TransactionalAction): Transaction = {
+    val trans = if (otrans == null) new Transaction() else otrans
+    controller.dispatch(trans, from, msg)
     trans
   }
-  
+
   /**
    * Dispatch and action and commit transaction
    */
-  def dispatch(from:CommandSource, msg:TransactionalAction) {
-    val trans=new Transaction()
-    controller.dispatch(trans,from,msg)
+  def dispatch(from: CommandSource, msg: TransactionalAction) {
+    val trans = new Transaction()
+    controller.dispatch(trans, from, msg)
     trans.commit(this)
   }
-  
+
   /**
    * Commit the transaction
    */
-  def commitTransaction(trans:Transaction) = {
+  def commitTransaction(trans: Transaction) = {
     trans.commit(this)
   }
-  
+
   /**
    * Return the last TrackerResponseBuffer's message that would be sent
    */
