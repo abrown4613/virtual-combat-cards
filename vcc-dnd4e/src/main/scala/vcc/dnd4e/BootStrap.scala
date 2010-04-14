@@ -86,7 +86,6 @@ object BootStrap extends StartupRoutine {
             logger.error("Failed to create compendium {}", Configuration.compendiumStoreID.value)
             false
           } else {
-            //TODO Import
             val sampleFile = new java.io.File(UpdateManager.getInstallDirectory, "sample-comp.zip")
             if (importSampleCompendium) {
               logger.info("Importing sample compendium from {} if it exists.", sampleFile)
@@ -147,9 +146,9 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "Core Tracker") {
       import vcc.controller.Tracker
-      import vcc.dnd4e.controller.TrackerController
+      import vcc.dnd4e.controller.TrackerControllerImpl
 
-      val t = Tracker.initialize(new TrackerController)
+      val t = Tracker.initialize(new TrackerControllerImpl)
 
       //Make sure it got registered
       Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]

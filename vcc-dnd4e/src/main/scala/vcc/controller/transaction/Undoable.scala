@@ -24,13 +24,13 @@ package vcc.controller.transaction
 abstract class ChangeNotification
 
 /**
- * This trait is used to allows delayed creation or messages in the ChangeNotifiticationPromise.
+ * This trait is used to allows delayed creation or messages in the ChangeNotificationPromise.
  */
 trait ChangeNotifier {
   /**
    * Deliver the promised notification.
    */
-  def createNotification():ChangeNotification
+  def createNotification(): ChangeNotification
 }
 
 /**
@@ -39,13 +39,13 @@ trait ChangeNotifier {
  * transaction publishing will not send more than one message. The ChangeNotifier will be called
  * to expand the promised change into a real ChangeNotification
  */
-case class ChangeNotificationPromise(cn:ChangeNotifier) extends ChangeNotification
+case class ChangeNotificationPromise(cn: ChangeNotifier) extends ChangeNotification
 
 /**
  * This is the parametric type UndoMemento, which is used to store previous states of Undoable 
  * objects.
  */
-case class UndoMemento[T](val obj:Undoable[T],val value:T) {
+case class UndoMemento[T](val obj: Undoable[T], val value: T) {
 
   /**
    * Restore from mementos
@@ -53,43 +53,62 @@ case class UndoMemento[T](val obj:Undoable[T],val value:T) {
   def undo() {
     obj.restore(this)
   }
+
   /**
    * Get a redo memento, so that if you want to redo you have the original value
    */
-  def redoMemento() = UndoMemento[T](obj,obj.value)
-  
+  def redoMemento() = UndoMemento[T](obj, obj.value)
+
   /**
    * Get ChangeNotification (if there is one)
    */
-  def changeNotification:Option[ChangeNotification] = if(obj.f!= null) Some(obj.f(obj)) else None
+  def changeNotification: Option[ChangeNotification] = if (obj.f != null) Some(obj.f(obj)) else None
 }
 
 /**
  * This is transcation controlled field. It will store mementos of changes to it in a 
  * transactions. This allows changes to be undone or redone.
  */
-class Undoable[T](initValue:T,val f:Undoable[T]=>ChangeNotification) {
-  
-  private var _value : T =initValue
-  
-  def value:T = this._value
-  
+class Undoable[T](initValue: T, val f: Undoable[T] => ChangeNotification) {
+  private var _value: T = initValue
+
+  def value: T = this._value
+
   /**
    * Store new value, and save memento of last value in a Transaction
    */
-  def value_=(v:T)(implicit trans:Transaction):Undoable[T] = {
-    trans.addMemento(UndoMemento(this,_value))
-    this._value=v
+  def value_=(v: T)(implicit trans: Transaction): Undoable[T] = {
+    trans.addMemento(UndoMemento(this, _value))
+    this._value = v
     this
   }
-  
-  override def toString:String = "Undoable["+_value+"]"
-  
+
+  override def toString: String = "Undoable[" + _value + "]"
+
   /**
    * Restore a Memento
    */
-  def restore(memento:UndoMemento[T]) {
-    this._value=memento.value
+  def restore(memento: UndoMemento[T]) {
+    this._value = memento.value
   }
-  
+
+}
+
+/**
+ * This Undoable mixin allows user to add code to notify other object that it's is about to change. It will call the
+ * restoreCallback function prior to restoring the value. This means that the current value is available as is the value
+ * that will be restored.
+ */
+trait UndoableWithCallback[T] extends Undoable[T] {
+  override def restore(memento: UndoMemento[T]) {
+    restoreCallback(memento.value)
+    super.restore(memento)
+  }
+
+  /**
+   * This function will be called prior to restoring the value from the memento. Current <code>value</code> contains the
+   * current value being held at the Undoable.
+   * @param valueToRestore The value that is stored in the memento.
+   */
+  def restoreCallback(valueToRestore: T)
 }

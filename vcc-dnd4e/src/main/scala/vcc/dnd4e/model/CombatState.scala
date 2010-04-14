@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -18,25 +19,27 @@
 
 package vcc.dnd4e.model
 
+import common._
+
 /**
  * State of a combatant
  */
-case class CombatantState(id:Symbol,alias:String,entity:CombatantEntity,health:HealthTracker,init:InitiativeTracker,info:String,effects:List[Effect]) {
+case class CombatantState(id: Symbol, alias: String, entity: CombatantEntity, health: HealthTracker, init: InitiativeTracker, info: String, effects: List[Effect]) {
   def prettyPrint() {
-     println("Combatant["+id+"/"+alias+"]"+entity.name)
-     println("  - Health: "+health)
-     println("  - Init  : "+init)
-     println("  - Info  : "+ info)
-     println("  - Effect: "+effects)
+    println("Combatant[" + id + "/" + alias + "]" + entity.name)
+    println("  - Health: " + health)
+    println("  - Init  : " + init)
+    println("  - Info  : " + info)
+    println("  - Effect: " + effects)
   }
-  
-  def isCharacter:Boolean = health.base.ctype==CombatantType.Character
+
+  def isCharacter: Boolean = health.base.ctype == CombatantType.Character
 
 }
 
 object CombatantState {
-  def apply(id:Symbol,alias:String,entity:CombatantEntity):CombatantState = CombatantState(id,alias,entity,null,null,null,null)
-  
+  def apply(id: Symbol, alias: String, entity: CombatantEntity): CombatantState = CombatantState(id, alias, entity, null, null, null, null)
+
   object part extends Enumeration {
     val Health = Value("Health")
     val Initiative = Value("Initiative")
@@ -48,24 +51,24 @@ object CombatantState {
 /**
  * State of the entire combat.
  */
-case class CombatState(combatantMap:Map[Symbol,CombatantState],combatantSequence:Seq[CombatantState]) {
+case class CombatState(combatantMap: Map[Symbol, CombatantState], combatantSequence: Seq[CombatantState]) {
   def prettyPrint() {
     println("------ COMBAT STATE ------")
-    for(e<-combatantSequence) {
+    for (e <- combatantSequence) {
       e.prettyPrint
     }
     println("---- END COMBAT STATE ----")
   }
-  
+
   /**
    * This is an utility method to get the a combantant from a ID option.
    * @param id Option of the ID
    * @return Option[CombatantState] A combatant if the ID defines on, or None otherwise.
    */
-  def getCombatant(id:Option[Symbol]):Option[CombatantState] = {
-     if(id.isDefined && combatantMap.isDefinedAt(id.get))
-       Some(combatantMap(id.get))
-     else None
+  def getCombatant(id: Option[Symbol]): Option[CombatantState] = {
+    if (id.isDefined && combatantMap.isDefinedAt(id.get))
+      Some(combatantMap(id.get))
+    else None
   }
 }
 
@@ -79,37 +82,38 @@ object CombatState {
  * Place holder
  */
 class CombatStateChanges {
-  private var _combatant = Map.empty[Symbol,Set[CombatantState.part.Value]]
+  private var _combatant = Map.empty[Symbol, Set[CombatantState.part.Value]]
   private var _combat = Set.empty[CombatState.part.Value]
-  
-  private[model] def add(part:CombatState.part.Value):CombatStateChanges = {
+
+  private[model] def add(part: CombatState.part.Value): CombatStateChanges = {
     _combat = _combat + part
     this
   }
-  private[model] def add(id:Symbol,part:CombatantState.part.Value):CombatStateChanges =  {
-    if(_combatant.isDefinedAt(id)) {
+
+  private[model] def add(id: Symbol, part: CombatantState.part.Value): CombatStateChanges = {
+    if (_combatant.isDefinedAt(id)) {
       _combatant = _combatant + (id -> (_combatant(id) + part))
     } else {
       _combatant = _combatant + (id -> Set(part))
     }
     this
   }
-  
-  def combatantsThatChange(part:CombatantState.part.Value):Set[Symbol]= {
-    Set(_combatant.filter( x => x._2.contains(part)).keys.toList : _*)
+
+  def combatantsThatChange(part: CombatantState.part.Value): Set[Symbol] = {
+    Set(_combatant.filter(x => x._2.contains(part)).keys.toList: _*)
   }
-  
-  def changesTo(id:Symbol):Set[CombatantState.part.Value] = if(_combatant.isDefinedAt(id)) _combatant(id) else Set()
-  
-  def changes():Set[CombatState.part.Value] = _combat
-  
-  override def toString():String = "CombatStateChanges("+ _combat + "," + _combatant + ")" 
+
+  def changesTo(id: Symbol): Set[CombatantState.part.Value] = if (_combatant.isDefinedAt(id)) _combatant(id) else Set()
+
+  def changes(): Set[CombatState.part.Value] = _combat
+
+  override def toString(): String = "CombatStateChanges(" + _combat + "," + _combatant + ")"
 }
 
 /**
  * Any object that observes changes in the combat state should listen to this
  */
 trait CombatStateObserver {
-  def combatStateChanged(newState:CombatState,changes:CombatStateChanges)
+  def combatStateChanged(newState: CombatState, changes: CombatStateChanges)
 }
 

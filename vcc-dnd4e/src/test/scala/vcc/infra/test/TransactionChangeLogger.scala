@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package vcc.dnd4e.model
+package vcc.infra.test
 
-object InitiativeState extends Enumeration {
-  val Reserve=Value("Reserve")
-  val Ready=Value("Ready")
-  val Readying=Value("Readying") // This state is when the combatant has readied but not ended it's round
-  val Surprised=Value("Surprised")
-  val Delaying=Value("Delaying")
-  val Acting=Value("Acting")
-  val Waiting=Value("Waiting")
-}
+import vcc.controller.transaction.{ChangeNotification, TransactionChangePublisher}
 
-object CombatantType extends Enumeration {
-  val Minion=Value("Minion")
-  val Character=Value("Character")
-  val Monster=Value("Monster")
-  
-  def isCharacter(ctype:this.Value) = ctype==Character
+/**
+ * This is a helper class to collect all the Transaction ChangeNotification into a log.
+ */
+class TransactionChangeLogger extends TransactionChangePublisher {
+  private var _cLog: Seq[ChangeNotification] = Nil
+
+  def publishChange(changes: Seq[ChangeNotification]) {
+    _cLog = changes
+  }
+
+  /**
+   * ChangeNotification captured in last publishChange.
+   * @return Sequence of ChangeNotification 
+   */
+  def changes = _cLog
+
 }

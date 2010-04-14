@@ -18,6 +18,7 @@
 package vcc.domain.dndi
 
 import scala.util.matching.Regex
+import scala.xml.{Node, NodeSeq, Text => XmlText, Elem}
 import vcc.domain.dndi.Monster.PowerDescriptionSupplement
 
 object Monster {
@@ -35,6 +36,10 @@ object Monster {
 
     def extractGroup(dontcare: String) = Nil
   }
+
+  //TODO: This is an ugly hack. Need to make this nicer.
+  @deprecated
+  private final val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2, x._1)).toSeq: _*)
 
   case class PowerDescriptionSupplement(emphasis: String, text: String) extends StatBlockDataSource {
     def extract(key: String): Option[String] = {
@@ -58,6 +63,7 @@ object Monster {
         case "NAME" => name
         case "DESCRIPTION" => description
         case "ACTION" => action
+        //FIXME
         case "TYPE" if (icon != null && !icon.isEmpty) =>
           icon.map(i => Parser.IconType.iconToImage(i)).mkString(";")
         case "KEYWORDS" => keywords
@@ -91,6 +97,8 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
     case "POWERS" => this.powers
     case "AURAS" => this.auras
   }
+
+  import vcc.domain.dndi.Parser._
 
   private var _map = Map.empty[String, String]
   private var _auras: List[Monster.Aura] = Nil

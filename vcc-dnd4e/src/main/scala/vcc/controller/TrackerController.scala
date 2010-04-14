@@ -20,23 +20,18 @@ package vcc.controller
 /**
  * This define the business logic behavior of the Tracker, it allows
  * you to add handlers for processing TransactionalActions.
- * This is designed to be subclassed for each game system. 
+ * This is designed to be implemented for each game system.
  */
-abstract class TrackerController[C](val context:C) {
-  
-  protected val processor:TransactionalProcessor[C]
-  
+trait TrackerController {
+
   /**
    * Process a TransactionalAction through all handlers in sequence.
    */
-  def dispatch(trans:transaction.Transaction,source:CommandSource, msg:message.TransactionalAction) {
-    processor.dispatch(trans,source,msg)
-  }
-    
+  def dispatch(trans: transaction.Transaction, source: CommandSource, msg: message.TransactionalAction)
+
   /**
    * Transform ChangeNotification into a single messages.
    * The message will be sent to all registered observer.
    */
-  def publish(changes:Seq[transaction.ChangeNotification]):Any
+  def publish(changes: Seq[transaction.ChangeNotification]): Any
 }
-

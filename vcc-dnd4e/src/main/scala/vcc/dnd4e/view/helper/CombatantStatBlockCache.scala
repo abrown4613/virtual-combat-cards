@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -19,9 +20,6 @@
 package vcc.dnd4e.view.helper
 
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.domain.compendium.CombatantEntity
-import vcc.dnd4e.model.CombatantType
-import vcc.dnd4e.domain.compendium.Compendium
 import org.w3c.dom.Document
 import vcc.util.swing.XHTMLPane
 
@@ -31,19 +29,18 @@ import vcc.util.swing.XHTMLPane
  * not have a StatBlock or parse an return a valid DOM Document if it does.
  */
 object CombatantStatBlockCache {
+  private var cache = Map.empty[EntityID, Document]
 
-  private var cache = Map.empty[EntityID,Document]
-
-  def getStatBlockDocumentForCombatant(eid:EntityID,statBlock:String):Document = {
-    if(!cache.isDefinedAt(eid)) {
-        val doc = XHTMLPane.parsePanelDocument(statBlock)
-        if(doc != null) {
-          cache = cache + (eid -> doc)
-          doc
-        } else {
-            XHTMLPane.errorDocument
-        }
-    } else 
-    	cache(eid)
+  def getStatBlockDocumentForCombatant(eid: EntityID, statBlock: String): Document = {
+    if (!cache.isDefinedAt(eid)) {
+      val doc = XHTMLPane.parsePanelDocument(statBlock)
+      if (doc != null) {
+        cache = cache + (eid -> doc)
+        doc
+      } else {
+        XHTMLPane.errorDocument
+      }
+    } else
+      cache(eid)
   }
 }

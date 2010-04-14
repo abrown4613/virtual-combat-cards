@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -18,8 +19,9 @@
 
 package vcc.dnd4e.model
 
+import common._
 import scala.actors.Actor
-import scala.actors.Actor.{loop,react}
+import scala.actors.Actor.{loop, react}
 
 import vcc.controller.transaction.ChangeNotification
 
@@ -28,100 +30,98 @@ import vcc.controller.transaction.ChangeNotification
  * Tracker actor. I will collect them into a local representation and publish the immutable
  * CombatState to all registered listener.
  */
-class CombatStateManager(tracker:Actor) {
-  
+class CombatStateManager(tracker: Actor) {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
-  
-  class Combatant(val id:Symbol,val alias:String,val entity:CombatantEntity) {
-    var health=HealthTracker.createTracker(entity.healthDef)
-    var initTracker=InitiativeTracker(0,InitiativeState.Reserve)
-    var info:String=""
-    var effects:List[Effect]=Nil
-    
-    def toCombatantState:CombatantState = CombatantState(id,alias,entity,health,initTracker,info,effects)
+
+  class Combatant(val id: Symbol, val alias: String, val entity: CombatantEntity) {
+    var health = HealthTracker.createTracker(entity.healthDef)
+    var initTracker = InitiativeTracker(0, InitiativeState.Reserve)
+    var info: String = ""
+    var effects: List[Effect] = Nil
+
+    def toCombatantState: CombatantState = CombatantState(id, alias, entity, health, initTracker, info, effects)
   }
-  
-  private def fromCombatantState(cmb:CombatantState):Combatant = {
-    val icmb = new Combatant(cmb.id,cmb.alias,cmb.entity)
+
+  private def fromCombatantState(cmb: CombatantState): Combatant = {
+    val icmb = new Combatant(cmb.id, cmb.alias, cmb.entity)
     icmb.health = cmb.health
     icmb.initTracker = cmb.init
     icmb.info = cmb.info
     icmb.effects = cmb.effects
     icmb
   }
-  
+
   class SupportActor extends Actor {
-    
     type T = Combatant
-    
+
     //Data structures to hold the objects
-    private var _seq:Seq[Symbol]=Nil
-    private val _map = scala.collection.mutable.Map.empty[Symbol,T]
-    private var _cstate = CombatState(Map.empty[Symbol,CombatantState],Nil)
-    private var _observers:List[CombatStateObserver] = Nil
-    
+    private var _seq: Seq[Symbol] = Nil
+    private val _map = scala.collection.mutable.Map.empty[Symbol, T]
+    private var _cstate = CombatState(Map.empty[Symbol, CombatantState], Nil)
+    private var _observers: List[CombatStateObserver] = Nil
+
     object InMap {
-      def unapply(id:Symbol):Option[T] = if(id!=null && _map.contains(id)) Some(_map(id)) else None
-  	}
+      def unapply(id: Symbol): Option[T] = if (id != null && _map.contains(id)) Some(_map(id)) else None
+    }
 
     def act() {
       logger.debug("START ")
       tracker ! vcc.controller.message.AddObserver(this)
-      loop { 
+      loop {
         react {
-          case CombatStateChanged(changes) => 
+          case CombatStateChanged(changes) =>
             val sc = processChanges(changes)
             publishCombatState(sc)
           case 'STATE =>
             reply(_cstate)
-          case ('ADDOBS,obs:CombatStateObserver) =>
+          case ('ADDOBS, obs: CombatStateObserver) =>
             _observers = obs :: _observers
           case s =>
-            logger.error("CombatStateManager: Unhandled message {}",s)
+            logger.error("CombatStateManager: Unhandled message {}", s)
         }
       }
     }
-    
-    private def processChanges(changes:Seq[CombatStateChange]):CombatStateChanges = {
+
+    private def processChanges(changes: Seq[CombatStateChange]): CombatStateChanges = {
       val sc = new CombatStateChanges()
-      changes.foreach { 
+      changes.foreach {
         _ match {
           case RosterUpdate(nmap) =>
             logger.debug("CombatStateManager: roster now contain: {}", nmap.keys.toList.toString)
             _map.clear
-            nmap.foreach { me => _map += ( me._1 -> fromCombatantState(me._2))}
+            nmap.foreach {me => _map += (me._1 -> fromCombatantState(me._2))}
           case SequenceChange(seq) =>
             _seq = seq
             sc.add(CombatState.part.Sequence)
-          case CombatantUpdate(id,obj) if(_map.isDefinedAt(id)) =>
+          case CombatantUpdate(id, obj) if (_map.isDefinedAt(id)) =>
             obj match {
               case CombatantComment(text) =>
                 _map(id).info = text
-                sc.add(id,CombatantState.part.Note)
+                sc.add(id, CombatantState.part.Note)
               case EffectList(el) =>
                 _map(id).effects = el
-                sc.add(id,CombatantState.part.Effects)
-              case i:InitiativeTracker =>
+                sc.add(id, CombatantState.part.Effects)
+              case i: InitiativeTracker =>
                 _map(id).initTracker = i
-                sc.add(id,CombatantState.part.Initiative)
-              case h:HealthTracker => 
+                sc.add(id, CombatantState.part.Initiative)
+              case h: HealthTracker =>
                 _map(id).health = h
-                sc.add(id,CombatantState.part.Health)
+                sc.add(id, CombatantState.part.Health)
             }
-          case c : CombatantUpdate => 
-            logger.error("CombatStateManger: Should not get here: {}",c)
+          case c: CombatantUpdate =>
+            logger.error("CombatStateManger: Should not get here: {}", c)
         }
       }
       sc
     }
-    
-    private def publishCombatState(change:CombatStateChanges) {
-      logger.debug("CombatStateManger: Current map: {}",_map)
-      logger.debug("CombatStateManager: Changes: {}",change)
-      val cmap:Map[Symbol,CombatantState] = Map(_map.map(me=>(me._1,me._2.toCombatantState)).toSeq: _*)
-      val newState = CombatState(cmap,_seq.map(id=>cmap(id)))
+
+    private def publishCombatState(change: CombatStateChanges) {
+      logger.debug("CombatStateManger: Current map: {}", _map)
+      logger.debug("CombatStateManager: Changes: {}", change)
+      val cmap: Map[Symbol, CombatantState] = Map(_map.map(me => (me._1, me._2.toCombatantState)).toSeq: _*)
+      val newState = CombatState(cmap, _seq.map(id => cmap(id)))
       _cstate = newState
-      _observers.foreach(obs => obs.combatStateChanged(newState,change))
+      _observers.foreach(obs => obs.combatStateChanged(newState, change))
     }
   }
 
@@ -132,14 +132,14 @@ class CombatStateManager(tracker:Actor) {
    * Get the current state. This is a actor resquest and may take some time to 
    * be handled. 
    */
-  def currentState:CombatState = { 
+  def currentState: CombatState = {
     _actor ! 'STATE
     Actor.self.receive {
-      case s:CombatState => s
+      case s: CombatState => s
     }
   }
-  
-  def registerObserver(obs:CombatStateObserver) {
-    _actor ! ('ADDOBS,obs) 
+
+  def registerObserver(obs: CombatStateObserver) {
+    _actor ! ('ADDOBS, obs)
   }
 }

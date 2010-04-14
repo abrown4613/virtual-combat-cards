@@ -3,8 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-dnd4e</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
-    <inceptionYear>2009</inceptionYear>
+    <version>1.3.0-SNAPSHOT</version>
+    <description>Main DND4E Module</description>
+    <inceptionYear>2008</inceptionYear>
     <properties>
         <scala.version>2.7.7</scala.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,6 +16,11 @@
             <id>scala-tools.org</id>
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases</url>
+        </repository>
+        <repository>
+            <id>scala-tools.org snapshot</id>
+            <name>Scala-Tools Maven2 Repository SNAPSHOT</name>
+            <url>http://scala-tools.org/repo-snapshots</url>
         </repository>
         <repository>
             <id>maven2-repository.dev.java.net</id>
@@ -63,7 +69,13 @@
         <dependency>
             <groupId>org.scala-tools.testing</groupId>
             <artifactId>specs</artifactId>
-            <version>1.6.2</version>
+            <version>1.6.2.2-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.8.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>

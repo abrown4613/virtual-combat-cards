@@ -17,51 +17,59 @@
 //$Id$
 package vcc.dnd4e.model
 
+import common._
 import vcc.controller.transaction._
 
-trait CombatantAspect 
+//TODO This class must be taken out and replaced by the vcc.domain.tracker.common  version
+@deprecated
+trait CombatantAspect
 
-case class CombatantComment(text:String) extends CombatantAspect
+case class CombatantComment(text: String) extends CombatantAspect
 
 //Change notifications in a closed class
+//TODO This class must be taken out and replaced by the vcc.domain.tracker.common  version
+@deprecated
 abstract sealed class CombatStateChange extends ChangeNotification
 
-case class CombatantUpdate(comb:Symbol, obj:CombatantAspect) extends CombatStateChange
+case class CombatantUpdate(comb: Symbol, obj: CombatantAspect) extends CombatStateChange
 
-case class RosterUpdate(obj:Map[Symbol,CombatantState]) extends CombatStateChange
+case class RosterUpdate(obj: Map[Symbol, CombatantState]) extends CombatStateChange
 
-case class SequenceChange(seq:Seq[Symbol]) extends CombatStateChange
+case class SequenceChange(seq: Seq[Symbol]) extends CombatStateChange
 
-case class CombatStateChanged(change:Seq[CombatStateChange])
+case class CombatStateChanged(change: Seq[CombatStateChange])
 
 
-class TrackerCombatant(val id:Symbol, val alias:String, val name:String,val healthDef:HealthDefinition,val init:Int, val ctype:CombatantType.Value, val entity:CombatantEntity ) {
-  private val _health=new Undoable[HealthTracker](HealthTracker.createTracker(healthDef),(uv)=>CombatantUpdate(id,uv.value))
-  
-  def health= _health.value
-  def health_=(nh:HealthTracker)(implicit trans:Transaction) {
-    if(nh != _health.value) _health.value=nh
+class TrackerCombatant(val id: Symbol, val alias: String, val name: String, val healthDef: HealthDefinition, val init: Int, val ctype: CombatantType.Value, val entity: CombatantEntity) {
+  private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(healthDef), (uv) => CombatantUpdate(id, uv.value))
+
+  def health = _health.value
+
+  def health_=(nh: HealthTracker)(implicit trans: Transaction) {
+    if (nh != _health.value) _health.value = nh
     this
   }
-  
-  private val _info= new Undoable[String]("",uv=>{CombatantUpdate(id,CombatantComment(uv.value))})
-  def info= _info.value
-  def info_=(str:String)(implicit trans:Transaction) { _info.value=str; this }
-  
-  val it=new Undoable[InitiativeTracker](InitiativeTracker(0,InitiativeState.Reserve),(uv)=>{CombatantUpdate(id,uv.value)})
-  
-  private val _effects=new Undoable[EffectList](EffectList(Nil),uv=>{CombatantUpdate(id,uv.value)})
-  
+
+  private val _info = new Undoable[String]("", uv => {CombatantUpdate(id, CombatantComment(uv.value))})
+
+  def info = _info.value
+
+  def info_=(str: String)(implicit trans: Transaction) {_info.value = str; this}
+
+  val it = new Undoable[InitiativeTracker](InitiativeTracker(0, InitiativeState.Reserve), (uv) => {CombatantUpdate(id, uv.value)})
+
+  private val _effects = new Undoable[EffectList](EffectList(Nil), uv => {CombatantUpdate(id, uv.value)})
+
   /**
    * Return the lists of active effect on the list.
    */
-  def effects:EffectList=_effects.value
-  
-  def effects_=(nel:EffectList)(implicit trans:Transaction) {
-    if(effects != nel)
-      _effects.value=nel; 
-    this 
+  def effects: EffectList = _effects.value
+
+  def effects_=(nel: EffectList)(implicit trans: Transaction) {
+    if (effects != nel)
+      _effects.value = nel;
+    this
   }
-  
-  def toState():CombatantState  = CombatantState(id,alias,entity,_health.value,it.value,info,effects.effects) 
+
+  def toState(): CombatantState = CombatantState(id, alias, entity, _health.value, it.value, info, effects.effects)
 }
