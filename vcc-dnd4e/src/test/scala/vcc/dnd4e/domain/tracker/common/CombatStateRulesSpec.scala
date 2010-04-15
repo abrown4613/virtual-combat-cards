@@ -44,9 +44,9 @@ object CombatStateRulesSpec extends Specification with Mockito {
   mockCombB = mock[CombatantStateView]
 
   val baseMockups = beforeContext {
-    state.allInitiativeOrderIDs returns List(ioA0, ioB0, ioA1)
-    state.combatantFromID(cidA) returns mockCombA
-    state.combatantFromID(cidB) returns mockCombB
+    state.getInitiativeOrder returns List(ioA0, ioB0, ioA1)
+    state.combatantViewFromID(cidA) returns mockCombA
+    state.combatantViewFromID(cidB) returns mockCombB
   }
 
   "CombatStateRules.areAllCombatantInOrderDead" ->- (baseMockups) should {
@@ -60,7 +60,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       mockCombB.healthTracker returns deadMinion
 
       rules.areAllCombatantInOrderDead(state) must beTrue
-      there was one(state).allInitiativeOrderIDs
+      there was one(state).getInitiativeOrder
       there was atLeastOne(mockCombA).healthTracker
       there was atLeastOne(mockCombB).healthTracker
     }
@@ -75,7 +75,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       mockCombB.healthTracker returns minion
 
       rules.areAllCombatantInOrderDead(state) must beFalse
-      there was one(state).allInitiativeOrderIDs
+      there was one(state).getInitiativeOrder
       there was atLeastOne(mockCombA).healthTracker
       there was atLeastOne(mockCombB).healthTracker
     }
@@ -95,7 +95,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       rules.canCombatantRollInitiative(state, cidA) must beFalse
 
       there was one(state).isCombatStarted
-      there was one(state).allInitiativeOrderIDs
+      there was one(state).getInitiativeOrder
     }
 
     "return true is combat started and combatant has no InitiativeOrderID" in {
@@ -104,8 +104,21 @@ object CombatStateRulesSpec extends Specification with Mockito {
       rules.canCombatantRollInitiative(state, cidC) must beTrue
 
       there was one(state).isCombatStarted
-      there was one(state).allInitiativeOrderIDs
+      there was one(state).getInitiativeOrder
+    }
+  }
+
+  "rules.hasActingCombatant" should {
+    "return true if at order has one combatant" in {
+      state.getInitiativeOrder returns List(ioA0)
+      rules.hasActingCombatant(state) must beTrue
+      there was atLeastOne(state).getInitiativeOrder
     }
 
+    "return false if there are no combatant" in {
+      state.getInitiativeOrder returns Nil
+      rules.hasActingCombatant(state) must beFalse
+      there was one(state).getInitiativeOrder
+    }
   }
 }

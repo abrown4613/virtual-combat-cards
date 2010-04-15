@@ -23,7 +23,7 @@ import vcc.dnd4e.domain.tracker.common._
  * CombatState provides an aggregate of the CombatantRoster, InitiativeOrder, and CombatMetaData. It also provides
  * some helper extractors for the tracker logic.
  */
-class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val metaData: CombatMetaData) {
+class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val metaData: CombatMetaData) extends CombatStateView {
 
   /**
    *  Default constructor that creates all the necessary objects.
@@ -50,5 +50,17 @@ class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val m
         None
   }
 
-  def inCombat: Boolean = metaData.inCombat
+  def isCombatStarted: Boolean = metaData.inCombat
+
+  //Implementation of CombatStateView
+  def combatComment = metaData.comment
+
+  def combatantViewFromID(id: CombatantID): CombatantStateView = roster.combatant(id)
+
+  def allCombatantIDs = roster.allCombatantIDs
+
+  def initiativeTrackerFromID(ioid: InitiativeOrderID): InitiativeTracker = order.initiativeTrackerFor(ioid)
+
+  def getInitiativeOrder: List[InitiativeOrderID] = order.getIDsInOrder
+
 }

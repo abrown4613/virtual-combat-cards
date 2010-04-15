@@ -22,7 +22,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{InitiativeTracker, InitiativeOrderID, CombatantID}
+import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateTest extends JUnit4(CombatStateSpec)
@@ -41,7 +41,7 @@ object CombatStateSpec extends Specification with Mockito {
   "aCombatState" should {
     "ask CombatMetaData for inCombat" in {
       mMeta.inCombat returns true
-      aCombatState.inCombat must beTrue
+      aCombatState.isCombatStarted must beTrue
       there was one(mMeta).inCombat
     }
 
@@ -100,6 +100,69 @@ object CombatStateSpec extends Specification with Mockito {
       it must beNull
       there was one(mOrder).isDefinedAt(ioa)
       there was no(mOrder).initiativeTrackerFor(ioa)
+    }
+  }
+
+  "aCombatState as a CombatStateView" ->- (beforeContext {
+    val ioA = InitiativeOrderID(CombatantID("A"), 0)
+    val ioB = InitiativeOrderID(CombatantID("B"), 0)
+    mRoster.allCombatantIDs returns List(combA, CombatantID("B"))
+    mOrder.getIDsInOrder() returns List(ioA, ioB)
+    mOrder.initiativeTrackerFor(ioA) returns InitiativeTracker.initialTracker(ioA)
+    mOrder.initiativeTrackerFor(ioB) returns InitiativeTracker.initialTracker(ioB)
+    mMeta.comment returns "Fiat lux!"
+    mMeta.inCombat returns true
+    val csvA = mock[Combatant]
+    csvA.definition returns CombatantRosterDefinition(combA, null, null)
+    val csvB = mock[Combatant]
+    csvB.definition returns CombatantRosterDefinition(CombatantID("B"), null, null)
+    mRoster.combatant(combA) returns csvA
+    mRoster.combatant(CombatantID("B")) returns csvB
+  }) should {
+    val cidA = CombatantID("A")
+    val cidB = CombatantID("B")
+    val ioa = InitiativeOrderID(CombatantID("A"), 0)
+    val iob = InitiativeOrderID(CombatantID("B"), 0)
+
+    "gets all CombatantStateView from all defined ID" in {
+      for (id <- List(cidA, cidB)) {
+        val cv = aCombatState.combatantViewFromID(id)
+        cv must notBeNull
+        cv.definition.cid must_== id
+      }
+    }
+
+    "returns all defined CombatantID allCombatantIDs (not in order)" in {
+      aCombatState.allCombatantIDs must contain(cidA)
+      aCombatState.allCombatantIDs must contain(cidB)
+    }
+
+    "returns tracker for each ID with initiativeTrackerFromID" in {
+      aCombatState.initiativeTrackerFromID(ioa) must_== InitiativeTracker.initialTracker(ioa)
+      aCombatState.initiativeTrackerFromID(iob) must_== InitiativeTracker.initialTracker(iob)
+    }
+
+    "return a list of InitiativeOrderID on a getInitiativeOrder" in {
+      aCombatState.getInitiativeOrder must_== List(ioa, iob)
+    }
+
+    "isCombatStarted provides valid answer" in {
+      aCombatState.isCombatStarted must beTrue
+    }
+
+    "return comment on combatComment" in {
+      aCombatState.combatComment must_== "Fiat lux!"
+    }
+
+    "be internally consistent" in {
+      //All InitiativeOrderID should point to a valid CombatantStateView
+      val ids = aCombatState.allCombatantIDs
+      for (ioi <- aCombatState.getInitiativeOrder) {
+        ids must contain(ioi.combId)
+        val cv = aCombatState.combatantViewFromID(ioi.combId)
+        cv must notBeNull
+        cv.definition.cid must_== ioi.combId
+      }
     }
   }
 }

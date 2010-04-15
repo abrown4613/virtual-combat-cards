@@ -23,13 +23,13 @@ import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
 import vcc.controller.transaction.{ChangeNotification, Transaction}
 import vcc.dnd4e.domain.tracker.common._
-import vcc.infra.test.TransactionChangeLogger
+import vcc.infra.test.{TransactionalSpecification, TransactionChangeLogger}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class InitiativeOrderTest extends JUnit4(InitiativeOrderSpec)
 
 
-object InitiativeOrderSpec extends Specification with Mockito {
+object InitiativeOrderSpec extends Specification with TransactionalSpecification with Mockito {
   val combA = CombatantID("A")
   val combB = CombatantID("B")
   val combC = CombatantID("C")
@@ -215,6 +215,21 @@ object InitiativeOrderSpec extends Specification with Mockito {
     f(trans)
     trans.commit(changeLog)
     changeLog.changes
+  }
+
+  "an InitiativeOrder transactionally" ->- (loadedOrder) should {
+    //TODO Remove these dummy since they are just to help run the spec.
+    "dummy" in {0 must_== 0} // Required for spec to run
+    "go to the first combatant on the order on a startCombat" in {
+      withTransaction {
+        transaction => aOrder.startCombat()(transaction)
+      } afterCommit {
+        changes => changes must contain(InitiativeOrderFirstChange(ioc))
+      } afterUndo {
+        changes => changes must contain(InitiativeOrderFirstChange(null))
+      } afterRedoAsInCommit ()
+    }
+    "dummy" in {0 must_== 0} // Required for spec to run
   }
 
   "an InitiativeOrder as a round robin of order entries" ->- (loadedOrder) should {
@@ -433,6 +448,23 @@ object InitiativeOrderSpec extends Specification with Mockito {
       aOrder.moveBefore(ioc, iod)
       aOrder.clearOrder()
       aOrder.setInitiative(InitiativeDefinition(combC, 3, List(17))) mustNot throwA[Exception]
+    }
+
+    "endCombat when its started" in {
+      withTransaction {
+        trans =>
+          aOrder.clearOrder()(trans)
+      } afterCommit {
+        changes =>
+          changes must contain(InitiativeOrderFirstChange(null))
+          changes must contain(InitiativeOrderChange(Nil))
+      } afterUndo {
+        changes =>
+          changes must contain(InitiativeOrderFirstChange(ioc))
+          changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+
+      } afterRedoAsInCommit ()
+
     }
   }
 }

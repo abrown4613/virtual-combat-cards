@@ -24,12 +24,17 @@ class CombatStateRules {
    * Inform if all the Combatants with and InitiativeOrderID are not dead.
    */
   def areAllCombatantInOrderDead(combatState: CombatStateView): Boolean = {
-    !combatState.allInitiativeOrderIDs.exists(x => combatState.combatantFromID(x.combId).healthTracker.status != HealthTracker.Status.Dead)
+    !combatState.getInitiativeOrder.exists(x => combatState.combatantViewFromID(x.combId).healthTracker.status != HealthTracker.Status.Dead)
   }
 
   def canCombatantRollInitiative(combatState: CombatStateView, combID: CombatantID): Boolean = {
     if (combatState.isCombatStarted) {
-      !combatState.allInitiativeOrderIDs.exists(ioi => ioi.combId == combID)
+      !combatState.getInitiativeOrder.exists(ioi => ioi.combId == combID)
     } else true
   }
+
+  def hasActingCombatant(combatState: CombatStateView): Boolean = {
+    combatState.getInitiativeOrder.length > 0
+  }
+
 }
