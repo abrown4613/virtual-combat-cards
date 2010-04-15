@@ -20,7 +20,6 @@ package test.dnd4e
 import junit.framework.TestCase
 import vcc.dnd4e.model._
 import common._
-import vcc.dnd4e.controller._
 import vcc.controller.TransactionalProcessor
 import vcc.controller.CommandSource
 import vcc.controller.transaction._
@@ -234,8 +233,12 @@ class EffectHandlerTest extends TestCase {
     listMustContainOnly(BaER, EaER)
 
     //End Combat does not cause changes
-    mockTracker.dispatch(source, request.EndCombat())
-    assert(mockTracker.extractCombatStateChanges == Nil)
+    try {
+      mockTracker.dispatch(source, request.EndCombat())
+      assert(mockTracker.extractCombatStateChanges == Nil)
+    } catch {
+      case _ =>
+    }
 
     mockTracker.dispatch(source, request.ApplyRest(false))
     val EaR = List(("efese*", SaveEndSpecial), ("efese", SaveEnd))
