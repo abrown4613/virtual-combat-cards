@@ -21,6 +21,17 @@ import vcc.controller.transaction.Transaction
 import vcc.controller.message.TransactionalAction
 
 /**
+ * This exception should be thrown when the action requested cant be executed
+ * @param msg Reason fro the Illegality
+ */
+class IllegalActionException(msg: String) extends Exception(msg)
+
+/**
+ * Thrown when no handler deals with this action 
+ */
+class UnhandledActionException(action: TransactionalAction) extends Exception()
+
+/**
  * TransactionalProcessor is a container for a set of PartialFunctions that 
  * process an action. They are all called in sequence, and should be defined via
  * traits in order to access context and transaction fields.
@@ -62,9 +73,14 @@ abstract class TransactionalProcessor[C](val context: C) extends TrackerControll
     try {
       while (!msgQueue.isEmpty) {
         val msg = msgQueue.dequeue
+        var handled = false
         for (hndl <- handlers) {
-          if (hndl.isDefinedAt(msg)) hndl.apply(msg)
+          if (hndl.isDefinedAt(msg)) {
+            handled = true
+            hndl.apply(msg)
+          }
         }
+        if (!handled) throw new UnhandledActionException(msg)
       }
     } catch {
       // We had an exception, flush message buffer to avoid leaving trash messages
