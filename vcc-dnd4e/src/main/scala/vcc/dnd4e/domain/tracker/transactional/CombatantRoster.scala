@@ -78,4 +78,9 @@ class CombatantRoster(idGenerator: IDGenerator) {
    * @return True if the Roster contains a Combatant for that ID
    */
   def isDefinedAt(cid: CombatantID) = _roster.value.isDefinedAt(cid)
+
+  /**
+   * Returns all the CombatantID in the roster
+   */
+  def allCombatantIDs: List[CombatantID] = _roster.value.keys.toList
 }

@@ -42,7 +42,7 @@ class InitiativeOrder {
   private val reorders = new Undoable[List[(InitiativeOrderID, InitiativeOrderID)]](Nil, null)
   private val initOrder = new Undoable[List[InitiativeOrderID]](Nil, x => InitiativeOrderChange(x.value)) with UndoableWithCallback[List[InitiativeOrderID]] {
     def restoreCallback(oldList: List[InitiativeOrderID]) {
-      robin.setRobin(robinHead.value, oldList)
+      robin.setRobin(if (oldList.isEmpty) null else robinHead.value, oldList)
     }
   }
 
@@ -145,7 +145,8 @@ class InitiativeOrder {
   }
 
   /**
-   * Removes all entries from the InitiativeOrder transitionally.
+   * Removes all entries from the InitiativeOrder transitionally. This also doubles as an EndCombat
+   * since the order is undone.
    */
   def clearOrder()(implicit trans: Transaction) {
     initOrder.value = Nil
@@ -155,4 +156,9 @@ class InitiativeOrder {
     initBaseOrder.value = Nil
     reorders.value = Nil
   }
+
+  /**
+   * Returns the IDs in the Order
+   */
+  def getIDsInOrder(): List[InitiativeOrderID] = initOrder.value
 }

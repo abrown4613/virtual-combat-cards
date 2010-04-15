@@ -34,13 +34,13 @@ trait CombatantStateView {
  * Provides access to immutable information about the Combat
  */
 trait CombatStateView {
-  def combatantFromID(id: CombatantID): CombatantStateView
+  def combatantViewFromID(id: CombatantID): CombatantStateView
 
   def allCombatantIDs: List[CombatantID]
 
   def initiativeTrackerFromID(ioid: InitiativeOrderID): InitiativeTracker
 
-  def allInitiativeOrderIDs: List[InitiativeOrderID]
+  def getInitiativeOrder: List[InitiativeOrderID]
 
   def isCombatStarted: Boolean
 
