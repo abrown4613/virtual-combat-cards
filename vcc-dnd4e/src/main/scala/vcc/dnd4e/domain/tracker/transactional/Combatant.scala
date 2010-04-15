@@ -20,10 +20,8 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.controller.transaction.{Transaction, Undoable}
 import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.domain.tracker.common._
-//TODO These classes should be moved to the tracker.common package
-import vcc.dnd4e.model.{CombatantEntity}
 
-class Combatant(val definition: CombatantRosterDefinition) {
+class Combatant(val definition: CombatantRosterDefinition) extends CombatantStateView {
 
   //TODO Remove this
   @deprecated
@@ -39,6 +37,8 @@ class Combatant(val definition: CombatantRosterDefinition) {
   private val _effects = new Undoable[EffectList](EffectList(Nil), uv => {CombatantChange(definition.cid, uv.value)})
 
   def health = _health.value
+
+  def healthTracker = _health.value
 
   def health_=(nh: HealthTracker)(implicit trans: Transaction) {
     if (nh != _health.value) _health.value = nh
