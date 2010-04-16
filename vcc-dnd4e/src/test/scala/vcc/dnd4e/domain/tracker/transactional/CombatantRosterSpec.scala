@@ -26,7 +26,7 @@ import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.model.CombatantEntity
 import vcc.infra.test.{TransactionalSpecification, TransactionChangeLogger}
 import vcc.controller.transaction.{ChangeNotification, Transaction}
-import vcc.dnd4e.domain.tracker.common.{CombatantAspect, RosterChange, CombatantID}
+import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatantRosterTest extends JUnit4(CombatantRosterSpec)
@@ -36,6 +36,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   var mockIDGenerator: IDGenerator = null
 
   val combEnt = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null)
+  val combEnt2 = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Character, null)
 
   val blankRoster = beforeContext {
     aRoster = new CombatantRoster()
@@ -45,6 +46,8 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
     mockIDGenerator = mock[IDGenerator]
     aRoster = new CombatantRoster(mockIDGenerator)
   }
+
+  shareVariables() // TO allow transactional to run better
 
   "a CombatantRoster interacting with IDGenerator" ->- (blankRosterWithMock) should {
     "ask for and ID if non is provided" in {
@@ -157,6 +160,37 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       trans.commit(changeLog)
       val nc = getChangeRosterMap(changeLog.changes).keys.toList
       (nc -- rc).length must_== 1
+    }
+  }
+
+  "A loaded Roster" ->- (beforeContext {
+    val combId = CombatantID("A")
+    aRoster = new CombatantRoster()
+    runAndCommit {
+      trans =>
+        aRoster.addCombatant(combId, "alias", combEnt)(trans)
+        aRoster.combatant(combId).health_=(aRoster.combatant(combId).health.applyDamage(10))(trans) // Apply damage
+    }
+  }) should {
+    "update a Combatant, preserving HP, if a new definition is given for the same ID" in {
+      /*
+         The semantic is to update the fields and not change then entire combatant
+       */
+      val combId = CombatantID("A")
+      withTransaction {
+        trans =>
+          aRoster.addCombatant(combId, "alias 2", combEnt2)(trans)
+      } afterCommit {
+        changes =>
+          getChangeRosterMap(changes) must beEmpty
+          changes must contain(CombatantChange(combId, HealthTracker(40, 0, 0, 6, aRoster.combatant(combId).projectHealthDef(combEnt2.healthDef))))
+          changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias 2", combEnt2)))
+      } afterUndo {
+        changes =>
+          getChangeRosterMap(changes) must beEmpty
+          changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, 6, aRoster.combatant(combId).projectHealthDef(combEnt.healthDef))))
+          changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias", combEnt)))
+      } afterRedoAsInCommit ()
     }
   }
 

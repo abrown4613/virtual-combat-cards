@@ -20,10 +20,13 @@ package vcc.dnd4e.domain.tracker.common
 import vcc.controller.message.TransactionalAction
 
 
-object Action {
+object Command {
   abstract class TransactionalActionWithMessage(val description: String) extends TransactionalAction
 
   case class StartCombat() extends TransactionalActionWithMessage("Start combat")
 
   case class EndCombat() extends TransactionalActionWithMessage("End combat")
+
+  case class AddCombatants(combatants: List[CombatantRosterDefinition])
+          extends TransactionalActionWithMessage("Add combatants: " + combatants)
 }

@@ -21,7 +21,7 @@ import vcc.controller.transaction.{Transaction, Undoable}
 import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.domain.tracker.common._
 
-class Combatant(val definition: CombatantRosterDefinition) extends CombatantStateView {
+class Combatant(initDefinition: CombatantRosterDefinition) extends CombatantStateView {
 
   //TODO Remove this
   @deprecated
@@ -32,6 +32,7 @@ class Combatant(val definition: CombatantRosterDefinition) extends CombatantStat
       case CombatantType.Minion => MinionHealthDefinition()
     }
 
+  private val _definition: Undoable[CombatantRosterDefinition] = new Undoable[CombatantRosterDefinition](initDefinition, x => CombatantChange(_definition.value.cid, x.value))
   private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(projectHealthDef(definition.entity.healthDef)), (uv) => CombatantChange(definition.cid, uv.value))
   private val _comment = new Undoable[String]("", uv => {CombatantChange(definition.cid, CombatantComment(uv.value))})
   private val _effects = new Undoable[EffectList](EffectList(Nil), uv => {CombatantChange(definition.cid, uv.value)})
@@ -54,6 +55,17 @@ class Combatant(val definition: CombatantRosterDefinition) extends CombatantStat
   }
 
   /**
+   * Set as new definition, this can be used to change ID, alias or HealthDefinition.
+   * Damage already suffered will be preserved
+   */
+  def setDefinition(newDef: CombatantRosterDefinition)(implicit trans: Transaction) {
+    _definition.value = newDef
+    _health.value = _health.value.replaceHealthDefinition(projectHealthDef(newDef.entity.healthDef))
+  }
+
+  def definition = _definition.value
+
+  /**
    * Return the lists of active effect on the list.
    */
   def effects: EffectList = _effects.value
@@ -64,5 +76,5 @@ class Combatant(val definition: CombatantRosterDefinition) extends CombatantStat
     this
   }
 
-  def aspectSet() = Set[CombatantAspect](definition, CombatantComment(_comment.value), _effects.value, _health.value)
+  def aspectSet() = Set[CombatantAspect](_definition.value, CombatantComment(_comment.value), _effects.value, _health.value)
 }
