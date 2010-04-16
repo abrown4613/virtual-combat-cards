@@ -23,8 +23,11 @@ import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
 import vcc.controller.transaction.Transaction
 import vcc.controller.{IllegalActionException, CommandSource}
-import vcc.dnd4e.domain.tracker.common.Action._
-import vcc.dnd4e.domain.tracker.common.{CombatStateView, CombatStateRules}
+import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.infra.datastore.naming.EntityID
+import vcc.dnd4e.model.CombatantEntity
+import vcc.dnd4e.model.common.{MinionHealthDefinition, CombatantType}
+import vcc.dnd4e.domain.tracker.common.{CombatantID, CombatantRosterDefinition, CombatStateView, CombatStateRules}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
@@ -81,4 +84,29 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
     }
   }
 
+  "aCombatController handling a AddComabatant" should {
+    val entity = CombatantEntity(EntityID.fromName("Dummy"), "Goblin", MinionHealthDefinition(), 4, CombatantType.Monster, null)
+    val combA = CombatantID("A")
+    val combB = CombatantID("B")
+
+    "add a single combatant" in {
+      val trans = new Transaction()
+      aCombatController.dispatch(trans, mSource, AddCombatants(List(CombatantRosterDefinition(combA, null, entity))))
+      there was one(mRoster).addCombatant(combA, null, entity)(trans)
+    }
+
+    "add multiple combatants" in {
+      val trans = new Transaction()
+      aCombatController.dispatch(trans, mSource, AddCombatants(
+        List(CombatantRosterDefinition(combA, null, entity), CombatantRosterDefinition(combB, "007", entity))))
+      there was one(mRoster).addCombatant(combA, null, entity)(trans)
+      there was one(mRoster).addCombatant(combB, "007", entity)(trans)
+    }
+
+    "replace a combatant if already present" in {
+      val trans = new Transaction()
+      aCombatController.dispatch(trans, mSource, AddCombatants(List(CombatantRosterDefinition(combA, null, entity))))
+      there was one(mRoster).addCombatant(combA, null, entity)(trans)
+    }
+  }
 }

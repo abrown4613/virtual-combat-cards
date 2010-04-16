@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.dnd4e.domain.tracker.common.Action._
+import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.controller.IllegalActionException
 
 trait CombatStateActionHandler {
@@ -37,5 +37,7 @@ trait CombatStateActionHandler {
         context.metaData.endCombat()
         context.order.clearOrder()
       } else throw new IllegalActionException("Combat already ended.")
+    case AddCombatants(combatants) =>
+      combatants.map(cre => context.roster.addCombatant(cre.cid, cre.alias, cre.entity))
   }
 }

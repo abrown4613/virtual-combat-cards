@@ -24,8 +24,10 @@ trait TransactionalSpecification {
   self: Specification =>
 
   class AfterCommit(action: Transaction => Any) {
+    private var msg: String = null
+
     def afterCommit(after: Seq[ChangeNotification] => Any) = {
-      "commit" in {
+      "commit" + (if (msg != null) ": " + msg else "") in {
         val trans = new Transaction()
         action(trans)
         val cLogger = new TransactionChangeLogger()
@@ -34,11 +36,18 @@ trait TransactionalSpecification {
       }
       new AfterUndo(action, after)
     }
+
+    def does(nMsg: String) = {
+      msg = nMsg
+      this
+    }
   }
 
   class AfterUndo(action: Transaction => Any, commitExample: Seq[ChangeNotification] => Any) {
-    def afterUndo(after: Seq[ChangeNotification] => Any) = {
-      "undo" in {
+    private var msg: String = null
+
+    def afterUndo(after: Seq[ChangeNotification] => Any): AfterRedo = {
+      "undo" + (if (msg != null) ": " + msg else "") in {
         val trans = new Transaction()
         action(trans)
         val cLogger = new TransactionChangeLogger()
@@ -48,11 +57,23 @@ trait TransactionalSpecification {
       }
       new AfterRedo(action, commitExample)
     }
+
+    def does(nMsg: String) = {
+      msg = nMsg
+      this
+    }
   }
 
   class AfterRedo(action: Transaction => Any, commitExample: Seq[ChangeNotification] => Any) {
+    private var msg: String = null
+
+    def does(nMsg: String) = {
+      msg = nMsg
+      this
+    }
+
     def afterRedo(after: Seq[ChangeNotification] => Any) = {
-      "redo" in {
+      "redo" + (if (msg != null) ": " + msg else "") in {
         val trans = new Transaction()
         action(trans)
         val cLogger = new TransactionChangeLogger()
@@ -77,7 +98,7 @@ trait TransactionalSpecification {
   }
 
   /**
-   * Define an action that must be executed in a transactional context. 
+   * Define an action that must be executed in a transactional context.
    */
   def withTransaction(action: Transaction => Any) = {
     new AfterCommit(action)

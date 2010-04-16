@@ -19,8 +19,8 @@ package vcc.dnd4e.domain.tracker.transactional
 
 import vcc.model.IDGenerator
 import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.domain.tracker.common.{CombatantRosterDefinition, RosterChange, CombatantID}
 import vcc.controller.transaction.{UndoableWithCallback, Transaction, Undoable}
+import vcc.dnd4e.domain.tracker.common.{CombatantRosterDefinition, RosterChange, CombatantID}
 
 /**
  * Contains a transactional view of all the combatants currently in the combat.
@@ -53,16 +53,21 @@ class CombatantRoster(idGenerator: IDGenerator) {
    */
   def addCombatant(cid: CombatantID, alias: String, entity: CombatantEntity)(implicit trans: Transaction) {
     // Generate ID if necessary
-    val definition = if (cid == null) {
+    val combId: CombatantID = if (cid == null) {
       val id = idGenerator.first()
-      CombatantRosterDefinition(CombatantID(id.name), alias, entity)
+      CombatantID(id.name)
     } else {
       val cidSymbol = Symbol(cid.id)
       if (idGenerator.contains(cidSymbol)) idGenerator.removeFromPool(cidSymbol)
-      CombatantRosterDefinition(cid, alias, entity)
+      cid
     }
-    val comb = new Combatant(definition)
-    _roster.value = _roster.value + (definition.cid -> comb)
+    val definition = CombatantRosterDefinition(combId, alias, entity)
+    if (_roster.value.isDefinedAt(combId)) {
+      // We need to update this dude
+      combatant(combId).setDefinition(definition)
+    } else {
+      _roster.value = _roster.value + (definition.cid -> new Combatant(definition))
+    }
   }
 
   /**
