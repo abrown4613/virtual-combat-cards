@@ -30,7 +30,7 @@ import transaction.{Transaction, ChangeNotification}
 @RunWith(classOf[JUnitSuiteRunner])
 class TransactionalProcessorTest extends JUnit4(TransactionalProcessorSpec)
 
-case class TestAction(sub: Symbol) extends TransactionalAction {
+case class DummyAction(sub: Symbol) extends TransactionalAction {
   def description: String = "Run " + sub
 }
 
@@ -38,9 +38,9 @@ object TransactionalProcessorSpec extends Specification with Mockito {
   val mQueue = spy(new Queue[TransactionalAction])
   val aProcessor = new TransactionalProcessor[String]("data", mQueue) {
     addHandler {
-      case TestAction('THROW) =>
+      case DummyAction('THROW) =>
         throw new IllegalStateException("Cant handle")
-      case TestAction('DOIT) =>
+      case DummyAction('DOIT) =>
     }
     def publish(changes: Seq[ChangeNotification]): Any = changes.toList
   }
@@ -49,23 +49,23 @@ object TransactionalProcessorSpec extends Specification with Mockito {
   "aProcessor" should {
 
     "must enqueue action with default processor" in {
-      val action = TestAction('DOIT)
+      val action = DummyAction('DOIT)
       aProcessor.dispatch(new Transaction(), aSource, action)
       there was one(mQueue).+=(action)
     }
 
     "dequeue messages when dispatching" in {
-      aProcessor.dispatch(new Transaction(), aSource, TestAction('DOIT))
+      aProcessor.dispatch(new Transaction(), aSource, DummyAction('DOIT))
       there was one(mQueue).dequeue()
     }
 
     "throw UnhandledActionException when message is not processed" in {
-      val action = TestAction('UNKNOWN)
+      val action = DummyAction('UNKNOWN)
       aProcessor.dispatch(new Transaction(), aSource, action) must throwA(new UnhandledActionException(action))
     }
 
     "flush queue when processing an action throws an exception" in {
-      aProcessor.dispatch(new Transaction(), aSource, TestAction('THROW)) must throwAn[Exception]
+      aProcessor.dispatch(new Transaction(), aSource, DummyAction('THROW)) must throwAn[Exception]
       there was one(mQueue).clear()
     }
   }
