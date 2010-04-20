@@ -19,8 +19,12 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.message.TransactionalAction
 
-
+/**
+ * This object contains all TransactionalActions for the transactional tracker.
+ */
 object Command {
+
+  // Combat MetaData Actions
   abstract class TransactionalActionWithMessage(val description: String) extends TransactionalAction
 
   case class StartCombat() extends TransactionalActionWithMessage("Start combat")
@@ -29,4 +33,16 @@ object Command {
 
   case class AddCombatants(combatants: List[CombatantRosterDefinition])
           extends TransactionalActionWithMessage("Add combatants: " + combatants)
+
+  /**
+   * Set initiative for a list of combatants. Will throw exception if the combatant cannot roll initiative.
+   * @param initDefinitions Initiative definition for each combatant
+   */
+  case class SetInitiative(initDefinitions: List[InitiativeDefinition])
+          extends TransactionalActionWithMessage("Set initiative: " + initDefinitions)
+
+  /**
+   * Set the combat level comment
+   */
+  case class SetCombatComment(comment: String) extends TransactionalActionWithMessage("Set Combat comment to: " + comment)
 }

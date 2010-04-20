@@ -27,7 +27,7 @@ import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.model.CombatantEntity
 import vcc.dnd4e.model.common.{MinionHealthDefinition, CombatantType}
-import vcc.dnd4e.domain.tracker.common.{CombatantID, CombatantRosterDefinition, CombatStateView, CombatStateRules}
+import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
@@ -39,7 +39,8 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
   val mRule = mock[CombatStateRules]
   val mSource = mock[CommandSource]
 
-  val aCombatController = new CombatController(mRule, new CombatState(mOrder, mRoster, mMeta))
+  val state = new CombatState(mOrder, mRoster, mMeta)
+  val aCombatController = new CombatController(mRule, state)
 
   "aCombatController handling a StartCombat" should {
     "start combat if not started and has combatant in order" in {
@@ -107,6 +108,40 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
       val trans = new Transaction()
       aCombatController.dispatch(trans, mSource, AddCombatants(List(CombatantRosterDefinition(combA, null, entity))))
       there was one(mRoster).addCombatant(combA, null, entity)(trans)
+    }
+  }
+
+  "aCombatController handling a SetInitiative" should {
+    val combA = CombatantID("A")
+    val combB = CombatantID("B")
+    val iDef1 = InitiativeDefinition(combA, 4, List(10))
+    val iDef2 = InitiativeDefinition(combB, 4, List(11))
+
+    "iterate through all in the list" in {
+      val trans = new Transaction()
+      mRule.canCombatantRollInitiative(state, combA) returns true
+      mRule.canCombatantRollInitiative(state, combB) returns true
+      aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1, iDef2)))
+      there was one(mRule).canCombatantRollInitiative(state, combA)
+      there was one(mRule).canCombatantRollInitiative(state, combB)
+      there was one(mOrder).setInitiative(iDef1)(trans)
+      there was one(mOrder).setInitiative(iDef2)(trans)
+    }
+
+    "throw exception if someone can't roll initiative" in {
+      val trans = new Transaction()
+      mRule.canCombatantRollInitiative(state, combA) returns true
+      mRule.canCombatantRollInitiative(state, combB) returns false
+      aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1, iDef2))) must throwAn(new IllegalActionException("Combatant " + iDef2.combId + " cant roll initiative."))
+
+    }
+  }
+
+  "aCombatController handling a SetCombatComment" should {
+    "update the comment" in {
+      val trans = new Transaction()
+      aCombatController.dispatch(trans, mSource, SetCombatComment("and there was light"))
+      there was one(mMeta).comment_=("and there was light")(trans)
     }
   }
 }

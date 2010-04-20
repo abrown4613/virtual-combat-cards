@@ -32,12 +32,25 @@ trait CombatStateActionHandler {
         }
         else throw new IllegalActionException("Must have at least on combatant in order.")
       } else throw new IllegalActionException("Combat already started.")
+
     case EndCombat() =>
       if (context.isCombatStarted) {
         context.metaData.endCombat()
         context.order.clearOrder()
       } else throw new IllegalActionException("Combat already ended.")
+
     case AddCombatants(combatants) =>
       combatants.map(cre => context.roster.addCombatant(cre.cid, cre.alias, cre.entity))
+
+    case SetInitiative(id) =>
+      for (iDef <- id) {
+        if (rules.canCombatantRollInitiative(context, iDef.combId))
+          context.order.setInitiative(iDef)
+        else
+          throw new IllegalActionException("Combatant " + iDef.combId + " cant roll initiative.")
+      }
+
+    case SetCombatComment(comment) =>
+      context.metaData.comment = comment
   }
 }
