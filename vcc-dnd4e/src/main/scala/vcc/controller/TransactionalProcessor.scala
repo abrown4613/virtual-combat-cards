@@ -19,6 +19,7 @@ package vcc.controller
 
 import vcc.controller.transaction.Transaction
 import vcc.controller.message.TransactionalAction
+import scala.collection.mutable.Queue
 
 /**
  * This exception should be thrown when the action requested cant be executed
@@ -36,8 +37,10 @@ class UnhandledActionException(action: TransactionalAction) extends Exception()
  * process an action. They are all called in sequence, and should be defined via
  * traits in order to access context and transaction fields.
  */
-abstract class TransactionalProcessor[C](val context: C) extends TrackerController {
-  protected val msgQueue = new scala.collection.mutable.Queue[TransactionalAction]
+abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[TransactionalAction]) extends TrackerController {
+  protected val msgQueue: Queue[TransactionalAction] = aQueue
+
+  def this(context: C) = this (context, new Queue[TransactionalAction])
 
   /**
    * This is the transaction holder, should only be used internally
@@ -55,12 +58,22 @@ abstract class TransactionalProcessor[C](val context: C) extends TrackerControll
    */
   private var handlers: List[PartialFunction[TransactionalAction, Unit]] = Nil
 
+  /**
+   * Add a handler to the processor, all handlers that apply will be executed while
+   * processing a TransactionalAction.
+   * @param handler A partial function on TransactionalAction
+   */
   def addHandler(handler: PartialFunction[TransactionalAction, Unit]) {
     handlers = handlers ::: List(handler)
   }
 
+  /**
+   * Called when a TransactionalAction is recieved, this method can be used to translate a single
+   * action into several sub actions. Default behavior is to simply enqueue the message received.
+   * @param action Original Action to be done.
+   */
   def rewriteEnqueue(action: TransactionalAction) {
-    msgQueue.enqueue(action)
+    msgQueue += action
   }
 
   /**
