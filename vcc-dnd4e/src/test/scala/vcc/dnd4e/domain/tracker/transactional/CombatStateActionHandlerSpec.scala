@@ -28,11 +28,17 @@ import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.model.CombatantEntity
 import vcc.dnd4e.model.common.{MinionHealthDefinition, CombatantType}
 import vcc.dnd4e.domain.tracker.common._
+import vcc.controller.message.TransactionalAction
+import collection.mutable.Queue
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
 
 object CombatStateActionHandlerSpec extends Specification with Mockito {
+  class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
+          extends CombatController(rules, state, queue)
+                  with CombatStateActionHandler
+
   val mOrder = mock[InitiativeOrder]
   val mRoster = mock[CombatantRoster]
   val mMeta = mock[CombatMetaData]
@@ -40,7 +46,7 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
   val mSource = mock[CommandSource]
 
   val state = new CombatState(mOrder, mRoster, mMeta)
-  val aCombatController = new CombatController(mRule, state)
+  val aCombatController = new PartialCombatController(mRule, state, new Queue[TransactionalAction])
 
   "aCombatController handling a StartCombat" should {
     "start combat if not started and has combatant in order" in {

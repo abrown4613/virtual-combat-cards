@@ -20,8 +20,23 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.controller.TransactionalProcessor
 import vcc.dnd4e.domain.tracker.common.CombatStateRules
 import vcc.dnd4e.controller.TrackerControllerValidatingPublisher
+import scala.collection.mutable.Queue
+import vcc.controller.message.TransactionalAction
 
-class CombatController(val rules: CombatStateRules, val state: CombatState)
-        extends TransactionalProcessor(state)
-                with CombatStateActionHandler
+/**
+ * Base class for testing and build CombatController, this is used for isolated testing of individual handlers.
+ */
+abstract class AbstractCombatController(val rules: CombatStateRules, val state: CombatState, queue: Queue[TransactionalAction])
+        extends TransactionalProcessor(state, queue)
                 with TrackerControllerValidatingPublisher
+
+/**
+ * This is the final combat controller that includes all action handlers
+ */
+class CombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
+        extends AbstractCombatController(rules, state, queue)
+                with CombatStateActionHandler
+                with InitiativeActionHandler
+{
+  def this(rules: CombatStateRules, state: CombatState) = this (rules, state, new Queue[TransactionalAction]())
+}
