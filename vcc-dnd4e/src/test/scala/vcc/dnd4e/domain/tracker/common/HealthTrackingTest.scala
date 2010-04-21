@@ -15,13 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package test
+package vcc.dnd4e.domain.tracker.common
 
 import junit.framework._
+import vcc.dnd4e.model.common.CombatantType
 
-import vcc.dnd4e.model.common._
-
-@deprecated
 class HealthTrackingTest extends TestCase {
   def checkCharacterDefinitionStatus {
     val hd = CharacterHealthDefinition(21, 4, 5)
