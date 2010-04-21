@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ object CombatantSpec extends Specification with TransactionalSpecification {
   "a base Combatant" ->- (ctx) should {
     "be properly built" in {
       aCombatant must notBeNull
-      aCombatant.effects must_== EffectList(Nil)
+      aCombatant.effects must_== EffectList(combDef.cid, Nil)
       aCombatant.comment must_== ""
       aCombatant.health must_== HealthTracker.createTracker(aCombatant.projectHealthDef(combDef.entity.healthDef))
       aCombatant.definition must_== combDef
@@ -93,8 +93,8 @@ object CombatantSpec extends Specification with TransactionalSpecification {
 
     "update EffectList" in {
 
-      val baseEL = EffectList(Nil)
-      val modifiedEL = baseEL.add(Effect(cid, Condition.Generic("safe"), true, Effect.Duration.SaveEnd))
+      val baseEL = EffectList(cid, Nil)
+      val modifiedEL = baseEL.addEffect(cid, Effect.Condition.Generic("safe"), true, Effect.Duration.SaveEnd)
 
       withTransaction {
         trans =>
