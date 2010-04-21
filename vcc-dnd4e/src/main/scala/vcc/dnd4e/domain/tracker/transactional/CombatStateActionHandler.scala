@@ -21,7 +21,7 @@ import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.controller.IllegalActionException
 
 trait CombatStateActionHandler {
-  this: CombatController =>
+  this: AbstractCombatController =>
 
   addHandler {
     case StartCombat() =>
