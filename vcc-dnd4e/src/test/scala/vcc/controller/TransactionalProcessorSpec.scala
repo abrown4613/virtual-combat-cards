@@ -42,6 +42,11 @@ object TransactionalProcessorSpec extends Specification with Mockito {
         throw new IllegalStateException("Cant handle")
       case DummyAction('DOIT) =>
     }
+
+    addRewriteRule {
+      case DummyAction('TWICE) => Seq(DummyAction('DOIT), DummyAction('DOIT))
+    }
+
     def publish(changes: Seq[ChangeNotification]): Any = changes.toList
   }
   val aSource = mock[CommandSource]
@@ -52,6 +57,15 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       val action = DummyAction('DOIT)
       aProcessor.dispatch(new Transaction(), aSource, action)
       there was one(mQueue).+=(action)
+    }
+
+    "must apply a rewrite if there is a match" in {
+      val actionTwice = DummyAction('TWICE)
+      val actionOnce = DummyAction('DOIT)
+      aProcessor.dispatch(new Transaction(), aSource, actionTwice)
+      there was one(mQueue).+=(actionOnce) then
+              one(mQueue).+=(actionOnce)
+
     }
 
     "dequeue messages when dispatching" in {
@@ -69,4 +83,6 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       there was one(mQueue).clear()
     }
   }
+
+
 }
