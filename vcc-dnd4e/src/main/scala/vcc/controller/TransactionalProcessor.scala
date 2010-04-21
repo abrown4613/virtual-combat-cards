@@ -30,7 +30,7 @@ class IllegalActionException(msg: String) extends Exception(msg)
 /**
  * Thrown when no handler deals with this action 
  */
-class UnhandledActionException(action: TransactionalAction) extends Exception()
+class UnhandledActionException(action: TransactionalAction) extends Exception("Cant handle: " + action)
 
 /**
  * TransactionalProcessor is a container for a set of PartialFunctions that 
@@ -59,6 +59,11 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
   private var handlers: List[PartialFunction[TransactionalAction, Unit]] = Nil
 
   /**
+   * List of rewrite rules to be applied. These first match will be applied and all other ignored.
+   */
+  private var rewriteRules: List[PartialFunction[TransactionalAction, Seq[TransactionalAction]]] = Nil
+
+  /**
    * Add a handler to the processor, all handlers that apply will be executed while
    * processing a TransactionalAction.
    * @param handler A partial function on TransactionalAction
@@ -67,11 +72,17 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
     handlers = handlers ::: List(handler)
   }
 
+  def addRewriteRule(rule: PartialFunction[TransactionalAction, Seq[TransactionalAction]]) {
+    rewriteRules = rewriteRules ::: List(rule)
+  }
+
   /**
    * Called when a TransactionalAction is recieved, this method can be used to translate a single
    * action into several sub actions. Default behavior is to simply enqueue the message received.
    * @param action Original Action to be done.
    */
+  // TODO eleminate this method
+  @deprecated
   def rewriteEnqueue(action: TransactionalAction) {
     msgQueue += action
   }
@@ -80,7 +91,16 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
   def dispatch(transaction: Transaction, source: CommandSource, action: TransactionalAction): Unit = {
-    rewriteEnqueue(action)
+
+    //Check for a valid rewrite and apply or else enqueue the unmodified message
+    var rewrite = rewriteRules.find(rule => rule.isDefinedAt(action))
+    if (rewrite.isDefined)
+      for (act <- rewrite.get.apply(action)) msgQueue += act
+    else
+      rewriteEnqueue(action)
+    //TODO: Use this as default:
+    // msgQueue += action
+
     trans = transaction
     this.source = source
     try {
