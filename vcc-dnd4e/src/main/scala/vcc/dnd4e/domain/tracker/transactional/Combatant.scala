@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ class Combatant(initDefinition: CombatantRosterDefinition) extends CombatantStat
   private val _definition: Undoable[CombatantRosterDefinition] = new Undoable[CombatantRosterDefinition](initDefinition, x => CombatantChange(_definition.value.cid, x.value))
   private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(projectHealthDef(definition.entity.healthDef)), (uv) => CombatantChange(definition.cid, uv.value))
   private val _comment = new Undoable[String]("", uv => {CombatantChange(definition.cid, CombatantComment(uv.value))})
-  private val _effects = new Undoable[EffectList](EffectList(Nil), uv => {CombatantChange(definition.cid, uv.value)})
+  private val _effects = new Undoable[EffectList](EffectList(definition.cid, Nil), uv => {CombatantChange(definition.cid, uv.value)})
 
   def health = _health.value
 
