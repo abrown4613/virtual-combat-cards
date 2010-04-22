@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,6 +62,14 @@ class InitiativeOrder {
    * @return True if ioid  points to a InitiativeTracker
    */
   def isDefinedAt(ioid: InitiativeOrderID) = trackers.value.isDefinedAt(ioid)
+
+  /**
+   * Returns the InitiativeTracker for the head InitiativeOrderID.
+   */
+  def robinHeadInitiativeTracker(): InitiativeTracker =
+    if (robinHead.value != null) initiativeTrackerFor(robinHead.value)
+    else throw new NoSuchElementException("There is no head for the order yet")
+
 
   /**
    * Updates a initiative tracker for a given InitiativeOrderId.
@@ -155,6 +163,16 @@ class InitiativeOrder {
     trackers.value = Map()
     initBaseOrder.value = Nil
     reorders.value = Nil
+  }
+
+  /**
+   * Set the robin head, this will advance to a new head in the Robin. Used for MoveUp actions.
+   * @param orderId The InitiativeOrderID that should be the new head of the Robin
+   */
+  def setRobinHead(orderId: InitiativeOrderID)(implicit trans: Transaction) {
+    if (robinHead.value == null) throw new IllegalStateException("Combat not started")
+    robin.advanceTo(orderId)
+    robinHead.value = robin.headOption.get
   }
 
   /**
