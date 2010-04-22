@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  */
 //$Id$
 package vcc.dnd4e.domain.tracker.common
-
 
 class CombatStateRules {
 
@@ -37,4 +36,27 @@ class CombatStateRules {
     combatState.getInitiativeOrder.length > 0
   }
 
+  /**
+   * Can moveBefore if who is not acting and is different than whom
+   * @param state The current combatState
+   * @param who Who will move
+   * @param whom In front of whom who will move
+   */
+  def canMoveBefore(combatState: CombatStateView, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
+    (who != whom) && combatState.initiativeTrackerFromID(who).state != InitiativeTracker.state.Acting
+  }
+
+  /**
+   * Determines in a given action can be applied to an InitiativeTracker. Not that this does not cover compound
+   * operations like the Delay which internally is broken into Start and Delay.
+   */
+  def canInitiativeOrderPerform(combatState: CombatStateView, io: InitiativeOrderID, action: InitiativeTracker.action.Value): Boolean = {
+    val order = combatState.getInitiativeOrder
+    if (order.isEmpty) false
+    else {
+      val first = combatState.initiativeTrackerFromID(order.head)
+      val test = combatState.initiativeTrackerFromID(io)
+      test.canTransform(first, action)
+    }
+  }
 }

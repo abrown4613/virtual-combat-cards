@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,4 +45,17 @@ object Command {
    * Set the combat level comment
    */
   case class SetCombatComment(comment: String) extends TransactionalActionWithMessage("Set Combat comment to: " + comment)
+
+
+  // Initiative Actions
+  case class InitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
+          extends TransactionalActionWithMessage(who + "executed " + action)
+
+  case class MoveBefore(who: InitiativeOrderID, before: InitiativeOrderID)
+          extends TransactionalActionWithMessage(who + " moving before " + before + " in the sequence")
+
+  case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
+          extends TransactionalActionWithMessage(who + " executed initiative action " + action)
+
+
 }
