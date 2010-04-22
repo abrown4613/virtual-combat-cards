@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,11 +39,11 @@ object CombatStateRulesSpec extends Specification with Mockito {
   var mockCombA: CombatantStateView = null
   var mockCombB: CombatantStateView = null
 
-  state = mock[CombatStateView]
-  mockCombA = mock[CombatantStateView]
-  mockCombB = mock[CombatantStateView]
-
   val baseMockups = beforeContext {
+    state = mock[CombatStateView]
+    mockCombA = mock[CombatantStateView]
+    mockCombB = mock[CombatantStateView]
+
     state.getInitiativeOrder returns List(ioA0, ioB0, ioA1)
     state.combatantViewFromID(cidA) returns mockCombA
     state.combatantViewFromID(cidB) returns mockCombB
@@ -108,7 +108,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
     }
   }
 
-  "rules.hasActingCombatant" should {
+  "rules.hasActingCombatant" ->- (baseMockups) should {
     "return true if at order has one combatant" in {
       state.getInitiativeOrder returns List(ioA0)
       rules.hasActingCombatant(state) must beTrue
@@ -121,4 +121,56 @@ object CombatStateRulesSpec extends Specification with Mockito {
       there was one(state).getInitiativeOrder
     }
   }
+
+  "rules.canMoveBefore" ->- (baseMockups) should {
+    "not allow acting to move" in {
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Acting)
+      rules.canMoveBefore(state, ioA0, ioB0) must beFalse
+      there was one(state).initiativeTrackerFromID(ioA0)
+    }
+
+    "not allow move of self before self" in {
+      rules.canMoveBefore(state, ioA0, ioA0) must beFalse
+    }
+
+    "allow otherwise" in {
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Waiting)
+      rules.canMoveBefore(state, ioA0, ioB0) must beTrue
+      there was one(state).initiativeTrackerFromID(ioA0)
+
+
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Delaying)
+      rules.canMoveBefore(state, ioA0, ioB0) must beTrue
+
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Ready)
+      rules.canMoveBefore(state, ioA0, ioB0) must beTrue
+
+    }
+  }
+
+  "rules.canInitiativeOrderPerform" ->- (baseMockups) should {
+    "work only with valid entries in the order" in {
+      state.getInitiativeOrder returns Nil
+      rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
+      there was one(state).getInitiativeOrder
+    }
+
+    "defer to InitiativeTracker with the correct first InitiativeTracker set" in {
+      val mIT = mock[InitiativeTracker]
+      val fIT = mock[InitiativeTracker]
+      val action = InitiativeTracker.action.StartRound
+
+      mIT.canTransform(fIT, action) returns false
+
+      state.initiativeTrackerFromID(ioB0) returns mIT
+      state.initiativeTrackerFromID(ioA0) returns fIT
+
+      rules.canInitiativeOrderPerform(state, ioB0, action) must beFalse
+      there was one(state).initiativeTrackerFromID(ioA0)
+      there was one(state).initiativeTrackerFromID(ioB0)
+      there was one(mIT).canTransform(fIT, action)
+    }
+
+  }
+
 }
