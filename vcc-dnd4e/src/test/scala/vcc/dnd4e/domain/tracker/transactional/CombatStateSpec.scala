@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ object CombatStateSpec extends Specification with Mockito {
   // Useful objects
   val combA = CombatantID("A")
   val ioa = InitiativeOrderID(combA, 3)
+  val eia = EffectID(combA, 3)
 
   // Mocks and testee
   val mRoster = mock[CombatantRoster]
@@ -65,6 +66,34 @@ object CombatStateSpec extends Specification with Mockito {
 
       val comb: Combatant = combA match {
         case aCombatState.combatantFromID(comb) => comb
+        case _ => null
+      }
+
+      comb must beNull
+      there was one(mRoster).isDefinedAt(combA)
+      there was no(mRoster).combatant(combA)
+    }
+
+    "lift a EffectID to a Combatant when present" in {
+      mRoster.isDefinedAt(combA) returns true
+      mRoster.combatant(combA) returns mock[Combatant]
+
+      val comb: Combatant = eia match {
+        case aCombatState.combatantFromEffectID(comb) => comb
+        case _ => null
+      }
+
+      comb must notBeNull
+      comb.isInstanceOf[Combatant] must beTrue
+      there was one(mRoster).isDefinedAt(combA) then
+              one(mRoster).combatant(combA)
+    }
+
+    "match EffectID to None when not present" in {
+      mRoster.isDefinedAt(combA) returns false
+
+      val comb: Combatant = eia match {
+        case aCombatState.combatantFromEffectID(comb) => comb
         case _ => null
       }
 

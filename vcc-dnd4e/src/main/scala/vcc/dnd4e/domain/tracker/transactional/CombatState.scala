@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,6 +49,18 @@ class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val m
       else
         None
   }
+
+  /**
+   * This is an extractor to get the Combatant from a EffectID
+   */
+  object combatantFromEffectID {
+    def unapply(effectId: EffectID): Option[Combatant] =
+      if (roster.isDefinedAt(effectId.combId))
+        Some(roster.combatant(effectId.combId))
+      else
+        None
+  }
+
 
   def isCombatStarted: Boolean = metaData.inCombat
 
