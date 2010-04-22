@@ -1,7 +1,5 @@
-package vcc.dnd4e.domain.tracker.transactional
-
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,9 @@ package vcc.dnd4e.domain.tracker.transactional
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+package vcc.dnd4e.domain.tracker.transactional
+
 
 import org.specs.Specification
 import org.junit.runner.RunWith
@@ -24,6 +25,7 @@ import org.specs.mock.Mockito
 import vcc.controller.transaction.{ChangeNotification, Transaction}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.infra.test.{TransactionalSpecification, TransactionChangeLogger}
+import InitiativeTracker.state
 
 @RunWith(classOf[JUnitSuiteRunner])
 class InitiativeOrderTest extends JUnit4(InitiativeOrderSpec)
@@ -164,6 +166,10 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.initiativeTrackerFor(InitiativeOrderID(combE, 0)) must throwA[NoSuchElementException]
     }
 
+    "throw exception when setRobinPosition" in {
+      aOrder.setRobinHead(ioc) must throwA(new IllegalStateException("Combat not started"))
+    }
+
     "have a new tracker after commiting" in {
       aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
       aTrans.commit(changeLog)
@@ -179,14 +185,14 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "change an InitiativeTracker and propagate" in {
-      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting))
+      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, state.Acting))
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting)))
+      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 1, state.Acting)))
     }
 
     "undo the change of an InitiativeTracker" in {
-      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, InitiativeTracker.state.Acting))
+      aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, state.Acting))
       aTrans.commit(changeLog)
       aTrans.undo(changeLog)
 
@@ -227,8 +233,6 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
   }
 
   "an InitiativeOrder transactionally" ->- (loadedOrder) should {
-    //TODO Remove these dummy since they are just to help run the spec.
-    //    "dummy" in {0 must_== 0} // Required for spec to run
     "go to the first combatant on the order on a startCombat" in {
       withTransaction {
         transaction => aOrder.startCombat()(transaction)
@@ -238,7 +242,6 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
         changes => changes must contain(InitiativeOrderFirstChange(null))
       } afterRedoAsInCommit ()
     }
-    //    "dummy" in {0 must_== 0} // Required for spec to run
   }
 
   "an InitiativeOrder as a round robin of order entries" ->- (loadedOrder) should {
@@ -422,6 +425,22 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
               changes must contain(InitiativeTrackerChange(e, null))
           }
       }
+    }
+    "setRobinHead if element is in Robin" in {
+      withTransaction {
+        trans =>
+          aOrder.setRobinHead(iod)(trans)
+      } afterCommit {
+        changes =>
+          changes must contain(InitiativeOrderFirstChange(iod))
+      } afterUndo {
+        changes =>
+          changes must contain(InitiativeOrderFirstChange(ioc))
+      } afterRedoAsInCommit ()
+    }
+
+    "throw NoSuchElement if setRobinHead is called on element not in Robin" in {
+      aOrder.setRobinHead(ioe) must throwA[NoSuchElementException]
     }
 
     "allow adding a cleared combatant after clearOrder" in {
