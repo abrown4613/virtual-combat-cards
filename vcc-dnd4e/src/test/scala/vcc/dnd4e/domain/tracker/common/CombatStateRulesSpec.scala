@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
+import vcc.dnd4e.model.CombatantEntity
+import vcc.dnd4e.model.common.CombatantType
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateRulesTest extends JUnit4(CombatStateRulesSpec)
@@ -173,4 +175,43 @@ object CombatStateRulesSpec extends Specification with Mockito {
 
   }
 
+  "rules.areAllied" ->- (baseMockups) should {
+    "be true if combatant are both character" in {
+      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Character)
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Character)
+      rules.areAllied(state, cidA, cidB) must beTrue
+      there was one(mockCombA).definition
+      there was one(mockCombB).definition
+    }
+
+    "be true if combatant are both are not character" in {
+      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Monster)
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      rules.areAllied(state, cidA, cidB) must beTrue
+
+      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Monster)
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Monster)
+      rules.areAllied(state, cidA, cidB) must beTrue
+
+      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Minion)
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      rules.areAllied(state, cidA, cidB) must beTrue
+    }
+
+    "be false otherwise" in {
+      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Character)
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      rules.areAllied(state, cidA, cidB) must beFalse
+
+      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Monster)
+      rules.areAllied(state, cidA, cidB) must beFalse
+    }
+
+  }
+
+  /**
+   * Helper to create a  CombatantRosterDefinition with only the ctype and eid defined.
+   */
+  def combatantDefinitionWithTypeOnly(comb: CombatantID, ctype: CombatantType.Value) =
+    CombatantRosterDefinition(comb, null, CombatantEntity(null, null, null, 0, ctype, null))
 }

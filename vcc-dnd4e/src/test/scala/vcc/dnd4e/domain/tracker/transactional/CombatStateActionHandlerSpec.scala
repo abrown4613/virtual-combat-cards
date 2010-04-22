@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
 
 object CombatStateActionHandlerSpec extends Specification with Mockito {
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends CombatController(rules, state, queue)
+          extends AbstractCombatController(rules, state, queue)
                   with CombatStateActionHandler
 
   val mOrder = mock[InitiativeOrder]
@@ -139,7 +139,6 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
       mRule.canCombatantRollInitiative(state, combA) returns true
       mRule.canCombatantRollInitiative(state, combB) returns false
       aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1, iDef2))) must throwAn(new IllegalActionException("Combatant " + iDef2.combId + " cant roll initiative."))
-
     }
   }
 
@@ -150,4 +149,28 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
       there was one(mMeta).comment_=("and there was light")(trans)
     }
   }
+
+  "aCombatController handling a ApplyRest" should {
+    "throw exception if in combat" in {
+      val trans = new Transaction()
+      mMeta.inCombat returns true
+      aCombatController.dispatch(trans, mSource, ApplyRest(true)) must throwAn[IllegalActionException]
+      there was one(mMeta).inCombat
+
+      aCombatController.dispatch(trans, mSource, ApplyRest(false)) must throwAn[IllegalActionException]
+      there was two(mMeta).inCombat
+    }
+
+    "do nothing if not in combat" in {
+      val trans = new Transaction()
+      mMeta.inCombat returns false
+      aCombatController.dispatch(trans, mSource, ApplyRest(true))
+      there was one(mMeta).inCombat
+
+      aCombatController.dispatch(trans, mSource, ApplyRest(false))
+      there was two(mMeta).inCombat
+
+    }
+  }
+
 }

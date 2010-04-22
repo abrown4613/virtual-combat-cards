@@ -57,5 +57,17 @@ object Command {
   case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
           extends TransactionalActionWithMessage(who + " executed initiative action " + action)
 
+  // Effect Actions
+  case class AddEffect(target: CombatantID, source: CombatantID, condition: Condition, duration: Effect.Duration)
+          extends TransactionalActionWithMessage("Add effect: " + condition + " to " + target)
 
+  case class CancelEffect(effectId: EffectID) extends TransactionalActionWithMessage("Cancel effect " + effectId)
+
+  case class SustainEffect(effectId: EffectID) extends TransactionalActionWithMessage("Sustain effect " + effectId)
+
+  case class UpdateEffectCondition(effectId: EffectID, condition: Condition)
+          extends TransactionalActionWithMessage("Update effect " + effectId + " to " + condition)
+
+  // Rest Effect
+  case class ApplyRest(extended: Boolean) extends TransactionalActionWithMessage(if (extended) "Extended rest" else "Short rest")
 }

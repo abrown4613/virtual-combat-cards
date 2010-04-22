@@ -17,6 +17,8 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.common
 
+import vcc.dnd4e.model.common.CombatantType
+
 class CombatStateRules {
 
   /**
@@ -58,5 +60,11 @@ class CombatStateRules {
       val test = combatState.initiativeTrackerFromID(io)
       test.canTransform(first, action)
     }
+  }
+
+  def areAllied(combatState: CombatStateView, combA: CombatantID, combB: CombatantID): Boolean = {
+    val a = combatState.combatantViewFromID(combA).definition.entity.ctype
+    val b = combatState.combatantViewFromID(combB).definition.entity.ctype
+    (a == CombatantType.Character && b == CombatantType.Character) || (a != CombatantType.Character && b != CombatantType.Character)
   }
 }
