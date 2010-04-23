@@ -31,18 +31,19 @@ object EffectListSpec extends Specification with Mockito {
 
   val combA = CombatantID("A")
   val combB = CombatantID("B")
-  val anyCondition = Effect.Condition.Generic("any")
+  val badCondition = Effect.Condition.Generic("any", false)
+  val goodCondition = Effect.Condition.Generic("any", true)
 
   val aBigList = EffectList(combA, List(
-    Effect(EffectID(combA, 0), combA, anyCondition, true, Duration.Stance),
-    Effect(EffectID(combA, 1), combA, anyCondition, true, Duration.Rage)))
+    Effect(EffectID(combA, 0), combA, goodCondition, Duration.Stance),
+    Effect(EffectID(combA, 1), combA, goodCondition, Duration.Rage)))
 
   "an EffectList" should {
 
     "add an effect providing an effect ID" in {
       val blankList = EffectList(combB, Nil)
 
-      val nList = blankList.addEffect(combA, anyCondition, false, Duration.SaveEnd)
+      val nList = blankList.addEffect(combA, badCondition, Duration.SaveEnd)
 
       nList.effects mustNot beEmpty
       nList.effects(0).effectId must notBeNull
@@ -50,16 +51,16 @@ object EffectListSpec extends Specification with Mockito {
     }
 
     "when adding to a list the new effect must have a unique ID" in {
-      val nList = aBigList.addEffect(combB, anyCondition, false, Duration.SaveEnd)
+      val nList = aBigList.addEffect(combB, badCondition, Duration.SaveEnd)
       (nList.effects -- aBigList.effects).length must_== 1
       val newEntry = getFirstNewEffect(aBigList, nList)
       aBigList.effects mustNot exist(e => e.effectId == newEntry.effectId)
     }
 
     "replace a temporary mark by a new mark" in {
-      val nList = aBigList.addEffect(combB, Condition.Mark(combB, false), false, Duration.Other)
+      val nList = aBigList.addEffect(combB, Condition.Mark(combB, false), Duration.Other)
       val mark1 = getFirstNewEffect(aBigList, nList)
-      val nnList = nList.addEffect(combB, Condition.Mark(combB, false), false, Duration.SaveEnd)
+      val nnList = nList.addEffect(combB, Condition.Mark(combB, false), Duration.SaveEnd)
       val mark2 = getFirstNewEffect(nList, nnList)
 
       mark1 must notBeNull
@@ -69,9 +70,9 @@ object EffectListSpec extends Specification with Mockito {
     }
 
     "keep the permanent mark when adding a new mark" in {
-      val nList = aBigList.addEffect(combB, Condition.Mark(combB, true), false, Duration.Other)
+      val nList = aBigList.addEffect(combB, Condition.Mark(combB, true), Duration.Other)
       val mark1 = getFirstNewEffect(aBigList, nList)
-      val nnList = nList.addEffect(combB, Condition.Mark(combB, false), false, Duration.SaveEnd)
+      val nnList = nList.addEffect(combB, Condition.Mark(combB, false), Duration.SaveEnd)
       val mark2 = getFirstNewEffect(nList, nnList)
 
       mark1 must notBeNull
@@ -79,13 +80,13 @@ object EffectListSpec extends Specification with Mockito {
     }
 
     "replace a Stance duration if found" in {
-      val nList = aBigList.addEffect(combA, anyCondition, true, Duration.Stance)
+      val nList = aBigList.addEffect(combA, goodCondition, Duration.Stance)
       val newEntry = getFirstNewEffect(aBigList, nList)
       nList.effects must notExist(e => e.duration == Duration.Stance && e.effectId != newEntry.effectId)
     }
 
     "replace a Rage duration if in list" in {
-      val nList = aBigList.addEffect(combA, anyCondition, true, Duration.Rage)
+      val nList = aBigList.addEffect(combA, goodCondition, Duration.Rage)
       val newEntry = getFirstNewEffect(aBigList, nList)
       nList.effects must notExist(e => e.duration == Duration.Rage && e.effectId != newEntry.effectId)
     }
