@@ -5,6 +5,11 @@
     <artifactId>vcc-dnd4e</artifactId>
     <version>1.3.0-SNAPSHOT</version>
     <description>Main DND4E Module</description>
+    <organization>
+        <name>exnebula.org</name>
+        <url>http://www.exnebula.org/</url>
+    </organization>
+    <name>Virtual Combat Cards 4E</name>
     <inceptionYear>2008</inceptionYear>
     <properties>
         <scala.version>2.7.7</scala.version>
@@ -246,6 +251,9 @@
                 </executions>
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
+                    <jvmArgs>
+                        <jvmArg>-Xmx512m</jvmArg>
+                    </jvmArgs>
                     <args>
                         <arg>-target:jvm-1.5</arg>
                     </args>
@@ -265,7 +273,7 @@
                     <failIfMissing>true</failIfMissing>
                     <aggregate>false</aggregate>
                     <includes>
-                        <include>src/**</include>
+                        <include>src/**/*.scala</include>
                     </includes>
                     <excludes>
                         <exclude>.*/**</exclude>
@@ -273,7 +281,7 @@
                         <exclude>.clover/**</exclude>
                     </excludes>
                     <properties>
-                        <year>2008-2009</year>
+                        <year>2008-2010</year>
                         <email>tms@exnebula.org</email>
                         <author>Thomas Santana</author>
                     </properties>
