@@ -70,4 +70,22 @@ object Command {
 
   // Rest Effect
   case class ApplyRest(extended: Boolean) extends TransactionalActionWithMessage(if (extended) "Extended rest" else "Short rest")
+
+
+  /**
+   * Change the comment for a combatant
+   */
+  case class SetComment(who: CombatantID, text: String) extends TransactionalActionWithMessage("Comment of " + who + " has changed")
+
+  //Health Actions
+  case class ApplyDamage(who: CombatantID, damage: Int) extends TransactionalActionWithMessage(who + " takes " + damage + " hitpoints of damage")
+
+  case class SetTemporaryHP(who: CombatantID, temporaryHP: Int) extends TransactionalActionWithMessage(who + " recieves " + temporaryHP + " of temporary hitpoints")
+
+  case class HealDamage(who: CombatantID, heal: Int) extends TransactionalActionWithMessage(who + " recovers " + heal + " hitpoints")
+
+  case class FailDeathSave(who: CombatantID) extends TransactionalActionWithMessage(who + " fails save versus death")
+
+  case class RevertDeath(who: CombatantID) extends TransactionalActionWithMessage(who + " is no longer dead")
+
 }
