@@ -39,8 +39,8 @@ object Effect {
    * @param duration Duration of the effect
    * @return An Effect with no EffectID
    */
-  def apply(source: CombatantID, condition: Condition, beneficial: Boolean, duration: Duration): Effect =
-    Effect(null, source, condition, beneficial, duration)
+  def apply(source: CombatantID, condition: Condition, duration: Duration): Effect =
+    Effect(null, source, condition, duration)
 
   /**
    *  Determines the duration of an effect.
@@ -91,11 +91,11 @@ object Effect {
    * Condition of the effect, currently this is either a Mark or a generic text.
    */
   object Condition {
-    case class Mark(marker: CombatantID, permanent: Boolean) extends Condition {
+    case class Mark(marker: CombatantID, permanent: Boolean) extends Condition(false) {
       def description = "Marked by " + marker.id + (if (permanent) " no mark can supersede" else "")
     }
 
-    case class Generic(description: String) extends Condition
+    case class Generic(description: String, override val beneficial: Boolean) extends Condition(beneficial)
   }
 
 }
@@ -153,9 +153,9 @@ object EffectTransformation {
       effect.duration match {
         case Duration.RoundBound(`cid`, Duration.Limit.StartOfNextTurn) => null
         case Duration.RoundBound(`cid`, Duration.Limit.EndOfNextTurn) =>
-          Effect(effect.effectId, effect.source, effect.condition, effect.benefic, Duration.RoundBound(cid, Duration.Limit.EndOfTurn))
+          Effect(effect.effectId, effect.source, effect.condition, Duration.RoundBound(cid, Duration.Limit.EndOfTurn))
         case Duration.RoundBound(`cid`, Duration.Limit.EndOfNextTurnSustain) =>
-          Effect(effect.effectId, effect.source, effect.condition, effect.benefic, Duration.RoundBound(cid, Duration.Limit.EndOfTurnSustain))
+          Effect(effect.effectId, effect.source, effect.condition, Duration.RoundBound(cid, Duration.Limit.EndOfTurnSustain))
         case _ => effect
       }
     }
@@ -185,7 +185,7 @@ object EffectTransformation {
     def transform(effect: Effect): Effect = {
       effect.duration match {
         case Duration.RoundBound(`cid`, Duration.Limit.EndOfTurnSustain) => null
-        case Duration.RoundBound(`cid`, Duration.Limit.EndOfTurn) if (effect.benefic == ally) => null
+        case Duration.RoundBound(`cid`, Duration.Limit.EndOfTurn) if (effect.condition.beneficial == ally) => null
         case _ => effect
       }
     }
@@ -198,7 +198,7 @@ object EffectTransformation {
   case class sustainEffect(effectId: EffectID) extends TargetedTransformation(effectId, effect => {
     effect.duration match {
       case Duration.RoundBound(src, Duration.Limit.EndOfTurnSustain) =>
-        Effect(effect.effectId, effect.source, effect.condition, effect.benefic, Duration.RoundBound(src, Duration.Limit.EndOfNextTurnSustain))
+        Effect(effect.effectId, effect.source, effect.condition, Duration.RoundBound(src, Duration.Limit.EndOfNextTurnSustain))
       case _ => effect
     }
   })
@@ -209,7 +209,7 @@ object EffectTransformation {
    */
   case class updateCondition(effectId: EffectID, newCondition: Condition) extends TargetedTransformation(effectId, effect => {
     effect.condition match {
-      case dontCare: Condition.Generic => Effect(effect.effectId, effect.source, newCondition, effect.benefic, effect.duration)
+      case dontCare: Condition.Generic => Effect(effect.effectId, effect.source, newCondition, effect.duration)
       case _ => effect
     }
   })
@@ -224,7 +224,7 @@ object EffectTransformation {
 /**
  *  This is the father of all conditions
  */
-trait Condition {
+abstract class Condition(val beneficial: Boolean) {
   def description: String
 }
 
@@ -240,7 +240,7 @@ trait Condition {
  * @param benefic Indicates if power is good for the target (important for delay)
  * @param duaration An Effect.Duration
  */
-case class Effect(effectId: EffectID, source: CombatantID, condition: Condition, benefic: Boolean, duration: Effect.Duration) {
+case class Effect(effectId: EffectID, source: CombatantID, condition: Condition, duration: Effect.Duration) {
   import Effect._
 
   def sustainable = duration match {

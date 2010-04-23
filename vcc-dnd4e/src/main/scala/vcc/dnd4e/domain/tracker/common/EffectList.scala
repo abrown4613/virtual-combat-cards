@@ -43,11 +43,10 @@ case class EffectList(target: CombatantID, effects: List[Effect]) extends Combat
    * </ul>
    * @param source CombatantID  that caused the effect
    * @param condition The condition being caused by this effect
-   * @param beneficial Indicates the condition is beneficial to the target
    * @param duration The Duration of the effect.
    * @return A new EffectList with the new effect if it can be added.
    */
-  def addEffect(source: CombatantID, condition: Condition, beneficial: Boolean, duration: Duration): EffectList = {
+  def addEffect(source: CombatantID, condition: Condition, duration: Duration): EffectList = {
     val effectId = EffectID(target, maxEffectID + 1)
 
     //Don't replace a permanent mark
@@ -64,7 +63,7 @@ case class EffectList(target: CombatantID, effects: List[Effect]) extends Combat
       else effects
     }
 
-    EffectList(target, Effect(effectId, source, condition, beneficial, duration) :: filteredEffects)
+    EffectList(target, Effect(effectId, source, condition, duration) :: filteredEffects)
   }
 
   /**
