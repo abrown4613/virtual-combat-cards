@@ -28,14 +28,14 @@ import org.specs.mock.Mockito
 import vcc.controller.transaction.Transaction
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{IllegalActionException, UnhandledActionException, CommandSource}
-import InitiativeTracker.{action, state}
+import vcc.dnd4e.domain.tracker.common.InitiativeTracker.{action, state}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class InitiativeActionHandlerTest extends JUnit4(InitiativeActionHandlerSpec)
 
 object InitiativeActionHandlerSpec extends Specification with Mockito {
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends CombatController(rules, state, queue)
+          extends AbstractCombatController(rules, state, queue)
                   with InitiativeActionHandler
 
   val combA = CombatantID("A")
