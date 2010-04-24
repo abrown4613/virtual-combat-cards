@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,16 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.controller.message
 
+import vcc.controller.transaction.ChangeNotification
+import vcc.controller.CommandSource
+
 trait TransactionalAction {
-  def description():String
+  def description(): String
 }
 
-case class Command(from:CommandSource,action:TransactionalAction)
+case class Command(from: CommandSource, action: TransactionalAction)
 
 trait TrackerControlMessage
-case class AddObserver(obs:scala.actors.Actor) extends TrackerControlMessage
+case class AddObserver(obs: scala.actors.Actor) extends TrackerControlMessage
 case class ClearTransactionLog() extends TrackerControlMessage
 case class Undo() extends TrackerControlMessage
 case class Redo() extends TrackerControlMessage
+
+//TODO Move ChangeNotification to this file and make publisher always return a TrackerChanged
+// Fix this after stripping the old tracker logic
+case class TrackerChanged(changes: List[ChangeNotification])
+
