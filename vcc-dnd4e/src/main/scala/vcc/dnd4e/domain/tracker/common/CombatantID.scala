@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,21 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.infra.util.UniquelyIdentified
 
-case class CombatantID(id: String)
+/**
+ * CombatantID defines a unique combatant in the Roster.
+ */
+case class CombatantID(id: String) {
+  /**
+   * Helper method to simplify interaction with the IDGenerator
+   */
+  def toSymbol(): Symbol = Symbol(id)
+}
 
+/**
+ * Unique identifier for an entry in the InitiativeOrder.
+ * @param combId The combatant that own the InitiativeOrder entry
+ * @param seq Sequential number to separate different InitiativeOrderID from the same CombatantID.
+ */
 case class InitiativeOrderID(val combId: CombatantID, val seq: Int) {
   override def toString(): String = "InitiativeOrderID(" + combId.id + ":" + seq + ")"
 

@@ -35,6 +35,12 @@ object Command {
           extends TransactionalActionWithMessage("Add combatants: " + combatants)
 
   /**
+   * Clear roster of combatants
+   * @param all If true will clear Play Combatant and NPC (non-player combatants), when fall only NPC are cleared.
+   */
+  case class ClearRoster(all: Boolean) extends TransactionalActionWithMessage("Clear " + (if (all) "all" else "enemies") + "combatants")
+
+  /**
    * Set initiative for a list of combatants. Will throw exception if the combatant cannot roll initiative.
    * @param initDefinitions Initiative definition for each combatant
    */

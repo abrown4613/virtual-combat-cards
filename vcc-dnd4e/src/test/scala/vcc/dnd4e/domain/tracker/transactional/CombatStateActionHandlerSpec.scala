@@ -173,4 +173,28 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
     }
   }
 
+  "aCombatController handling a ClearRoster" should {
+    "not allow a ClearCombat on a running combat" in {
+      val trans = new Transaction()
+      mMeta.inCombat returns true
+      aCombatController.dispatch(trans, mSource, ClearRoster(true)) must throwAn[IllegalActionException]
+      there was atLeastOne(mMeta).inCombat
+    }
+
+    "clear all combatant from the roster when not in combat" in {
+      val trans = new Transaction()
+      mMeta.inCombat returns false
+      aCombatController.dispatch(trans, mSource, ClearRoster(true))
+      there was one(mMeta).inCombat
+      there was one(mRoster).clear(true)(trans)
+    }
+
+    "clear all combatant from the roster when not in combat" in {
+      val trans = new Transaction()
+      mMeta.inCombat returns false
+      aCombatController.dispatch(trans, mSource, ClearRoster(false))
+      there was one(mMeta).inCombat
+      there was one(mRoster).clear(false)(trans)
+    }
+  }
 }

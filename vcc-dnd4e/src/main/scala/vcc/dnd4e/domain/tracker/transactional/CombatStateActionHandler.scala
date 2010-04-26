@@ -55,5 +55,9 @@ trait CombatStateActionHandler {
 
     case ApplyRest(dontCare) =>
       if (context.isCombatStarted) throw new IllegalActionException("Cant rest while in combat.")
+
+    case ClearRoster(all) =>
+      if (context.isCombatStarted) throw new IllegalActionException("Can not clear combatant during a combat.")
+      context.roster.clear(all)
   }
 }

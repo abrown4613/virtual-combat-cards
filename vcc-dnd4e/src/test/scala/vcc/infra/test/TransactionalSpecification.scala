@@ -107,10 +107,11 @@ trait TransactionalSpecification {
   /**
    * Run and Commit an action
    */
-  def runAndCommit(action: Transaction => Any) = {
+  def runAndCommit(action: Transaction => Any): Seq[ChangeNotification] = {
     val trans = new Transaction()
     val cLogger = new TransactionChangeLogger()
     action(trans)
     trans.commit(cLogger)
+    cLogger.changes
   }
 }

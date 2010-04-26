@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import vcc.model.IDGenerator
 import vcc.dnd4e.model.CombatantEntity
 import vcc.controller.transaction.{UndoableWithCallback, Transaction, Undoable}
 import vcc.dnd4e.domain.tracker.common.{CombatantRosterDefinition, RosterChange, CombatantID}
+import vcc.dnd4e.model.common.CombatantType
 
 /**
  * Contains a transactional view of all the combatants currently in the combat.
@@ -38,9 +39,9 @@ class CombatantRoster(idGenerator: IDGenerator) {
 
     // Find IDs that are gone and return them to ID Generator
     def restoreCallback(valueToRestore: Map[CombatantID, Combatant]) {
-      val gone = (this.value -- valueToRestore.keys).map(me => Symbol(me._1.id))
-      gone.foreach(id => if (idGenerator.contains(id)) idGenerator.returnToPool(id))
-      val back = (valueToRestore -- this.value.keys).map(me => Symbol(me._1.id))
+      val gone = (this.value -- valueToRestore.keys).map(me => me._1.toSymbol)
+      gone.foreach(id => idGenerator.returnToPool(id))
+      val back = (valueToRestore -- this.value.keys).map(me => me._1.toSymbol)
       back.foreach(id => if (idGenerator.contains(id)) idGenerator.removeFromPool(id))
     }
   }
@@ -88,4 +89,25 @@ class CombatantRoster(idGenerator: IDGenerator) {
    * Returns all the CombatantID in the roster
    */
   def allCombatantIDs: List[CombatantID] = _roster.value.keys.toList
+
+  /**
+   * Clear roster of combatants
+   * @param all If true will clear Play Combatant and NPC (non-player combatants), when fall only NPC are cleared.
+   */
+  def clear(all: Boolean)(implicit trans: Transaction) {
+    if (all) {
+      _roster.value.keys.map(e => e.toSymbol).foreach(s => idGenerator.returnToPool(s))
+      _roster.value = Map()
+    } else {
+      _roster.value = _roster.value.filter(re => {
+        if (re._2.definition.entity.ctype == CombatantType.Character) {
+          true
+        } else {
+          //Return ids we will filter to the pool
+          idGenerator.returnToPool(re._1.toSymbol)
+          false
+        }
+      })
+    }
+  }
 }
