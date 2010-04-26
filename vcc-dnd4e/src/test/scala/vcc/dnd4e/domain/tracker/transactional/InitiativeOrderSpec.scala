@@ -66,8 +66,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.setInitiative(iDef)
       aTrans.commit(changeLog)
       changeLog.changes must notBeEmpty
-      changeLog.changes must contain(InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0)))
-      changeLog.changes must contain(InitiativeOrderChange(List(ioa0)))
+      changeLog.changes.toList must_== List(InitiativeOrderChange(List(InitiativeTracker.initialTracker(ioa0))))
     }
 
     "not define a head for initiative robin upon add" in {
@@ -95,22 +94,18 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       } afterCommit {
         changes =>
           changes must notBeEmpty
-          changes must contain(InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0)))
-          changes must contain(InitiativeTrackerChange(ioa1, InitiativeTracker.initialTracker(ioa1)))
-          changes must contain(InitiativeOrderChange(List(ioa1, ioa0)))
+          changes.toList must_== List(InitiativeOrderChange(List(InitiativeTracker.initialTracker(ioa1), InitiativeTracker.initialTracker(ioa0))))
       } afterUndo {
         changes =>
-          changes must contain(InitiativeTrackerChange(ioa0, null))
-          changes must contain(InitiativeTrackerChange(ioa1, null))
-          changes must contain(InitiativeOrderChange(Nil))
+          extractOrderChange(changes) must_== Nil
       } does "preserve baseList on and undo" afterRedo {
         changes =>
-          changes must contain(InitiativeOrderChange(List(ioa1, ioa0)))
+          extractOrderChange(changes) must_== List(ioa1, ioa0)
 
           aTrans = new Transaction()
           aOrder.setInitiative(InitiativeDefinition(combB, 10, List(17)))
           aTrans.commit(changeLog)
-          changeLog.changes must contain(InitiativeOrderChange(List(ioa1, iob, ioa0)))
+          extractOrderChange(changeLog.changes) must_== List(ioa1, iob, ioa0)
       }
     }
 
@@ -170,12 +165,6 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.setRobinHead(ioc) must throwA(new IllegalStateException("Combat not started"))
     }
 
-    "have a new tracker after commiting" in {
-      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
-      aTrans.commit(changeLog)
-      aOrder.initiativeTrackerFor(ioe) must_== InitiativeTracker.initialTracker(ioe)
-    }
-
     "not return an added tracker after undoing it's add" in {
       aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
       aTrans.commit(changeLog)
@@ -188,7 +177,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.updateInitiativeTrackerFor(ioc, InitiativeTracker(ioc, 1, state.Acting))
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 1, state.Acting)))
+      changeLog.changes must contain(InitiativeTrackerChange(InitiativeTracker(ioc, 1, state.Acting)))
     }
 
     "undo the change of an InitiativeTracker" in {
@@ -196,26 +185,21 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans.commit(changeLog)
       aTrans.undo(changeLog)
 
-      changeLog.changes must contain(InitiativeTrackerChange(ioc, InitiativeTracker(ioc, 0, InitiativeTracker.state.Waiting)))
+      changeLog.changes must contain(InitiativeTrackerChange(InitiativeTracker(ioc, 0, InitiativeTracker.state.Waiting)))
     }
 
-    "propagate to null the InitiativeTracker when undoing an add" in {
-      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
-      aTrans.commit(changeLog)
-      aTrans.undo(changeLog)
-
-      changeLog.changes must contain(InitiativeTrackerChange(ioe, null))
-      aOrder.initiativeTrackerFor(ioe) must throwA[NoSuchElementException]
-    }
-
-    "propagate the old tracker the InitiativeTracker when redoing an add" in {
-      aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))
-      aTrans.commit(changeLog)
-      aTrans.undo(changeLog)
-      aTrans.redo(changeLog)
-
-      changeLog.changes must contain(InitiativeTrackerChange(ioe, InitiativeTracker.initialTracker(ioe)))
-      aOrder.initiativeTrackerFor(ioe) must_== InitiativeTracker.initialTracker(ioe)
+    "added tracker with setInitiative" in {
+      withTransaction {
+        trans => aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))(trans)
+      } afterCommit {
+        changes =>
+          aOrder.initiativeTrackerFor(ioe) must_== InitiativeTracker.initialTracker(ioe)
+          extractOrderChange(changes) must_== List(ioc, ioa0, iob, ioa1, iod, ioe)
+      } afterUndo {
+        changes =>
+          extractOrderChange(changes) must_== List(ioc, ioa0, iob, ioa1, iod)
+          aOrder.initiativeTrackerFor(ioe) must throwA[NoSuchElementException]
+      } afterRedoAsInCommit ()
     }
   }
 
@@ -269,7 +253,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.setInitiative(InitiativeDefinition(combE, 3, List(35))) //And 
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(ioe, ioc, ioa0, iob, ioa1, iod)))
+      extractOrderChange(changeLog.changes) must_== List(ioe, ioc, ioa0, iob, ioa1, iod)
     }
 
     "undo the robin change for adding an intiative" in {
@@ -277,7 +261,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans.commit(changeLog)
       aTrans.undo(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+      extractOrderChange(changeLog.changes) must_== List(ioc, ioa0, iob, ioa1, iod)
     }
 
     "not accept moveBefore if the combat has not started" in {
@@ -290,15 +274,13 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
           aOrder.removeCombatant(combA)(trans)
       } afterCommit {
         changes =>
-          changes must contain(InitiativeOrderChange(List(ioc, iob, iod)))
-          changes must contain((InitiativeTrackerChange(ioa0, null)))
-          changes must contain((InitiativeTrackerChange(ioa1, null)))
+          extractOrderChange(changes) must_== List(ioc, iob, iod)
           aOrder.initiativeTrackerFor(ioa0) must throwA[NoSuchElementException]
       } afterUndo {
         changes =>
-          changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
-          changes must contain((InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0))))
-          changes must contain((InitiativeTrackerChange(ioa1, InitiativeTracker.initialTracker(ioa1))))
+          extractOrderChange(changes) must_== List(ioc, ioa0, iob, ioa1, iod)
+          changes must contain((InitiativeTrackerChange(InitiativeTracker.initialTracker(ioa0))))
+          changes must contain((InitiativeTrackerChange(InitiativeTracker.initialTracker(ioa1))))
       } afterRedoAsInCommit ()
 
     }
@@ -310,16 +292,15 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.setInitiative(InitiativeDefinition(combA, 1, List(2)))
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod, ioa0)))
-      changeLog.changes must contain((InitiativeTrackerChange(ioa0, InitiativeTracker.initialTracker(ioa0))))
+      extractOrderChange(changeLog.changes) must_== List(ioc, iob, iod, ioa0)
+      changeLog.changes must notContain(InitiativeTrackerChange(InitiativeTracker.initialTracker(ioa0)))
     }
 
     "clear the entire order" in {
       aOrder.clearOrder()
       aTrans.commit(changeLog)
 
-      changeLog.changes must containAll(List(InitiativeOrderChange(Nil)))
-      List(ioa0, ioa1, iob, ioc, iod).foreach(e => changeLog.changes must contain(InitiativeTrackerChange(e, null)))
+      changeLog.changes.toList must_== List((InitiativeOrderChange(Nil)))
     }
   }
 
@@ -358,7 +339,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans = new Transaction()
       aOrder.setInitiative(InitiativeDefinition(combE, 3, List(17))) // Add after C
       aTrans.commit(changeLog)
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioe, iod, ioa0, iob, ioa1)))
+      extractOrderChange(changeLog.changes) must_== List(ioc, ioe, iod, ioa0, iob, ioa1)
     }
 
     "preserve the reorder internal when reordering after another reorder" in {
@@ -378,21 +359,21 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans = new Transaction()
       aOrder.moveBefore(iob, iod)
       aTrans.commit(changeLog)
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iob, iod, ioa0, ioa1)))
+      extractOrderChange(changeLog.changes) must_== List(ioc, iob, iod, ioa0, ioa1)
     }
 
     "update the robin when a reorder is done and propagate" in {
       aOrder.moveBefore(iod, ioa0)
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, iod, ioa0, iob, ioa1)))
+      extractOrderChange(changeLog.changes) must_== List(ioc, iod, ioa0, iob, ioa1)
     }
 
     "not change head on reorder moves to the first slot" in {
       aOrder.moveBefore(iod, ioc)
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(iod, ioc, ioa0, iob, ioa1)))
+      extractOrderChange(changeLog.changes) must_== List(iod, ioc, ioa0, iob, ioa1)
       changeLog.changes must notExist(x => x.isInstanceOf[InitiativeOrderFirstChange])
     }
 
@@ -401,7 +382,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans.commit(changeLog)
       aTrans.undo(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+      extractOrderChange(changeLog.changes) must_== List(ioc, ioa0, iob, ioa1, iod)
     }
 
     "clear the entire order" in {
@@ -410,19 +391,17 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       } afterCommit {
         changes =>
           changes must containAll(List(InitiativeOrderFirstChange(null), InitiativeOrderChange(Nil)))
-          List(ioa0, ioa1, iob, ioc, iod).foreach(e => changes must contain(InitiativeTrackerChange(e, null)))
       } afterUndo {
         changes =>
           changes must contain(InitiativeOrderFirstChange(ioc))
-          changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
-          List(ioa0, ioa1, iob, ioc, iod).foreach(e => changes must contain(InitiativeTrackerChange(e, InitiativeTracker.initialTracker(e))))
+          extractOrderChange(changeLog.changes) must_== List(ioc, ioa0, iob, ioa1, iod)
+          List(ioa0, ioa1, iob, ioc, iod).foreach(e => changes must notContain(InitiativeTrackerChange(InitiativeTracker.initialTracker(e))))
       } afterRedo {
         changes =>
           changes must containAll(List(InitiativeOrderFirstChange(null), InitiativeOrderChange(Nil)))
           List(ioa0, ioa1, iob, ioc, iod).foreach {
             e =>
               aOrder.initiativeTrackerFor(e) must throwA[NoSuchElementException]
-              changes must contain(InitiativeTrackerChange(e, null))
           }
       }
     }
@@ -467,9 +446,16 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       } afterUndo {
         changes =>
           changes must contain(InitiativeOrderFirstChange(ioc))
-          changes must contain(InitiativeOrderChange(List(ioc, ioa0, iob, ioa1, iod)))
+          extractOrderChange(changes) must_== List(ioc, ioa0, iob, ioa1, iod)
 
       } afterRedoAsInCommit ()
     }
+  }
+
+  def extractOrderChange(changes: Seq[ChangeNotification]): List[InitiativeOrderID] = {
+    val orderChange = changes.find(x => x.isInstanceOf[InitiativeOrderChange]).get.asInstanceOf[InitiativeOrderChange]
+    if (orderChange != null) {
+      orderChange.order.map(x => x.orderID)
+    } else Nil
   }
 }

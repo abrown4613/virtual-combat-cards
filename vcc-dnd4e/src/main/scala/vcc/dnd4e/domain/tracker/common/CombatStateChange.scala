@@ -51,14 +51,14 @@ case class CombatantChange(comb: CombatantID, obj: CombatantAspect) extends Comb
  * @param initTracker New value of the initiative tracker, null indicates that this InitiativeOrderID  is no longer being
  * tracked.
  */
-case class InitiativeTrackerChange(ioid: InitiativeOrderID, initTracker: InitiativeTracker) extends CombatStateChange
+case class InitiativeTrackerChange(initTracker: InitiativeTracker) extends CombatStateChange
 
 /**
  * Indicates a change in the initiative order, this is result of a reorder, removing or adding a combatant.
  * @param order New order, Nil indicates that we are no longer tracking order
  */
-case class InitiativeOrderChange(order: List[InitiativeOrderID]) extends CombatStateChange {
-  override def toString(): String = "InitiativeOrderChange(" + order.map(x => x.toLabelString).mkString(", ") + ")"
+case class InitiativeOrderChange(order: List[InitiativeTracker]) extends CombatStateChange {
+  override def toString(): String = "InitiativeOrderChange(" + order.map(x => x.orderID.toLabelString).mkString(", ") + ")"
 }
 
 /**
