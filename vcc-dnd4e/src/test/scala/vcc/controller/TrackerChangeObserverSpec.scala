@@ -97,7 +97,7 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
 
   }
 
-  "a TrackerChagneObserver" ->- (obseverWithMockActor) should {
+  "a TrackerChangeObserver" ->- (obseverWithMockActor) should {
 
     "on construction start and register" in {
       there was one(anObserverActor).start() then
@@ -111,9 +111,14 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
       there was one(anObserverActor).!?(TrackerChangeObserver.GetSnapshot)
     }
 
-    "throw exception in snapshot request returns None" in {
+    "throw exception if snapshot request returns None" in {
       anObserverActor.!?(TrackerChangeObserver.GetSnapshot) returns None
       anObserver.getSnapshot() must throwAn[Exception]
+    }
+
+    "throw exception if snapshot request returns wrong type" in {
+      anObserverActor.!?(TrackerChangeObserver.GetSnapshot) returns Some(10)
+      anObserver.getSnapshot() must throwAn[ClassCastException]
     }
 
   }
