@@ -40,7 +40,8 @@ class InitiativeOrder {
   private val trackers = new Undoable(Map.empty[InitiativeOrderID, Undoable[InitiativeTracker]], null)
   private val robin = new ArrayRoundRobin[InitiativeOrderID](null, Nil)
   private val reorders = new Undoable[List[(InitiativeOrderID, InitiativeOrderID)]](Nil, null)
-  private val initOrder = new Undoable[List[InitiativeOrderID]](Nil, x => InitiativeOrderChange(x.value)) with UndoableWithCallback[List[InitiativeOrderID]] {
+  private val initOrder = new Undoable[List[InitiativeOrderID]](Nil,
+    x => InitiativeOrderChange(x.value.map(oid => trackers.value(oid).value))) with UndoableWithCallback[List[InitiativeOrderID]] {
     def restoreCallback(oldList: List[InitiativeOrderID]) {
       robin.setRobin(if (oldList.isEmpty) null else robinHead.value, oldList)
     }
@@ -138,9 +139,8 @@ class InitiativeOrder {
     var itMap = trackers.value
     val ioBuilder = new ReorderedListBuilder(initBaseOrder.value, reorders.value, initiativeResultComparator)
     for (res <- initRes) {
-      val it = new Undoable[InitiativeTracker](null, u => InitiativeTrackerChange(res.uniqueId, u.value))
+      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId), u => InitiativeTrackerChange(u.value))
       itMap = itMap + (res.uniqueId -> it)
-      it.value = InitiativeTracker.initialTracker(res.uniqueId)
       ioBuilder.addEntry(res)
     }
 
@@ -159,7 +159,6 @@ class InitiativeOrder {
   def clearOrder()(implicit trans: Transaction) {
     initOrder.value = Nil
     if (robinHead.value != null) robinHead.value = null
-    trackers.value.keys.foreach(updateInitiativeTrackerFor(_, null))
     trackers.value = Map()
     initBaseOrder.value = Nil
     reorders.value = Nil
