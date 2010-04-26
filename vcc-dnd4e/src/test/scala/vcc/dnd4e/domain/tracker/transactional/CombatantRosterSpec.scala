@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,15 +35,19 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   var aRoster: CombatantRoster = null
   var mockIDGenerator: IDGenerator = null
 
+  val combA = CombatantID("A")
+  val combB = CombatantID("1")
+
   val combEnt = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null)
   val combEnt2 = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Character, null)
+  val combMonster = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Monster, null)
 
   val blankRoster = beforeContext {
     aRoster = new CombatantRoster()
   }
 
   val blankRosterWithMock = beforeContext {
-    mockIDGenerator = mock[IDGenerator]
+    mockIDGenerator = spy(new IDGenerator(1, 10))
     aRoster = new CombatantRoster(mockIDGenerator)
   }
 
@@ -51,8 +55,6 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
 
   "a CombatantRoster interacting with IDGenerator" ->- (blankRosterWithMock) should {
     "ask for and ID if non is provided" in {
-      mockIDGenerator.first() returns Symbol("1")
-
       aRoster.addCombatant(null, "alias", combEnt)(new Transaction())
 
       aRoster.combatant(CombatantID("1")) must notBeNull
@@ -60,7 +62,6 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
     }
 
     "check IDGenerator for provided ID but done remove if it's not in generator" in {
-      mockIDGenerator.contains(Symbol("A")) returns false
       aRoster.addCombatant(CombatantID(Symbol("A").name), "alias", combEnt)(new Transaction())
 
       there was one(mockIDGenerator).contains(Symbol("A"))
@@ -68,7 +69,6 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
     }
 
     "remove ID from generator if provided and is contained in generator" in {
-      mockIDGenerator.contains(Symbol("10")) returns true
       aRoster.addCombatant(CombatantID(Symbol("10").name), "alias", combEnt)(new Transaction())
 
       there was one(mockIDGenerator).contains(Symbol("10")) then
@@ -78,25 +78,19 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
     "return ID to pool when an add is undone" in {
       val trans = new Transaction()
       val changeLog = new TransactionChangeLogger()
-      mockIDGenerator.first() returns Symbol("20")
-      mockIDGenerator.contains(Symbol("20")) returns true
-      mockIDGenerator.contains(Symbol("A")) returns false
 
       aRoster.addCombatant(null, "alias", combEnt)(trans)
       aRoster.addCombatant(CombatantID("A"), "alias", combEnt)(trans)
       trans.commit(changeLog)
       trans.undo(changeLog)
 
-      there was one(mockIDGenerator).returnToPool(Symbol("20"))
-      there was no(mockIDGenerator).returnToPool(Symbol("A")) // This was not generated don't return...
+      there was one(mockIDGenerator).returnToPool(Symbol("1"))
+      there was one(mockIDGenerator).returnToPool(Symbol("A")) // This was not generated return any
     }
 
     "remove ID to pool when an add is redone" in {
       val trans = new Transaction()
       val changeLog = new TransactionChangeLogger()
-      mockIDGenerator.first() returns Symbol("20")
-      mockIDGenerator.contains(Symbol("20")) returns true
-      mockIDGenerator.contains(Symbol("A")) returns false
 
       aRoster.addCombatant(null, "alias", combEnt)(trans)
       aRoster.addCombatant(CombatantID("A"), "alias", combEnt)(trans)
@@ -104,8 +98,8 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       trans.undo(changeLog)
       trans.redo(changeLog)
 
-      there was one(mockIDGenerator).removeFromPool(Symbol("20"))
-      there was no(mockIDGenerator).removeFromPool(Symbol("A")) // This was not generated don't return...
+      there was one(mockIDGenerator).removeFromPool(Symbol("1"))
+      there was no(mockIDGenerator).removeFromPool(Symbol("A")) // Return should not take something not in pool
     }
   }
 
@@ -133,10 +127,8 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
           aRoster.addCombatant(combId, "alias", combEnt)(atrans)
       } afterCommit {
         changes =>
-          changes must exist(x => x match {
-            case RosterChange(cmap) => !cmap.isEmpty
-            case _ => false
-          })
+          val cr = getChangeRosterMap(changes)
+          cr must beDefinedAt(combId)
           aRoster.combatant(combId) must notBeNull
       } afterUndo {
         changes =>
@@ -191,6 +183,67 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
           changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, 6, aRoster.combatant(combId).projectHealthDef(combEnt.healthDef))))
           changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias", combEnt)))
       } afterRedoAsInCommit ()
+    }
+  }
+
+  "a fully loaded Roster" ->- (beforeContext {
+    mockIDGenerator = spy(new IDGenerator(1, 50))
+    aRoster = new CombatantRoster(mockIDGenerator)
+    runAndCommit {
+      trans =>
+        aRoster.addCombatant(combA, null, combEnt)(trans)
+        aRoster.addCombatant(null, null, combMonster)(trans)
+    }
+  }) should {
+
+    "remove NP combatant on a clear npc" in {
+      withTransaction {
+        trans => aRoster.clear(false)(trans)
+      } afterCommit {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr must beDefinedAt(combA)
+          cr mustNot beDefinedAt(combB)
+          there was one(mockIDGenerator).returnToPool(combB.toSymbol)
+      } afterUndo {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr must beDefinedAt(combA)
+          cr must beDefinedAt(combB)
+          there was one(mockIDGenerator).removeFromPool(Symbol("1"))
+      } afterRedo {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr must beDefinedAt(combA)
+          cr mustNot beDefinedAt(combB)
+          there was two(mockIDGenerator).returnToPool(combB.toSymbol)
+      }
+    }
+
+    "remove NP combatant on a clear all" in {
+      withTransaction {
+        trans => aRoster.clear(true)(trans)
+      } afterCommit {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr mustNot beDefinedAt(combA)
+          cr mustNot beDefinedAt(combB)
+          there was one(mockIDGenerator).returnToPool(combA.toSymbol)
+          there was one(mockIDGenerator).returnToPool(combB.toSymbol)
+      } afterUndo {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr must beDefinedAt(combA)
+          cr must beDefinedAt(combB)
+          there was one(mockIDGenerator).removeFromPool(Symbol("1"))
+      } afterRedo {
+        changes =>
+          val cr = getChangeRosterMap(changes)
+          cr mustNot beDefinedAt(combA)
+          cr mustNot beDefinedAt(combB)
+          there was two(mockIDGenerator).returnToPool(combA.toSymbol)
+          there was two(mockIDGenerator).returnToPool(combB.toSymbol)
+      }
     }
   }
 
