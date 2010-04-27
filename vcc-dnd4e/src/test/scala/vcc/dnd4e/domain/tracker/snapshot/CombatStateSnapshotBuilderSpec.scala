@@ -22,31 +22,16 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.dnd4e.domain.tracker.common._
-import vcc.controller.transaction.ChangeNotification
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateSnapshotBuilderTest extends JUnit4(CombatStateSnapshotBuilderSpec)
 
-object CombatStateSnapshotBuilderSpec extends Specification {
+object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnapshotHelper[CombatState] {
   var aBuilder: CombatStateSnapshotBuilder = null
 
   val emptyContext = beforeContext {
     aBuilder = new CombatStateSnapshotBuilder()
   }
-
-  // Data
-  val combA = CombatantID("A")
-  val combB = CombatantID("B")
-  val ioa0 = InitiativeOrderID(combA, 0)
-  val ioa1 = InitiativeOrderID(combA, 1)
-  val iob = InitiativeOrderID(combB, 0)
-
-  val ita0 = InitiativeTracker(ioa0, 1, InitiativeTracker.state.Waiting)
-  val ita0m = InitiativeTracker(ioa0, 2, InitiativeTracker.state.Acting)
-  val itb = InitiativeTracker(iob, 1, InitiativeTracker.state.Waiting)
-
-  val baseHealth = HealthTracker(10, 0, 0, 4, null)
-  val modHealth = HealthTracker(12, 0, 0, 4, null)
 
   "aCombatStateSnapShotBuilder" ->- (emptyContext) should {
 
@@ -161,24 +146,5 @@ object CombatStateSnapshotBuilderSpec extends Specification {
     "before a change to start combat, must not be in combat" in {
       aBuilder.getSnapshot().isCombatStarted must beFalse
     }
-  }
-
-
-  def processChanges(builder: CombatStateSnapshotBuilder, changes: ChangeNotification*): CombatState = {
-    builder.beginChanges()
-    changes.foreach(builder.processChange(_))
-    builder.endChanges()
-    builder.getSnapshot()
-  }
-
-  def generateCombatantRosterDefinition(comb: CombatantID) = CombatantRosterDefinition(comb, null, null)
-
-  def generateEffects(comb: CombatantID) = EffectList(comb, Nil)
-
-  def generateCombatantAspectSet(comb: CombatantID): Set[CombatantAspect] = {
-    Set(generateCombatantRosterDefinition(comb),
-      baseHealth,
-      CombatantComment("dont"),
-      generateEffects(comb))
   }
 }
