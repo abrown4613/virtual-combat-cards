@@ -18,10 +18,26 @@
 package vcc.dnd4e.domain.tracker.transactional
 
 import vcc.controller.TransactionalProcessor
-import vcc.dnd4e.domain.tracker.common.CombatStateRules
-import vcc.dnd4e.controller.TrackerControllerValidatingPublisher
 import scala.collection.mutable.Queue
-import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.domain.tracker.common.{CombatStateChange, CombatStateRules}
+import vcc.controller.transaction.ChangeNotification
+import vcc.controller.message.{TrackerChanged, TransactionalAction}
+
+/**
+ * This Mixin implement the <code>publish</code> method required for a AbstractTrackerController, it will
+ * simply cast all objects to the CombatStateChange and make sure every changes was accounted for.
+ */
+trait TrackerControllerValidatingPublisher {
+  def publish(changes: Seq[ChangeNotification]): Any = {
+    val c: Seq[CombatStateChange] = for (change <- changes if (change.isInstanceOf[CombatStateChange])) yield {
+      change.asInstanceOf[CombatStateChange]
+    }
+    assert(c.length == changes.length)
+    TrackerChanged(c.toList.toList)
+  }
+
+}
+
 
 /**
  * Base class for testing and build CombatController, this is used for isolated testing of individual handlers.
@@ -38,6 +54,7 @@ class CombatController(rules: CombatStateRules, state: CombatState, queue: Queue
                 with CombatStateActionHandler
                 with InitiativeActionHandler
                 with EffectActionHandler
+                with HealthActionHandler
 {
   def this(rules: CombatStateRules, state: CombatState) = this (rules, state, new Queue[TransactionalAction]())
 }
