@@ -24,6 +24,7 @@ import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
 import actors.Actor
 import transaction.ChangeNotification
+import reflect.Manifest
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TrackerChangeObserverTest extends JUnit4(TrackerChangeObserverSpec)
@@ -43,11 +44,11 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
     anObserverActor.start()
   }
 
-  val obseverWithMockActor = beforeContext {
+  val observerWithMockActor = beforeContext {
     mBuilder = mock[SnapshotBuilder[String]]
     anObserverActor = mock[TrackerChangeObserverActor[String]]
     mTracker = mock[Actor]
-    anObserver = new TrackerChangeObserver(mBuilder, mTracker, anObserverActor)
+    anObserver = new TrackerChangeObserver[String](mBuilder, mTracker, anObserverActor)
   }
 
 
@@ -80,6 +81,24 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
               one(mBuilder).endChanges
     }
 
+    "call registered call backs when change ends" in {
+      //Register callback
+      val aware1 = mock[TrackerChangeAware[String]]
+      val aware2 = mock[TrackerChangeAware[String]]
+      val change = mock[ChangeNotification]
+      val manif = getManifest[String]()
+
+      mBuilder.getSnapshot() returns "Hello"
+
+      anObserverActor ! TrackerChangeObserver.RegisterCallback(aware1, manif)
+      anObserverActor ! TrackerChangeObserver.RegisterCallback(aware2, manif)
+      anObserverActor ! TrackerChanged(List(change))
+
+
+      there was one(mBuilder).endChanges then
+              one(aware1).snapshotChanged("Hello")
+      there was one(aware2).snapshotChanged("Hello")
+    }
     "return None if the snapshot generation fails" in {
       mBuilder.getSnapshot() answers {
         x =>
@@ -95,9 +114,20 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
       (anObserverActor !? TrackerChangeObserver.GetSnapshot) must_== Some("Click!")
     }
 
+    "not register wrong observer callback" in {
+      val manif = getManifest[Int]()
+      val aware1 = mock[TrackerChangeAware[Int]]
+      val change = mock[ChangeNotification]
+      mBuilder.getSnapshot() returns "Hello"
+
+      anObserverActor ! TrackerChangeObserver.RegisterCallback(aware1, manif)
+      anObserverActor ! TrackerChanged(List(change))
+
+      there was no(aware1).snapshotChanged(any[Int])
+    }
   }
 
-  "a TrackerChangeObserver" ->- (obseverWithMockActor) should {
+  "a TrackerChangeObserver" ->- (observerWithMockActor) should {
 
     "on construction start and register" in {
       there was one(anObserverActor).start() then
@@ -121,7 +151,14 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
       anObserver.getSnapshot() must throwAn[ClassCastException]
     }
 
+    "register an observer with the actor" in {
+      val aware = mock[TrackerChangeAware[String]]
+      val manif = getManifest[String]()
+      anObserver.addChangeObserver(aware)
+      there was one(anObserverActor).!(TrackerChangeObserver.RegisterCallback(aware, manif))
+    }
   }
 
+  def getManifest[S]()(implicit m: Manifest[S]): Manifest[_] = m
 
 }

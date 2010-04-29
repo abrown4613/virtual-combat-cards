@@ -21,6 +21,7 @@ import scala.actors.Actor
 import scala.actors.Actor.{loop, react}
 import message.{TrackerChanged, AddObserver}
 import transaction.ChangeNotification
+import reflect.Manifest
 
 /**
  * A snapshot builder is responsible for collecting changes to a combat state as published by the tracker and applying
@@ -56,7 +57,9 @@ trait SnapshotBuilder[S] {
  * This is the actor responsible for receiving changes from the tracker and posting them to the builder.
  * It also allows for a serialized request of a snapshot.
  */
-private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder[S]) extends Actor {
+private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder[S])(implicit val manifest: Manifest[AnyRef]) extends Actor {
+  private var callbacks: List[TrackerChangeAware[S]] = Nil
+
   def act() = {
     loop {
       react {
@@ -71,6 +74,13 @@ private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder
           builder.beginChanges()
           changes.foreach(builder.processChange)
           builder.endChanges()
+          callbacks.foreach(cb => cb.snapshotChanged(builder.getSnapshot()))
+
+        case TrackerChangeObserver.RegisterCallback(cb, manif) if (manif <:< manifest) =>
+          callbacks = cb.asInstanceOf[TrackerChangeAware[S]] :: callbacks
+
+        case TrackerChangeObserver.RegisterCallback(cb, manif) if (!(manif <:< manifest)) =>
+        //
       }
     }
   }
@@ -80,24 +90,40 @@ private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder
   }
 }
 
+/**
+ * This interface allows object to be informed bty the TrackerChangeObserver when a set of changes have
+ * been applied and a new Snapshot is available.
+ */
+trait TrackerChangeAware[S] {
+
+  /**
+   * Callback for a snapshot change
+   */
+  def snapshotChanged(s: S)
+}
+
 object TrackerChangeObserver {
   /**
-   *  Message used to get a snapshot
+   *   Message used to get a snapshot
    */
   case object GetSnapshot
+
+  case class RegisterCallback[S](callback: TrackerChangeAware[S], manifest: Manifest[_])
 }
 
 /**
  * This is a adapter to a TrackerChangeObserverActor, it hides the actor processes behind a regular synchronous object.
  */
-class TrackerChangeObserver[S](builder: SnapshotBuilder[S], tracker: Actor, observer: TrackerChangeObserverActor[S]) {
+class TrackerChangeObserver[S](builder: SnapshotBuilder[S], tracker: Actor, observer: TrackerChangeObserverActor[S])(implicit manifest: Manifest[S]) {
+
+  // def this(builder: SnapshotBuilder[S], tracker: Actor, observer: TrackerChangeObserverActor[S])(implicit m: Manifest[S]) = this(builder,tracker,observer,m)
 
   /**
    * This is the constructor to be used normally.
    * @param builder A SnapshotBuilder that will handle change messages
    * @param tracker The tracker it should register with
    */
-  def this(builder: SnapshotBuilder[S], tracker: Actor) = this (builder, tracker, new TrackerChangeObserverActor[S](builder))
+  def this(builder: SnapshotBuilder[S], tracker: Actor)(implicit m: Manifest[S]) = this (builder, tracker, new TrackerChangeObserverActor[S](builder))
 
   //Initialization
   observer.start()
@@ -111,5 +137,13 @@ class TrackerChangeObserver[S](builder: SnapshotBuilder[S], tracker: Actor, obse
   def getSnapshot(): S = observer !? TrackerChangeObserver.GetSnapshot match {
     case Some(s: S) => s
     case None => throw new Exception("Failed to generate snapshot")
+  }
+
+  /**
+   * Adds an observer to the internal actor, so that the observer will be called when the snapshot changes
+   * @param obs Observer that wishes to receive notification for the snapshot change.
+   */
+  def addChangeObserver(obs: TrackerChangeAware[S]) {
+    observer ! TrackerChangeObserver.RegisterCallback(obs, manifest)
   }
 }
