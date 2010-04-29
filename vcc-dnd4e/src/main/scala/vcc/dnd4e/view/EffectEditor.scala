@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import vcc.util.swing._
-import vcc.dnd4e.model.common.{Effect, Condition}
-import vcc.dnd4e.model.CombatantState
+import vcc.dnd4e.domain.tracker.common._
 
 /**
  * A combo box option that included the infomartion to display and what to 
@@ -28,14 +27,14 @@ import vcc.dnd4e.model.CombatantState
  * @param text To appear on the ComboBox
  * @param generate A function form (source,target)=> Duration
  */
-case class DurationComboEntry(text: String, generate: (CombatantState, CombatantState) => Effect.Duration) {
+case class DurationComboEntry(text: String, generate: (CombatantStateView, CombatantStateView) => Effect.Duration) {
   override def toString(): String = text
 }
 
 trait EffectSubPanelComboOption {
   val name: String
 
-  def generateEffect(source: CombatantState, target: CombatantState): Condition
+  def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition
 
   def saveMemento(): Any
 
@@ -53,18 +52,22 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
 
   private val idComboModel = new ContainterComboBoxModel[String](Nil)
 
+  //TODO Get this right
+  @deprecated
+  implicit def c2o(cid: CombatantID): InitiativeOrderID = InitiativeOrderID(cid, 0)
+
   private val durationCombo = new ComboBox(
     List(
-      DurationComboEntry("End of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.id, Effect.Duration.Limit.EndOfNextTurn, false)}),
-      DurationComboEntry("End of source's next turn, sustain", (s, t) => {Effect.Duration.RoundBound(s.id, Effect.Duration.Limit.EndOfNextTurn, true)}),
-      DurationComboEntry("Start of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.id, Effect.Duration.Limit.StartOfNextTurn, false)}),
+      DurationComboEntry("End of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.EndOfNextTurn)}),
+      DurationComboEntry("End of source's next turn, sustain", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.EndOfNextTurnSustain)}),
+      DurationComboEntry("Start of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.StartOfNextTurn)}),
       DurationComboEntry("End of encounter", (s, t) => {Effect.Duration.EndOfEncounter}),
       DurationComboEntry("Stance", (s, t) => {Effect.Duration.Stance}),
       DurationComboEntry("Save End", (s, t) => {Effect.Duration.SaveEnd}),
       DurationComboEntry("Save End (Special)", (s, t) => {Effect.Duration.SaveEndSpecial}),
       DurationComboEntry("Other", (s, t) => {Effect.Duration.Other}),
-      DurationComboEntry("End of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.id, Effect.Duration.Limit.EndOfNextTurn, false)}),
-      DurationComboEntry("Start of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.id, Effect.Duration.Limit.StartOfNextTurn, false)}))
+      DurationComboEntry("End of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.definition.cid, Effect.Duration.Limit.EndOfNextTurn)}),
+      DurationComboEntry("Start of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.definition.cid, Effect.Duration.Limit.StartOfNextTurn)}))
     ) {
     font = smallfont
   }
@@ -75,8 +78,8 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     private val descField = new TextField()
     add(descField, "growx, h 22!")
     visible = false
-    def generateEffect(source: CombatantState, target: CombatantState): Condition = {
-      Condition.Generic(descField.text)
+    def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition = {
+      Effect.Condition.Generic(descField.text, benefCheckbox.selected)
     }
 
     def saveMemento(): Any = descField.text
@@ -99,8 +102,8 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     add(permanentMarkCheck)
     visible = false
 
-    def generateEffect(source: CombatantState, target: CombatantState): Condition = {
-      Condition.Mark(Symbol(markerText.selection.item), permanentMarkCheck.selected)
+    def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition = {
+      Effect.Condition.Mark(CombatantID(markerText.selection.item), permanentMarkCheck.selected)
     }
 
     def saveMemento(): Any = (Symbol(markerText.selection.item), permanentMarkCheck.selected)
@@ -180,7 +183,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   /**
    * Make sure Add button is enabled only with context active
    */
-  def setContext(nctx: Option[CombatantState]) {
+  def setContext(nctx: Option[CombatantStateView]) {
     addButton.enabled = nctx.isDefined
   }
 

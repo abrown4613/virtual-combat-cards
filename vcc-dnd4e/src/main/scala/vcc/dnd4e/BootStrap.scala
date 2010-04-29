@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -146,9 +146,10 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "Core Tracker") {
       import vcc.controller.Tracker
-      import vcc.dnd4e.controller.TrackerControllerImpl
+      import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatState}
+      import vcc.dnd4e.domain.tracker.common.CombatStateRules
 
-      val t = Tracker.initialize(new TrackerControllerImpl)
+      val t = Tracker.initialize(new CombatController(new CombatStateRules(), new CombatState(null)))
 
       //Make sure it got registered
       Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]
