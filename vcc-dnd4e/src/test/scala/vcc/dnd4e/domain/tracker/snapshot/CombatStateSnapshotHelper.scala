@@ -25,6 +25,7 @@ trait CombatStateSnapshotHelper[S] {
   // Data
   val combA = CombatantID("A")
   val combB = CombatantID("B")
+  val combC = CombatantID("C")
   val ioa0 = InitiativeOrderID(combA, 0)
   val ioa1 = InitiativeOrderID(combA, 1)
   val iob = InitiativeOrderID(combB, 0)

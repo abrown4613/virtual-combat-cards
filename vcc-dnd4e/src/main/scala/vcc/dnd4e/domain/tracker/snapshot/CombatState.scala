@@ -36,4 +36,6 @@ case class CombatState(
   def combatantViewFromID(id: CombatantID): CombatantStateView = roster(id)
 
   def allCombatantIDs: List[CombatantID] = roster.keys.toList
+
+  def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList -- order.map(_.combId)): _*)
 }
