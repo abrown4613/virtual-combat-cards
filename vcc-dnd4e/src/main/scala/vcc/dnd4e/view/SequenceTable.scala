@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,18 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
 import vcc.infra.docking._
-import vcc.dnd4e.model.{CombatStateObserver, CombatState, CombatStateChanges, CombatantState}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatState, StateChange, CombatantState}
 import tabular._
+import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.domain.tracker.common.Command.AddEffect
+import vcc.dnd4e.domain.tracker.common._
 
 class SequenceTable(director: PanelDirector) extends ScrollPane
         with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
   //Init
-  val table = new RowProjectionTable[CombatantState] with CustomRenderedRowProjectionTable[CombatantState] {
+  val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer(None)
-    projection = new ProjectionTableModel[CombatantState](view.tabular.CombatantStateProjection)
+    projection = new ProjectionTableModel[UnifiedCombatant](view.tabular.CombatantStateProjection)
     autoResizeMode = Table.AutoResizeMode.Off
     selection.intervalMode = Table.IntervalMode.Single
     setColumnWidth(0, 25)
@@ -42,8 +45,8 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
 
   }
 
-  private var source: Option[Symbol] = None
-  private var target: Option[Symbol] = None
+  private var source: Option[CombatantID] = None
+  private var target: Option[CombatantID] = None
   private var state = director.currentState
   // This variable is used to block target updates by table.seletion listener
   private var _changingState = false
@@ -54,12 +57,14 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   }
   KeystrokeBinder.bindKeystrokeAction(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "alt A", setAction)
   KeystrokeBinder.bindKeystrokeAction(table, false, "alt M", Action("sequence.mark") {
-    if (target.isDefined && source.isDefined) {
-      import vcc.dnd4e.model.common._
-      director.requestAction(vcc.dnd4e.controller.request.AddEffect(target.get,
-        Effect(source.get, Condition.Mark(source.get, false), false,
-          Effect.Duration.RoundBound(source.get, Effect.Duration.Limit.EndOfNextTurn, false))))
-    }
+    /*
+    //TODO: Fix this, since the internal logic changed we now have to know which IOI is marking
+        if (target.isDefined && source.isDefined) {
+          director.requestAction(AddEffect(target.get, source.get,
+            Effect.Condition.Mark(source.get, false),
+              Effect.Duration.RoundBound(source.get, Effect.Duration.Limit.EndOfNextTurn, false)))
+        }
+    */
   })
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F8")
@@ -71,7 +76,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       var l = table.selection.rows.toSeq
       if (!l.isEmpty) {
         var c = table.content(l(0))
-        director.setTargetCombatant(Some(c.id))
+        director.setTargetCombatant(Some(c.combId))
       }
     case FocusGained(this.table, other, true) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
@@ -79,58 +84,61 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       director.setStatusBarMessage("")
   }
 
-  def combatStateChanged(newState: CombatState, changes: CombatStateChanges) {
+  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange) {
     state = newState
     if (
-      changes.changes.contains(CombatState.part.Sequence) ||
-              !changes.combatantsThatChange(CombatantState.part.Health).isEmpty ||
-              !changes.combatantsThatChange(CombatantState.part.Initiative).isEmpty
+      changes.changes.contains(StateChange.combat.Order) ||
+              changes.changes.contains(StateChange.combat.Roster) ||
+              changes.changes.contains(StateChange.combat.OrderFirst) ||
+              !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
+              !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
     ) {
       updateContent()
       //On a sequence change
-      if (changes.changes.contains(CombatState.part.Sequence)) {
-        val newfirst = if (table.content.isEmpty) None else Some(table.content(0).id)
+      //TODO this is not a good indication of a sequence change now
+      if (changes.changes.contains(StateChange.combat.Order)) {
+        val newfirst = if (table.content.isEmpty) None else Some(table.content(0).combId)
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
     }
   }
 
   private def updateContent() {
-    import vcc.dnd4e.model.common.HealthTracker
-    import vcc.dnd4e.model.common.InitiativeState
     _changingState = true
-    val hidedead = director.getBooleanProperty(PanelDirector.property.HideDead)
-    val ncontent = if (hidedead && !state.combatantSequence.isEmpty) {
-      val l = state.combatantSequence.toList
-      l.head :: l.tail.filter(x => x.health.status != HealthTracker.Status.Dead)
-    } else state.combatantSequence
+    /* TODO: This needs to be rethinked
+        val hidedead = director.getBooleanProperty(PanelDirector.property.HideDead)
+        val ncontent = if (hidedead && !(state.order.isEmpty && state.roster.isEmpty)) {
+          val l = state.combatantSequence.toList
+          l.head :: l.tail.filter(x => x.health.status != HealthTracker.Status.Dead)
+        } else state.combatantSequence
 
-    table.content = ncontent
+        table.content = ncontent
 
-    //Adjust selection
-    if (ncontent.length > 0) {
-      val idx: Int = { // -1 means not found
-        val obj = if (target.isDefined) ncontent.find(x => x.id == target.get) else None
-        if (obj.isDefined) ncontent.indexOf(obj.get) else -1
-      }
-      if (idx == -1) { //Select first as active and second, if present as target
-        val defaultRow = if (ncontent.length > 1) 1 else 0
-        table.selection.rows += defaultRow
+        //Adjust selection
+        if (ncontent.length > 0) {
+          val idx: Int = { // -1 means not found
+            val obj = if (target.isDefined) ncontent.find(x => x.id == target.get) else None
+            if (obj.isDefined) ncontent.indexOf(obj.get) else -1
+          }
+          if (idx == -1) { //Select first as active and second, if present as target
+            val defaultRow = if (ncontent.length > 1) 1 else 0
+            table.selection.rows += defaultRow
 
-        //This has to fire later to make sure everyone gets the state update first.
-        SwingHelper.invokeLater {director.setTargetCombatant(Some(ncontent(defaultRow).id))}
-      } else {
-        //Just show the correct selection
-        table.selection.rows += (idx)
-      }
-    } else {
-      //Nothing to show set context accordingly
-      director.setTargetCombatant(None)
-    }
+            //This has to fire later to make sure everyone gets the state update first.
+            SwingHelper.invokeLater {director.setTargetCombatant(Some(ncontent(defaultRow).id))}
+          } else {
+            //Just show the correct selection
+            table.selection.rows += (idx)
+          }
+        } else {
+          //Nothing to show set context accordingly
+          director.setTargetCombatant(None)
+        }
+    */
     _changingState = false
   }
 
-  def changeContext(nctx: Option[Symbol], isTarget: Boolean) {
+  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
     if (isTarget) {
       target = nctx
     } else {

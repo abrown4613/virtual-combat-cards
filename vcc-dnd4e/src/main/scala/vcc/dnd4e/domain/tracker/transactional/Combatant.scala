@@ -22,18 +22,8 @@ import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.domain.tracker.common._
 
 class Combatant(initDefinition: CombatantRosterDefinition) extends CombatantStateView {
-
-  //TODO Remove this
-  @deprecated
-  def projectHealthDef(oldHD: vcc.dnd4e.model.common.HealthDefinition): HealthDefinition =
-    oldHD.ctype match {
-      case CombatantType.Character => CharacterHealthDefinition(oldHD.totalHP, oldHD.surgeValue, oldHD.healingSurges)
-      case CombatantType.Monster => MonsterHealthDefinition(oldHD.totalHP, oldHD.surgeValue, oldHD.healingSurges)
-      case CombatantType.Minion => MinionHealthDefinition()
-    }
-
   private val _definition: Undoable[CombatantRosterDefinition] = new Undoable[CombatantRosterDefinition](initDefinition, x => CombatantChange(_definition.value.cid, x.value))
-  private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(projectHealthDef(definition.entity.healthDef)), (uv) => CombatantChange(definition.cid, uv.value))
+  private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(definition.entity.healthDef), (uv) => CombatantChange(definition.cid, uv.value))
   private val _comment = new Undoable[String]("", uv => {CombatantChange(definition.cid, CombatantComment(uv.value))})
   private val _effects = new Undoable[EffectList](EffectList(definition.cid, Nil), uv => {CombatantChange(definition.cid, uv.value)})
 
@@ -60,7 +50,7 @@ class Combatant(initDefinition: CombatantRosterDefinition) extends CombatantStat
    */
   def setDefinition(newDef: CombatantRosterDefinition)(implicit trans: Transaction) {
     _definition.value = newDef
-    _health.value = _health.value.replaceHealthDefinition(projectHealthDef(newDef.entity.healthDef))
+    _health.value = _health.value.replaceHealthDefinition(newDef.entity.healthDef)
   }
 
   def definition = _definition.value

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,13 @@
 package vcc.dnd4e.view
 
 import scala.swing._
-import util.swing._
+import vcc.util.swing._
 
-import vcc.dnd4e.model.common.{Effect}
-import vcc.dnd4e.controller.request._
+import vcc.dnd4e.domain.tracker.common.{Effect}
+import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.docking._
-import vcc.dnd4e.model.{CombatState, CombatStateObserver, CombatStateChanges}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatState, StateChange}
+import vcc.dnd4e.domain.tracker.common.CombatantID
 
 class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel("fill,ins 2")
         with ContextObserver with ScalaDockableComponent with CombatStateObserver
@@ -34,7 +35,7 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
   private val cancelButton = new Button("Cancel Effect")
   cancelButton.enabled = false
 
-  private var context: Option[Symbol] = None
+  private var context: Option[CombatantID] = None
 
   private var state = director.currentState
 
@@ -42,9 +43,9 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
 
   val dockID = DockID(if (isTarget) "tgt-effects" else "src-effects")
 
-  val effectTable = new RowProjectionTable[(Symbol, Int, Effect)]() with CustomRenderedRowProjectionTable[(Symbol, Int, Effect)] {
+  val effectTable = new RowProjectionTable[Effect]() with CustomRenderedRowProjectionTable[Effect] {
     val labelFormatter = tabular.EffectTableColorer
-    projection = new vcc.util.swing.ProjectionTableModel[(Symbol, Int, Effect)](new tabular.EffectTableProjection(director))
+    projection = new vcc.util.swing.ProjectionTableModel[Effect](new tabular.EffectTableProjection(director))
     autoResizeMode = Table.AutoResizeMode.Off
     selection.intervalMode = Table.IntervalMode.Single
     setColumnWidth(0, 25)
@@ -70,9 +71,9 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
 
   reactions += {
     case event.ButtonClicked(this.sustainButton) =>
-      director requestAction SustainEffect(context.get, effectTable.selection.rows.toSeq(0))
+      director requestAction SustainEffect(selectedEffectID)
     case event.ButtonClicked(this.cancelButton) =>
-      director requestAction CancelEffect(context.get, effectTable.selection.rows.toSeq(0))
+      director requestAction CancelEffect(selectedEffectID)
     case event.TableRowsSelected(this.effectTable, rng, opt) =>
       val sel = effectTable.selection.rows
       if (sel.isEmpty) {
@@ -80,15 +81,17 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
         sustainButton.enabled = false
       } else {
         val eff = effectTable.content(sel.toSeq(0))
-        sustainButton.enabled = eff._3.sustainable
+        sustainButton.enabled = eff.sustainable
         cancelButton.enabled = true
       }
   }
 
+  private def selectedEffectID() = effectTable.content(effectTable.selection.rows.toSeq(0)).effectId
+
   /**
    * Update table according to context
    */
-  def changeContext(nctx: Option[Symbol], isTarget: Boolean) {
+  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
     if (this.isTarget == isTarget) {
       context = nctx
       updateTable()
@@ -98,13 +101,13 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
   private def updateTable() {
     state.getCombatant(context) match {
       case Some(cmb) =>
-        effectTable.content = (0 to cmb.effects.length - 1).map(pos => (cmb.id, pos, cmb.effects(pos)))
+        effectTable.content = cmb.effects.effects
       case None =>
         effectTable.content = Nil
     }
   }
 
-  def combatStateChanged(newState: CombatState, changes: CombatStateChanges) {
+  def combatStateChanged(newState: CombatState, uv: Array[UnifiedCombatant], changes: StateChange) {
     state = newState
     updateTable()
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import vcc.dnd4e.controller.request._
 
 import vcc.model.Registry
 
+@deprecated
 trait TrackerContextHandler {
   this: TransactionalProcessor[TrackerContext] =>
 
@@ -40,7 +41,7 @@ trait TrackerContextHandler {
     }
     val ent = CombatantRepository.getEntity(member.ceid)
     if (ent == null) throw new Exception("Can't find entity " + member.ceid + " in EntityStore")
-    var nc = new TrackerCombatant(id, member.alias, ent.name, ent.healthDef, ent.initiative, ent.ctype, ent)
+    var nc = new TrackerCombatant(id, member.alias, ent.name, null /*ent.healthDef */ , ent.initiative, ent.ctype, ent)
     if (context.map.contains(nc.id)) {
       // It's an old combatant salvage old heath and Initiative
       val oc = context.map(nc.id)

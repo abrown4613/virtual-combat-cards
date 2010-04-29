@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.dnd4e.model
 
-import common._
+import common.CombatantType
+import vcc.dnd4e.domain.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition}
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
 import vcc.dnd4e.view.compendium.SimpleStatBlockBuilder

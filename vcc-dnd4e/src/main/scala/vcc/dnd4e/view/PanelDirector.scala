@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,27 +14,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.dnd4e.view
 
-import model._
+import helper.{DontCareReserveViewBuilder, DirectInitiativeOrderViewBuilder, UnifiedCombatantArrayBuilder}
+import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.controller.message.{TrackerControlMessage,TransactionalAction}
+import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
 import scala.actors.Actor
-import vcc.controller.CommandSource
 import vcc.controller.message.Command
+import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
+import vcc.controller.{TrackerChangeObserver, TrackerChangeAware, CommandSource}
 
 trait ContextObserver {
-  def changeContext(nctx:Option[Symbol],isTarget:Boolean)
+  def changeContext(nctx: Option[CombatantID], isTarget: Boolean)
 }
 
 trait PaneDirectorPropertyObserver {
-  def propertyChanged(which:PanelDirector.property.Value)
+  def propertyChanged(which: PanelDirector.property.Value)
 }
 
 object PanelDirector {
   object property extends Enumeration {
     val HideDead = Value("Hide Dead")
   }
+}
+
+trait CombatStateObserver {
+  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange)
+
 }
 
 /**
@@ -45,100 +53,99 @@ object PanelDirector {
  * do not use this mixin.
  */
 trait SimpleCombatStateObserver extends CombatStateObserver {
-  
-  protected var combatState:CombatState = null
-  
-  def combatStateChanged(newState:CombatState,changes:CombatStateChanges) {
+  protected var combatState: CombatState = null
+
+  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange) {
     combatState = newState
   }
 }
 
 /**
- * This compenent act as a Mediator between all the panels and the CombatStateManager.
+ * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker:Actor,csm:CombatStateManager,statusBar:StatusBar) extends CombatStateObserver with CommandSource {
+class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithChanges], statusBar: StatusBar) extends TrackerChangeAware[CombatStateWithChanges] with CommandSource {
+  private var combatState = csm.getSnapshot()
+  private var combatStateObserver: List[CombatStateObserver] = Nil
+  private var contextObserver: List[ContextObserver] = Nil
+  private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
 
-  private var combatState = csm.currentState
-  private var combatStateObserver:List[CombatStateObserver] = Nil
-  private var contextObserver:List[ContextObserver] = Nil
-  private var propertyObserver:List[PaneDirectorPropertyObserver] = Nil
-  
   private var propHideDead = false
-  
-  def currentState = combatState
-  
+
+  def currentState = combatState.state
+
   //Init code
-  csm.registerObserver(this)
-  
-  def combatStateChanged(newState:CombatState,changes:CombatStateChanges) {
+  csm.addChangeObserver(this)
+
+  def snapshotChanged(newState: CombatStateWithChanges) {
     //newState.prettyPrint()
     SwingHelper.invokeInEventDispatchThread {
       combatState = newState
-      combatStateObserver.foreach(obs => obs.combatStateChanged(combatState,changes))
+      val uv = UnifiedCombatantArrayBuilder.buildList(newState.state, DirectInitiativeOrderViewBuilder, DontCareReserveViewBuilder)
+      combatStateObserver.foreach(obs => obs.combatStateChanged(newState.state, uv, newState.changes))
     }
-  }
-  
-  def registerContextObserver(obs:ContextObserver) {
-	contextObserver = obs :: contextObserver
   }
 
-  def registerStateObserver(obs:CombatStateObserver) {
-	combatStateObserver = obs :: combatStateObserver
+  def registerContextObserver(obs: ContextObserver) {
+    contextObserver = obs :: contextObserver
   }
-  
-  def registerPropertyObserver(obs:PaneDirectorPropertyObserver) {
-	propertyObserver = obs :: propertyObserver
+
+  def registerStateObserver(obs: CombatStateObserver) {
+    combatStateObserver = obs :: combatStateObserver
   }
-  
-  def setActiveCombatant(id:Option[Symbol]) {
-    publishContextChange(id,false)
+
+  def registerPropertyObserver(obs: PaneDirectorPropertyObserver) {
+    propertyObserver = obs :: propertyObserver
   }
-  
-  private def publishContextChange(nctx:Option[Symbol],isTarget:Boolean) {
-    contextObserver.foreach(obs=>obs.changeContext(nctx,isTarget))
+
+  def setActiveCombatant(id: Option[CombatantID]) {
+    publishContextChange(id, false)
   }
-  
-  def setTargetCombatant(id:Option[Symbol]) {
-    publishContextChange(id,true)
+
+  private def publishContextChange(nctx: Option[CombatantID], isTarget: Boolean) {
+    contextObserver.foreach(obs => obs.changeContext(nctx, isTarget))
   }
-  
-  def setStatusBarMessage(text:String) {
+
+  def setTargetCombatant(id: Option[CombatantID]) {
+    publishContextChange(id, true)
+  }
+
+  def setStatusBarMessage(text: String) {
     statusBar.setTipText(text)
   }
-  
-  def setProperty(prop:PanelDirector.property.Value,value:Boolean) {
-    if(prop == PanelDirector.property.HideDead) {
+
+  def setProperty(prop: PanelDirector.property.Value, value: Boolean) {
+    if (prop == PanelDirector.property.HideDead) {
       propHideDead = value
     } else {
-      throw new Exception("Unknown property: "+prop)
+      throw new Exception("Unknown property: " + prop)
     }
-    for(obs <- propertyObserver) obs.propertyChanged(prop)
+    for (obs <- propertyObserver) obs.propertyChanged(prop)
   }
-  
-  def getBooleanProperty(prop:PanelDirector.property.Value):Boolean = {
+
+  def getBooleanProperty(prop: PanelDirector.property.Value): Boolean = {
     import PanelDirector.property._
     prop match {
       case HideDead => propHideDead
-      case _ => throw new Exception("Unknown property: "+prop)
+      case _ => throw new Exception("Unknown property: " + prop)
     }
   }
-  
+
   /**
    * This is the way to request tracker actions. No Panel should
    * send messages directly to the Tracker.
    * @param action A TransactionalAction message
    */
-  def requestAction(action:TransactionalAction) {
-    tracker ! Command(this,action)
+  def requestAction(action: TransactionalAction) {
+    tracker ! Command(this, action)
   }
 
-  def requestControllerOperation(action:TrackerControlMessage) {
+  def requestControllerOperation(action: TrackerControlMessage) {
     tracker ! action
   }
-  
-  def actionCompleted(msg:String) {
+
+  def actionCompleted(msg: String) {
   }
-  
-  def actionCancelled(reason:String) {
+
+  def actionCancelled(reason: String) {
   }
 }

@@ -18,8 +18,13 @@
 package vcc.dnd4e.view
 
 import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatantID, InitiativeTracker}
+import vcc.dnd4e.model.common.CombatantType
 
 case class UnifiedCombatant(combId: CombatantID,
                             initiative: InitiativeTracker,
-                            combatant: CombatantStateView)
+                            combatant: CombatantStateView) {
+  def isCharacter = combatant.definition.entity.ctype == CombatantType.Character
+
+  def health = combatant.healthTracker
+}
 

@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 package vcc.dnd4e.model
 
@@ -51,6 +50,7 @@ object CombatantState {
 /**
  * State of the entire combat.
  */
+@deprecated
 case class CombatState(combatantMap: Map[Symbol, CombatantState], combatantSequence: Seq[CombatantState]) {
   def prettyPrint() {
     println("------ COMBAT STATE ------")
@@ -72,6 +72,7 @@ case class CombatState(combatantMap: Map[Symbol, CombatantState], combatantSeque
   }
 }
 
+@deprecated
 object CombatState {
   object part extends Enumeration {
     val Sequence = Value("Sequence")
@@ -81,6 +82,7 @@ object CombatState {
 /**
  * Place holder
  */
+@deprecated
 class CombatStateChanges {
   private var _combatant = Map.empty[Symbol, Set[CombatantState.part.Value]]
   private var _combat = Set.empty[CombatState.part.Value]
@@ -113,7 +115,8 @@ class CombatStateChanges {
 /**
  * Any object that observes changes in the combat state should listen to this
  */
-trait CombatStateObserver {
+@deprecated
+trait CombatStateObserverGone {
   def combatStateChanged(newState: CombatState, changes: CombatStateChanges)
 }
 

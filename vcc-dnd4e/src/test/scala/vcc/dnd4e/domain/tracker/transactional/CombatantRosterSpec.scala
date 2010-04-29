@@ -38,9 +38,9 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   val combA = CombatantID("A")
   val combB = CombatantID("1")
 
-  val combEnt = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null)
-  val combEnt2 = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Character, null)
-  val combMonster = CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Monster, null)
+  val combEnt = CombatantEntity(null, "Bond", CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null)
+  val combEnt2 = CombatantEntity(null, "Bond", CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Character, null)
+  val combMonster = CombatantEntity(null, "Bond", CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Monster, null)
 
   val blankRoster = beforeContext {
     aRoster = new CombatantRoster()
@@ -175,12 +175,12 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       } afterCommit {
         changes =>
           getChangeRosterMap(changes) must beEmpty
-          changes must contain(CombatantChange(combId, HealthTracker(40, 0, 0, 6, aRoster.combatant(combId).projectHealthDef(combEnt2.healthDef))))
+          changes must contain(CombatantChange(combId, HealthTracker(40, 0, 0, 6, combEnt2.healthDef)))
           changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias 2", combEnt2)))
       } afterUndo {
         changes =>
           getChangeRosterMap(changes) must beEmpty
-          changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, 6, aRoster.combatant(combId).projectHealthDef(combEnt.healthDef))))
+          changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, 6, combEnt.healthDef)))
           changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias", combEnt)))
       } afterRedoAsInCommit ()
     }

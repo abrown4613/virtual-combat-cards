@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,33 +19,35 @@ package vcc.dnd4e.view.dialog
 
 import vcc.util.swing.TableModelRowProjection
 import vcc.util.DiceBag
+import vcc.dnd4e.domain.tracker.common.CombatantID
 
 //NOTE: These classes should be internal to the Dialog 
 
-class InitiativeDialogEntry(val id:Symbol, val name:String, var init:Int, var roll:Int, var reserve:Boolean) {
-  override def toString():String="IDEntry("+id+","+name+","+init+","+roll+","+reserve+")"
+class InitiativeDialogEntry(val id: CombatantID, val name: String, var init: Int, var roll: Int, var reserve: Boolean) {
+  override def toString(): String = "IDEntry(" + id + "," + name + "," + init + "," + roll + "," + reserve + ")"
 }
 
 object InitiativeDialogEntryProjection extends TableModelRowProjection[InitiativeDialogEntry] {
-  val columns=List[(String,java.lang.Class[_])](
-    ("ID",classOf[String]),
-    ("Name",classOf[String]),
-    ("Init",classOf[Integer]),
-    ("Roll",classOf[Integer]),
-    ("Reserve",classOf[Boolean]))
-  def apply(col:Int,entry:InitiativeDialogEntry):java.lang.Object= {
+  val columns = List[(String, java.lang.Class[_])](
+    ("ID", classOf[String]),
+    ("Name", classOf[String]),
+    ("Init", classOf[Integer]),
+    ("Roll", classOf[Integer]),
+    ("Reserve", classOf[Boolean]))
+
+  def apply(col: Int, entry: InitiativeDialogEntry): java.lang.Object = {
     col match {
-      case 0 => entry.id.name
+      case 0 => entry.id.id
       case 1 => entry.name
       case 2 => int2Integer(entry.init)
       case 3 => int2Integer(entry.roll)
       case 4 => boolean2Boolean(entry.reserve)
     }
   }
-  
-  val setter:PartialFunction[(Int,InitiativeDialogEntry,Any),Unit]= {
-    case (2,entry,v) => entry.init=v.asInstanceOf[Int]
-    case (3,entry,v) => entry.roll=v.asInstanceOf[Int]
-    case (4,entry,v) => entry.reserve=v.asInstanceOf[Boolean]
+
+  val setter: PartialFunction[(Int, InitiativeDialogEntry, Any), Unit] = {
+    case (2, entry, v) => entry.init = v.asInstanceOf[Int]
+    case (3, entry, v) => entry.roll = v.asInstanceOf[Int]
+    case (4, entry, v) => entry.reserve = v.asInstanceOf[Boolean]
   }
 }
