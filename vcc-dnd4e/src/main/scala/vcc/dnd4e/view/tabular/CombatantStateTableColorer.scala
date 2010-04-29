@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
-import vcc.dnd4e.model.{CombatantState}
+import vcc.dnd4e.domain.tracker.snapshot.CombatState
+import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
+import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
+import vcc.dnd4e.view.UnifiedCombatant
 
-class CombatantStateTableColorer(var acting: Option[Symbol]) extends ProjectionTableLabelFormatter[CombatantState] {
+class CombatantStateTableColorer(var acting: Option[CombatantID]) extends ProjectionTableLabelFormatter[UnifiedCombatant] {
   import java.awt.Color
-  import vcc.dnd4e.model.common.InitiativeState._
-  import vcc.dnd4e.model.common.HealthTracker.Status._
 
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
   private val cellFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, fontSize)
@@ -48,11 +50,11 @@ class CombatantStateTableColorer(var acting: Option[Symbol]) extends ProjectionT
     label.setForeground(cp._2)
   }
 
-  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: CombatantState): Unit = {
-    var is = cmb.init.state
-    var hs = cmb.health.status
+  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: UnifiedCombatant): Unit = {
+    var is = if (cmb.initiative != null) cmb.initiative.state else null
+    var hs = cmb.combatant.healthTracker.status
     val normalBack = if (cmb.isCharacter) charBackground else normal
-    label.setFont(if (acting.isDefined && acting.get == cmb.id) cellFontBold else cellFont)
+    label.setFont(if (acting.isDefined && acting.get == cmb.combId) cellFontBold else cellFont)
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label, col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
@@ -62,18 +64,18 @@ class CombatantStateTableColorer(var acting: Option[Symbol]) extends ProjectionT
           case Dying => dying
           case Bloody => bloody
           case _ if (isSelected) => (label.getBackground, label.getForeground)
-          case _ if (is == Reserve) => grayed
+          case _ if (is == null) => grayed
           case _ => normalBack
         }
       case 5 if (is == Ready || is == Delaying) => ready
       case _ if (isSelected) => (label.getBackground, label.getForeground)
       case _ if (hs == Dead) => grayed
-      case _ if (is == Reserve) => grayed
+      case _ if (is == null) => grayed
       case _ => normalBack
     })
   }
 
-  def updateActing(nctx: Option[Symbol]) {
+  def updateActing(nctx: Option[CombatantID]) {
     acting = nctx
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,114 +20,112 @@ package vcc.dnd4e.view
 import swing._
 import swing.event._
 import javax.swing.BorderFactory
-import util.swing.{MigPanel,KeystrokeBinder,ClickButtonAction,KeystrokeContainer}
-import util.swing.KeystrokeBinder
+import vcc.util.swing.{MigPanel, KeystrokeBinder, ClickButtonAction, KeystrokeContainer}
+import vcc.util.swing.KeystrokeBinder
 import vcc.infra.docking._
 
-import vcc.dnd4e.controller.request._
+import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.dnd4e.domain.tracker.common.{CombatantID, CombatantStateView}
 
-import vcc.dnd4e.model.{CombatantState}
-
-class DamageCommandPanel(val director:PanelDirector) 
- extends MigPanel("ins 2","[fill][fill][fill][fill]","") with KeystrokeContainer 
- with ContextObserver with ScalaDockableComponent with SimpleCombatStateObserver 
+class DamageCommandPanel(val director: PanelDirector)
+        extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
+                with ContextObserver with ScalaDockableComponent with SimpleCombatStateObserver
 {
-
   val dockID = DockID("damage")
-  
-  val dockTitle = "Health Change"
-  
-  private val damage=new TextField {
-    columns=3
-    enabled=false
-  }
-  
-  val dockFocusComponent = damage.peer
-  
-  private var target:Option[Symbol] = None
-  
-  private val badColor= new java.awt.Color(255,228,196)
-  damage.background=badColor
 
-  private val damage_btn= new Button("Damage")
+  val dockTitle = "Health Change"
+
+  private val damage = new TextField {
+    columns = 3
+    enabled = false
+  }
+
+  val dockFocusComponent = damage.peer
+
+  private var target: Option[CombatantID] = None
+
+  private val badColor = new java.awt.Color(255, 228, 196)
+  damage.background = badColor
+
+  private val damage_btn = new Button("Damage")
   damage_btn.tooltip = "Apply damage to selected combatant"
 
-  private val heal_btn= new Button("Heal")
+  private val heal_btn = new Button("Heal")
   heal_btn.tooltip = "Heal selected combatant"
-  
-  private val temp_btn= new Button("Set Temporary")
+
+  private val temp_btn = new Button("Set Temporary")
   temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value"
-  
+
   private val death_btn = new Button("Fail Death Save")
   private val undie_btn = new Button("\"undie\"")
-  undie_btn.tooltip="Use this button to bring a dead combatant back to dying state. This will clear death strikes."
-  private val controls=List(damage, damage_btn, heal_btn, temp_btn, death_btn,undie_btn)
-  private val damageRelButton=List(damage_btn, heal_btn, temp_btn)
-  
-  private var damageEquation:helper.DamageParser.Term=null
+  undie_btn.tooltip = "Use this button to bring a dead combatant back to dying state. This will clear death strikes."
+  private val controls = List(damage, damage_btn, heal_btn, temp_btn, death_btn, undie_btn)
+  private val damageRelButton = List(damage_btn, heal_btn, temp_btn)
+
+  private var damageEquation: helper.DamageParser.Term = null
 
   add(new Label("Hit Points:"))
-  add(damage,"wrap")
-  add(damage_btn,"skip 1")
+  add(damage, "wrap")
+  add(damage_btn, "skip 1")
   add(heal_btn)
-  add(temp_btn,"wrap")
-  add(undie_btn,"skip 1,align left")
-  add(death_btn,"align left,span 2")
-  xLayoutAlignment=java.awt.Component.LEFT_ALIGNMENT;
-  for(x<-controls) listenTo(x)
+  add(temp_btn, "wrap")
+  add(undie_btn, "skip 1,align left")
+  add(death_btn, "align left,span 2")
+  xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
+  for (x <- controls) listenTo(x)
   listenTo(damage)
-  changeContext(None,true)
-  
-  reactions +={
+  changeContext(None, true)
+
+  reactions += {
     case ValueChanged(this.damage) =>
-      damageEquation=try{helper.DamageParser.parseString(damage.text)} catch { case _ => null}
-      enableDamageControls(damageEquation!=null)
-    case FocusGained(this.damage,other,temporary) =>
+      damageEquation = try {helper.DamageParser.parseString(damage.text)} catch {case _ => null}
+      enableDamageControls(damageEquation != null)
+    case FocusGained(this.damage, other, temporary) =>
       director.setStatusBarMessage("Enter equation with: + - * / and parenthesis and variable: 's' for surge value ; 'b' for bloody value")
       damage.selectAll()
-    case FocusLost(this.damage,other,temp) => 
+    case FocusLost(this.damage, other, temp) =>
       director.setStatusBarMessage("")
-      
+
     case ButtonClicked(this.death_btn) =>
       director requestAction FailDeathSave(target.get)
 
-    case ButtonClicked(this.undie_btn) => 
-      director requestAction Undie(target.get)
-      
-    case ButtonClicked(button) if(damageEquation!=null)=> {
-      val tgt = combatState.combatantMap(target.get)
-      val cinfo= Map(
-        "b" -> tgt.health.base.totalHP/2,
-        "s" -> tgt.health.base.totalHP/4
-      )
-      val value=damageEquation.apply(cinfo)
-      if(value >= 0 )
-    	button match {
-    	  case this.damage_btn => director requestAction ApplyDamage(target.get, value)
-    	  case this.heal_btn => director requestAction HealDamage(target.get,value)
-    	  case this.temp_btn => director requestAction SetTemporaryHP(target.get,value)
+    case ButtonClicked(this.undie_btn) =>
+      director requestAction RevertDeath(target.get)
+
+    case ButtonClicked(button) if (damageEquation != null) => {
+      val tgt = combatState.roster(target.get)
+      val cinfo = Map(
+        "b" -> tgt.healthTracker.base.totalHP / 2,
+        "s" -> tgt.healthTracker.base.totalHP / 4
+        )
+      val value = damageEquation.apply(cinfo)
+      if (value >= 0)
+        button match {
+          case this.damage_btn => director requestAction ApplyDamage(target.get, value)
+          case this.heal_btn => director requestAction HealDamage(target.get, value)
+          case this.temp_btn => director requestAction SetTemporaryHP(target.get, value)
         }
     }
   }
 
-  def enableDamageControls(enable:Boolean) {
-	damage.background=if(enable) java.awt.Color.white else badColor
-	for(x<-damageRelButton) x.enabled=enable
+  def enableDamageControls(enable: Boolean) {
+    damage.background = if (enable) java.awt.Color.white else badColor
+    for (x <- damageRelButton) x.enabled = enable
   }
-  
-  def changeContext(nctx:Option[Symbol],isTarget:Boolean) {
-    if(isTarget) {
+
+  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+    if (isTarget) {
       target = nctx
-      controls map (x => x.enabled = target!=None)
+      controls map (x => x.enabled = target != None)
     }
   }
 
   def getRootPane = this.peer.getRootPane
-  
+
   def registerKeystroke() {
-    KeystrokeBinder.bindKeystrokeAction(damage_btn,true,KeystrokeBinder.FocusCondition.WhenWindowFocused,"alt D",new ClickButtonAction("health.damage",damage_btn))
-    KeystrokeBinder.bindKeystrokeAction(heal_btn,true,KeystrokeBinder.FocusCondition.WhenWindowFocused,"alt H",new ClickButtonAction("health.heal",heal_btn))
-    KeystrokeBinder.bindKeystrokeAction(temp_btn,true,KeystrokeBinder.FocusCondition.WhenWindowFocused,"alt T",new ClickButtonAction("health.settemphp",temp_btn))
+    KeystrokeBinder.bindKeystrokeAction(damage_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt D", new ClickButtonAction("health.damage", damage_btn))
+    KeystrokeBinder.bindKeystrokeAction(heal_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt H", new ClickButtonAction("health.heal", heal_btn))
+    KeystrokeBinder.bindKeystrokeAction(temp_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt T", new ClickButtonAction("health.settemphp", temp_btn))
   }
 }
 

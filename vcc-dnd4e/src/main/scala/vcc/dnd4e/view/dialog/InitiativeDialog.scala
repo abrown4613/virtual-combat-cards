@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,37 +23,37 @@ import scala.swing.event._
 import vcc.util.swing._
 
 import vcc.util.DiceBag
-import vcc.dnd4e.model.CombatantState
 import scala.util.Sorting
+import vcc.dnd4e.view.PanelDirector
+import vcc.dnd4e.domain.tracker.common.CombatantID
 
-class InitiativeDialog(window:Frame,director:PanelDirector) extends ModalDialog[Seq[Symbol]](window,"Roll Initiative") {
-
-  val initTable=new vcc.util.swing.ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
-  val table= new EnhancedTable {
-    model=initTable
-    autoResizeMode=Table.AutoResizeMode.Off
-    selection.intervalMode=Table.IntervalMode.Single
-    setColumnWidth(0,35)
-    setColumnWidth(1,150)
-    setColumnWidth(2,35)
-    setColumnWidth(3,35)
-    setColumnWidth(4,70)
-  }	
-  
-  private val groupCheckbox= new CheckBox("Group similar (same name and initiative bonus)")
-  contents= new MigPanel("") {
-    add( new ScrollPane {contents=table}, "growx,growy,wrap")
-    add(groupCheckbox,"wrap")
-    add(new Button(okAction),"split 3")
-    add(new Button(cancelAction),"")
+class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDialog[Seq[CombatantID]](window, "Roll Initiative") {
+  val initTable = new vcc.util.swing.ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
+  val table = new EnhancedTable {
+    model = initTable
+    autoResizeMode = Table.AutoResizeMode.Off
+    selection.intervalMode = Table.IntervalMode.Single
+    setColumnWidth(0, 35)
+    setColumnWidth(1, 150)
+    setColumnWidth(2, 35)
+    setColumnWidth(3, 35)
+    setColumnWidth(4, 70)
   }
-  minimumSize=new java.awt.Dimension(360,400)
+
+  private val groupCheckbox = new CheckBox("Group similar (same name and initiative bonus)")
+  contents = new MigPanel("") {
+    add(new ScrollPane {contents = table}, "growx,growy,wrap")
+    add(groupCheckbox, "wrap")
+    add(new Button(okAction), "split 3")
+    add(new Button(cancelAction), "")
+  }
+  minimumSize = new java.awt.Dimension(360, 400)
 
   initTable.content = Sorting.stableSort[InitiativeDialogEntry](
-    director.currentState.combatantSequence.map(cmb=>new InitiativeDialogEntry(cmb.id,cmb.entity.name,cmb.entity.initiative,0,false)).toList,
-    (a:InitiativeDialogEntry,b:InitiativeDialogEntry)=>{a.id.name < b.id.name}).toSeq
-    
+    director.currentState.combatantsNotInOrder.map(id => director.currentState.combatantViewFromID(id)).map(cmb => new InitiativeDialogEntry(cmb.definition.cid, cmb.definition.entity.name, cmb.definition.entity.initiative, 0, false)).toList,
+    (a: InitiativeDialogEntry, b: InitiativeDialogEntry) => {a.id.id < b.id.id}).toSeq
+
   def processOK() {
-    dialogResult = Some(helper.InitiativeRoller.rollInitiative(groupCheckbox.selected,initTable.content.toList))
+    dialogResult = Some(helper.InitiativeRoller.rollInitiative(groupCheckbox.selected, initTable.content.toList))
   }
 }

@@ -38,4 +38,11 @@ case class CombatState(
   def allCombatantIDs: List[CombatantID] = roster.keys.toList
 
   def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList -- order.map(_.combId)): _*)
+
+  //TODO Move this to the view version of state
+  //TODO Need to create a view version of state
+  @deprecated
+  def getCombatant(cid: Option[CombatantID]): Option[CombatantStateView] =
+    if (cid.isDefined && roster.isDefinedAt(cid.get)) Some(roster(cid.get))
+    else None
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,25 +18,26 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.TableModelRowProjection
-import vcc.dnd4e.model.common.{Effect, Condition}
-import vcc.dnd4e.controller.request.UpdateEffect
+import vcc.dnd4e.domain.tracker.common.{Effect, Condition}
+import vcc.dnd4e.domain.tracker.common.Command.UpdateEffectCondition
+import vcc.dnd4e.view.PanelDirector
 
-class EffectTableProjection(director: PanelDirector) extends TableModelRowProjection[(Symbol, Int, Effect)] {
+class EffectTableProjection(director: PanelDirector) extends TableModelRowProjection[Effect] {
   val columns: List[(String, java.lang.Class[_])] = List(
     ("Src", classOf[String]),
     ("End", classOf[String]),
     ("Description", classOf[String]))
 
-  def apply(col: Int, entry: (Symbol, Int, Effect)): java.lang.Object = {
+  def apply(col: Int, entry: Effect): java.lang.Object = {
     col match {
-      case 0 => entry._3.source.name
-      case 1 => entry._3.duration.shortDesc
-      case 2 => entry._3.condition.description
+      case 0 => entry.source.id
+      case 1 => entry.duration.shortDescription
+      case 2 => entry.condition.description
     }
   }
 
-  val setter: PartialFunction[(Int, (Symbol, Int, Effect), Any), Unit] = {
-    case (2, (who, pos, Effect(_, Condition.Generic(x), _, _)), newvalue) =>
-      director requestAction UpdateEffect(who, pos, Condition.Generic(newvalue.asInstanceOf[String]))
+  val setter: PartialFunction[(Int, Effect, Any), Unit] = {
+    case (2, Effect(eid, _, Effect.Condition.Generic(x, good), _), newValue) =>
+      director requestAction UpdateEffectCondition(eid, Effect.Condition.Generic(newValue.asInstanceOf[String], good))
   }
 }

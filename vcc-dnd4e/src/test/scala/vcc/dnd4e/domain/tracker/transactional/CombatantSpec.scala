@@ -31,8 +31,8 @@ class CombatantTest extends JUnit4(CombatantSpec)
 
 object CombatantSpec extends Specification with TransactionalSpecification {
   val cid = CombatantID("A")
-  val combDef = new CombatantRosterDefinition(cid, "007", CombatantEntity(null, "Bond", vcc.dnd4e.model.common.CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null))
-  val newCombDef = new CombatantRosterDefinition(cid, "alias", CombatantEntity(null, "Elektra", vcc.dnd4e.model.common.CharacterHealthDefinition(50, 12, 7), 4, CombatantType.Character, null))
+  val combDef = new CombatantRosterDefinition(cid, "007", CombatantEntity(null, "Bond", CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null))
+  val newCombDef = new CombatantRosterDefinition(cid, "alias", CombatantEntity(null, "Elektra", CharacterHealthDefinition(50, 12, 7), 4, CombatantType.Character, null))
   var aCombatant: Combatant = null
 
   shareVariables()
@@ -51,7 +51,7 @@ object CombatantSpec extends Specification with TransactionalSpecification {
       aCombatant must notBeNull
       aCombatant.effects must_== EffectList(combDef.cid, Nil)
       aCombatant.comment must_== ""
-      aCombatant.health must_== HealthTracker.createTracker(aCombatant.projectHealthDef(combDef.entity.healthDef))
+      aCombatant.health must_== HealthTracker.createTracker(combDef.entity.healthDef)
       aCombatant.definition must_== combDef
     }
   }
@@ -122,12 +122,12 @@ object CombatantSpec extends Specification with TransactionalSpecification {
         changes =>
           aCombatant.definition must_== newCombDef
           changes must contain(CombatantChange(cid, newCombDef))
-          changes must contain(CombatantChange(cid, HealthTracker(40, 0, 0, 7, aCombatant.projectHealthDef(newCombDef.entity.healthDef))))
+          changes must contain(CombatantChange(cid, HealthTracker(40, 0, 0, 7, newCombDef.entity.healthDef)))
       } afterUndo {
         changes =>
           aCombatant.definition must_== combDef
           changes must contain(CombatantChange(cid, combDef))
-          changes must contain(CombatantChange(cid, HealthTracker(30, 0, 0, 6, aCombatant.projectHealthDef(combDef.entity.healthDef))))
+          changes must contain(CombatantChange(cid, HealthTracker(30, 0, 0, 6, combDef.entity.healthDef)))
       } afterRedoAsInCommit ()
     }
   }

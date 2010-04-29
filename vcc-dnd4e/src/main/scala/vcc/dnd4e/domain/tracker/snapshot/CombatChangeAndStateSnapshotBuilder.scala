@@ -37,6 +37,8 @@ class CombatChangeAndStateSnapshotBuilder(subBuilder: CombatStateSnapshotBuilder
         extends SnapshotBuilder[CombatStateWithChanges] {
   private var changes: StateChange = null
 
+  def this() = this (new CombatStateSnapshotBuilder())
+
   def processChange(change: ChangeNotification) = {
     if (!change.isInstanceOf[CombatStateChange]) throw new IllegalArgumentException("Can't handle: " + change)
     change.asInstanceOf[CombatStateChange] match {

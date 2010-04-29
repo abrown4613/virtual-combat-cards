@@ -26,10 +26,10 @@ import vcc.controller.{IllegalActionException, CommandSource}
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.model.common.{MinionHealthDefinition, CombatantType}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.controller.message.TransactionalAction
 import collection.mutable.Queue
+import vcc.dnd4e.model.common.CombatantType
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)

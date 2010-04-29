@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,30 +18,30 @@
 package vcc.dnd4e.view
 
 import scala.swing._
-import util.swing._
+import vcc.util.swing._
 import helper.CombatantStatBlockCache
-import infra.docking._
+import vcc.infra.docking._
+import vcc.dnd4e.domain.tracker.common.CombatantID
 
-class CombatantCard(diretor:PanelDirector,isTarget:Boolean) extends GridPanel(1,1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
-
-  def changeContext(nctx:Option[Symbol],isTarget:Boolean) {
-    if(this.isTarget == isTarget) {
-      val cmb = combatState.getCombatant(nctx)
-      if(cmb.isDefined) {
-        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.get.entity.eid,cmb.get.entity.statBlock))
+class CombatantCard(diretor: PanelDirector, isTarget: Boolean) extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
+  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+    if (this.isTarget == isTarget) {
+      if (nctx.isDefined) {
+        val cmb = combatState.combatantViewFromID(nctx.get)
+        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.definition.entity.eid, cmb.definition.entity.statBlock))
       }
-      else statBlock.setDocumentFromText("") 
+      else statBlock.setDocumentFromText("")
     }
   }
-  
-  minimumSize = new java.awt.Dimension(300,400)
-  
+
+  minimumSize = new java.awt.Dimension(300, 400)
+
   private val statBlock = new XHTMLPane
-  statBlock.minimumSize = new java.awt.Dimension(200,200)
+  statBlock.minimumSize = new java.awt.Dimension(200, 200)
   contents += statBlock
-    
-  val dockID = DockID(if(isTarget) "tgt-block" else "src-block")
-  val dockTitle = if(isTarget) "Target" else "Source"
+
+  val dockID = DockID(if (isTarget) "tgt-block" else "src-block")
+  val dockTitle = if (isTarget) "Target" else "Source"
   val dockFocusComponent = statBlock.peer
-  
+
 }

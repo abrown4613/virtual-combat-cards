@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.ProjectionTableLabelFormatter
-import vcc.dnd4e.model.common.Effect
+import vcc.dnd4e.domain.tracker.common.Effect
 
-object EffectTableColorer extends ProjectionTableLabelFormatter[(Symbol, Int, Effect)] {
+object EffectTableColorer extends ProjectionTableLabelFormatter[Effect] {
   import java.awt.Color
 
   private val attention = (Color.ORANGE, Color.BLACK)
@@ -32,17 +32,13 @@ object EffectTableColorer extends ProjectionTableLabelFormatter[(Symbol, Int, Ef
     label.setForeground(colors._2)
   }
 
-  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, entry: (Symbol, Int, Effect)) {
-    val (tgt, row, eff) = entry
-    val needAttention = eff.duration match {
-      case Effect.Duration.RoundBound(who, x, true) => true
-      case Effect.Duration.SaveEndSpecial => true
-      case _ => false
-    }
+  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, effect: Effect) {
+    val needAttention = effect.sustainable || effect.duration == Effect.Duration.SaveEndSpecial
+
     setColor(label, col match {
       case _ if (isSelected) => (label.getBackground, label.getForeground)
       case 1 if (needAttention) => attention
-      case _ if (eff.benefic) => beneficial
+      case _ if (effect.condition.beneficial) => beneficial
       case _ => normal
     })
   }
