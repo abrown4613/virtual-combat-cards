@@ -18,8 +18,7 @@
 
 package vcc.dnd4e.view.tabular
 
-import vcc.dnd4e.model._
-import common.HealthTracker
+import vcc.dnd4e.domain.tracker.common.HealthTracker
 import vcc.dnd4e.view.UnifiedCombatant
 
 object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[UnifiedCombatant] {

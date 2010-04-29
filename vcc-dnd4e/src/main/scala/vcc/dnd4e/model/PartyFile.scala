@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -20,9 +21,10 @@ package vcc.dnd4e.model
 import scala.xml._
 import vcc.infra.datastore.naming._
 import vcc.util.XMLHelper._
+import vcc.dnd4e.domain.tracker.common.CombatantID
 
-case class PartyMember(id: Symbol, alias:String, eid: EntityID) {
-  def toXML() = (<combatant eid={eid.uri.toString} alias={alias} id={if(id!=null) id.name else null} />)
+case class PartyMember(id: CombatantID, alias: String, eid: EntityID) {
+  def toXML() = (<combatant eid={eid.uri.toString} alias={alias} id={if (id != null) id.id else null}/>)
 }
 
 /**
@@ -31,65 +33,65 @@ case class PartyMember(id: Symbol, alias:String, eid: EntityID) {
 object PartyFile {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  def parseEntry(node:Node):PartyMember = {
+  def parseEntry(node: Node): PartyMember = {
     val eidUri = nodeSeq2String(node \ "@eid")
     val id = nodeSeq2String(node \ "@id", null)
     val alias = nodeSeq2String(node \ "@alias", null)
     val eid = EntityID.fromStorageString(eidUri)
-    
-    PartyMember(if(id!=null) Symbol(id.toUpperCase) else null ,alias,eid)
+
+    PartyMember(if (id != null) CombatantID(id.toUpperCase) else null, alias, eid)
   }
-  
-  def loadFromXML(node:Node):(List[PartyMember],Boolean) = {
-    var x:List[PartyMember]=Nil
+
+  def loadFromXML(node: Node): (List[PartyMember], Boolean) = {
+    var x: List[PartyMember] = Nil
     var ok = true
-    val ver = { 
+    val ver = {
       val vnl = node \ "@version"
-      if(vnl.isEmpty) None
+      if (vnl.isEmpty) None
       else Some(vnl(0).text)
     }
-    if(node.label=="party" && ver == Some("1.0")) {
-      for(snode <- node.child if(snode.label!="#PCDATA")) {
+    if (node.label == "party" && ver == Some("1.0")) {
+      for (snode <- node.child if (snode.label != "#PCDATA")) {
         try {
-          x= parseEntry(snode) :: x
-        }catch {
-          case e:Exception=>
-            logger.warn("Failed to load node: "+snode,e)
+          x = parseEntry(snode) :: x
+        } catch {
+          case e: Exception =>
+            logger.warn("Failed to load node: " + snode, e)
             ok = false
         }
       }
     } else {
-      if(ver==None) logger.error("No version found on file, this may be a legacy file")
+      if (ver == None) logger.error("No version found on file, this may be a legacy file")
       else logger.error("Failed to load party, either is not a party")
       ok = false
     }
-    (x.reverse,ok)
+    (x.reverse, ok)
   }
-  
+
   /**
    * Load a PEML party and return a list of PartyMembers
-   * 
+   *
    * @return A pair with the loadable PartyMember and a OK flag. If ok = false, there
    * was some error processing the file. In out is (Nil,false) the file is invalid.
    * (Nil,true) means the file is empty. And some element and false means that not all
    * element in the file were read
    */
-  def loadFromFile(file:java.io.File):(List[PartyMember],Boolean) = {
+  def loadFromFile(file: java.io.File): (List[PartyMember], Boolean) = {
     try {
-      var node=scala.xml.XML.loadFile(file)
+      var node = scala.xml.XML.loadFile(file)
       loadFromXML(node)
     } catch {
       case e =>
-        logger.error("Failed to load: "+e.getMessage,e)
-        (Nil,false)
+        logger.error("Failed to load: " + e.getMessage, e)
+        (Nil, false)
     }
   }
-  
-  def saveToFile(file:java.io.File,entries:Seq[PartyMember]) {
+
+  def saveToFile(file: java.io.File, entries: Seq[PartyMember]) {
     val doc = (<party version='1.0'>
       {entries.map(_.toXML)}
     </party>)
-    XML.saveFull(file.toString,doc,"UTF-8",true,null)
+    XML.saveFull(file.toString, doc, "UTF-8", true, null)
   }
-  
+
 }
