@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,31 @@ object RoundRobinSpec extends Specification {
       roundRobin.advanceTo('D)
       roundRobin.advance()
       roundRobin.headOption must_== Some('A)
+    }
+  }
+  "a full RoundRobin without explicit head " ->- (beforeContext {
+    roundRobin = new ArrayRoundRobin(null, Seq('A, 'B))
+  }) should {
+    "have a head" in {
+      roundRobin.headOption must_== Some('A)
+    }
+    "advance normally" in {
+      roundRobin.advance()
+      roundRobin.headOption must_== Some('B)
+    }
+
+    "wrap around" in {
+      roundRobin.advance()
+      roundRobin.advance()
+      roundRobin.headOption must_== Some('A)
+    }
+
+    "provide a linear read from a advanced head" in {
+      roundRobin.advance()
+      roundRobin.length must_== 2
+      roundRobin(0) must_== 'B
+      roundRobin(1) must_== 'A
+      roundRobin(2) must throwAn[IndexOutOfBoundsException]
     }
   }
 }
