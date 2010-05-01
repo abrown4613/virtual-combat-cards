@@ -53,10 +53,9 @@ class CombatStateRules {
    * operations like the Delay which internally is broken into Start and Delay.
    */
   def canInitiativeOrderPerform(combatState: CombatStateView, io: InitiativeOrderID, action: InitiativeTracker.action.Value): Boolean = {
-    val order = combatState.getInitiativeOrder
-    if (order.isEmpty) false
+    if (!combatState.isCombatStarted || !combatState.nextUp.isDefined) false
     else {
-      val first = combatState.initiativeTrackerFromID(order.head)
+      val first = combatState.initiativeTrackerFromID(combatState.nextUp.get)
       val test = combatState.initiativeTrackerFromID(io)
       test.canTransform(first, action)
     }

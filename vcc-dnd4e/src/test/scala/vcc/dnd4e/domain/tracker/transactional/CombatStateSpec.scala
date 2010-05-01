@@ -130,6 +130,18 @@ object CombatStateSpec extends Specification with Mockito {
       there was one(mOrder).isDefinedAt(ioa)
       there was no(mOrder).initiativeTrackerFor(ioa)
     }
+
+    "return None on a nextUp if order has not robinHead" in {
+      mOrder.robinHeadInitiativeTracker returns null
+      aCombatState.nextUp must_== None
+    }
+
+    "return Some on a nextUp if order has robinHead" in {
+      val it = mock[InitiativeTracker]
+      it.orderID returns ioa
+      mOrder.robinHeadInitiativeTracker returns it
+      aCombatState.nextUp must_== Some(ioa)
+    }
   }
 
   "aCombatState as a CombatStateView" ->- (beforeContext {
