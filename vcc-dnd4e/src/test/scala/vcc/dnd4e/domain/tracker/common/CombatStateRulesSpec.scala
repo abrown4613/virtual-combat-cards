@@ -151,10 +151,27 @@ object CombatStateRulesSpec extends Specification with Mockito {
   }
 
   "rules.canInitiativeOrderPerform" ->- (baseMockups) should {
-    "work only with valid entries in the order" in {
-      state.getInitiativeOrder returns Nil
+
+    // Should only be able to take actions during combat
+    // The first for these actions is not element 0 of the other but whomever is the nextUp
+
+    "work only when in combat" in {
+      state.isCombatStarted returns false
+      state.nextUp returns None
       rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
-      there was one(state).getInitiativeOrder
+      there was one(state).isCombatStarted
+      there was no(state).getInitiativeOrder
+    }
+
+    "only allow initiative actions during combat" in {
+      state.isCombatStarted returns true
+      state.nextUp returns Some(ioA1)
+      state.initiativeTrackerFromID(ioA0) returns mock[InitiativeTracker]
+      state.initiativeTrackerFromID(ioA1) returns mock[InitiativeTracker]
+
+      rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
+      there was one(state).isCombatStarted then
+              atLeastOne(state).nextUp
     }
 
     "defer to InitiativeTracker with the correct first InitiativeTracker set" in {
@@ -162,13 +179,16 @@ object CombatStateRulesSpec extends Specification with Mockito {
       val fIT = mock[InitiativeTracker]
       val action = InitiativeTracker.action.StartRound
 
+
       mIT.canTransform(fIT, action) returns false
 
+      state.isCombatStarted returns true
+      state.nextUp returns Some(ioA1)
       state.initiativeTrackerFromID(ioB0) returns mIT
-      state.initiativeTrackerFromID(ioA0) returns fIT
+      state.initiativeTrackerFromID(ioA1) returns fIT
 
       rules.canInitiativeOrderPerform(state, ioB0, action) must beFalse
-      there was one(state).initiativeTrackerFromID(ioA0)
+      there was one(state).initiativeTrackerFromID(ioA1)
       there was one(state).initiativeTrackerFromID(ioB0)
       there was one(mIT).canTransform(fIT, action)
     }

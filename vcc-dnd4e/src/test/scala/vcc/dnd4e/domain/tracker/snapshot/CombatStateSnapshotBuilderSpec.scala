@@ -124,12 +124,12 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
 
     "change roster head on InitiativeOrderFirstChange" in {
       val snap = processChanges(aBuilder, InitiativeOrderFirstChange(iob))
-      snap.robinHead must_== Some(iob)
+      snap.nextUp must_== Some(iob)
     }
 
     "change roster head to None on InitiativeOrderFirstChange(null)" in {
       val snap = processChanges(aBuilder, InitiativeOrderFirstChange(null))
-      snap.robinHead must_== None
+      snap.nextUp must_== None
     }
 
     "throw exception if InitiativeOrderFirstChange points to something wrong" in {

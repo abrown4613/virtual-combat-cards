@@ -75,4 +75,7 @@ class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val m
 
   def getInitiativeOrder: List[InitiativeOrderID] = order.getIDsInOrder
 
+  def nextUp: Option[InitiativeOrderID] =
+    if (order.robinHeadInitiativeTracker == null) None
+    else Some(order.robinHeadInitiativeTracker.orderID)
 }

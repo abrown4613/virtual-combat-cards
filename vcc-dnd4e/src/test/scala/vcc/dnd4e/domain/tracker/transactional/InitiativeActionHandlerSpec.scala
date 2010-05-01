@@ -150,6 +150,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.StartRound))
 
+      there was one(mOrder).robinHeadInitiativeTracker()
       there was one(mOrder).updateInitiativeTrackerFor(ioc, updatedIT)(trans)
     }
 
