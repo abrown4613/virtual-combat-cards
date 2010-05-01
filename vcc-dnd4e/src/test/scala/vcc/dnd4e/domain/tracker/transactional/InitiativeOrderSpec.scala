@@ -314,7 +314,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.rotate()
       aTrans.commit(changeLog)
 
-      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioa0))
     }
 
     "undo the rotation and propagate" in {
@@ -323,6 +323,17 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans.undo(changeLog)
 
       changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+    }
+
+    "after undo of rotation a futher rotate must return the undone next" in {
+      aOrder.rotate()
+      aTrans.commit(changeLog)
+      aTrans.undo(changeLog)
+
+      val nTrans = new Transaction()
+      aOrder.rotate()(nTrans)
+      nTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioa0))
     }
 
     "preserve the reorder internal when adding after a reorder should " in {

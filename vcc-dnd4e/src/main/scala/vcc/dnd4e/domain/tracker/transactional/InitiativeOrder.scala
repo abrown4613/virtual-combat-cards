@@ -35,7 +35,15 @@ class InitiativeOrder {
     }
   }
 
-  private val robinHead = new Undoable[InitiativeOrderID](null, x => InitiativeOrderFirstChange(x.value))
+  private val robinHead = new Undoable[InitiativeOrderID](null, x => InitiativeOrderFirstChange(x.value)) with
+          UndoableWithCallback[InitiativeOrderID] {
+    def restoreCallback(oldValue: InitiativeOrderID) {
+      if (oldValue != null) robin.advanceTo(oldValue)
+      println(robin)
+      println("HEAD **** " + robin.headOption)
+    }
+  }
+
   private val initBaseOrder = new Undoable[List[InitiativeResult]](Nil, null)
   private val trackers = new Undoable(Map.empty[InitiativeOrderID, Undoable[InitiativeTracker]], null)
   private val robin = new ArrayRoundRobin[InitiativeOrderID](null, Nil)

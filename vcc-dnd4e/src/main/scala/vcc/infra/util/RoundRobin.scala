@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ package vcc.infra.util
  */
 trait RoundRobin[T] {
   protected var robin: Seq[T]
-  protected var headIdx: Int = -1
+  protected var headIdx: Int = 0
 
   def setRobin(aHead: T, aSeq: Seq[T])
 
@@ -42,11 +42,13 @@ trait RoundRobin[T] {
   }
 
   def apply(idx: Int): T = {
-    if (idx < 0 || idx > robin.length) throw new IndexOutOfBoundsException()
+    if (idx < 0 || idx >= robin.length) throw new IndexOutOfBoundsException()
     var midx = idx + headIdx
     if (midx >= robin.length) midx = midx - robin.length
     robin(midx)
   }
+
+  def length = robin.length
 }
 
 /**
