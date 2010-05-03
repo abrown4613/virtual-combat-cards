@@ -35,7 +35,7 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
   private val cancelButton = new Button("Cancel Effect")
   cancelButton.enabled = false
 
-  private var context: Option[CombatantID] = None
+  private var context: Option[UnifiedCombatantID] = None
 
   private var state = director.currentState
 
@@ -91,7 +91,7 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
   /**
    * Update table according to context
    */
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (this.isTarget == isTarget) {
       context = nctx
       updateTable()
@@ -99,7 +99,7 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
   }
 
   private def updateTable() {
-    state.getCombatant(context) match {
+    state.combatantOption(context) match {
       case Some(cmb) =>
         effectTable.content = cmb.effects.effects
       case None =>
@@ -107,7 +107,7 @@ class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPan
     }
   }
 
-  def combatStateChanged(newState: CombatState, uv: Array[UnifiedCombatant], changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
     updateTable()
   }

@@ -52,7 +52,10 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     diag.visible = true
     val res = diag.dialogResult
     //FIXME this is not the right way to do initiative anymore
-    if (res.isDefined) director requestAction StartCombat()
+    if (res.isDefined) {
+      director requestAction SetInitiative(res.get)
+      director requestAction StartCombat()
+    }
   })
   combatMenu.contents += new MenuItem(Action("End Combat") {
     director requestAction EndCombat()

@@ -20,7 +20,7 @@ package vcc.dnd4e.view.helper
 import vcc.dnd4e.view.dialog.InitiativeDialogEntry
 import vcc.util.DiceBag
 import scala.util.Sorting.stableSort
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.domain.tracker.common.{InitiativeDefinition, CombatantID}
 
 object InitiativeRoller {
   case class GroupInitEntry(roll: Int, initBonus: Int, ids: Set[CombatantID]) extends Ordered[GroupInitEntry] {
@@ -71,9 +71,7 @@ object InitiativeRoller {
    * @return Sequence of symbols
    */
   def sortGroups(groups: List[GroupInitEntry]): List[CombatantID] = {
-
     val ord = stableSort(groups)
-    //val idlist=ord.m
     val ordIds = ord.map(x => stableSort(x.ids.toSeq, (a: CombatantID, b: CombatantID) => {a.id <= b.id}))
     ordIds.flatMap(x => x.toList).toList
   }
@@ -84,9 +82,11 @@ object InitiativeRoller {
    * @param ie InitiativeDialogEntries that contain the values you need
    * @return Sequence of symbols ordered by initiative
    */
-  def rollInitiative(joinSimilar: Boolean, ie: List[InitiativeDialogEntry]): List[CombatantID] = {
+  def rollInitiative(joinSimilar: Boolean, ie: List[InitiativeDialogEntry]): List[InitiativeDefinition] = {
+    //FIXME Initiative rolling has to be remade
     var l = createInitiativeGroups(joinSimilar, ie)
     l = l.map(e => e.rollIfZeroed)
-    sortGroups(l).toList
+    val finalList = sortGroups(l).toList
+    (finalList.length to 1 by -1).toList.zip(finalList).map(p => InitiativeDefinition(p._2, 0, List(p._1)))
   }
 }

@@ -28,7 +28,7 @@ import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateW
 import vcc.controller.{TrackerChangeObserver, TrackerChangeAware, CommandSource}
 
 trait ContextObserver {
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean)
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
 }
 
 trait PaneDirectorPropertyObserver {
@@ -42,7 +42,7 @@ object PanelDirector {
 }
 
 trait CombatStateObserver {
-  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange)
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange)
 
 }
 
@@ -53,9 +53,9 @@ trait CombatStateObserver {
  * do not use this mixin.
  */
 trait SimpleCombatStateObserver extends CombatStateObserver {
-  protected var combatState: CombatState = null
+  protected var combatState: UnifiedSequenceTable = null
 
-  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     combatState = newState
   }
 }
@@ -64,14 +64,15 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
 class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithChanges], statusBar: StatusBar) extends TrackerChangeAware[CombatStateWithChanges] with CommandSource {
-  private var combatState = csm.getSnapshot()
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
   private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
 
   private var propHideDead = false
 
-  def currentState = combatState.state
+  private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot().state)
+
+  def currentState = unifiedTable
 
   //Init code
   csm.addChangeObserver(this)
@@ -79,9 +80,9 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   def snapshotChanged(newState: CombatStateWithChanges) {
     //newState.prettyPrint()
     SwingHelper.invokeInEventDispatchThread {
-      combatState = newState
       val uv = UnifiedCombatantArrayBuilder.buildList(newState.state, DirectInitiativeOrderViewBuilder, DontCareReserveViewBuilder)
-      combatStateObserver.foreach(obs => obs.combatStateChanged(newState.state, uv, newState.changes))
+      unifiedTable = new UnifiedSequenceTable(uv, newState.state)
+      combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable, newState.changes))
     }
   }
 
@@ -97,15 +98,15 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
     propertyObserver = obs :: propertyObserver
   }
 
-  def setActiveCombatant(id: Option[CombatantID]) {
+  def setActiveCombatant(id: Option[UnifiedCombatantID]) {
     publishContextChange(id, false)
   }
 
-  private def publishContextChange(nctx: Option[CombatantID], isTarget: Boolean) {
+  private def publishContextChange(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     contextObserver.foreach(obs => obs.changeContext(nctx, isTarget))
   }
 
-  def setTargetCombatant(id: Option[CombatantID]) {
+  def setTargetCombatant(id: Option[UnifiedCombatantID]) {
     publishContextChange(id, true)
   }
 

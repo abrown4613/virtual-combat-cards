@@ -42,7 +42,7 @@ class DamageCommandPanel(val director: PanelDirector)
 
   val dockFocusComponent = damage.peer
 
-  private var target: Option[CombatantID] = None
+  private var target: Option[UnifiedCombatantID] = None
 
   private val badColor = new java.awt.Color(255, 228, 196)
   damage.background = badColor
@@ -87,23 +87,23 @@ class DamageCommandPanel(val director: PanelDirector)
       director.setStatusBarMessage("")
 
     case ButtonClicked(this.death_btn) =>
-      director requestAction FailDeathSave(target.get)
+      director requestAction FailDeathSave(target.get.combId)
 
     case ButtonClicked(this.undie_btn) =>
-      director requestAction RevertDeath(target.get)
+      director requestAction RevertDeath(target.get.combId)
 
     case ButtonClicked(button) if (damageEquation != null) => {
-      val tgt = combatState.roster(target.get)
+      val tgt = combatState.combatantOption(target).get
       val cinfo = Map(
-        "b" -> tgt.healthTracker.base.totalHP / 2,
-        "s" -> tgt.healthTracker.base.totalHP / 4
+        "b" -> tgt.health.base.totalHP / 2,
+        "s" -> tgt.health.base.totalHP / 4
         )
       val value = damageEquation.apply(cinfo)
       if (value >= 0)
         button match {
-          case this.damage_btn => director requestAction ApplyDamage(target.get, value)
-          case this.heal_btn => director requestAction HealDamage(target.get, value)
-          case this.temp_btn => director requestAction SetTemporaryHP(target.get, value)
+          case this.damage_btn => director requestAction ApplyDamage(target.get.combId, value)
+          case this.heal_btn => director requestAction HealDamage(target.get.combId, value)
+          case this.temp_btn => director requestAction SetTemporaryHP(target.get.combId, value)
         }
     }
   }
@@ -113,7 +113,7 @@ class DamageCommandPanel(val director: PanelDirector)
     for (x <- damageRelButton) x.enabled = enable
   }
 
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (isTarget) {
       target = nctx
       controls map (x => x.enabled = target != None)

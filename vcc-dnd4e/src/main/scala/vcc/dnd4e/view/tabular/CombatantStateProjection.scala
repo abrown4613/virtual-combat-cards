@@ -32,16 +32,16 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
     );
   def apply(col: Int, comb: UnifiedCombatant): java.lang.Object = {
     col match {
-      case 0 => comb.combId
-      case 1 => (if (comb.combatant.definition.alias != null) "[" + comb.combatant.definition.alias + "] " else "") + comb.combatant.definition.entity.name
+      case 0 => if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id
+      case 1 => (if (comb.alias != null) "[" + comb.alias + "] " else "") + comb.name
       case 2 =>
-        val health = comb.combatant.healthTracker
+        val health = comb.health
         health.currentHP + " / " + health.base.totalHP + (if (health.temporaryHP > 0) " +" + health.temporaryHP else "")
       case 3 =>
-        val health = comb.combatant.healthTracker
+        val health = comb.health
         health.status + (if (health.status == HealthTracker.Status.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
-      case 4 => int2Integer(comb.initiative.round)
-      case 5 => comb.initiative.state
+      case 4 => if (comb.isInOrder) int2Integer(comb.initiative.round) else "0"
+      case 5 => if (comb.isInOrder) comb.initiative.state else "-"
     }
   }
 

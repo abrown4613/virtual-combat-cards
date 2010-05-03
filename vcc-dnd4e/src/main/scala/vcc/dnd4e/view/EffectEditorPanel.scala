@@ -70,7 +70,7 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
     //      switchActive(activeCombo.selection.item.c.entity.name)
   }
 
-  def combatStateChanged(newState: CombatState, uv: Array[UnifiedCombatant], changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
     //TODO Check for simplification
     if (changes.changes.contains(StateChange.combat.Roster)) {
@@ -90,8 +90,8 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
     }
   }
 
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
-    val ctx = state.getCombatant(nctx)
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
+    val ctx = state.combatantOption(nctx)
     //    if (isTarget) {
     //      for (efp <- efpl) efp.setContext(ctx)
     //      target = nctx
