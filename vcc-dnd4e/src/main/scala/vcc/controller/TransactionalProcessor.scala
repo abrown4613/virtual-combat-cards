@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,17 +77,6 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
   }
 
   /**
-   * Called when a TransactionalAction is recieved, this method can be used to translate a single
-   * action into several sub actions. Default behavior is to simply enqueue the message received.
-   * @param action Original Action to be done.
-   */
-  // TODO eleminate this method
-  @deprecated
-  def rewriteEnqueue(action: TransactionalAction) {
-    msgQueue += action
-  }
-
-  /**
    * Call internal handlers, but first set the transaction and then unset the transaction
    */
   def dispatch(transaction: Transaction, source: CommandSource, action: TransactionalAction): Unit = {
@@ -97,9 +86,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
     if (rewrite.isDefined)
       for (act <- rewrite.get.apply(action)) msgQueue += act
     else
-      rewriteEnqueue(action)
-    //TODO: Use this as default:
-    // msgQueue += action
+      msgQueue += action
 
     trans = transaction
     this.source = source

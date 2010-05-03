@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 //$Id$
 package vcc.controller
 
+import message.TrackerChanged
+
 /**
  * This define the business logic behavior of the Tracker, it allows
  * you to add handlers for processing TransactionalActions.
@@ -33,5 +35,5 @@ trait TrackerController {
    * Transform ChangeNotification into a single messages.
    * The message will be sent to all registered observer.
    */
-  def publish(changes: Seq[transaction.ChangeNotification]): Any
+  def publish(changes: Seq[transaction.ChangeNotification]): TrackerChanged
 }
