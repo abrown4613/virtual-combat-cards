@@ -46,9 +46,10 @@ object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
  * the combatant in a single Array.
  */
 object UnifiedCombatantArrayBuilder {
+  //TODO Maybe fold this into UnifiedSequenceTable
   def buildList(combatState: CombatState, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): Array[UnifiedCombatant] = {
-    val order = orderBuilder.buildOrder(combatState).map(e => UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
-    val reserve = reserveBuilder.buildReserve(combatState).map(e => UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
+    val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
+    val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
     (order ++ reserve).toArray
   }
 }

@@ -50,7 +50,7 @@ object EffectEditor {
 class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
   private val smallfont = new java.awt.Font(java.awt.Font.SANS_SERIF, 0, 10)
 
-  private val idComboModel = new ContainterComboBoxModel[String](Nil)
+  private val idComboModel = new ContainerComboBoxModel[String](Nil)
 
   //TODO Get this right
   @deprecated

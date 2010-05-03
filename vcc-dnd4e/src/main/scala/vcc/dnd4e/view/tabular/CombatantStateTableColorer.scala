@@ -23,9 +23,9 @@ import vcc.dnd4e.domain.tracker.snapshot.CombatState
 import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
-import vcc.dnd4e.view.UnifiedCombatant
+import vcc.dnd4e.view.{UnifiedCombatantID, UnifiedCombatant}
 
-class CombatantStateTableColorer(var acting: Option[CombatantID]) extends ProjectionTableLabelFormatter[UnifiedCombatant] {
+class CombatantStateTableColorer(var acting: Option[UnifiedCombatantID]) extends ProjectionTableLabelFormatter[UnifiedCombatant] {
   import java.awt.Color
 
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
@@ -52,9 +52,9 @@ class CombatantStateTableColorer(var acting: Option[CombatantID]) extends Projec
 
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: UnifiedCombatant): Unit = {
     var is = if (cmb.initiative != null) cmb.initiative.state else null
-    var hs = cmb.combatant.healthTracker.status
+    var hs = cmb.health.status
     val normalBack = if (cmb.isCharacter) charBackground else normal
-    label.setFont(if (acting.isDefined && acting.get == cmb.combId) cellFontBold else cellFont)
+    label.setFont(if (acting.isDefined && acting.get == cmb.unifiedId) cellFontBold else cellFont)
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label, col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
@@ -75,7 +75,7 @@ class CombatantStateTableColorer(var acting: Option[CombatantID]) extends Projec
     })
   }
 
-  def updateActing(nctx: Option[CombatantID]) {
+  def updateActing(nctx: Option[UnifiedCombatantID]) {
     acting = nctx
   }
 }

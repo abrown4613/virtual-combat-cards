@@ -24,11 +24,11 @@ import vcc.infra.docking._
 import vcc.dnd4e.domain.tracker.common.CombatantID
 
 class CombatantCard(diretor: PanelDirector, isTarget: Boolean) extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (this.isTarget == isTarget) {
-      if (nctx.isDefined) {
-        val cmb = combatState.combatantViewFromID(nctx.get)
-        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.definition.entity.eid, cmb.definition.entity.statBlock))
+      val cmb = combatState.combatantOption(nctx)
+      if (cmb.isDefined) {
+        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.get.definition.entity.eid, cmb.get.definition.entity.statBlock))
       }
       else statBlock.setDocumentFromText("")
     }

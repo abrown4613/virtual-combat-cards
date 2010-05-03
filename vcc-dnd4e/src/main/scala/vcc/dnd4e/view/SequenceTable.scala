@@ -21,9 +21,8 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{CombatState, StateChange, CombatantState}
+import vcc.dnd4e.domain.tracker.snapshot.{StateChange}
 import tabular._
-import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.domain.tracker.common.Command.AddEffect
 import vcc.dnd4e.domain.tracker.common._
 
@@ -45,8 +44,8 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
 
   }
 
-  private var source: Option[CombatantID] = None
-  private var target: Option[CombatantID] = None
+  private var source: Option[UnifiedCombatantID] = None
+  private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
   // This variable is used to block target updates by table.seletion listener
   private var _changingState = false
@@ -57,14 +56,11 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   }
   KeystrokeBinder.bindKeystrokeAction(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "alt A", setAction)
   KeystrokeBinder.bindKeystrokeAction(table, false, "alt M", Action("sequence.mark") {
-    /*
-    //TODO: Fix this, since the internal logic changed we now have to know which IOI is marking
-        if (target.isDefined && source.isDefined) {
-          director.requestAction(AddEffect(target.get, source.get,
-            Effect.Condition.Mark(source.get, false),
-              Effect.Duration.RoundBound(source.get, Effect.Duration.Limit.EndOfNextTurn, false)))
-        }
-    */
+    if (target.isDefined && source.isDefined && source.get.orderId != null) {
+      director.requestAction(AddEffect(target.get.combId, source.get.combId,
+        Effect.Condition.Mark(source.get.combId, false),
+        Effect.Duration.RoundBound(source.get.orderId, Effect.Duration.Limit.EndOfNextTurn)))
+    }
   })
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F8")
@@ -76,7 +72,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       var l = table.selection.rows.toSeq
       if (!l.isEmpty) {
         var c = table.content(l(0))
-        director.setTargetCombatant(Some(c.combId))
+        director.setTargetCombatant(Some(c.unifiedId))
       }
     case FocusGained(this.table, other, true) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
@@ -84,7 +80,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       director.setStatusBarMessage("")
   }
 
-  def combatStateChanged(newState: CombatState, view: Array[UnifiedCombatant], changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
     if (
       changes.changes.contains(StateChange.combat.Order) ||
@@ -97,7 +93,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       //On a sequence change
       //TODO this is not a good indication of a sequence change now
       if (changes.changes.contains(StateChange.combat.Order)) {
-        val newfirst = if (table.content.isEmpty) None else Some(table.content(0).combId)
+        val newfirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
     }
@@ -105,40 +101,38 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
 
   private def updateContent() {
     _changingState = true
-    /* TODO: This needs to be rethinked
-        val hidedead = director.getBooleanProperty(PanelDirector.property.HideDead)
-        val ncontent = if (hidedead && !(state.order.isEmpty && state.roster.isEmpty)) {
-          val l = state.combatantSequence.toList
-          l.head :: l.tail.filter(x => x.health.status != HealthTracker.Status.Dead)
-        } else state.combatantSequence
+    val hideDead = director.getBooleanProperty(PanelDirector.property.HideDead)
+    val ncontent = if (hideDead && !state.elements.isEmpty) {
+      val l = state.elements.toList
+      l.head :: l.tail.filter(x => x.health.status != HealthTracker.Status.Dead)
+    } else state.elements.toList
 
-        table.content = ncontent
+    table.content = ncontent.toArray
 
-        //Adjust selection
-        if (ncontent.length > 0) {
-          val idx: Int = { // -1 means not found
-            val obj = if (target.isDefined) ncontent.find(x => x.id == target.get) else None
-            if (obj.isDefined) ncontent.indexOf(obj.get) else -1
-          }
-          if (idx == -1) { //Select first as active and second, if present as target
-            val defaultRow = if (ncontent.length > 1) 1 else 0
-            table.selection.rows += defaultRow
+    //Adjust selection
+    if (ncontent.length > 0) {
+      val idx: Int = { // -1 means not found
+        val obj = if (target.isDefined) ncontent.find(x => x.matches(target.get)) else None
+        if (obj.isDefined) ncontent.indexOf(obj.get) else -1
+      }
+      if (idx == -1) { //Select first as active and second, if present as target
+        val defaultRow = if (ncontent.length > 1) 1 else 0
+        table.selection.rows += defaultRow
 
-            //This has to fire later to make sure everyone gets the state update first.
-            SwingHelper.invokeLater {director.setTargetCombatant(Some(ncontent(defaultRow).id))}
-          } else {
-            //Just show the correct selection
-            table.selection.rows += (idx)
-          }
-        } else {
-          //Nothing to show set context accordingly
-          director.setTargetCombatant(None)
-        }
-    */
+        //This has to fire later to make sure everyone gets the state update first.
+        SwingHelper.invokeLater {director.setTargetCombatant(Some(ncontent(defaultRow).unifiedId))}
+      } else {
+        //Just show the correct selection
+        table.selection.rows += (idx)
+      }
+    } else {
+      //Nothing to show set context accordingly
+      director.setTargetCombatant(None)
+    }
     _changingState = false
   }
 
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (isTarget) {
       target = nctx
     } else {

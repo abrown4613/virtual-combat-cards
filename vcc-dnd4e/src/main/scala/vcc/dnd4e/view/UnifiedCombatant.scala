@@ -17,14 +17,48 @@
 //$Id$
 package vcc.dnd4e.view
 
-import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatantID, InitiativeTracker}
 import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.domain.tracker.common.{InitiativeOrderID, CombatantStateView, CombatantID, InitiativeTracker}
 
-case class UnifiedCombatant(combId: CombatantID,
-                            initiative: InitiativeTracker,
-                            combatant: CombatantStateView) {
+/**
+ * This identifier is used to search for UnifiedCombatant.
+ * @param combId A valid CombatantID, this is always present
+ * @param orderId An optional InitiativeOrderID that identifies the UnifiedCombatant as in initiative order, null if the
+ * combatant is not in the iniatitive order.
+ */
+case class UnifiedCombatantID(combId: CombatantID, orderId: InitiativeOrderID)
+
+/**
+ * This is a wrapper for the CombatantStateView with some simplifications to allow uniform access in the GUI components.
+ * All will have a combId, and if they belong to the InitiativeOrder they also have an Initiative.
+ * Several getter methods are provided to access the underlying CombatantStateView.
+ */
+class UnifiedCombatant(val combId: CombatantID,
+                       val initiative: InitiativeTracker,
+                       combatant: CombatantStateView) {
   def isCharacter = combatant.definition.entity.ctype == CombatantType.Character
 
   def health = combatant.healthTracker
+
+  def effects = combatant.effects
+
+  def comment = combatant.comment
+
+  def definition = combatant.definition
+
+  def name = combatant.definition.entity.name
+
+  def alias = combatant.definition.alias
+
+  def matches(ucid: UnifiedCombatantID) = ((ucid.combId == combId) && (ucid.orderId == orderId))
+
+  def unifiedId() = UnifiedCombatantID(combId, this.orderId())
+
+  def orderId(): InitiativeOrderID = if (initiative != null) initiative.orderID else null
+
+  def isInOrder() = (initiative != null)
+
+
+  override def toString(): String = "UnifiedCombatant(" + combId.id + "/" + (if (orderId != null) orderId.toLabelString else "nio") + ")"
 }
 

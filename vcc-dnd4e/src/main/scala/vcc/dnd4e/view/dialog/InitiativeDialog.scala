@@ -22,12 +22,11 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
 
-import vcc.util.DiceBag
 import scala.util.Sorting
 import vcc.dnd4e.view.PanelDirector
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.domain.tracker.common.{InitiativeDefinition}
 
-class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDialog[Seq[CombatantID]](window, "Roll Initiative") {
+class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDialog[List[InitiativeDefinition]](window, "Roll Initiative") {
   val initTable = new vcc.util.swing.ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
   val table = new EnhancedTable {
     model = initTable
@@ -50,10 +49,11 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
   minimumSize = new java.awt.Dimension(360, 400)
 
   initTable.content = Sorting.stableSort[InitiativeDialogEntry](
-    director.currentState.combatantsNotInOrder.map(id => director.currentState.combatantViewFromID(id)).map(cmb => new InitiativeDialogEntry(cmb.definition.cid, cmb.definition.entity.name, cmb.definition.entity.initiative, 0, false)).toList,
+    director.currentState.elements.map(cmb => new InitiativeDialogEntry(cmb.combId, cmb.name, cmb.definition.entity.initiative, 0, false)).toList,
     (a: InitiativeDialogEntry, b: InitiativeDialogEntry) => {a.id.id < b.id.id}).toSeq
 
   def processOK() {
+    //FIXME Initiative rolling has to be remade
     dialogResult = Some(helper.InitiativeRoller.rollInitiative(groupCheckbox.selected, initTable.content.toList))
   }
 }

@@ -34,9 +34,9 @@ class CommentPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel(
     enabled = false
   }
 
-  private var context: Option[CombatantID] = None
+  private var context: Option[UnifiedCombatantID] = None
 
-  private var state: CombatState = director.currentState
+  private var state = director.currentState
 
   xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
 
@@ -67,11 +67,11 @@ class CommentPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel(
   private def sendChange() {
     if (_hasChanged) {
       _hasChanged = false
-      director requestAction SetComment(context.get, edit.text)
+      director requestAction SetComment(context.get.combId, edit.text)
     }
   }
 
-  def changeContext(nctx: Option[CombatantID], isTarget: Boolean) {
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (this.isTarget == isTarget) {
       if (_hasChanged) sendChange()
       context = nctx
@@ -81,17 +81,16 @@ class CommentPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel(
 
   }
 
-  private def updateCombatant(nctx: Option[CombatantID]) {
+  private def updateCombatant(nctx: Option[UnifiedCombatantID]) {
     _updating = true
-    //TODO Move to simpler in unified combatant
-    edit.text = if (context.isDefined && state.roster.isDefinedAt(context.get)) state.combatantViewFromID(context.get).comment else ""
+    val comb = state.combatantOption(context)
+    edit.text = if (comb.isDefined) comb.get.comment else ""
     _updating = false
   }
 
-  def combatStateChanged(newState: CombatState, uv: Array[UnifiedCombatant], changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    //TODO Move to simpler in unified combatant
-    if (context.isDefined && changes.changesTo(context.get).contains(StateChange.combatant.Comment)) {
+    if (context.isDefined && changes.changesTo(context.get.combId).contains(StateChange.combatant.Comment)) {
       updateCombatant(context)
     }
   }
