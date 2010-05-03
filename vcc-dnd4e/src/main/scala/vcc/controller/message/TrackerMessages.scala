@@ -32,7 +32,9 @@ case class ClearTransactionLog() extends TrackerControlMessage
 case class Undo() extends TrackerControlMessage
 case class Redo() extends TrackerControlMessage
 
-//TODO Move ChangeNotification to this file and make publisher always return a TrackerChanged
-// Fix this after stripping the old tracker logic
+/**
+ * Send by tracker to observer to mark the end of a transaction.
+ * @param changes Changes that happend in the observable state of the tracker.
+ */
 case class TrackerChanged(changes: List[ChangeNotification])
 

@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 //$Id$
 package vcc.controller
 
 
-import message.TransactionalAction
+import message.{TrackerChanged, TransactionalAction}
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
@@ -47,7 +46,7 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       case DummyAction('TWICE) => Seq(DummyAction('DOIT), DummyAction('DOIT))
     }
 
-    def publish(changes: Seq[ChangeNotification]): Any = changes.toList
+    def publish(changes: Seq[ChangeNotification]): TrackerChanged = TrackerChanged(changes.toList)
   }
   val aSource = mock[CommandSource]
 
@@ -83,6 +82,4 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       there was one(mQueue).clear()
     }
   }
-
-
 }

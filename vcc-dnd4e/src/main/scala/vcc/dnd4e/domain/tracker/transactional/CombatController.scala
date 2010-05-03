@@ -28,7 +28,7 @@ import vcc.controller.message.{TrackerChanged, TransactionalAction}
  * simply cast all objects to the CombatStateChange and make sure every changes was accounted for.
  */
 trait TrackerControllerValidatingPublisher {
-  def publish(changes: Seq[ChangeNotification]): Any = {
+  def publish(changes: Seq[ChangeNotification]): TrackerChanged = {
     val c: Seq[CombatStateChange] = for (change <- changes if (change.isInstanceOf[CombatStateChange])) yield {
       change.asInstanceOf[CombatStateChange]
     }

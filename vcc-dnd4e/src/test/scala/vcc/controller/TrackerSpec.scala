@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@ object TrackerSpec extends Specification with Mockito {
     override def scheduler = new scala.actors.SingleThreadedScheduler
   }
 
+  case class MyChange(msg: String) extends ChangeNotification
+
   tracker.start
 
   "Tracker" should {
@@ -47,7 +49,6 @@ object TrackerSpec extends Specification with Mockito {
       val src = mock[CommandSource]
 
       tracker ! Command(src, msg)
-      //waitActorComplete(tracker)
 
       there was one(mController).dispatch(any[Transaction], refEq(src), refEq(msg))
     }
@@ -80,7 +81,7 @@ object TrackerSpec extends Specification with Mockito {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
-      mController.publish(Nil) returns 10
+      mController.publish(Nil) returns TrackerChanged(List(MyChange("10")))
 
       tracker ! Command(src, msg)
 
@@ -127,12 +128,12 @@ object TrackerSpec extends Specification with Mockito {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
-      mController.publish(new ArrayBuffer()) returns 11
+      mController.publish(new ArrayBuffer()) returns TrackerChanged(List(MyChange("11")))
 
       tracker ! Command(src, msg)
 
       there was one(mController).publish(new ArrayBuffer()) //This is needed since there are boxing issues in this
-      there was one(mObserver) ! 11
+      there was one(mObserver) ! TrackerChanged(List(MyChange("11")))
     }
 
     "silently do nothing if roll forward is out of bounds not publishing" in {
@@ -148,22 +149,22 @@ object TrackerSpec extends Specification with Mockito {
       mLog.rollforward(tracker) answers {
         pub => pub.asInstanceOf[TransactionChangePublisher].publishChange(new ArrayBuffer)
       }
-      mController.publish(new ArrayBuffer()) returns "Rolled forward"
+      mController.publish(new ArrayBuffer()) returns TrackerChanged(List(MyChange("Rolled forward")))
       tracker ! Redo()
 
       there was one(mLog).rollforward(tracker)
-      there was one(mObserver) ! "Rolled forward"
+      there was one(mObserver) ! TrackerChanged(List(MyChange("Rolled forward")))
     }
 
     "ask TransactionLog to Undo and publish " in {
       mLog.rollback(tracker) answers {
         pub => pub.asInstanceOf[TransactionChangePublisher].publishChange(new ArrayBuffer)
       }
-      mController.publish(new ArrayBuffer()) returns "Rolled back"
+      mController.publish(new ArrayBuffer()) returns TrackerChanged(List(MyChange("Rolled back")))
       tracker ! Undo()
 
       there was one(mLog).rollback(tracker)
-      there was one(mObserver) ! "Rolled back"
+      there was one(mObserver) ! TrackerChanged(List(MyChange("Rolled back")))
     }
 
     "silently do nothing if roll back is out of bounds not publishing " in {
