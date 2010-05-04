@@ -72,10 +72,9 @@ trait InitiativeActionHandler {
     case a@MoveBefore(context.initTrackerFromID(who), context.initTrackerFromID(whom)) =>
       if (!rules.canMoveBefore(context, who.orderID, whom.orderID))
         throw new IllegalActionException("Cant move " + who + " before " + whom)
-      val curOrder = context.order.getIDsInOrder()
-      context.order.moveBefore(who.orderID, whom.orderID)
       // Advance to second if first moved out (you must have 2 elements because of the rules.canMoveBefore
-      if (who.orderID == curOrder.head) context.order.setRobinHead(curOrder(1))
+      if (who.orderID == context.order.robinHeadInitiativeTracker.orderID) context.order.rotate()
+      context.order.moveBefore(who.orderID, whom.orderID)
 
   }
 }
