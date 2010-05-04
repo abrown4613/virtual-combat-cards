@@ -381,34 +381,37 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     }
 
     "move if it is allowed" in {
-      //This means that move befora acting will place you in last
+      //This means that move before acting will place you in last
       mRules.canMoveBefore(rState, ioa, iob) returns true
       setMockInitiativeTracker(ioa, state.Waiting)
       setMockInitiativeTracker(iob, state.Waiting)
-      mOrder.getIDsInOrder returns List(iob, ioa, ioc)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, InitiativeTracker.state.Waiting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, MoveBefore(ioa, iob))
 
+      there was one(mOrder).robinHeadInitiativeTracker()
       there was one(mOrder).moveBefore(ioa, iob)(trans)
-      there was one(mOrder).getIDsInOrder
+      there was no(mOrder).getIDsInOrder
       there was no(mOrder).setRobinHead(ioa)(trans)
       there was no(mOrder).setRobinHead(iob)(trans)
       there was no(mOrder).setRobinHead(ioc)(trans)
     }
 
-    "move to second if moving non acting first to another position" in {
+    "advance to second if moving non acting first to another position" in {
       mRules.canMoveBefore(rState, ioa, iob) returns true
       setMockInitiativeTracker(ioa, state.Waiting)
       setMockInitiativeTracker(iob, state.Waiting)
-      mOrder.getIDsInOrder returns List(ioa, ioc, iob)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, InitiativeTracker.state.Waiting)
 
       val trans = new Transaction()
 
       aController.dispatch(trans, mSource, MoveBefore(ioa, iob))
 
-      there was one(mOrder).moveBefore(ioa, iob)(trans)
-      there was one(mOrder).setRobinHead(ioc)(trans)
+      //Since first is moving, advance to next then move
+      there was one(mOrder).robinHeadInitiativeTracker()
+      there was one(mOrder).rotate()(trans) then
+              one(mOrder).moveBefore(ioa, iob)(trans)
     }
   }
 
