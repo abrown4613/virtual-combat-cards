@@ -18,16 +18,20 @@
 package vcc.util.swing
 
 import scala.swing._
-import javax.swing.{AbstractListModel, ComboBoxModel}
+import javax.swing._
+
+
+/**
+ * This is the base type for all typed ComboBoxModels
+ */
+trait TypedComboBoxModel[T] extends AbstractListModel with ComboBoxModel
 
 /**
  * Model for ComboBox, it allows update to the contents via properties.
  * @param iv Initial value for the contents of the model
  * @param format A function that returns a string based on the value of A.
  */
-class ContainerComboBoxModel[A](iv: Seq[A], format: A => String) extends AbstractListModel with ComboBoxModel {
-  def this(iv: Seq[A]) = this (iv, null)
-
+class ContainerComboBoxModel[A](iv: Seq[A]) extends TypedComboBoxModel[A] {
   var entries: Seq[A] = iv
 
   private var selected: A = if (entries.isEmpty) null.asInstanceOf[A] else entries(0)
@@ -36,7 +40,7 @@ class ContainerComboBoxModel[A](iv: Seq[A], format: A => String) extends Abstrac
 
   def setSelectedItem(a: Any) {selected = a.asInstanceOf[A]}
 
-  def getElementAt(n: Int) = (if (format != null) format(entries(n)) else entries(n)).asInstanceOf[AnyRef]
+  def getElementAt(n: Int) = entries(n).asInstanceOf[AnyRef]
 
   def getSize = entries.length
 
@@ -50,11 +54,28 @@ class ContainerComboBoxModel[A](iv: Seq[A], format: A => String) extends Abstrac
 }
 
 /**
+ * Renders a JList cell using a label that prints out what ever was returned by the format function.
+ * @param format Returns the visual string for an object of type T
+ */
+class StringFormatListCellRenderer[T](format: T => String) extends JLabel with ListCellRenderer {
+  def getListCellRendererComponent(model: JList, obj: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean) = {
+    if (obj != null) setText(format(obj.asInstanceOf[T]))
+    this
+  }
+}
+
+/**
  * This sub class of scala.swing.ComboBox is designed to be constructed based on a model
  * and not on a list. This allows model to be changed externally.
  */
-class ExplicitModelComboBox[T](mdl: javax.swing.ComboBoxModel) extends ComboBox[T](Nil) {
-  import javax.swing._
+class ExplicitModelComboBox[T](mdl: TypedComboBoxModel[T]) extends ComboBox[T](Nil) {
   override lazy val peer: JComboBox = new JComboBox(mdl) with SuperMixin
+
+  /**
+   * Defined the format renderer to be used with the ComboBox
+   */
+  def setFormatRenderer(fr: StringFormatListCellRenderer[T]) {
+    peer.asInstanceOf[JComboBox].setRenderer(fr)
+  }
 
 }

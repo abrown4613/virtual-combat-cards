@@ -22,9 +22,9 @@ import scala.swing.event._
 import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.domain.tracker.common.Command._
-import vcc.util.swing.{MigPanel, KeystrokeContainer, KeystrokeBinder, ClickButtonAction, ExplicitModelComboBox, ContainerComboBoxModel}
 import vcc.infra.docking._
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState}
+import vcc.util.swing._
 
 class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hidemode 3", "[20%,fill][40%,fill][40%,fill]", "")
         with CombatStateObserver with ContextObserver with ScalaDockableComponent with KeystrokeContainer
@@ -49,8 +49,9 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
   firstLabel.horizontalAlignment = scala.swing.Alignment.Right
   private val targetLabel = new Label("Target can:")
   targetLabel.horizontalAlignment = scala.swing.Alignment.Right
-  private val candidateBefore = new ContainerComboBoxModel[InitiativeOrderID](Nil, o => o.toLabelString)
+  private val candidateBefore = new ContainerComboBoxModel[InitiativeOrderID](Nil)
   private val before_Combo = new ExplicitModelComboBox[InitiativeOrderID](candidateBefore)
+  before_Combo.setFormatRenderer(new StringFormatListCellRenderer(o => o.toLabelString))
 
   moveBefore_btn.tooltip = "Move select combatant to a position before the combatant selected on the combo box to the left"
 
