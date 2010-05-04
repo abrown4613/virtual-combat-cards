@@ -37,7 +37,9 @@ case class CombatantID(id: String) {
 case class InitiativeOrderID(val combId: CombatantID, val seq: Int) {
   override def toString(): String = "InitiativeOrderID(" + combId.id + ":" + seq + ")"
 
-  def toLabelString(): String = combId.id + ":" + seq
+  def toLabelString(): String = combId.id + (if (seq < 4) superscript(seq) else ":" + seq)
+
+  final private val superscript = "º¹²³"
 }
 
 /**
