@@ -23,14 +23,26 @@ import vcc.dnd4e.domain.tracker.snapshot.CombatState
 import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
-import vcc.dnd4e.view.{UnifiedCombatantID, UnifiedCombatant}
+import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
 
-class CombatantStateTableColorer(var acting: Option[UnifiedCombatantID]) extends ProjectionTableLabelFormatter[UnifiedCombatant] {
+class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCombatant] {
   import java.awt.Color
 
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
   private val cellFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, fontSize)
   private val cellFontBold = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, fontSize)
+
+  private var acting: Option[UnifiedCombatantID] = None
+
+  def updateActing(nctx: Option[UnifiedCombatantID]) {
+    acting = nctx
+  }
+
+  private var nextUp: Option[UnifiedCombatantID] = None
+
+  def updateNextUp(next: Option[UnifiedCombatant]) {
+    nextUp = if (next.isDefined) Some(next.get.unifiedId) else None
+  }
 
   // Pair[Color,Color]  where (background,foreground)
   private val grayed = (Color.LIGHT_GRAY, Color.BLACK)
@@ -54,7 +66,12 @@ class CombatantStateTableColorer(var acting: Option[UnifiedCombatantID]) extends
     var is = if (cmb.initiative != null) cmb.initiative.state else null
     var hs = cmb.health.status
     val normalBack = if (cmb.isCharacter) charBackground else normal
-    label.setFont(if (acting.isDefined && acting.get == cmb.unifiedId) cellFontBold else cellFont)
+    label.setFont(if (cmb.matches(acting)) cellFontBold else cellFont)
+
+
+    if (col == 1 && cmb.matches(nextUp)) label.setIcon(IconLibrary.ActionGO)
+    else label.setIcon(null)
+
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     setColor(label, col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
@@ -75,8 +92,5 @@ class CombatantStateTableColorer(var acting: Option[UnifiedCombatantID]) extends
     })
   }
 
-  def updateActing(nctx: Option[UnifiedCombatantID]) {
-    acting = nctx
-  }
 }
 

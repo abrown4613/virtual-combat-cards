@@ -30,7 +30,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
         with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
   //Init
   val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
-    val labelFormatter = new CombatantStateTableColorer(None)
+    val labelFormatter = new CombatantStateTableColorer()
     projection = new ProjectionTableModel[UnifiedCombatant](view.tabular.CombatantStateProjection)
     autoResizeMode = Table.AutoResizeMode.Off
     selection.intervalMode = Table.IntervalMode.Single
@@ -91,8 +91,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     ) {
       updateContent()
       //On a sequence change
-      //TODO this is not a good indication of a sequence change now
-      if (changes.changes.contains(StateChange.combat.Order)) {
+      if (changes.changes.contains(StateChange.combat.Order) && changes.changes.contains(StateChange.combat.Roster)) {
         val newfirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
@@ -103,12 +102,12 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     _changingState = true
     val hideDead = director.getBooleanProperty(PanelDirector.property.HideDead)
     val ncontent = if (hideDead && !state.elements.isEmpty) {
-      val l = state.elements.toList
-      l.head :: l.tail.filter(x => x.health.status != HealthTracker.Status.Dead)
-    } else state.elements.toList
+      state.elements.filter(c => c.health.status != HealthTracker.Status.Dead || (state.orderFirst.isDefined && c.matches(state.orderFirst.get)))
+    } else state.elements
 
-    table.content = ncontent.toArray
+    table.content = ncontent
 
+    table.labelFormatter.updateNextUp(state.orderFirst)
     //Adjust selection
     if (ncontent.length > 0) {
       val idx: Int = { // -1 means not found
