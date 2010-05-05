@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,10 +37,6 @@ object Monster {
     def extractGroup(dontcare: String) = Nil
   }
 
-  //TODO: This is an ugly hack. Need to make this nicer.
-  @deprecated
-  private final val imageMap = Map(Parser.IconType.imageDirectory.map(x => (x._2, x._1)).toSeq: _*)
-
   case class PowerDescriptionSupplement(emphasis: String, text: String) extends StatBlockDataSource {
     def extract(key: String): Option[String] = {
       val s: String = key.toUpperCase match {
@@ -63,7 +59,6 @@ object Monster {
         case "NAME" => name
         case "DESCRIPTION" => description
         case "ACTION" => action
-        //FIXME
         case "TYPE" if (icon != null && !icon.isEmpty) =>
           icon.map(i => Parser.IconType.iconToImage(i)).mkString(";")
         case "KEYWORDS" => keywords

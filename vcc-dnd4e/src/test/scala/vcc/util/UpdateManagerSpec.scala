@@ -29,19 +29,19 @@ class UpdateManagerTest extends JUnit4(UpdateManagerSpec)
 object UpdateManagerSpec extends Specification {
   "UpdateManager Version" should {
     "read form string 1.2.3-RC" in {
-      Version.fromString("1.2.3-RC") must_== Version(1,2,3,"RC")
+      Version.fromString("1.2.3-RC") must_== Version(1, 2, 3, "RC")
     }
 
     "read form string 1.2.3" in {
-      Version.fromString("1.2.3") must_== Version(1,2,3,null)
+      Version.fromString("1.2.3") must_== Version(1, 2, 3, null)
     }
 
     "read form string 1.2" in {
-      Version.fromString("1.2") must_== Version(1,2,0,null)
+      Version.fromString("1.2") must_== Version(1, 2, 0, null)
     }
 
     "read form string 1.2-SNAPSHOT" in {
-      Version.fromString("1.2-SNAPSHOT") must_== Version(1,2,0,"SNAPSHOT")
+      Version.fromString("1.2-SNAPSHOT") must_== Version(1, 2, 0, "SNAPSHOT")
     }
 
     "not accept strang string" in {
@@ -49,7 +49,7 @@ object UpdateManagerSpec extends Specification {
     }
 
     "reject non version XML" in {
-      Version.fromVersionFileFromStream(new ByteArrayInputStream("<va>1.2</va>".getBytes)) must beNull    
+      Version.fromVersionFileFromStream(new ByteArrayInputStream("<va>1.2</va>".getBytes)) must_== UpdateManager.NotFoundVersion
     }
 
     "read from a version file" in {
@@ -57,7 +57,7 @@ object UpdateManagerSpec extends Specification {
     }
 
     "throw exception on strange file" in {
-      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/Main.class")) must beNull
+      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/Main.class")) must_== UpdateManager.NotFoundVersion
     }
   }
 }
