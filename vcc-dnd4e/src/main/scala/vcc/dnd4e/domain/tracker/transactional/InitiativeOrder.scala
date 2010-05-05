@@ -39,8 +39,6 @@ class InitiativeOrder {
           UndoableWithCallback[InitiativeOrderID] {
     def restoreCallback(oldValue: InitiativeOrderID) {
       if (oldValue != null) robin.advanceTo(oldValue)
-      println(robin)
-      println("HEAD **** " + robin.headOption)
     }
   }
 
