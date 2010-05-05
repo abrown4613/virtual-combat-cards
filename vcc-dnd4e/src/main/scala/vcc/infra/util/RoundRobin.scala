@@ -29,7 +29,7 @@ trait RoundRobin[T] {
   def advance() {
     if (!robin.isEmpty) {
       headIdx += 1
-      if (headIdx > robin.length) headIdx = 0
+      if (headIdx >= robin.length) headIdx = 0
     }
   }
 

@@ -82,6 +82,13 @@ object RoundRobinSpec extends Specification {
       roundRobin.headOption must_== Some('A)
     }
 
+    "wrap around and advance " in {
+      roundRobin.advance()
+      roundRobin.advance()
+      roundRobin.advance()
+      roundRobin.headOption must_== Some('B)
+    }
+
     "provide a linear read from a advanced head" in {
       roundRobin.advance()
       roundRobin.length must_== 2
