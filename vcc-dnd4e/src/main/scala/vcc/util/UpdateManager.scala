@@ -52,6 +52,8 @@ object UpdateManager {
     }
   }
 
+  val NotFoundVersion = Version(0, 0, 0, "NotFound")
+
   object Version {
     private val fullVersion = """(\d+)\.(\d+)\.(\d+)(\-\w+)?""".r
     private val partialVersion = """(\d+)\.(\d+)(\-\w+)?""".r
@@ -77,9 +79,9 @@ object UpdateManager {
     def fromVersionFileFromStream(resource: InputStream): Version = {
       try {
         val vxml = XML.load(new InputSource(resource))
-        if(vxml.label == "version") this.fromString(vxml.text) else null
+        if (vxml.label == "version") this.fromString(vxml.text) else NotFoundVersion
       } catch {
-        case _ => null
+        case _ => NotFoundVersion
       }
     }
   }
@@ -93,8 +95,6 @@ object UpdateManager {
    * @param info URL to release note
    */
   case class Release(version: Version, download: URL, md5: String, info: URL)
-
-  //TODO: Maybe get all the release information, since this could be used for a controlled download
 
   /**
    * Collect version information from a stream, which should point to a XML file. This

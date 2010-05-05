@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
+//$Id$
 
 package vcc.domain.dndi
 
-import scala.xml.{Elem, Node, Text}
+import scala.xml.{Node, Text}
 
 trait StatBlockDataSource {
   def extract(string: String): Option[String]
@@ -29,6 +27,8 @@ trait StatBlockDataSource {
 }
 
 object StatBlockBuilder {
+  val xmlLineBreak = scala.xml.Text("\n")
+
   abstract class Chunk {
     def render(source: StatBlockDataSource): Seq[Node]
 
@@ -41,7 +41,7 @@ object StatBlockBuilder {
   }
 
   object Break extends Chunk {
-    def render(source: StatBlockDataSource) = Seq(<br/>)
+    def render(source: StatBlockDataSource) = Seq(<br/>, xmlLineBreak)
   }
 
   abstract class PartFormatter(key: String) extends Chunk {
@@ -120,15 +120,15 @@ object StatBlockBuilder {
   case class Line(parts: Chunk*) extends Chunk {
     override def render(source: StatBlockDataSource) = {
       val s = formatChunks(source)(parts: _*)
-      if (!s.isEmpty) (s ++ <br/>)
+      if (!s.isEmpty) (s ++ <br/> ++ xmlLineBreak)
       else s
     }
   }
 
   case class Para(pclass: String, parts: Chunk*) extends Chunk {
-    override def render(source: StatBlockDataSource) = (<p class={pclass}>
+    override def render(source: StatBlockDataSource) = Seq(<p class={pclass}>
       {formatChunks(source)(parts: _*)}
-    </p>)
+    </p>, xmlLineBreak)
   }
 
   case class Div(divClass: String, parts: Chunk*) extends Chunk {
@@ -190,7 +190,7 @@ object MonsterStatBlockBuilder extends StatBlockBuilder {
 
   private val powerBlock = Seq(
     Para("flavor alt", ImageMap("Type"), BoldFormat("Name", true), TextFormat("Action", true), IfDefined("Keywords", Image("x.gif"), BoldFormat("Keywords", true))),
-    Para("flavorIndent", MultiLineFormat("Description")), //TODO Handle line break for beholder
+    Para("flavorIndent", MultiLineFormat("Description")),
     Group("POWER DESCRIPTION SUPPLEMENT", Para("flavor", EmphasisFormat("header", false)), Para("flavorIndent", TextFormat("description", false)))
     )
 
