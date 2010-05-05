@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,21 +18,23 @@
 package vcc.dnd4e.view
 
 import javax.swing.ImageIcon
+import vcc.infra.AbnormalEnd
 
 /**
- * This is a collection of images loaded for the view compoents.
+ * This is a collection of images loaded for the view components.
  */
 object IconLibrary {
-  protected def loadIcon(resource:String):ImageIcon = {
-    val url=this.getClass.getResource(resource)
-    if(url!=null) {
-      val icon=new ImageIcon(url)
+  protected def loadIcon(resource: String): ImageIcon = {
+    val url = this.getClass.getResource(resource)
+    if (url != null) {
+      val icon = new ImageIcon(url)
       icon
     } else {
-      println("Failed to load resource: "+resource)
-      exit(1)
+      AbnormalEnd(this, "Failed to load resource: " + resource)
     }
   }
- 
+
   val MetalD20 = loadIcon("/vcc/dnd4e/images/d20metal.png")
+
+  val ActionGO = loadIcon("/vcc/dnd4e/images/action_go.gif")
 }

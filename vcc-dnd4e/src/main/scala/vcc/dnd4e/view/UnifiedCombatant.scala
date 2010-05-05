@@ -52,6 +52,10 @@ class UnifiedCombatant(val combId: CombatantID,
 
   def matches(ucid: UnifiedCombatantID) = ((ucid.combId == combId) && (ucid.orderId == orderId))
 
+  def matches(opt: Option[UnifiedCombatantID]): Boolean = if (opt.isDefined) this.matches(opt.get) else false
+
+  def matches(uc: UnifiedCombatant) = (uc.combId == combId) && (uc.orderId == orderId)
+
   def unifiedId() = UnifiedCombatantID(combId, this.orderId())
 
   def orderId(): InitiativeOrderID = if (initiative != null) initiative.orderID else null
