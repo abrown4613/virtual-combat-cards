@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 package vcc.infra
 
@@ -23,9 +23,8 @@ import org.slf4j.{Logger => SLogger}
 import vcc.infra.startup.StartupStep
 
 object LogService extends StartupStep {
-  
-  private val inDebugMode = (System.getProperty("vcc.console")!=null)
-  
+  private val inDebugMode = (System.getProperty("vcc.console") != null)
+
   object level extends Enumeration {
     val Debug = Value("DEBUG")
     val Info = Value("INFO")
@@ -33,62 +32,62 @@ object LogService extends StartupStep {
     val Error = Value("ERROR")
     val Fatal = Value("FATAL")
     val Off = Value("OFF")
-    
+
   }
-  
-  protected val mapToLog4J = Map[level.Value,Level](
+
+  protected val mapToLog4J = Map[level.Value, Level](
     level.Debug -> Level.DEBUG,
     level.Info -> Level.INFO,
     level.Warn -> Level.WARN,
     level.Error -> Level.ERROR,
     level.Fatal -> Level.FATAL,
     level.Off -> Level.OFF
-  )
-  
-  def initializeLog(contexts:Seq[String], filename:String, defaultLevel: level.Value, keep: Boolean) {
+    )
+
+  def initializeLog(contexts: Seq[String], filename: String, defaultLevel: level.Value, keep: Boolean) {
     val logger = org.slf4j.LoggerFactory.getLogger("startup")
-	val fmt = new org.apache.log4j.TTCCLayout()
-	
-    val apdr = if(keep) {
-      val lr = new RollingFileAppender(fmt,filename)
+    val fmt = new org.apache.log4j.TTCCLayout()
+
+    val apdr = if (keep) {
+      val lr = new RollingFileAppender(fmt, filename)
       lr.setMaxBackupIndex(10)
       lr.rollOver
       lr
-	} else {
-	  new FileAppender(fmt,filename,false)
-	}
-    logger.info("Logging to {}",filename)
-	for(context <- contexts) {
-      if(LogManager.exists(context) == null) {
-	    val log = Logger.getLogger(context)
-	    
-	    val lvl = level.valueOf(System.getProperty("vcc.log."+context)) match {
-	    			  case None => defaultLevel
-	    			  case Some(l) => l
-	    		}
-	    logger.debug("Log level for {} is {}",context,lvl)
+    } else {
+      new FileAppender(fmt, filename, false)
+    }
+    logger.info("Logging to {}", filename)
+    for (context <- contexts) {
+      if (LogManager.exists(context) == null) {
+        val log = Logger.getLogger(context)
+
+        val lvl = level.valueOf(System.getProperty("vcc.log." + context)) match {
+          case None => defaultLevel
+          case Some(l) => l
+        }
+        logger.debug("Log level for {} is {}", context, lvl)
         log.setLevel(mapToLog4J(lvl))
 
-        if(inDebugMode) {
+        if (inDebugMode) {
           log.addAppender(new ConsoleAppender(fmt))
         }
         log.addAppender(apdr)
       }
-	}
+    }
     logger.warn("Hello")
   }
-  
+
   def initializeStartupLog() {
     val context = "startup"
-    
-    if(LogManager.exists(context) == null) {
-	  val log = Logger.getLogger(context)
-	  log.setLevel(Level.DEBUG)
-	  if(inDebugMode) log.addAppender(new ConsoleAppender(new SimpleLayout()))
-	  log.addAppender(new FileAppender(new SimpleLayout(),"launch.log",false))
-	}
+
+    if (LogManager.exists(context) == null) {
+      val log = Logger.getLogger(context)
+      log.setLevel(Level.DEBUG)
+      if (inDebugMode) log.addAppender(new ConsoleAppender(new SimpleLayout()))
+      log.addAppender(new FileAppender(new SimpleLayout(), "launch.log", false))
+    }
   }
-  
+
   def isStartupComplete = LogManager.exists("infra") != null
 }
 
@@ -99,19 +98,19 @@ object LogService extends StartupStep {
  */
 object AbnormalEnd {
   import java.io._
-  
-  def apply(obj:AnyRef, msg:String):Nothing = apply(obj,msg,new Exception("Placeholder"))
-  
-  def apply(obj: AnyRef, msg:String,e:Throwable):Nothing = {
-    def outputMessage(os:PrintStream) {
-      os.println("VCC has ended abnormally, this is most likely due to a program failure")
-      if(obj != null) os.println("Reporting object: "+obj.getClass.getCanonicalName)
-      os.println("Message: "+msg)
-      if(e!=null) e.printStackTrace(os)
+
+  def apply(obj: AnyRef, msg: String): Nothing = apply(obj, msg, null)
+
+  def apply(obj: AnyRef, msg: String, e: Throwable): Nothing = {
+    def outputMessage(os: PrintStream) {
+      os.println("VCC has ended abnormally, this is most likely due to a invalid build")
+      if (obj != null) os.println("Reporting object: " + obj.getClass.getCanonicalName)
+      os.println("Message: " + msg)
+      if (e != null) e.printStackTrace(os)
     }
     try {
       val out = new PrintStream(new FileOutputStream(new File("abort.log")))
-      if(out!=null) outputMessage(out)
+      if (out != null) outputMessage(out)
       out.close()
     }
     outputMessage(System.err)
