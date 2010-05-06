@@ -18,7 +18,7 @@
 
 package vcc.dnd4e.view
 
-import helper.{DontCareReserveViewBuilder, DirectInitiativeOrderViewBuilder, UnifiedCombatantArrayBuilder}
+import helper.{DontCareReserveViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
@@ -74,14 +74,15 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
 
   def currentState = unifiedTable
 
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
+
   //Init code
   csm.addChangeObserver(this)
 
   def snapshotChanged(newState: CombatStateWithChanges) {
     //newState.prettyPrint()
     SwingHelper.invokeInEventDispatchThread {
-      val uv = UnifiedCombatantArrayBuilder.buildList(newState.state, DirectInitiativeOrderViewBuilder, DontCareReserveViewBuilder)
-      unifiedTable = new UnifiedSequenceTable(uv, newState.state)
+      unifiedTable = UnifiedSequenceTable.buildList(newState.state, DirectInitiativeOrderViewBuilder, DontCareReserveViewBuilder)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable, newState.changes))
     }
   }
@@ -145,8 +146,10 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   }
 
   def actionCompleted(msg: String) {
+    logger.info("Executed: " + msg)
   }
 
   def actionCancelled(reason: String) {
+    logger.warn("Failed to execute action, reason: " + reason)
   }
 }

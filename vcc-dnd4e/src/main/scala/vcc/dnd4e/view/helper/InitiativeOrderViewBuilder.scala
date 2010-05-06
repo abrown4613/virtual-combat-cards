@@ -19,7 +19,6 @@ package vcc.dnd4e.view.helper
 
 import vcc.dnd4e.domain.tracker.snapshot.CombatState
 import vcc.dnd4e.domain.tracker.common._
-import vcc.dnd4e.view.UnifiedCombatant
 
 trait InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID]
@@ -38,18 +37,5 @@ object DontCareReserveViewBuilder extends ReserveViewBuilder {
 object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
     combatState.order
-  }
-}
-
-/**
- * This service object will used a ReserveViewBuilder and a InitiativeOrderViewBuilder to build a unified array with all
- * the combatant in a single Array.
- */
-object UnifiedCombatantArrayBuilder {
-  //TODO Maybe fold this into UnifiedSequenceTable
-  def buildList(combatState: CombatState, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): Array[UnifiedCombatant] = {
-    val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
-    val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
-    (order ++ reserve).toArray
   }
 }
