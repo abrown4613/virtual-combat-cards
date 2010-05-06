@@ -56,12 +56,13 @@ class UnifiedCombatant(val combId: CombatantID,
 
   def matches(uc: UnifiedCombatant) = (uc.combId == combId) && (uc.orderId == orderId)
 
+  def matches(oid: InitiativeOrderID): Boolean = (oid != null) && (orderId == oid)
+
   def unifiedId() = UnifiedCombatantID(combId, this.orderId())
 
   def orderId(): InitiativeOrderID = if (initiative != null) initiative.orderID else null
 
   def isInOrder() = (initiative != null)
-
 
   override def toString(): String = "UnifiedCombatant(" + combId.id + "/" + (if (orderId != null) orderId.toLabelString else "nio") + ")"
 }
