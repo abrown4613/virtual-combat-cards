@@ -95,6 +95,9 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
         val newfirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
+      if (changes.changes.contains(StateChange.combat.OrderFirst)) {
+        SwingHelper.invokeLater {director.setActiveCombatant(state.orderFirstId)}
+      }
     }
   }
 
@@ -109,7 +112,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
 
     table.labelFormatter.updateNextUp(state.orderFirst)
     //Adjust selection
-    if (ncontent.length > 0) {
+    if (!ncontent.isEmpty) {
       val idx: Int = { // -1 means not found
         val obj = if (target.isDefined) ncontent.find(x => x.matches(target.get)) else None
         if (obj.isDefined) ncontent.indexOf(obj.get) else -1
@@ -119,7 +122,9 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
         table.selection.rows += defaultRow
 
         //This has to fire later to make sure everyone gets the state update first.
-        SwingHelper.invokeLater {director.setTargetCombatant(Some(ncontent(defaultRow).unifiedId))}
+        SwingHelper.invokeLater {
+          director.setTargetCombatant(Some(ncontent(defaultRow).unifiedId))
+        }
       } else {
         //Just show the correct selection
         table.selection.rows += (idx)
