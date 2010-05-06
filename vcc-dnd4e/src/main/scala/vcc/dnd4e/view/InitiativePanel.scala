@@ -125,9 +125,11 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
       executeReady_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, comb.orderId, InitiativeTracker.action.ExecuteReady)
 
       //Get possible combatant to move before
-      val before = combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map {c => c.orderId}
+      val before: Seq[InitiativeOrderID] = if (comb.isInOrder)
+        combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map {c => c.orderId}
+      else
+        Seq()
       candidateBefore.contents = before
-      before_Combo.selection.index = -1
       moveBefore_btn.enabled = !before.isEmpty
 
       toggleFirstButton(endRound_btn.enabled)
@@ -137,9 +139,12 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
       }
       toggleFirstButton(false)
     }
-    firstLabel.text = if (_first != null) "[" + _first.name + "] can:" else "First can:"
-    targetLabel.text = if (context.isDefined) "[" + context.get.name + "] can:" else "Target can:"
-    moveLabel.text = if (context.isDefined) "Move [ " + context.get.name + " ] before:" else "Move target before:"
+
+    val selectedId: String = if (context.isDefined && context.get.isInOrder) context.get.orderId.toLabelString else null
+
+    firstLabel.text = if (_first != null && _first.isInOrder) "[" + _first.orderId.toLabelString + "] can:" else "First can:"
+    targetLabel.text = if (selectedId != null) "[" + selectedId + "] can:" else "Target can:"
+    moveLabel.text = if (selectedId != null) "Move [ " + selectedId + " ] before:" else "Move target before:"
   }
 
   private def toggleFirstButton(canEnd: Boolean) {
@@ -152,6 +157,8 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     _first = if (newState.orderFirst.isDefined) newState.orderFirst.get else null
     combatState = newState
+    //Validate context
+    context = combatState.combatantOption(context.map(o => o.unifiedId))
     updatePanel()
   }
 
