@@ -25,26 +25,29 @@ import vcc.infra.docking._
 import vcc.dnd4e.BootStrap
 import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.domain.tracker.snapshot.{CombatState, StateChange}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, CombatState, StateChange}
+import vcc.infra.datastore.naming.EntityID
 
 class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
         with CombatStateObserver with ContextObserver with ScalaDockableComponent
 {
-  private val memory = scala.collection.mutable.Map.empty[String, List[EffectEditor.StateMemento]]
-  private var lastActiveKey: String = null
+  private val memory = scala.collection.mutable.Map.empty[EntityID, List[EffectEditor.StateMemento]]
+  private var lastActiveKey: EntityID = null
   private var _changing: Boolean = false
 
-  case class ActiveCombatant(val c: CombatantRosterDefinition) {
-    override def toString() = c.cid.id + " - " + c.entity.name
-  }
-
-  private var target: Option[Symbol] = None
+  private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
 
-  val terrainCombatant = CombatantEntity(null, "Terrain or Other", MinionHealthDefinition(), 0, CombatantType.Minion, null)
+  val terrainDefinition = CombatantEntity(EntityID.fromName("terrain"), "Terrain or Other", MinionHealthDefinition(), 0, CombatantType.Minion, null)
 
-  private val other = new ActiveCombatant(CombatantRosterDefinition(CombatantID("?"), null, terrainCombatant))
-  val activeCombo = new ComboBox[ActiveCombatant](List(other))
+  private val otherId = CombatantID("?")
+  private val otherCombatant = new UnifiedCombatant(otherId, null, CombatantState(CombatantRosterDefinition(otherId, null, terrainDefinition), null, null, null))
+  val activeModel = new ContainerComboBoxModel[UnifiedCombatant](List(otherCombatant))
+  val activeCombo = new ExplicitModelComboBox[UnifiedCombatant](activeModel)
+  activeCombo.setFormatRenderer(new StringFormatListCellRenderer(cmb => {
+    (if (cmb.isInOrder) cmb.orderId.toLabelString else cmb.combId.id) + " - " + cmb.name
+  }))
+
   private val efpl = if (
     java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 700 &&
             BootStrap.getPropertyAsInt("vcc.view.efp.max", 3) > 2
@@ -53,6 +56,8 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
     } else {
     List(new EffectEditor(this), new EffectEditor(this))
   }
+
+  private var active: Option[UnifiedCombatantID] = Some(otherCombatant.unifiedId)
 
   add(new Label("Source:"), "span,split 2")
   add(activeCombo, "wrap,growx")
@@ -65,60 +70,54 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
   listenTo(activeCombo.selection)
   reactions += {
     case event.SelectionChanged(`activeCombo`) =>
-    //TODO Fix this we need a logic to get the IOI
-    //      if (!_changing) director.setActiveCombatant(Some(activeCombo.selection.item.c.id))
-    //      switchActive(activeCombo.selection.item.c.entity.name)
+      if (!_changing) director.setActiveCombatant(Some(activeCombo.selection.item.unifiedId))
+      switchActive(activeCombo.selection.item.definition.entity.eid)
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    //TODO Check for simplification
-    if (changes.changes.contains(StateChange.combat.Roster)) {
+    if (!(changes.changes ** Set(StateChange.combat.Roster, StateChange.combat.Order)).isEmpty) {
       //Sequence changed time to update ActiveCombo
-      //TODO Move this the UV
-      //      val seq = newState.roster.keys.toList
-      //      if (seq.isEmpty) {
-      //        activeCombo.peer.setModel(ComboBox.newConstantModel(List(other)))
-      //        for (efp <- efpl) efp.setSequence(Nil)
-      //      } else {
-      //        var nac = seq.map(c => {new ActiveCombatant(c)}).toList ::: List(other)
-      //        activeCombo.peer.setModel(ComboBox.newConstantModel(nac))
-      //        val lid = seq.map(c => {c.id.name})
-      //        for (efp <- efpl) efp.setSequence(lid)
-      //      }
-      //      switchActive(activeCombo.selection.item.c.entity.name)
+      activeModel.contents = state.elements ++ Seq(otherCombatant)
+      setActiveComboSelection(active)
+      for (efp <- efpl) efp.setSequence(state.elements.map(c => c.combId))
     }
   }
 
+  private def setActiveComboSelection(who: Option[UnifiedCombatantID]) {
+    val ctx = state.combatantOption(who)
+    val cmb: UnifiedCombatant = if (ctx == None) otherCombatant else ctx.get
+    val idx = activeModel.entries.findIndexOf(c => c.matches(cmb))
+    activeCombo.selection.index = idx
+    activeCombo.repaint
+    switchActive(cmb.definition.entity.eid)
+  }
+
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    val ctx = state.combatantOption(nctx)
-    //    if (isTarget) {
-    //      for (efp <- efpl) efp.setContext(ctx)
-    //      target = nctx
-    //    } else if (ctx.isDefined) {
-    //      //Setting Source information
-    //      _changing = true
-    //      activeCombo.selection.item = new ActiveCombatant(ctx.get)
-    //      activeCombo.repaint
-    //      _changing = false
-    //    }
-    //TODO This need to get the real deal and update subpanels
-    0
+    if (isTarget) {
+      for (efp <- efpl) efp.setContext(state.combatantOption(nctx), true)
+      target = nctx
+    } else {
+      for (efp <- efpl) efp.setContext(state.combatantOption(nctx), false)
+      _changing = true
+      active = nctx
+      setActiveComboSelection(active)
+      _changing = false
+    }
   }
 
   def createEffect(subPanel: EffectSubPanelComboOption, durOption: DurationComboEntry, beneficial: Boolean) {
-    //TODO Create new panels
-    //    val source = activeCombo.selection.item.c
-    //    val tgtComb = state.combatantMap(target.get)
-    //    val cond = subPanel.generateEffect(source, tgtComb)
-    //    val duration = durOption.generate(source, tgtComb)
-    //    director.requestAction(AddEffect(target.get, Effect(source.id, cond, beneficial, duration)))
+    val source = activeCombo.selection.item
+    val tgtComb = state(target.get.combId, target.get.orderId)
+    val cond = subPanel.generateEffect(source, tgtComb)
+    val duration = durOption.generate(source, tgtComb)
+    director.requestAction(AddEffect(target.get.combId, source.combId, cond, duration))
   }
 
   /**
    * Store data on the effect memory
    */
-  def switchActive(nkey: String) {
+  def switchActive(nkey: EntityID) {
     // If we have a key store it
     if (lastActiveKey != null) {
       memory(lastActiveKey) = efpl.map(epl => epl.saveMemento())
@@ -127,6 +126,8 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
     // Restore the previous mementos if they exit
     if (memory.contains(nkey)) {
       efpl.zip(memory(nkey)).map(x => x._1.restoreMemento(x._2))
+    } else {
+      efpl.foreach(ep => ep.clearPanel())
     }
   }
 
