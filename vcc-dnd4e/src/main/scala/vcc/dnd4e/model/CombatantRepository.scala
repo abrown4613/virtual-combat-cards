@@ -27,7 +27,9 @@ import vcc.domain.dndi.StatBlockDataSource
 
 case class CombatantEntityID(ceid: Int)
 
-case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String)
+case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
+  override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
+}
 
 class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity) extends StatBlockDataSource {
   import vcc.infra.fields._

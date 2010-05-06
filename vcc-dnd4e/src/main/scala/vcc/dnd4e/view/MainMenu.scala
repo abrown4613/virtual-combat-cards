@@ -46,34 +46,9 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     cdiag.visible = true
   })
 
-  private val combatMenu = new Menu("Combat")
-  combatMenu.contents += new MenuItem(Action("Start Combat") {
-    val diag = new vcc.dnd4e.view.dialog.InitiativeDialog(parent, director)
-    diag.visible = true
-    val res = diag.dialogResult
-    //FIXME this is not the right way to do initiative anymore
-    if (res.isDefined) {
-      director requestAction SetInitiative(res.get)
-      director requestAction StartCombat()
-    }
-  })
-  combatMenu.contents += new MenuItem(Action("End Combat") {
-    director requestAction EndCombat()
-  })
-  combatMenu.contents += new MenuItem(Action("Rest") {
-    director requestAction ApplyRest(false)
-  })
-  combatMenu.contents += new MenuItem(Action("Extended Rest") {
-    director requestAction ApplyRest(true)
-  })
+  private val combatMenu = new CombatMenu(director, parent)
 
-  combatMenu.contents += new Separator
-  combatMenu.contents += new MenuItem(Action("Clear Monsters") {
-    director requestAction ClearRoster(false)
-  })
-  combatMenu.contents += new MenuItem(Action("Clear All") {
-    director requestAction ClearRoster(true)
-  })
+
 
   private val historyMenu = new Menu("History")
   historyMenu.contents += new MenuItem(new Action("Undo") {
