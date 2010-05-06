@@ -102,7 +102,7 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
     if (nctx.isDefined && isTarget) updatePanel()
   }
 
-  val rules = new CombatStateRules()
+  val rules = director.rules
 
   private def updatePanel() {
     if (_first != null) {

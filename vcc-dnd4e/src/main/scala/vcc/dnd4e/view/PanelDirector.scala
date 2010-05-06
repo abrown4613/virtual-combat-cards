@@ -72,6 +72,8 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
 
   private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot().state)
 
+  val rules = new CombatStateRules()
+
   def currentState = unifiedTable
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
