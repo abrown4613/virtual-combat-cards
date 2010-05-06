@@ -82,7 +82,7 @@ object Effect {
      * @param sustain Indicates effect is sustainable
      */
     case class RoundBound(id: InitiativeOrderID, limit: Limit.Value) extends Duration {
-      override def shortDescription: String = limit.toString + ":" + id.combId.id
+      override def shortDescription: String = limit.toString + ":" + id.toLabelString
     }
   }
 

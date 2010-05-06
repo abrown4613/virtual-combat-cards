@@ -22,19 +22,36 @@ import vcc.util.swing._
 import vcc.dnd4e.domain.tracker.common._
 
 /**
- * A combo box option that included the infomartion to display and what to 
+ * A combo box option that included the information to display and what to
  * generate as an output
  * @param text To appear on the ComboBox
  * @param generate A function form (source,target)=> Duration
  */
-case class DurationComboEntry(text: String, generate: (CombatantStateView, CombatantStateView) => Effect.Duration) {
+abstract class DurationComboEntry(text: String) {
+  def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean
+
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration
+
   override def toString(): String = text
+}
+
+class StaticDurationComboEntry(text: String, duration: Effect.Duration) extends DurationComboEntry(text) {
+  def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean = true
+
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration = duration
+}
+
+class BoundDurationComboEntry(text: String, limit: Effect.Duration.Limit.Value, ofSource: Boolean) extends DurationComboEntry(text) {
+  def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean = if (ofSource) source.isInOrder else target.isInOrder
+
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration =
+    Effect.Duration.RoundBound(if (ofSource) source.orderId else target.orderId, limit)
 }
 
 trait EffectSubPanelComboOption {
   val name: String
 
-  def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition
+  def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition
 
   def saveMemento(): Any
 
@@ -45,31 +62,32 @@ trait EffectSubPanelComboOption {
 
 object EffectEditor {
   case class StateMemento(spIdx: Int, spMemento: Any, durIdx: Int, benef: Boolean)
+
+  private val durations = List(
+    new BoundDurationComboEntry("End of source's next turn", Effect.Duration.Limit.EndOfNextTurn, true),
+    new BoundDurationComboEntry("End of source's next turn, sustain", Effect.Duration.Limit.EndOfNextTurnSustain, true),
+    new BoundDurationComboEntry("Start of source's next turn", Effect.Duration.Limit.StartOfNextTurn, true),
+    new StaticDurationComboEntry("End of Encounter", Effect.Duration.EndOfEncounter),
+    new StaticDurationComboEntry("Stance", Effect.Duration.Stance),
+    new StaticDurationComboEntry("Rage", Effect.Duration.Rage),
+    new StaticDurationComboEntry("Save End", Effect.Duration.SaveEnd),
+    new StaticDurationComboEntry("Save End (Special)", Effect.Duration.SaveEndSpecial),
+    new StaticDurationComboEntry("Other", Effect.Duration.Other),
+    new BoundDurationComboEntry("End of target's next turn", Effect.Duration.Limit.EndOfNextTurn, false),
+    new BoundDurationComboEntry("Start of target's next turn", Effect.Duration.Limit.StartOfNextTurn, false)
+    )
 }
 
 class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
-  private val smallfont = new java.awt.Font(java.awt.Font.SANS_SERIF, 0, 10)
+  private var source: Option[UnifiedCombatant] = None
+  private var target: Option[UnifiedCombatant] = None
 
-  private val idComboModel = new ContainerComboBoxModel[String](Nil)
+  private val smallFont = new java.awt.Font(java.awt.Font.SANS_SERIF, 0, 10)
 
-  //TODO Get this right
-  @deprecated
-  implicit def c2o(cid: CombatantID): InitiativeOrderID = InitiativeOrderID(cid, 0)
+  private val idComboModel = new ContainerComboBoxModel[CombatantID](Nil)
 
-  private val durationCombo = new ComboBox(
-    List(
-      DurationComboEntry("End of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.EndOfNextTurn)}),
-      DurationComboEntry("End of source's next turn, sustain", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.EndOfNextTurnSustain)}),
-      DurationComboEntry("Start of source's next turn", (s, t) => {Effect.Duration.RoundBound(s.definition.cid, Effect.Duration.Limit.StartOfNextTurn)}),
-      DurationComboEntry("End of encounter", (s, t) => {Effect.Duration.EndOfEncounter}),
-      DurationComboEntry("Stance", (s, t) => {Effect.Duration.Stance}),
-      DurationComboEntry("Save End", (s, t) => {Effect.Duration.SaveEnd}),
-      DurationComboEntry("Save End (Special)", (s, t) => {Effect.Duration.SaveEndSpecial}),
-      DurationComboEntry("Other", (s, t) => {Effect.Duration.Other}),
-      DurationComboEntry("End of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.definition.cid, Effect.Duration.Limit.EndOfNextTurn)}),
-      DurationComboEntry("Start of target's next turn", (s, t) => {Effect.Duration.RoundBound(t.definition.cid, Effect.Duration.Limit.StartOfNextTurn)}))
-    ) {
-    font = smallfont
+  private val durationCombo = new ComboBox(EffectEditor.durations) {
+    font = smallFont
   }
 
   //This is the subPanel for most general case
@@ -78,15 +96,17 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     private val descField = new TextField()
     add(descField, "growx, h 22!")
     visible = false
-    def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition = {
+    def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {
       Effect.Condition.Generic(descField.text, benefCheckbox.selected)
     }
 
-    def saveMemento(): Any = descField.text
+    def saveMemento(): Any = (descField.text, benefCheckbox.selected)
 
     def restoreMemento(memento: Any) {
       memento match {
-        case text: String => descField.text = text
+        case (text: String, benef: Boolean) =>
+          descField.text = text
+          benefCheckbox.selected = benef
         case _ =>
       }
     }
@@ -94,7 +114,8 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
 
   // This is the mark panel
   private val markSubPanel = new MigPanel("gap 1 0, ins 0", "[][][]", "[24!]") with EffectSubPanelComboOption {
-    private val markerText = new ExplicitModelComboBox(idComboModel) //new TextField { columns=4}
+    private val markerText = new ExplicitModelComboBox(idComboModel)
+    markerText.setFormatRenderer(new StringFormatListCellRenderer(cid => cid.id))
     private val permanentMarkCheck = new CheckBox("cant be superseded")
     val name = "Mark"
     add(new Label(" by "), "gap rel")
@@ -102,29 +123,28 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     add(permanentMarkCheck)
     visible = false
 
-    def generateEffect(source: CombatantStateView, target: CombatantStateView): Condition = {
-      Effect.Condition.Mark(CombatantID(markerText.selection.item), permanentMarkCheck.selected)
+    def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {
+      Effect.Condition.Mark(markerText.selection.item, permanentMarkCheck.selected)
     }
 
-    def saveMemento(): Any = (Symbol(markerText.selection.item), permanentMarkCheck.selected)
+    def saveMemento(): Any = (markerText.selection.item, permanentMarkCheck.selected)
 
     def restoreMemento(memento: Any) {
       memento match {
-        case (marker: Symbol, perm: Boolean) =>
-          val idx = idComboModel.contents.indexOf(marker.name)
+        case (marker: CombatantID, perm: Boolean) =>
+          val idx = idComboModel.contents.indexOf(marker)
           permanentMarkCheck.selected = perm
           markerText.selection.index = idx
           this.repaint
         case _ =>
       }
     }
-
   }
 
   private val subPanels = List(generalSubPanel, markSubPanel)
 
   private val typeCombo = new ComboBox(subPanels) {
-    font = smallfont
+    font = smallFont
   }
 
   private val addButton = new Button("Add") {enabled = false}
@@ -145,22 +165,20 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   add(clearButton)
 
   listenTo(typeCombo.selection)
+  listenTo(durationCombo.selection)
   listenTo(addButton, clearButton)
   reactions += {
     case event.SelectionChanged(this.typeCombo) =>
       for (p <- subPanels) {p.visible = p == typeCombo.selection.item}
+    case event.SelectionChanged(this.durationCombo) =>
+      checkAddButton()
     case event.ButtonClicked(this.addButton) =>
       parent.createEffect(
         typeCombo.selection.item,
         durationCombo.selection.item,
-        benefCheckbox.selected
-        )
+        benefCheckbox.selected)
     case event.ButtonClicked(this.clearButton) =>
-      typeCombo.selection.index = 0;
-      typeCombo.selection.item.restoreMemento((""))
-      typeCombo.repaint()
-      durationCombo.selection.index = 0
-      durationCombo.repaint()
+      clearPanel()
   }
 
   def restoreMemento(memento: EffectEditor.StateMemento) {
@@ -180,18 +198,36 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
       )
   }
 
+  def clearPanel() {
+    typeCombo.selection.index = 0;
+    typeCombo.selection.item.restoreMemento(("", false))
+    typeCombo.repaint()
+    durationCombo.selection.index = 0
+    durationCombo.repaint()
+  }
+
   /**
    * Make sure Add button is enabled only with context active
    */
-  def setContext(nctx: Option[CombatantStateView]) {
-    addButton.enabled = nctx.isDefined
+  def setContext(nctx: Option[UnifiedCombatant], isTarget: Boolean) {
+    if (isTarget) target = nctx
+    else source = nctx
+    checkAddButton()
   }
 
   /**
    * use this method to update the combo models for marked
    */
-  def setSequence(seq: Seq[String]) {
+  def setSequence(seq: Seq[CombatantID]) {
     idComboModel.contents = seq
   }
+
+  private def checkAddButton() {
+    if (source.isDefined && target.isDefined)
+      addButton.enabled = durationCombo.selection.item.isDefinedAt(source.get, target.get)
+    else
+      addButton.enabled = false
+  }
+
 }
 
