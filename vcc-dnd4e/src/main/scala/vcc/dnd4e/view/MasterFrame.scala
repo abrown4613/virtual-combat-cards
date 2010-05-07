@@ -38,15 +38,16 @@ class MasterFrame extends Frame {
     new DamageCommandPanel(director),
     new InitiativePanel(director),
     new EffectEditorPanel(director),
-    new vcc.dnd4e.view.SequenceTable(director),
+    new CombatCommentPanel(director),
+    new SequenceTable(director),
     //Targt panels
-    new vcc.dnd4e.view.CombatantCard(director, true),
+    new CombatantCard(director, true),
     new EffectViewPanel(director, true),
-    new CommentPanel(director, true),
+    new CombatantCommentPanel(director, true),
     // Source Panel
-    new vcc.dnd4e.view.CombatantCard(director, false),
+    new CombatantCard(director, false),
     new EffectViewPanel(director, false),
-    new CommentPanel(director, false)
+    new CombatantCommentPanel(director, false)
     )
 
   title = "Virtual Combat Cards"
@@ -81,7 +82,7 @@ class MasterFrame extends Frame {
 
   val mainMenu = new MainMenu(director, docker, this)
 
-  for ((dock, keystroke) <- docks.zip(List("F1", "F2", "F3", "F5", "F6", "F7", "F8", "alt F6", "alt F7", "alt F8"))) {
+  for ((dock, keystroke) <- docks.zip(List("F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "alt F6", "alt F7", "alt F8"))) {
     docker.addDockable(dock)
     mainMenu.addToDockRestoreMenu(new MenuItem(new DockableRestoreAction(docker, dock.dockID, dock.dockTitle)))
     val fma = new MenuItem(new DockableFocusAction(docker, dock.dockID, dock.dockTitle))
