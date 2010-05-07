@@ -24,6 +24,7 @@ import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
 import vcc.dnd4e.domain.tracker.snapshot.{CombatState, CombatStateSnapshotHelper}
 import vcc.dnd4e.domain.tracker.common.CombatantStateView
+import vcc.dnd4e.view.UnifiedSequenceTable
 
 @RunWith(classOf[JUnitSuiteRunner])
 class UnifiedCombatantArrayBuilderTest extends JUnit4(UnifiedCombatantArrayBuilderSpec)
@@ -44,7 +45,7 @@ object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with 
       mOrderBuilder.buildOrder(any[CombatState]) answers {cs => cs.asInstanceOf[CombatState].order}
       mReserve.buildReserve(any[CombatState]) answers {cs => cs.asInstanceOf[CombatState].combatantsNotInOrder().toSeq}
 
-      UnifiedCombatantArrayBuilder.buildList(cs, mOrderBuilder, mReserve)
+      UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       there was one(mReserve).buildReserve(cs)
     }
     "call order builder with item in the initative order" in {
@@ -53,7 +54,7 @@ object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with 
       mOrderBuilder.buildOrder(any[CombatState]) returns Seq(ioa0)
       mReserve.buildReserve(any[CombatState]) returns Seq(combC, combB)
 
-      UnifiedCombatantArrayBuilder.buildList(cs, mOrderBuilder, mReserve)
+      UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       there was one(mOrderBuilder).buildOrder(cs)
     }
 
@@ -63,8 +64,8 @@ object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with 
       mOrderBuilder.buildOrder(any[CombatState]) returns Seq(ioa0)
       mReserve.buildReserve(any[CombatState]) returns Seq(combC, combB)
 
-      val ret = UnifiedCombatantArrayBuilder.buildList(cs, mOrderBuilder, mReserve)
-      ret.length must_== 3
+      val ret = UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
+      ret.elements.length must_== 3
       ret(0).initiative must_== ita0
       ret(1).initiative must beNull
       ret(1).combId must_== combC
