@@ -74,24 +74,21 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
         var c = table.content(l(0))
         director.setTargetCombatant(Some(c.unifiedId))
       }
-    case FocusGained(this.table, other, true) =>
+    case FocusGained(this.table, other, temp) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
-    case FocusLost(this.table, other, true) =>
+    case FocusLost(this.table, other, temp) =>
       director.setStatusBarMessage("")
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    if (
-      changes.changes.contains(StateChange.combat.Order) ||
-              changes.changes.contains(StateChange.combat.Roster) ||
-              changes.changes.contains(StateChange.combat.OrderFirst) ||
-              !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
-              !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
+    if (StateChange.hasAnySequenceChange(changes.changes) ||
+            !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
+            !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
     ) {
       updateContent()
       //On a sequence change
-      if (changes.changes.contains(StateChange.combat.Order) && changes.changes.contains(StateChange.combat.Roster)) {
+      if (StateChange.hasSequenceChange(changes.changes)) {
         val newfirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
@@ -154,6 +151,6 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   }
 
   val dockID = DockID("sequence")
-  val dockTitle = "Combat Sequence"
+  val dockTitle = "Initiative Order"
   val dockFocusComponent = table.peer
 }
