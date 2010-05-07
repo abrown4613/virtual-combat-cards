@@ -20,36 +20,25 @@ package vcc.dnd4e.view
 import swing._
 import event._
 import javax.swing.BorderFactory
-import vcc.dnd4e.domain.tracker.common.Command.SetComment
 import vcc.util.swing.MigPanel
-import vcc.infra.docking.{DockableComponent, DockID}
-import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, CombatState, StateChange}
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.infra.docking.{DockableComponent}
 
-class CommentPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel("fill,ins 0", "", "")
-        with ContextObserver with CombatStateObserver with DockableComponent {
+abstract class CommentPanel extends MigPanel("fill,ins 0", "", "") with DockableComponent {
+
+  // User has changed the text
   private var _hasChanged = false
+
+  //An non-user update is happening (see updateText)
   private var _updating = false
   private val edit = new TextArea {
     enabled = false
   }
 
-  private var context: Option[UnifiedCombatantID] = None
-
-  private var state = director.currentState
-
   xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
-
-  val dockTitle = if (isTarget) "Target Notes" else "Source Notes"
 
   val dockRootComponent = this.peer
 
   val dockFocusComponent = edit.peer
-
-  val dockID = if (isTarget) DockID("tgt-notes") else DockID("src-notes")
-
-  @deprecated
-  val debug = new Label(context.toString)
 
   add(new ScrollPane {
     border = BorderFactory.createLoweredBevelBorder
@@ -57,41 +46,38 @@ class CommentPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel(
   }, "growx,growy")
 
   listenTo(edit)
+
   reactions += {
-    case FocusLost(edit: TextArea, opt, temp) if (_hasChanged) =>
-      sendChange()
-    case ValueChanged(edit) =>
-      if (!_updating) _hasChanged = true
+    case FocusLost(edit: TextArea, opt, temp) if (_hasChanged) => sendChange()
+    case ValueChanged(edit) if (!_updating) => _hasChanged = true
   }
 
-  private def sendChange() {
+  def sendChangeMessage(text: String)
+
+  def hasChanged = _hasChanged
+
+  def editorEnabled_=(enable: Boolean) {edit.enabled = enable}
+
+  def editorEnabled = edit.enabled
+
+  /**
+   * Send a change if their is some change has happened.
+   */
+  protected def sendChange() {
     if (_hasChanged) {
       _hasChanged = false
-      director requestAction SetComment(context.get.combId, edit.text)
+      sendChangeMessage(edit.text)
     }
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (this.isTarget == isTarget) {
-      if (_hasChanged) sendChange()
-      context = nctx
-      updateCombatant(nctx)
-      edit.enabled = context != None
-    }
-
-  }
-
-  private def updateCombatant(nctx: Option[UnifiedCombatantID]) {
+  /**
+   * Update text externally without indicating that a user driven change has happened
+   */
+  def updateText(text: String) {
     _updating = true
-    val comb = state.combatantOption(context)
-    edit.text = if (comb.isDefined) comb.get.comment else ""
+    edit.text = text
     _updating = false
+
   }
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
-    state = newState
-    if (context.isDefined && changes.changesTo(context.get.combId).contains(StateChange.combatant.Comment)) {
-      updateCombatant(context)
-    }
-  }
 }
