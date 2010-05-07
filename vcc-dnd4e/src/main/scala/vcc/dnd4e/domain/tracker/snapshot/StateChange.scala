@@ -53,6 +53,19 @@ object StateChange {
       case d: CombatantRosterDefinition => StateChange.combatant.Definition
       case i: InitiativeTracker => StateChange.combatant.Initiative
     }
+
+  /**
+   * Checks if a set of combat Changes include any change to any of: Roster, Order, or OrderFirst change.
+   * @param changes Changes to be checked
+   */
+  def hasAnySequenceChange(changes: Set[combat.Value]) = !((changes ** Set(combat.Order, combat.Roster, combat.OrderFirst)).isEmpty)
+
+  /**
+   * Checks if a set of combat Changes include any change to any of: Roster or Order.
+   * @param changes Changes to be checked
+   */
+  def hasSequenceChange(changes: Set[combat.Value]) = (changes.contains(combat.Order) || changes.contains(combat.Roster))
+
 }
 
 class StateChange {

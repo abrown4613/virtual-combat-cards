@@ -76,7 +76,7 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    if (!(changes.changes ** Set(StateChange.combat.Roster, StateChange.combat.Order)).isEmpty) {
+    if (StateChange.hasSequenceChange(changes.changes)) {
       //Sequence changed time to update ActiveCombo
       activeModel.contents = state.elements ++ Seq(otherCombatant)
       setActiveComboSelection(active)

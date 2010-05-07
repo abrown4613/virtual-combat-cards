@@ -60,8 +60,7 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
   director.registerStateObserver(this)
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
-    val c = changes.changes
-    if (!(c ** Set(StateChange.combat.MetaData, StateChange.combat.Roster, StateChange.combat.Order)).isEmpty) {
+    if (StateChange.hasSequenceChange(changes.changes) || changes.changes.contains(StateChange.combat.MetaData)) {
       menuStartCombat.enabled = !newState.state.isCombatStarted && director.rules.hasActingCombatant(newState.state)
       menuEndCombat.enabled = newState.state.isCombatStarted
       menuShortRest.enabled = !menuEndCombat.enabled
