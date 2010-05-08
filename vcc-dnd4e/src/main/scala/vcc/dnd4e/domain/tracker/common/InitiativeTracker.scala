@@ -19,7 +19,7 @@
 package vcc.dnd4e.domain.tracker.common
 
 object InitiativeTracker {
-  def initialTracker(orderID: InitiativeOrderID): InitiativeTracker = InitiativeTracker(orderID, 0, state.Waiting)
+  def initialTracker(orderID: InitiativeOrderID, roll: Int): InitiativeTracker = InitiativeTracker(orderID, 0, roll, state.Waiting)
 
   object action extends Enumeration {
     val StartRound = Value("Start Round")
@@ -65,7 +65,7 @@ object InitiativeTracker {
  * @param round The round in which that InitiativeOrder is, used for traking number of action takes
  * @param state Current InitiativeState
  */
-case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, state: InitiativeTracker.state.Value) extends CombatantAspect {
+case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, initScore: Int, state: InitiativeTracker.state.Value) extends CombatantAspect {
 
   /**
    * Indicate it a given transformation can be applied.
@@ -83,8 +83,8 @@ case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, state: Init
    */
   def transform(first: InitiativeTracker, action: InitiativeTracker.action.Value): InitiativeTracker = InitiativeTracker.transformation(this, first, action)
 
-  private def copyAtNextRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round + 1, state)
+  private def copyAtNextRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round + 1, this.initScore, state)
 
-  private def copyAtSameRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round, state)
+  private def copyAtSameRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round, this.initScore, state)
 
 }
