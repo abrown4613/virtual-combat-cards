@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,107 +14,111 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.swing.{MigPanel,XHTMLEditorPane}
+import vcc.util.swing.{MigPanel, XHTMLEditorPane}
 import vcc.util.swing.forms._
 
 import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
 
-class CombatantEditorDialog(combatant:CombatantEntity) extends Frame {
-  
-  title = "Edit Combatant: " + (if(combatant.name.isValid) combatant.name.storageString else "")
-  
+class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
+  title = "Edit Combatant: " + (if (combatant.name.isValid) combatant.name.storageString else "")
+
   iconImage = vcc.dnd4e.view.IconLibrary.MetalD20.getImage
-  
+
   peer.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE)
   listenTo(this)
   reactions += {
     case WindowClosing(win) =>
-      if(Dialog.showConfirmation(tabPane, "Are you sure you want to exit without saving the changes to the combatant?", "Exit without saving?",Dialog.Options.YesNo) == Dialog.Result.Yes) {
-    	this.dispose
+      if (Dialog.showConfirmation(tabPane, "Are you sure you want to exit without saving the changes to the combatant?", "Exit without saving?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
+        this.dispose
       }
   }
-  
+
   private val f = new Form(null)
-  
-  private val saveButton:Button = new Button(Action("Save & Close") {
-    combatant.loadFromMap(f.extractMap + ( "text:statblock" -> statBlock.text) )
-    if(combatant.isValid) {
-      if(Compendium.activeRepository.store(combatant)) {
+
+  private val saveButton: Button = new Button(Action("Save & Close") {
+    combatant.loadFromMap(f.extractMap + ("text:statblock" -> statBlock.text))
+    if (combatant.isValid) {
+      if (Compendium.activeRepository.store(combatant)) {
         // Ok
       } else {
-        Dialog.showMessage(saveButton,"Failed to save entity to the repository.","Save failed",Dialog.Message.Error,null)
+        Dialog.showMessage(saveButton, "Failed to save entity to the repository.", "Save failed", Dialog.Message.Error, null)
       }
       this.visible = false
       this.dispose()
     }
   })
-  
-  f.setChangeAction(field=>{
+  private val closeButton = new Button(Action("Close") {
+    this.dispose()
+  })
+
+  f.setChangeAction(field => {
     saveButton.enabled = f.isValid
     generateAction.enabled = f.isValid
-    if(field.id == combatant.name.id) title = "Edit Combatant: "+field.storageString
+    if (field.id == combatant.name.id) title = "Edit Combatant: " + field.storageString
   })
-  
-  private val fs:List[(String,Field[_])]= List(
-    ("Name",combatant.name)) :::
-      (combatant match {
-        case monster:MonsterEntity => List(
-          ("Level",monster.level),
-          ("Role",monster.role),
-          ("XP",monster.xp)
-        )
-        case char:CharacterEntity=> List(
-          ("Level",char.level),
-          ("Race",char.race),
-          ("Class",char.charClass)
-        )
-      }) :::
-      List(
-        ("Initiative",combatant.initiative),
-        ("Hit Points",combatant.hp),
-        ("AC",combatant.ac),
-        ("Fortitude",combatant.fortitude),
-        ("Reflex",combatant.reflex),
-        ("Will",combatant.will)) :::
-      (combatant match {
-        case char:CharacterEntity=> List(
-          ("Insight",char.insight),
-          ("Perception",char.perception),
-          ("Senses",char.senses)
-        )
-        case _ => Nil
-        }) ::: 
-     List(("Comment",combatant.comment))
 
-  fs.foreach(t=> new FormTextField(t._1,t._2,f))
-  
-  private val generateAction = Action("Generate"){
+  private val fs: List[(String, Field[_])] = List(
+    ("Name", combatant.name)) :::
+          (combatant match {
+            case monster: MonsterEntity => List(
+              ("Level", monster.level),
+              ("Role", monster.role),
+              ("XP", monster.xp)
+              )
+            case char: CharacterEntity => List(
+              ("Level", char.level),
+              ("Race", char.race),
+              ("Class", char.charClass)
+              )
+          }) :::
+          List(
+            ("Initiative", combatant.initiative),
+            ("Hit Points", combatant.hp),
+            ("AC", combatant.ac),
+            ("Fortitude", combatant.fortitude),
+            ("Reflex", combatant.reflex),
+            ("Will", combatant.will)) :::
+          (combatant match {
+            case char: CharacterEntity => List(
+              ("Insight", char.insight),
+              ("Perception", char.perception),
+              ("Senses", char.senses)
+              )
+            case _ => Nil
+          }) :::
+          List(("Comment", combatant.comment))
+
+  fs.foreach(t => new FormTextField(t._1, t._2, f))
+
+  private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
-    if(( defined && Dialog.showConfirmation(statBlock,"This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?","Overwrite current statblock",Dialog.Options.YesNo) == Dialog.Result.Yes) ||  !defined ) {
-	  statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
-	  statBlock.sync()
+    if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
+      statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
+      statBlock.sync()
     }
   }
-  private val statBlock:XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
+  private val statBlock: XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
   private val fc = new MigPanelFormContainter("[50][200,fill][250]")
-  
+
   f.layout(fc)
   generateAction.enabled = f.isValid
-  
+
   private val tabPane = new TabbedPane {
-    pages += new TabbedPane.Page("Data",fc)
+    pages += new TabbedPane.Page("Data", fc)
     pages += new TabbedPane.Page("Stat Block", statBlock)
   }
-  
+
   contents = new MigPanel("fill") {
-    add(tabPane,"wrap,growy,growx")
-    add(saveButton,"span 3")
+    add(tabPane, "wrap,growy,growx")
+    add(saveButton, "span 3,split 3")
+    add(closeButton)
   }
 
 }
