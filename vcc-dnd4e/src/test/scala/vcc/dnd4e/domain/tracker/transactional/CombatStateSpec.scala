@@ -149,8 +149,8 @@ object CombatStateSpec extends Specification with Mockito {
     val ioB = InitiativeOrderID(CombatantID("B"), 0)
     mRoster.allCombatantIDs returns List(combA, CombatantID("B"))
     mOrder.getIDsInOrder() returns List(ioA, ioB)
-    mOrder.initiativeTrackerFor(ioA) returns InitiativeTracker.initialTracker(ioA)
-    mOrder.initiativeTrackerFor(ioB) returns InitiativeTracker.initialTracker(ioB)
+    mOrder.initiativeTrackerFor(ioA) returns InitiativeTracker.initialTracker(ioA, 0)
+    mOrder.initiativeTrackerFor(ioB) returns InitiativeTracker.initialTracker(ioB, 0)
     mMeta.comment returns "Fiat lux!"
     mMeta.inCombat returns true
     val csvA = mock[Combatant]
@@ -179,8 +179,8 @@ object CombatStateSpec extends Specification with Mockito {
     }
 
     "returns tracker for each ID with initiativeTrackerFromID" in {
-      aCombatState.initiativeTrackerFromID(ioa) must_== InitiativeTracker.initialTracker(ioa)
-      aCombatState.initiativeTrackerFromID(iob) must_== InitiativeTracker.initialTracker(iob)
+      aCombatState.initiativeTrackerFromID(ioa) must_== InitiativeTracker.initialTracker(ioa, 0)
+      aCombatState.initiativeTrackerFromID(iob) must_== InitiativeTracker.initialTracker(iob, 0)
     }
 
     "return a list of InitiativeOrderID on a getInitiativeOrder" in {

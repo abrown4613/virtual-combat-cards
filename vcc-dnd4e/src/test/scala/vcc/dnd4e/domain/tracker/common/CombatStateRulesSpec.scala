@@ -125,8 +125,17 @@ object CombatStateRulesSpec extends Specification with Mockito {
   }
 
   "rules.canMoveBefore" ->- (baseMockups) should {
+
+    "not allow move if not in combat" in {
+      state.isCombatStarted returns false
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker.initialTracker(ioA0, 0)
+      rules.canMoveBefore(state, ioA0, ioB0) must beFalse
+      there was one(state).isCombatStarted
+    }
+
     "not allow acting to move" in {
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Acting)
+      state.isCombatStarted returns true
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Acting)
       rules.canMoveBefore(state, ioA0, ioB0) must beFalse
       there was one(state).initiativeTrackerFromID(ioA0)
     }
@@ -136,15 +145,15 @@ object CombatStateRulesSpec extends Specification with Mockito {
     }
 
     "allow otherwise" in {
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Waiting)
+      state.isCombatStarted returns true
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Waiting)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
       there was one(state).initiativeTrackerFromID(ioA0)
 
-
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Delaying)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Delaying)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
 
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, InitiativeTracker.state.Ready)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Ready)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
 
     }

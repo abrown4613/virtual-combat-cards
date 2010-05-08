@@ -121,7 +121,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if StartRound is not allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, action.StartRound) returns false
       setMockInitiativeTracker(ioc, state.Acting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, state.Acting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, state.Acting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.StartRound)) must throwAn[IllegalActionException]
@@ -132,7 +132,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if not EndRound if not allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns false
       setMockInitiativeTracker(ioc, state.Waiting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, state.Acting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, state.Acting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.EndRound)) must throwAn[IllegalActionException]
@@ -143,9 +143,9 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "start round if allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.StartRound) returns true
       setMockInitiativeTracker(ioc, state.Waiting)
-      val baseIT = InitiativeTracker(ioc, 0, state.Waiting)
+      val baseIT = InitiativeTracker.initialTracker(ioc, 0)
       val updatedIT = baseIT.transform(baseIT, action.StartRound)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Waiting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.StartRound))
@@ -157,9 +157,9 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "end round and rotate if allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      val baseIT = InitiativeTracker(ioc, 0, state.Acting)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Acting)
       val updatedIT = baseIT.transform(baseIT, action.EndRound)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Waiting)
 
       mockNextAsNotDead(combB)
 
@@ -173,7 +173,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "auto advance next guy if he is dead" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Waiting)
 
       mockNextAsDead(combB)
 
@@ -188,7 +188,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "auto advance dead after a first delays" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.Delay) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Waiting)
 
       mockNextAsDead(combB)
 
@@ -203,7 +203,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "auto advance next guy if he is dead and delaying" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Delaying)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Delaying)
 
       mockNextAsDead(combB)
 
@@ -219,7 +219,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "auto advance end next guy if he is dead and readied" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Delaying)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Delaying)
 
       mockNextAsDead(combB)
 
@@ -238,7 +238,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if delay is not allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.Delay) returns false
       setMockInitiativeTracker(ioc, state.Waiting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, state.Waiting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.Delay)) must throwAn[IllegalActionException]
@@ -249,9 +249,9 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "rotate after delay" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.Delay) returns true
       setMockInitiativeTracker(ioc, state.Acting)
-      val baseIT = InitiativeTracker(ioc, 0, state.Acting)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Acting)
       val updatedIT = baseIT.transform(baseIT, action.Delay)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Waiting)
 
       mockNextAsNotDead(combB)
 
@@ -265,7 +265,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if MoveUp is not allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.MoveUp) returns false
       setMockInitiativeTracker(ioc, state.Delaying)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, state.Acting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, state.Acting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.MoveUp)) must throwAn[IllegalActionException]
@@ -276,8 +276,8 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
     "move before first, make it the first in the case of a legal MoveUp" in {
       //Delay move up must change tracker and move to before first
-      val firstIT = InitiativeTracker(ioa, 0, state.Waiting)
-      val baseIT = InitiativeTracker(ioc, 0, state.Delaying)
+      val firstIT = InitiativeTracker(ioa, 0, 0, state.Waiting)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Delaying)
       val updatedIT = baseIT.transform(firstIT, action.MoveUp)
 
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.MoveUp) returns true
@@ -300,7 +300,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if Ready is not allowed" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.Ready) returns false
       setMockInitiativeTracker(ioc, state.Waiting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, state.Waiting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.Ready)) must throwAn[IllegalActionException]
@@ -309,7 +309,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     }
 
     "only Ready if rules allow" in {
-      val baseIT = InitiativeTracker(ioc, 0, state.Acting)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Acting)
       val updatedIT = baseIT.transform(baseIT, action.Ready)
 
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.Ready) returns true
@@ -327,9 +327,9 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       // This is a special case of end round, it should be called by the rewrite
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Readying)
-      val baseIT = InitiativeTracker(ioc, 0, state.Readying)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Readying)
       val updatedIT = baseIT.transform(baseIT, action.EndRound)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Acting) thenReturns InitiativeTracker(iob, 0, 0, state.Waiting)
 
       mockNextAsNotDead(combB)
 
@@ -342,8 +342,8 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
     "move combatant before acting on when Executing readied action" in {
       //Move back to waiting, and move before first, no change in head
-      val firstIT = InitiativeTracker(ioa, 0, state.Acting)
-      val baseIT = InitiativeTracker(ioc, 0, state.Ready)
+      val firstIT = InitiativeTracker(ioa, 0, 0, state.Acting)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Ready)
       val updatedIT = baseIT.transform(firstIT, action.ExecuteReady)
 
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.ExecuteReady) returns true
@@ -385,7 +385,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       mRules.canMoveBefore(rState, ioa, iob) returns true
       setMockInitiativeTracker(ioa, state.Waiting)
       setMockInitiativeTracker(iob, state.Waiting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, InitiativeTracker.state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, InitiativeTracker.state.Waiting)
 
       val trans = new Transaction()
       aController.dispatch(trans, mSource, MoveBefore(ioa, iob))
@@ -402,7 +402,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       mRules.canMoveBefore(rState, ioa, iob) returns true
       setMockInitiativeTracker(ioa, state.Waiting)
       setMockInitiativeTracker(iob, state.Waiting)
-      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, InitiativeTracker.state.Waiting)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioa, 0, 0, InitiativeTracker.state.Waiting)
 
       val trans = new Transaction()
 
@@ -417,7 +417,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
   def setMockInitiativeTracker(io: InitiativeOrderID, state: InitiativeTracker.state.Value) {
     mOrder.isDefinedAt(io) returns true
-    mOrder.initiativeTrackerFor(io) returns InitiativeTracker(io, 0, state)
+    mOrder.initiativeTrackerFor(io) returns InitiativeTracker(io, 0, 0, state)
   }
 
   def mockNextAsDead(combId: CombatantID) {

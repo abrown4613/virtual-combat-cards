@@ -30,7 +30,7 @@ object InitiativeTrackerSpec extends Specification {
   val ioa = InitiativeOrderID(CombatantID("A"), 0)
   val iob = InitiativeOrderID(CombatantID("A"), 1) //Just to make sure we use the InitiativeOrderID not the CombatantID 
 
-  val firstTracker = state.map(st => InitiativeTracker(iob, 0, st)).toList
+  val firstTracker = state.map(st => InitiativeTracker(iob, 0, 0, st)).toList
   val firstMap = Map(firstTracker.map(it => it.state -> it).toSeq: _*)
 
   def runAllCases(it: InitiativeTracker, trans: Map[(InitiativeTracker, action.Value), InitiativeTracker]) {
@@ -51,49 +51,48 @@ object InitiativeTrackerSpec extends Specification {
   }
 
   "Waiting tracker" should {
-    var it = InitiativeTracker(ioa, 0, state.Waiting)
+    var it = InitiativeTracker(ioa, 0, 0, state.Waiting)
 
     runAllCases(it, Map(
-      (it, action.StartRound) -> InitiativeTracker(ioa, 1, state.Acting)
+      (it, action.StartRound) -> InitiativeTracker(ioa, 1, 0, state.Acting)
       ))
   }
 
   "Readying tracker" should {
-    var it = InitiativeTracker(ioa, 0, state.Readying)
+    var it = InitiativeTracker(ioa, 0, 0, state.Readying)
 
     runAllCases(it, Map(
-      (it, action.EndRound) -> InitiativeTracker(ioa, 0, state.Ready)
+      (it, action.EndRound) -> InitiativeTracker(ioa, 0, 0, state.Ready)
       ))
   }
 
   "Ready tracker" should {
-    var it = InitiativeTracker(ioa, 0, state.Ready)
+    var it = InitiativeTracker(ioa, 0, 0, state.Ready)
 
     runAllCases(it, Map(
-      (it, action.StartRound) -> InitiativeTracker(ioa, 1, state.Acting),
-      (firstMap(state.Acting), action.ExecuteReady) -> InitiativeTracker(ioa, 0, state.Waiting)
+      (it, action.StartRound) -> InitiativeTracker(ioa, 1, 0, state.Acting),
+      (firstMap(state.Acting), action.ExecuteReady) -> InitiativeTracker(ioa, 0, 0, state.Waiting)
       ))
   }
 
   "Acting tracker" should {
-    var it = InitiativeTracker(ioa, 0, state.Acting)
+    var it = InitiativeTracker(ioa, 0, 0, state.Acting)
 
     runAllCases(it, Map(
-      (it, action.EndRound) -> InitiativeTracker(ioa, 0, state.Waiting),
-      (it, action.Ready) -> InitiativeTracker(ioa, 0, state.Readying),
-      (it, action.Delay) -> InitiativeTracker(ioa, 0, state.Delaying)
+      (it, action.EndRound) -> InitiativeTracker(ioa, 0, 0, state.Waiting),
+      (it, action.Ready) -> InitiativeTracker(ioa, 0, 0, state.Readying),
+      (it, action.Delay) -> InitiativeTracker(ioa, 0, 0, state.Delaying)
       ))
   }
 
   "Delaying tracker" should {
-    var it = InitiativeTracker(ioa, 0, state.Delaying)
+    var it = InitiativeTracker(ioa, 0, 0, state.Delaying)
     runAllCases(it, Map(
-      (it, action.EndRound) -> InitiativeTracker(ioa, 0, state.Waiting),
-      (firstMap(state.Delaying), action.MoveUp) -> InitiativeTracker(ioa, 0, state.Acting),
-      (firstMap(state.Ready), action.MoveUp) -> InitiativeTracker(ioa, 0, state.Acting),
-      (firstMap(state.Waiting), action.MoveUp) -> InitiativeTracker(ioa, 0, state.Acting)
+      (it, action.EndRound) -> InitiativeTracker(ioa, 0, 0, state.Waiting),
+      (firstMap(state.Delaying), action.MoveUp) -> InitiativeTracker(ioa, 0, 0, state.Acting),
+      (firstMap(state.Ready), action.MoveUp) -> InitiativeTracker(ioa, 0, 0, state.Acting),
+      (firstMap(state.Waiting), action.MoveUp) -> InitiativeTracker(ioa, 0, 0, state.Acting)
       ))
   }
-
 
 }

@@ -145,7 +145,7 @@ class InitiativeOrder {
     var itMap = trackers.value
     val ioBuilder = new ReorderedListBuilder(initBaseOrder.value, reorders.value, initiativeResultComparator)
     for (res <- initRes) {
-      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId), u => InitiativeTrackerChange(u.value))
+      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId, res.result), u => InitiativeTrackerChange(u.value))
       itMap = itMap + (res.uniqueId -> it)
       ioBuilder.addEntry(res)
     }
