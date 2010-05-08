@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,28 +14,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.util.swing
 
 import scala.swing._
-import scala.swing.event._
+import event.ButtonClicked
 
-class XHTMLEditorPane(starttext:String,otherActions:Action *) extends MigPanel("fill","[200][200]","[][300]"){
-  
+/**
+ * Provides a split window with an Editor and a XHTMLPane side by side
+ * @param startText The initial text on the editor pane
+ * @param otherActions Additional action that can be added to the Pane.
+ */
+class XHTMLEditorPane(startText: String, otherActions: Action*) extends MigPanel("fill", "[600]", "[][][300]") {
   private val xhtmlPane = new XHTMLPane()
-  private val editPane = new TextArea(starttext)
-  
+  private val editPane = new TextArea(startText)
+  private val editScroll = new ScrollPane(editPane)
+  private val wrapButton = new CheckBox("Wrap lines")
+  private val split = new SplitPane(Orientation.Vertical, editScroll, xhtmlPane)
+
+  editPane.lineWrap = true
+  editPane.wordWrap = true
+  wrapButton.selected = true
+  split.oneTouchExpandable = true
+  split.dividerLocation = 300
+  split.resizeWeight = 0.75
+
+  listenTo(wrapButton)
+  reactions += {
+    case ButtonClicked(wrapButton) =>
+      editPane.lineWrap = wrapButton.selected
+      editPane.wordWrap = wrapButton.selected
+  }
+
   // Construction
-  xhtmlPane.setDocumentFromText(starttext)
-  add(new Button(Action("Preview"){xhtmlPane.setDocumentFromText(editPane.text)}),
-      if(otherActions.isEmpty) "span 2,wrap" else "span 2, split " + otherActions.length + 1)
-  otherActions.foreach {x => add(new Button(x),if(x == otherActions.last) "wrap" else "")}
-  add(new ScrollPane(editPane),"growx, growy")
-  add(xhtmlPane,"growx, growy")
-  
-  def text:String = editPane.text
-  def text_=(txt:String) { editPane.text = txt }
-  
+  xhtmlPane.setDocumentFromText(startText)
+  add(new Button(Action("Preview") {xhtmlPane.setDocumentFromText(editPane.text)}),
+    if (otherActions.isEmpty) "wrap" else "split " + otherActions.length + 1)
+  otherActions.foreach {x => add(new Button(x), if (x == otherActions.last) "wrap" else "")}
+  add(wrapButton, "wrap")
+  add(split, "growx,growy")
+
+  def text: String = editPane.text
+
+  def text_=(txt: String) {editPane.text = txt}
+
   def sync() {
     xhtmlPane.setDocumentFromText(editPane.text)
   }
+
 }
