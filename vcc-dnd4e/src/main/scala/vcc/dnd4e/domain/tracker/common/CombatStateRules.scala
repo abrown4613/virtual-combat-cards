@@ -45,7 +45,7 @@ class CombatStateRules {
    * @param whom In front of whom who will move
    */
   def canMoveBefore(combatState: CombatStateView, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
-    (who != whom) && combatState.initiativeTrackerFromID(who).state != InitiativeTracker.state.Acting
+    (who != whom) && combatState.isCombatStarted && combatState.initiativeTrackerFromID(who).state != InitiativeTracker.state.Acting
   }
 
   /**
