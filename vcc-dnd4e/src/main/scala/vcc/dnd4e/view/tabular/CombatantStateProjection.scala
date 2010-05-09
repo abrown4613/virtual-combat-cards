@@ -27,7 +27,7 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
     ("Name", classOf[String]),
     ("Health", classOf[String]),
     ("Status", classOf[String]),
-    ("Turn #", classOf[Integer]),
+    ("T#/R", classOf[String]),
     ("Sequence", classOf[String])
     );
   def apply(col: Int, comb: UnifiedCombatant): java.lang.Object = {
@@ -40,7 +40,7 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
       case 3 =>
         val health = comb.health
         health.status + (if (health.status == HealthTracker.Status.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
-      case 4 => if (comb.isInOrder) int2Integer(comb.initiative.round) else "0"
+      case 4 => if (comb.isInOrder) (comb.initiative.round + " / " + comb.initiative.initScore) else "-"
       case 5 => if (comb.isInOrder) comb.initiative.state else "-"
     }
   }
