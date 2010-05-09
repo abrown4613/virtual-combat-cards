@@ -18,26 +18,35 @@
 package vcc.util
 
 /**
+ * Any dice roller or generator should implement this interface.
+ */
+trait DiceGenerator {
+  def D(side: Int): Int
+
+  def flipCoin(): Boolean
+}
+
+/**
  * Simple random generator
  */
-object DiceBag {
-  private val rand=new scala.util.Random
-  
+object DiceBag extends DiceGenerator {
+  private val rand = new scala.util.Random
+
   /**
    * Set the random seed
    * @param nseed The new seed
    */
-  def seed(nseed:Long) { rand.setSeed(nseed) }
-  
+  def seed(nseed: Long) {rand.setSeed(nseed)}
+
   /**
    * Return a random number between 1 and side
    * @param side Number of sides on the dice
    */
-  def D(side:Int):Int = rand.nextInt(side)+1
-  
+  def D(side: Int): Int = rand.nextInt(side) + 1
+
   /**
    * Generate a true or false
    * @return true or false
    */
-  def flipCoin():Boolean = rand.nextBoolean
+  def flipCoin(): Boolean = rand.nextBoolean
 }
