@@ -17,6 +17,7 @@
 //$Id$
 package vcc.dnd4e.view
 
+import dialog.InitiativeDialog
 import scala.swing._
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.dnd4e.domain.tracker.snapshot.StateChange
@@ -27,10 +28,9 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
   })
 
   private val menuRollInitiative = new MenuItem(Action("Roll Initiative...") {
-    val dlg = new vcc.dnd4e.view.dialog.InitiativeDialog(parent, director)
+    val dlg = new InitiativeDialog(parent, director)
     dlg.visible = true
     val res = dlg.dialogResult
-    //FIXME this is not the right way to do initiative anymore
     if (res.isDefined) {
       director requestAction SetInitiative(res.get)
     }
