@@ -22,12 +22,13 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import java.text.ParseException
-import vcc.util.swing.FormattedTextFieldWithFormatter
+import vcc.util.DiceGenerator
+import org.specs.mock.Mockito
 
 @RunWith(classOf[JUnitSuiteRunner])
 class InitiativeRollTest extends JUnit4(InitiativeRollSpec)
 
-object InitiativeRollSpec extends Specification {
+object InitiativeRollSpec extends Specification with Mockito {
   "a InitiativeRoll.toString" should {
     "format Nil rolls to empty string" in {
       val ir = InitiativeRoll(Nil)
@@ -84,6 +85,30 @@ object InitiativeRollSpec extends Specification {
     "parse space to Nil " in {
       val ir = InitiativeRoll.fromString("     ")
       ir.rolls must_== List()
+    }
+  }
+  "a InitiativeRoll.resolve" should {
+    val db = mock[DiceGenerator]
+
+    "return empty on an empty list" in {
+      InitiativeRoll(Nil).resolve(0, db) must_== Nil
+    }
+
+    "add bonus to informed number" in {
+      InitiativeRoll.fromString("10").resolve(3, db) must_== List(13)
+      there was no(db).D(20)
+    }
+
+    "return the result of a dice if undefined" in {
+      db.D(20) returns 13
+      InitiativeRoll.simpleRoll.resolve(2, db) must_== List(15)
+      there was one(db).D(20)
+    }
+
+    "apply same logic to all" in {
+      db.D(20) returns 17
+      InitiativeRoll.fromString("10/r/4").resolve(4, db) must_== List(14, 21, 8)
+      there was one(db).D(20)
     }
   }
 }
