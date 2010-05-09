@@ -23,6 +23,7 @@ import scala.util.matching.Regex
 import java.text.ParseException
 import javax.swing.{JTable, JFormattedTextField, DefaultCellEditor}
 import java.awt.Component
+import vcc.util.{DiceGenerator}
 
 /**
  * Class to hold temporary edits of a set of initiative rolls or instruction to roll
@@ -33,11 +34,24 @@ case class InitiativeRoll(rolls: List[Option[Int]]) {
     case Some(i) => i.toString
   }).mkString("/")
 
+  def isDefined(): Boolean = !rolls.isEmpty
+
+  /**
+   * Expand R (or None) are not the result of a D20 and add to initiative bonus
+   * @param initBonus Initiative bonus to be added to result
+   * @parma dice A dice generator (normally should be DiceBag)
+   */
+  def resolve(initBonus: Int, dice: DiceGenerator): List[Int] = rolls.map {
+    r => r match {
+      case None => dice.D(20) + initBonus
+      case Some(i) => i + initBonus
+    }
+  }.toList
 }
 
 object InitiativeRoll {
-  final val slashTrim: Regex = """\s*\/\s*""".r
-  final val natural: Regex = """(\d+)""".r
+  val slashTrim: Regex = """\s*\/\s*""".r
+  val natural: Regex = """(\d+)""".r
 
   /**
    * Para a string of slash separated number os upper or lower case r.
@@ -56,10 +70,15 @@ object InitiativeRoll {
     }
     InitiativeRoll(rl.toList)
   }
+
+  /**
+   * Returns a simple roll.
+   */
+  val simpleRoll: InitiativeRoll = InitiativeRoll(List(None))
 }
 
 /**
- * This formatter for CellEditor is used to check for InitiativeRoll
+ *  This formatter for CellEditor is used to check for InitiativeRoll
  */
 class InitiativeRollFormatter extends DefaultFormatter {
   override def valueToString(value: AnyRef): String = {
@@ -81,6 +100,7 @@ class InitiativeRollEditor extends DefaultCellEditor(new JFormattedTextField(new
   override def getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component = {
     val ftf = super.getTableCellEditorComponent(table, value, isSelected, row, column).asInstanceOf[JFormattedTextField]
     ftf.setValue(value);
+    ftf.setToolTipText("Use: blank - to leave combatant out of the initiative order; r - for VCC to roll; number - for actual value; use slash to separate multiple initiative rolls")
     return ftf;
   }
 
