@@ -24,18 +24,17 @@ import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
+import java.awt.Color
 
 class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCombatant] {
-  import java.awt.Color
-
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
   private val cellFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, fontSize)
   private val cellFontBold = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, fontSize)
 
   private var acting: Option[UnifiedCombatantID] = None
 
-  def updateActing(nctx: Option[UnifiedCombatantID]) {
-    acting = nctx
+  def updateActing(act: Option[UnifiedCombatantID]) {
+    acting = act
   }
 
   private var nextUp: Option[UnifiedCombatantID] = None
@@ -57,11 +56,6 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private val charBackground = (new Color(240, 255, 236), Color.BLACK)
   private val monsterBackground = normal //(new Color(255,248,220),Color.BLACK)
 
-  private def setColor(label: javax.swing.JLabel, cp: Pair[Color, Color]): Unit = {
-    label.setBackground(cp._1)
-    label.setForeground(cp._2)
-  }
-
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: UnifiedCombatant): Unit = {
     var is = if (cmb.initiative != null) cmb.initiative.state else null
     var hs = cmb.health.status
@@ -73,14 +67,14 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
     else label.setIcon(null)
 
     label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
-    setColor(label, col match {
+    setColorPair(label, col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
       case 3 =>
         hs match {
           case Dead => dead
           case Dying => dying
           case Bloody => bloody
-          case _ if (isSelected) => (label.getBackground, label.getForeground)
+          case _ if (isSelected) => getColorPair(label)
           case _ if (is == null) => grayed
           case _ => normalBack
         }

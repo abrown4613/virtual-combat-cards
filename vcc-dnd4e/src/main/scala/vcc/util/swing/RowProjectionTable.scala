@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,36 +17,56 @@
 //$Id$
 package vcc.util.swing
 
+import java.awt.Color
+import javax.swing.{JLabel, JComponent}
+
 abstract class RowProjectionTable[T] extends EnhancedTable {
-	protected var rowProjection:ProjectionTableModel[T]=null
- 
-	def projection_=(rp:ProjectionTableModel[T]) = {
-	  rowProjection=rp
-	  peer.setModel(rp)
-	}
- 
- 	def projection = rowProjection
- 
-	def content = rowProjection.content
-	def content_=(content:Seq[T]) = { rowProjection.content=content }
+  protected var rowProjection: ProjectionTableModel[T] = null
+
+  def projection_=(rp: ProjectionTableModel[T]) = {
+    rowProjection = rp
+    peer.setModel(rp)
+  }
+
+  def projection = rowProjection
+
+  def content = rowProjection.content
+
+  def content_=(content: Seq[T]) = {rowProjection.content = content}
 }
 
 trait ProjectionTableLabelFormatter[T] {
-  def render(label:javax.swing.JLabel,column:Int,isSelected:Boolean,entry:T)
+
+  /**
+   * Helper method to set the component's color
+   * @param component Component to be colored
+   * @param cp A pair of colors meaning (Background,Foreground)
+   */
+  protected def setColorPair(component: JComponent, cp: Pair[Color, Color]): Unit = {
+    component.setBackground(cp._1)
+    component.setForeground(cp._2)
+  }
+
+  /**
+   * Helper method to get the component's color
+   * @return A pair of colors meaning (Background,Foreground)
+   */
+  protected def getColorPair(component: JComponent): Pair[Color, Color] = (component.getBackground(), component.getForeground())
+
+  def render(label: javax.swing.JLabel, column: Int, isSelected: Boolean, entry: T)
 }
 
 trait CustomRenderedRowProjectionTable[T] extends RowProjectionTable[T] {
-  
-  val labelFormatter:ProjectionTableLabelFormatter[T]
+  val labelFormatter: ProjectionTableLabelFormatter[T]
 
-  override def rendererComponentFix(isSelected: Boolean,hasFocus: Boolean, row: Int, column: Int): java.awt.Component= {
-    var comp=super.rendererComponentFix(isSelected,hasFocus, row, column)
-    if(comp.isInstanceOf[javax.swing.JLabel] && row<this.content.size) {
+  override def rendererComponentFix(isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
+    var comp = super.rendererComponentFix(isSelected, hasFocus, row, column)
+    if (comp.isInstanceOf[JLabel] && row < this.content.size) {
       labelFormatter.render(
         comp.asInstanceOf[javax.swing.JLabel],
-        column,isSelected,
+        column, isSelected,
         this.content(row)
-      )
+        )
     }
     comp
   }
