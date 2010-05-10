@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,16 +60,24 @@ case class UndoMemento[T](val obj: Undoable[T], val value: T) {
   def redoMemento() = UndoMemento[T](obj, obj.value)
 
   /**
-   * Get ChangeNotification (if there is one)
+   * Get ChangeNotification for this memento.
+   * @return None if the re is not createChange function or that function returned null. Some[ChangeNotification]
+   * otherwise.
    */
-  def changeNotification: Option[ChangeNotification] = if (obj.f != null) Some(obj.f(obj)) else None
+  def changeNotification: Option[ChangeNotification] = {
+    if (obj.createChange != null) {
+      val change = obj.createChange(obj)
+      if (change == null) None else Some(change)
+    }
+    else None
+  }
 }
 
 /**
  * This is transcation controlled field. It will store mementos of changes to it in a 
  * transactions. This allows changes to be undone or redone.
  */
-class Undoable[T](initValue: T, val f: Undoable[T] => ChangeNotification) {
+class Undoable[T](initValue: T, val createChange: Undoable[T] => ChangeNotification) {
   private var _value: T = initValue
 
   def value: T = this._value

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ class TransactionTest extends TestCase {
 
 
     assert(trans.state == Transaction.state.Committed)
-    // Cant writ to commited transaction
+    // Cant writ to committed transaction
     try {
       u2.value = "test3"
       assert(false, "Must not write to commited transaction")
@@ -76,7 +76,7 @@ class TransactionTest extends TestCase {
       case e: TransactionClosedException => assert(true)
       case s => assert(false, "Unexpected transaction" + s)
     }
-    // Cant cancel commited transaction
+    // Cant cancel committed transaction
     try {
       trans.cancel
       assert(false, "Cant cancel commited transaction")
@@ -318,5 +318,20 @@ class TransactionTest extends TestCase {
     assert(valueBeforeRestore == 10)
     assert(restoredValue == 5)
     assert(uwcb.value == 5)
+  }
+
+  /**
+   * If a ChangeNotification comes out null, it should not be propagated. This is the result of some undoable that is
+   * tracked but not observed.
+   */
+  def testUndoWithNullChangeNotification() {
+    val uv = new Undoable[Int](10, x => if (x.value < 0) null else Beep('A, x.value))
+    val memo = new UndoMemento(uv, -1)
+    memo.undo()
+    assert(memo.changeNotification == None, "Got a " + memo.changeNotification)
+
+    val memo2 = new UndoMemento(uv, 10)
+    memo2.undo()
+    assert(memo2.changeNotification == Some(Beep('A, 10)), "Got a " + memo2.changeNotification)
   }
 }
