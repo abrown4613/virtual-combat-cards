@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ trait DiceGenerator {
  * Simple random generator
  */
 object DiceBag extends DiceGenerator {
-  private val rand = new scala.util.Random
+  private val rand = new scala.util.Random()
 
   /**
    * Set the random seed
