@@ -17,15 +17,21 @@
 //$Id$
 package vcc.dnd4e.view.dialog
 
-import vcc.util.swing.TableModelRowProjection
-import vcc.util.DiceBag
 import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.view.helper.InitiativeRoll
+import vcc.util.swing.{ProjectionTableLabelFormatter, TableModelRowProjection}
+import javax.swing.{SwingConstants, JLabel}
+import java.awt.Color
 
-//NOTE: These classes should be internal to the Dialog 
 
-class InitiativeDialogEntry(val id: CombatantID, val name: String, var init: Int, var roll: InitiativeRoll) {
-  override def toString(): String = "IDEntry(" + id + "," + name + "," + init + "," + roll + ")"
+class InitiativeDialogEntry(val ids: Set[CombatantID], val name: String, var init: Int, var roll: InitiativeRoll) {
+  override def toString(): String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + ")"
+
+  def isSimilar(that: InitiativeDialogEntry): Boolean = (this.name == that.name) &&
+          (this.init == that.init) && (this.roll == that.roll)
+
+  def merge(that: InitiativeDialogEntry): InitiativeDialogEntry =
+    new InitiativeDialogEntry(this.ids ++ that.ids, this.name, this.init, this.roll)
 }
 
 object InitiativeDialogEntryProjection extends TableModelRowProjection[InitiativeDialogEntry] {
@@ -37,7 +43,7 @@ object InitiativeDialogEntryProjection extends TableModelRowProjection[Initiativ
 
   def apply(col: Int, entry: InitiativeDialogEntry): java.lang.Object = {
     col match {
-      case 0 => entry.id.id
+      case 0 => entry.ids.elements.map(_.id).mkString(", ")
       case 1 => entry.name
       case 2 => int2Integer(entry.init)
       case 3 => entry.roll
@@ -47,5 +53,17 @@ object InitiativeDialogEntryProjection extends TableModelRowProjection[Initiativ
   val setter: PartialFunction[(Int, InitiativeDialogEntry, Any), Unit] = {
     case (2, entry, v) => entry.init = v.asInstanceOf[Int]
     case (3, entry, v) => entry.roll = v.asInstanceOf[InitiativeRoll]
+  }
+}
+
+class InitiativeDialogEntryFormatter extends ProjectionTableLabelFormatter[InitiativeDialogEntry] {
+  final private val grayed = (Color.LIGHT_GRAY, Color.BLACK)
+  final private val normal = (Color.WHITE, Color.BLACK)
+
+  def render(label: JLabel, column: Int, isSelected: Boolean, entry: InitiativeDialogEntry) {
+    label.setHorizontalAlignment(if (column == 1) SwingConstants.LEFT else SwingConstants.CENTER)
+    if (isSelected) setColorPair(label, getColorPair(label))
+    else if (!entry.roll.isDefined) setColorPair(label, grayed)
+    else setColorPair(label, normal)
   }
 }
