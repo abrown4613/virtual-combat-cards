@@ -145,7 +145,8 @@ class InitiativeOrder {
     var itMap = trackers.value
     val ioBuilder = new ReorderedListBuilder(initBaseOrder.value, reorders.value, initiativeResultComparator)
     for (res <- initRes) {
-      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId, res.result), u => InitiativeTrackerChange(u.value))
+      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId, res.result),
+        u => if (u.value != null) InitiativeTrackerChange(u.value) else null)
       itMap = itMap + (res.uniqueId -> it)
       ioBuilder.addEntry(res)
     }
@@ -184,4 +185,10 @@ class InitiativeOrder {
    * Returns the IDs in the Order
    */
   def getIDsInOrder(): List[InitiativeOrderID] = initOrder.value
+
+  /**
+   * Check if the combatant is in the Initiative Order.
+   * @param cmb The Combatant to search in the order.
+   */
+  def isInOrder(cmb: CombatantID): Boolean = initOrder.value.exists(x => x.combId == cmb)
 }
