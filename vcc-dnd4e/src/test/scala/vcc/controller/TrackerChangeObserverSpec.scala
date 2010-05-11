@@ -68,6 +68,18 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
               one(mBuilder).endChanges
     }
 
+    "capture exception in even processing" in {
+      val change = mock[ChangeNotification]
+
+      mBuilder.processChange(change) answers {_ => throw new Exception("Bad move")}
+
+      anObserverActor ! TrackerChanged(List(change))
+
+      there was one(mBuilder).beginChanges then
+              one(mBuilder).processChange(change) then
+              one(mBuilder).endChanges
+    }
+
     "send all changes to builder" in {
       val c1 = mock[ChangeNotification]
       val c2 = mock[ChangeNotification]
@@ -102,7 +114,6 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
     "return None if the snapshot generation fails" in {
       mBuilder.getSnapshot() answers {
         x =>
-          println("Hello")
           throw new Exception("get the stack")
       }
 
