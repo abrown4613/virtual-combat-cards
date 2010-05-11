@@ -74,7 +74,6 @@ object LogService extends StartupStep {
         log.addAppender(apdr)
       }
     }
-    logger.warn("Hello")
   }
 
   def initializeStartupLog() {

@@ -25,6 +25,8 @@ import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
+import vcc.util.swing.XHTMLPaneAgent
+import java.io.File
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -62,7 +64,7 @@ object BootStrap extends StartupRoutine {
       Configuration
     }
     callStartupStep(srw, "Logging") {
-      val logs = Seq("org.mortbay.log", "domain", "app", "infra", "user")
+      val logs = Seq("org.mortbay.log", "domain", "app", "infra", "user", "fs-agent")
       val file = new java.io.File(Configuration.baseDirectory.value, "vcc.log")
       logger.info("Starting to logging operations to: {}", file)
       LogService.initializeLog(logs, file.toString, LogService.level.Debug, Configuration.storeLogs.value)
@@ -157,7 +159,8 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "User Interface Elements") {
       vcc.dnd4e.view.compendium.DNDICaptureMonitor
-      vcc.util.swing.XHTMLPane
+      XHTMLPaneAgent.createInstance(new File(UpdateManager.getInstallDirectory, "fs-wc"))
+      XHTMLPaneAgent
     }
 
     srw.reportProgress(this, "Initialization complete.")
