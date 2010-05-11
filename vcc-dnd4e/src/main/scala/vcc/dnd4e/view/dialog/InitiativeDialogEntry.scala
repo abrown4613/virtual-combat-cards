@@ -24,14 +24,17 @@ import javax.swing.{SwingConstants, JLabel}
 import java.awt.Color
 
 
-class InitiativeDialogEntry(val ids: Set[CombatantID], val name: String, var init: Int, var roll: InitiativeRoll) {
-  override def toString(): String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + ")"
+class InitiativeDialogEntry(val ids: Set[CombatantID], val name: String, var init: Int, var roll: InitiativeRoll, var skip: Boolean) {
+  override def toString(): String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + "," + (if (skip) "skip" else "roll") + ")"
 
   def isSimilar(that: InitiativeDialogEntry): Boolean = (this.name == that.name) &&
-          (this.init == that.init) && (this.roll == that.roll)
+          (this.init == that.init) && (this.roll == that.roll) && (this.skip == that.skip)
 
   def merge(that: InitiativeDialogEntry): InitiativeDialogEntry =
-    new InitiativeDialogEntry(this.ids ++ that.ids, this.name, this.init, this.roll)
+    new InitiativeDialogEntry(this.ids ++ that.ids, this.name, this.init, this.roll, this.skip)
+
+  def addRolls(that: InitiativeRoll) =
+    new InitiativeDialogEntry(this.ids, this.name, this.init, this.roll.addRolls(that), this.skip)
 }
 
 object InitiativeDialogEntryProjection extends TableModelRowProjection[InitiativeDialogEntry] {
@@ -39,7 +42,8 @@ object InitiativeDialogEntryProjection extends TableModelRowProjection[Initiativ
     ("ID", classOf[String]),
     ("Name", classOf[String]),
     ("Bonus", classOf[Integer]),
-    ("Roll", classOf[InitiativeRoll]))
+    ("Roll", classOf[InitiativeRoll]),
+    ("Skip", classOf[Boolean]))
 
   def apply(col: Int, entry: InitiativeDialogEntry): java.lang.Object = {
     col match {
@@ -47,22 +51,26 @@ object InitiativeDialogEntryProjection extends TableModelRowProjection[Initiativ
       case 1 => entry.name
       case 2 => int2Integer(entry.init)
       case 3 => entry.roll
+      case 4 => boolean2Boolean(entry.skip)
     }
   }
 
   val setter: PartialFunction[(Int, InitiativeDialogEntry, Any), Unit] = {
     case (2, entry, v) => entry.init = v.asInstanceOf[Int]
     case (3, entry, v) => entry.roll = v.asInstanceOf[InitiativeRoll]
+    case (4, entry, v) => entry.skip = v.asInstanceOf[Boolean]
   }
 }
 
 class InitiativeDialogEntryFormatter extends ProjectionTableLabelFormatter[InitiativeDialogEntry] {
   final private val grayed = (Color.LIGHT_GRAY, Color.BLACK)
+  final private val skipped = (Color.LIGHT_GRAY, Color.GRAY)
   final private val normal = (Color.WHITE, Color.BLACK)
 
   def render(label: JLabel, column: Int, isSelected: Boolean, entry: InitiativeDialogEntry) {
     label.setHorizontalAlignment(if (column == 1) SwingConstants.LEFT else SwingConstants.CENTER)
     if (isSelected) setColorPair(label, getColorPair(label))
+    else if (entry.skip) setColorPair(label, skipped)
     else if (!entry.roll.isDefined) setColorPair(label, grayed)
     else setColorPair(label, normal)
   }
