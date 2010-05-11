@@ -274,6 +274,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       } afterCommit {
         changes =>
           extractOrderChange(changes) must_== List(ioc, iob, iod)
+          changes must notContain(InitiativeTrackerChange(null)) //Avoid empty changed
           aOrder.initiativeTrackerFor(ioa0) must throwA[NoSuchElementException]
       } afterUndo {
         changes =>

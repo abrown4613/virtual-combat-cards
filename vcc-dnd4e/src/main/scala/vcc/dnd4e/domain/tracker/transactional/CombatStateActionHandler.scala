@@ -44,9 +44,13 @@ trait CombatStateActionHandler {
 
     case SetInitiative(id) =>
       for (iDef <- id) {
-        if (rules.canCombatantRollInitiative(context, iDef.combId))
+        if (rules.canCombatantRollInitiative(context, iDef.combId)) {
+          if (context.order.isInOrder(iDef.combId)) {
+            if (context.metaData.inCombat) throw new IllegalActionException("Cannot redefined initiative once in combat")
+            else context.order.removeCombatant(iDef.combId)
+          }
           context.order.setInitiative(iDef)
-        else
+        } else
           throw new IllegalActionException("Combatant " + iDef.combId + " cant roll initiative.")
       }
 

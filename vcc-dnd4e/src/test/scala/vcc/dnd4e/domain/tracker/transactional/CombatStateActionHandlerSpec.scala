@@ -123,14 +123,36 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
     val iDef1 = InitiativeDefinition(combA, 4, List(10))
     val iDef2 = InitiativeDefinition(combB, 4, List(11))
 
+    "remove from list if already there and not in combat" in {
+      val trans = new Transaction()
+      mRule.canCombatantRollInitiative(state, combA) returns true
+      mMeta.inCombat returns false
+      mOrder.isInOrder(combA) returns true
+      aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1)))
+      there was one(mMeta).inCombat
+      there was one(mOrder).isInOrder(combA)
+      there was one(mOrder).removeCombatant(combA)(trans) then
+              one(mOrder).setInitiative(iDef1)(trans)
+    }
+
+    "not remove from list if already there and in combat" in {
+      val trans = new Transaction()
+      mRule.canCombatantRollInitiative(state, combA) returns true
+      mMeta.inCombat returns true
+      mOrder.isInOrder(combA) returns true
+      aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1))) must throwA[IllegalActionException]
+      there was one(mMeta).inCombat
+      there was one(mOrder).isInOrder(combA)
+    }
+
     "iterate through all in the list" in {
       val trans = new Transaction()
       mRule.canCombatantRollInitiative(state, combA) returns true
       mRule.canCombatantRollInitiative(state, combB) returns true
       aCombatController.dispatch(trans, mSource, SetInitiative(List(iDef1, iDef2)))
       there was one(mRule).canCombatantRollInitiative(state, combA)
-      there was one(mRule).canCombatantRollInitiative(state, combB)
       there was one(mOrder).setInitiative(iDef1)(trans)
+      there was one(mRule).canCombatantRollInitiative(state, combB)
       there was one(mOrder).setInitiative(iDef2)(trans)
     }
 
