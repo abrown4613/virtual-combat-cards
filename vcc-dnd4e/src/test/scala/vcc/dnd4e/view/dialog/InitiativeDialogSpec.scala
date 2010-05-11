@@ -33,29 +33,29 @@ object InitiativeDialogSpec extends Specification {
 
   "InitiativeDialogEntry" should {
     "be similar is name, roll and bonus are the same" in {
-      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll)
-      val ieb = new InitiativeDialogEntry(Set(combB), "name", 4, InitiativeRoll.simpleRoll)
+      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll, false)
+      val ieb = new InitiativeDialogEntry(Set(combB), "name", 4, InitiativeRoll.simpleRoll, false)
 
       (iea isSimilar ieb) must beTrue
     }
 
     "be diferente otherwise" in {
-      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll)
-      val ieb = new InitiativeDialogEntry(Set(combB), "name2", 4, InitiativeRoll.simpleRoll)
+      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll, false)
+      val ieb = new InitiativeDialogEntry(Set(combB), "name2", 4, InitiativeRoll.simpleRoll, false)
 
       (iea isSimilar ieb) must beFalse
     }
 
     "be diferente otherwise" in {
-      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll)
-      val ieb = new InitiativeDialogEntry(Set(combB), "name", 5, InitiativeRoll.simpleRoll)
+      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll, false)
+      val ieb = new InitiativeDialogEntry(Set(combB), "name", 5, InitiativeRoll.simpleRoll, false)
 
       (iea isSimilar ieb) must beFalse
     }
 
     "be diferente otherwise" in {
-      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll)
-      val ieb = new InitiativeDialogEntry(Set(combB), "name", 4, InitiativeRoll(List(Some(4))))
+      val iea = new InitiativeDialogEntry(Set(combA), "name", 4, InitiativeRoll.simpleRoll, false)
+      val ieb = new InitiativeDialogEntry(Set(combB), "name", 4, InitiativeRoll(List(Some(4))), false)
 
       (iea isSimilar ieb) must beFalse
     }

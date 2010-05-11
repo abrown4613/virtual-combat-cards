@@ -47,6 +47,8 @@ case class InitiativeRoll(rolls: List[Option[Int]]) {
       case Some(i) => i + initBonus
     }
   }.toList
+
+  def addRolls(that: InitiativeRoll) = InitiativeRoll(this.rolls ::: that.rolls)
 }
 
 object InitiativeRoll {

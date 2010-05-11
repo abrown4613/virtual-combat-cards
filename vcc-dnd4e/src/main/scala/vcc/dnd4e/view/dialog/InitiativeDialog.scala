@@ -22,7 +22,7 @@ import scala.swing.event._
 import vcc.util.swing._
 
 import scala.util.Sorting
-import vcc.dnd4e.domain.tracker.common.{CombatantID, InitiativeDefinition}
+import vcc.dnd4e.domain.tracker.common.{InitiativeDefinition}
 import vcc.dnd4e.view.helper.{InitiativeRollEditor, InitiativeRoll}
 import vcc.dnd4e.view.{UnifiedCombatant, PanelDirector}
 import vcc.util.{ListHelper, DiceBag}
@@ -44,24 +44,25 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
   private val groupCheckbox = new Button(Action("Group similar") {
     table.content = mergeSimilar(table.content.toList)
   })
+
   private val splitGroup = new Button(Action("Split Group") {
-    val sel = table.selection.rows.toSeq
-    if (!sel.isEmpty) {
-      val idx = sel(0)
+    val sel = getSelectedRow()
+    if (sel.isDefined) {
+      val idx = sel.get
       val toSplit = table.content(idx)
       val segment = List(
-        new InitiativeDialogEntry(Set(toSplit.ids.toSeq.take(toSplit.ids.size / 2).toSeq: _*), toSplit.name, toSplit.init, toSplit.roll),
-        new InitiativeDialogEntry(Set(toSplit.ids.toSeq.drop(toSplit.ids.size / 2).toSeq: _*), toSplit.name, toSplit.init, toSplit.roll))
+        new InitiativeDialogEntry(Set(toSplit.ids.toSeq.take(toSplit.ids.size / 2).toSeq: _*), toSplit.name, toSplit.init, toSplit.roll, toSplit.skip),
+        new InitiativeDialogEntry(Set(toSplit.ids.toSeq.drop(toSplit.ids.size / 2).toSeq: _*), toSplit.name, toSplit.init, toSplit.roll, toSplit.skip))
       table.content = ListHelper.splice(table.content.toList, idx, segment)
     }
   })
 
   private val breakGroup = new Button(Action("Break Group") {
-    val sel = table.selection.rows.toSeq
-    if (!sel.isEmpty) {
-      val idx = sel(0)
+    val sel = getSelectedRow()
+    if (sel.isDefined) {
+      val idx = sel.get
       val toSplit = table.content(idx)
-      val segment = toSplit.ids.map(id => new InitiativeDialogEntry(Set(id), toSplit.name, toSplit.init, toSplit.roll)).toList
+      val segment = toSplit.ids.map(id => new InitiativeDialogEntry(Set(id), toSplit.name, toSplit.init, toSplit.roll, toSplit.skip)).toList
       table.content = ListHelper.splice(table.content.toList, idx, segment)
     }
   })
@@ -76,19 +77,55 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
     add(new Button(cancelAction), "")
   }
   minimumSize = new java.awt.Dimension(360, 550)
-  this.placeOnScreenCenter()
+  splitGroup.enabled = false
+  breakGroup.enabled = false
 
-  private val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)), (a: UnifiedCombatant, b: UnifiedCombatant) => {a.combId.id < b.combId.id})
-  table.content = orderedAndFilter.map(cmb => new InitiativeDialogEntry(Set(cmb.combId), cmb.name, cmb.definition.entity.initiative, InitiativeRoll.simpleRoll)).toList
+  this.placeOnScreenCenter()
+  listenTo(table.selection)
+
+  reactions += {
+    case TableRowsSelected(t, rng, false) =>
+      splitGroup.enabled = {
+        val sel = getSelectedRow()
+        (sel.isDefined) && table.content(sel.get).ids.size > 1
+      }
+      breakGroup.enabled = splitGroup.enabled
+  }
+
+  table.content = {
+    val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)), (a: UnifiedCombatant, b: UnifiedCombatant) => {a.combId.id < b.combId.id})
+    orderedAndFilter.map(
+      cmb => new InitiativeDialogEntry(
+        Set(cmb.combId), cmb.name, cmb.definition.entity.initiative,
+        if (cmb.isInOrder) InitiativeRoll(List(Some(cmb.initiative.initScore))) else InitiativeRoll.simpleRoll,
+        cmb.isInOrder)
+      ).toList.foldLeft(List[InitiativeDialogEntry]())(joinInitiativeRolls)
+  }
 
   def processOK() {
-    dialogResult = Some(table.content.flatMap(ie => ie.ids.map(id => InitiativeDefinition(id, ie.init, ie.roll.resolve(ie.init, DiceBag)))).toList)
+    dialogResult = Some(table.content.filter(e => !e.skip).flatMap(ie => ie.ids.map(id => InitiativeDefinition(id, ie.init, ie.roll.resolve(ie.init, DiceBag)))).toList)
+  }
+
+  private def getSelectedRow(): Option[Int] = {
+    val sel = table.selection.rows.toSeq
+    if (sel.isEmpty) None
+    else Some(sel(0))
   }
 
   def insertSimilar(lst: List[InitiativeDialogEntry], e: InitiativeDialogEntry): List[InitiativeDialogEntry] = {
     lst match {
       case head :: rest if (head.isSimilar(e)) => head.merge(e) :: rest
       case head :: rest => head :: insertSimilar(rest, e)
+      case Nil => List(e)
+    }
+  }
+
+  private def joinInitiativeRolls(lst: List[InitiativeDialogEntry], e: InitiativeDialogEntry): List[InitiativeDialogEntry] = {
+    lst match {
+      case head :: rest if (head.ids == e.ids) =>
+        head.roll = head.roll.addRolls(e.roll)
+        head :: rest
+      case head :: rest => head :: joinInitiativeRolls(rest, e)
       case Nil => List(e)
     }
   }
