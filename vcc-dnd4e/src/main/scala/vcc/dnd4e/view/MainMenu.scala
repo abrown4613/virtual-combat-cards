@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,29 @@
 package vcc.dnd4e.view
 
 import scala.swing._
-import vcc.model.Registry
 import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.dnd4e.model.PartyFile
-import vcc.infra.datastore.naming.DataStoreURI
-import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
 import vcc.controller.message.ClearTransactionLog
-import vcc.infra.docking.DockingActionController
 import vcc.dnd4e.view.helper.PartyLoader
+
+/**
+ * Helper object to create MenuItem associated to PanelDirector properties
+ */
+object PropertyMenuItem {
+
+  /**
+   * Create a CheckMenuItem associated with a boolean PanelDirector property.
+   */
+  def createCheckMenu(name: String, director: PanelDirector, prop: PanelDirector.property.Value): MenuItem = {
+    val mi = new CheckMenuItem(name)
+    mi.selected = director.getBooleanProperty(prop)
+    mi.action = Action(name) {
+      director.setProperty(prop, mi.selected)
+    }
+    mi
+  }
+}
 
 class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame) extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
@@ -47,8 +60,6 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   })
 
   private val combatMenu = new CombatMenu(director, parent)
-
-
 
   private val historyMenu = new Menu("History")
   historyMenu.contents += new MenuItem(new Action("Undo") {
@@ -69,11 +80,11 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   })
 
   private val viewMenu = new Menu("View")
-  private val hideDeadMenu = new CheckMenuItem("Hide Dead")
-  hideDeadMenu.action = Action("Hide Dead") {
-    director.setProperty(PanelDirector.property.HideDead, hideDeadMenu.peer.isSelected)
-  }
+  private val hideDeadMenu = PropertyMenuItem.createCheckMenu("Hide Dead", director, PanelDirector.property.HideDead)
+  private val robinViewMenu = PropertyMenuItem.createCheckMenu("Show Next Up as first combatant", director, PanelDirector.property.RobinView)
+
   viewMenu.contents += hideDeadMenu
+  viewMenu.contents += robinViewMenu
 
   private val dockMenu = new Menu("Dockable")
 
