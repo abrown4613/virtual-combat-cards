@@ -55,6 +55,8 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] {
   private var comment = ""
   private var inCombat = false
 
+  private var toBeFirst: Option[InitiativeOrderID] = None
+
   def processChange(change: ChangeNotification) {
     if (!change.isInstanceOf[CombatStateChange]) throw new Exception("Can't handle a: " + change)
     change.asInstanceOf[CombatStateChange] match {
@@ -81,15 +83,19 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] {
         comment = newComment
 
       case InitiativeOrderFirstChange(who) =>
-        if (who != null && !initiatives.isDefinedAt(who)) throw new NoSuchElementException("InitiativeOrder does not include: " + who)
-        if (who == null) first = None
-        else first = Some(who)
+        toBeFirst = Some(who)
 
     }
   }
 
   def endChanges() {
     initiatives --= (initiatives.keys.toList -- order)
+    if (toBeFirst.isDefined) {
+      val who = toBeFirst.get
+      if (who != null && !initiatives.isDefinedAt(who)) throw new NoSuchElementException("InitiativeOrder does not include: " + who)
+      if (who == null) first = None
+      else first = Some(who)
+    }
   }
 
   def beginChanges() {}

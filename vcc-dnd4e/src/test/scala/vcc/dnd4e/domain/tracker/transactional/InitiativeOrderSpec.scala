@@ -461,6 +461,19 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
 
       } afterRedoAsInCommit ()
     }
+
+
+    "end combat when its started (same as clear)" in {
+      val trans = new Transaction()
+
+      aOrder.clearOrder()(trans)
+      trans.commit(changeLog)
+      trans.undo(changeLog)
+      trans.redo(changeLog)
+      trans.undo(changeLog)
+      trans.redo(changeLog)
+      0 must_== 0
+    }
   }
 
   def extractOrderChange(changes: Seq[ChangeNotification]): List[InitiativeOrderID] = {

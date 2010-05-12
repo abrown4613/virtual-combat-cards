@@ -28,14 +28,25 @@ trait ReserveViewBuilder {
   def buildReserve(combatState: CombatState): Seq[CombatantID]
 }
 
-object DontCareReserveViewBuilder extends ReserveViewBuilder {
+object SortedIDReserverViewBuilder extends ReserveViewBuilder {
   def buildReserve(combatState: CombatState): Seq[CombatantID] = {
-    combatState.combatantsNotInOrder().toSeq
+    combatState.combatantsNotInOrder().toList.sort((a: CombatantID, b: CombatantID) => a.id < b.id)
   }
 }
 
 object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
-    combatState.order
+    combatState.getInitiativeOrder()
+  }
+}
+
+/**
+ * Build an order with the robin head always on the top.
+ */
+object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
+  def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
+    val order = combatState.getInitiativeOrder()
+    val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
+    order.drop(idx) ++ order.take(idx)
   }
 }
