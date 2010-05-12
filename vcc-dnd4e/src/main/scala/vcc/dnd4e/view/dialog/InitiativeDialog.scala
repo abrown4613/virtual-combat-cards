@@ -103,7 +103,9 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
   }
 
   def processOK() {
-    dialogResult = Some(table.content.filter(e => !e.skip).flatMap(ie => ie.ids.map(id => InitiativeDefinition(id, ie.init, ie.roll.resolve(ie.init, DiceBag)))).toList)
+    dialogResult = Some(table.content.filter(e => !e.skip).
+            map(ie => (ie.ids, ie.init, ie.roll.resolve(ie.init, DiceBag))). //Tuple( Ids, InitBonus, Rolls)
+            flatMap(tpl => tpl._1.map(id => InitiativeDefinition(id, tpl._2, tpl._3))).toList)
   }
 
   private def getSelectedRow(): Option[Int] = {
