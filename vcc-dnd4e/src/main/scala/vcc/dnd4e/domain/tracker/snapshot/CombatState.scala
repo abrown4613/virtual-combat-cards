@@ -25,7 +25,7 @@ import vcc.dnd4e.domain.tracker.common._
 case class CombatState(
         isCombatStarted: Boolean,
         combatComment: String,
-        order: List[InitiativeOrderID],
+        private val order: List[InitiativeOrderID],
         initiatives: Map[InitiativeOrderID, InitiativeTracker],
         nextUp: Option[InitiativeOrderID],
         roster: Map[CombatantID, CombatantStateView]) extends CombatStateView {

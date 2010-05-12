@@ -53,6 +53,15 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
       snap.getInitiativeOrder() must_== List(iob)
     }
 
+    "handle InitiativeOrderChangeFirst then InitiativeOrderChange" in {
+      //This happens on an undo of a End Combat
+      val snap = processChanges(aBuilder, InitiativeOrderFirstChange(ioa0), InitiativeOrderChange(List(itb, ita0)))
+      snap.initiativeTrackerFromID(ioa0) must_== ita0
+      snap.initiativeTrackerFromID(iob) must_== itb
+      snap.getInitiativeOrder() must_== List(iob, ioa0)
+      snap.nextUp must_== Some(ioa0)
+    }
+
     "update an InitiativeTracker in InitiativeOrderChange" in {
       processChanges(aBuilder, InitiativeOrderChange(List(ita0)))
       val snap = processChanges(aBuilder, InitiativeTrackerChange(ita0m))
