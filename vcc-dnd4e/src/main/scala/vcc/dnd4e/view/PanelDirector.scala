@@ -18,13 +18,13 @@
 
 package vcc.dnd4e.view
 
-import helper.{DontCareReserveViewBuilder, DirectInitiativeOrderViewBuilder}
+import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
 import scala.actors.Actor
 import vcc.controller.message.Command
-import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
+import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatStateWithChanges}
 import vcc.controller.{TrackerChangeObserver, TrackerChangeAware, CommandSource}
 
 trait ContextObserver {
@@ -38,6 +38,7 @@ trait PaneDirectorPropertyObserver {
 object PanelDirector {
   object property extends Enumeration {
     val HideDead = Value("Hide Dead")
+    val RobinView = Value("Robin View")
   }
 }
 
@@ -70,6 +71,8 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
 
   private var propHideDead = false
 
+  private var propRobinView = true
+
   private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot().state)
 
   val rules = new CombatStateRules()
@@ -84,7 +87,9 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   def snapshotChanged(newState: CombatStateWithChanges) {
     //newState.prettyPrint()
     SwingHelper.invokeInEventDispatchThread {
-      unifiedTable = UnifiedSequenceTable.buildList(newState.state, DirectInitiativeOrderViewBuilder, DontCareReserveViewBuilder)
+      unifiedTable = UnifiedSequenceTable.buildList(newState.state,
+        if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
+        SortedIDReserverViewBuilder)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable, newState.changes))
     }
   }
@@ -118,10 +123,15 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   }
 
   def setProperty(prop: PanelDirector.property.Value, value: Boolean) {
-    if (prop == PanelDirector.property.HideDead) {
-      propHideDead = value
-    } else {
-      throw new Exception("Unknown property: " + prop)
+    prop match {
+      case PanelDirector.property.HideDead =>
+        propHideDead = value
+      case PanelDirector.property.RobinView =>
+        propRobinView = value
+        //Need to update sequence
+        snapshotChanged(csm.getSnapshot())
+      case _ =>
+        throw new Exception("Unknown property: " + prop)
     }
     for (obs <- propertyObserver) obs.propertyChanged(prop)
   }
@@ -130,6 +140,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
     import PanelDirector.property._
     prop match {
       case HideDead => propHideDead
+      case RobinView => propRobinView
       case _ => throw new Exception("Unknown property: " + prop)
     }
   }
