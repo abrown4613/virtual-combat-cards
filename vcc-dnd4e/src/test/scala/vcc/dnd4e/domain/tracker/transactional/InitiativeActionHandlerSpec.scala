@@ -170,6 +170,24 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       there was one(mOrder).rotate()(trans)
     }
 
+    "end round and not rotate if next up is delaying" in {
+      mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
+      setMockInitiativeTracker(ioc, state.Delaying)
+      val baseIT = InitiativeTracker(ioc, 0, 0, state.Delaying)
+      val updatedIT = baseIT.transform(baseIT, action.EndRound)
+      mOrder.robinHeadInitiativeTracker() returns InitiativeTracker(ioc, 0, 0, state.Delaying) thenReturns InitiativeTracker(ioc, 0, 0, state.Waiting)
+
+      val mockSelf = mockNextAsNotDead(combC) // Should be the same on the second cll of the first guy
+
+      val trans = new Transaction()
+      aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.EndRound))
+
+      there was one(mOrder).updateInitiativeTrackerFor(ioc, updatedIT)(trans)
+      there was no(mOrder).rotate()(trans)
+      // Must not check next guys health since we have not rotated.
+      there was no(mockSelf).health
+    }
+
     "auto advance next guy if he is dead" in {
       mRules.canInitiativeOrderPerform(rState, ioc, InitiativeTracker.action.EndRound) returns true
       setMockInitiativeTracker(ioc, state.Acting)
@@ -183,6 +201,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
       there was one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
               one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
+
     }
 
     "auto advance dead after a first delays" in {
@@ -423,15 +442,14 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
   def mockNextAsDead(combId: CombatantID) {
     val mockNext = mock[Combatant]
     mockNext.health returns HealthTracker(0, 0, 3, 0, MinionHealthDefinition())
-    mockNext.health.status must_== HealthTracker.Status.Dead
     mRoster.combatant(combId) returns mockNext
   }
 
-  def mockNextAsNotDead(combId: CombatantID) {
+  def mockNextAsNotDead(combId: CombatantID): Combatant = {
     val mockNext = mock[Combatant]
     mockNext.health returns HealthTracker(1, 0, 0, 0, MinionHealthDefinition())
-    mockNext.health.status must_!= HealthTracker.Status.Dead
     mRoster.combatant(combId) returns mockNext
+    mockNext
   }
 
 }

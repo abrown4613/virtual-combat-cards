@@ -39,15 +39,18 @@ trait InitiativeActionHandler {
 
     case InternalInitiativeAction(who, action) =>
       // First thing check if we can perform this
+      println("Execute " + who + " action:" + action)
       if (!rules.canInitiativeOrderPerform(context, who, action))
-        throw new IllegalActionException(who + " can not perform " + action)
+        throw new IllegalActionException(who + " can not perform " + action + " current state: " + context.order.initiativeTrackerFor(who) + " first is: " + context.order.robinHeadInitiativeTracker())
       val firstIT = context.order.robinHeadInitiativeTracker()
-      val actioningIT = context.order.initiativeTrackerFor(who)
-      val nIT = actioningIT.transform(firstIT, action)
-      context.order.updateInitiativeTrackerFor(who, nIT)
+      val actingIT = context.order.initiativeTrackerFor(who)
+      val actingNewIT = actingIT.transform(firstIT, action)
+      context.order.updateInitiativeTrackerFor(who, actingNewIT)
 
       action match {
-        case InitiativeTracker.action.EndRound => context.order.rotate()
+        case InitiativeTracker.action.EndRound =>
+          if (actingIT.state != InitiativeTracker.state.Delaying)
+            context.order.rotate()
         case InitiativeTracker.action.Delay => context.order.rotate()
         case InitiativeTracker.action.MoveUp =>
           context.order.moveBefore(who, firstIT.orderID)
@@ -57,8 +60,9 @@ trait InitiativeActionHandler {
         case _ => //Nothing to do
       }
 
-      // Check if we need to advance dead
-      if (action == InitiativeTracker.action.EndRound || action == InitiativeTracker.action.Delay) {
+      // Check if we need to advance dead if we rotated
+      if ((action == InitiativeTracker.action.EndRound || action == InitiativeTracker.action.Delay)
+              && (firstIT.orderID != context.order.robinHeadInitiativeTracker.orderID)) {
         val nextIT = context.order.robinHeadInitiativeTracker()
         val health = context.roster.combatant(nextIT.orderID.combId).health
         if (health.status == HealthTracker.Status.Dead) {
