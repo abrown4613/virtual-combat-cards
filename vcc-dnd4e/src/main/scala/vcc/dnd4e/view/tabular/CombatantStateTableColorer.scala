@@ -19,12 +19,11 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
-import vcc.dnd4e.domain.tracker.snapshot.CombatState
-import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
 import java.awt.Color
+import javax.swing.SwingConstants
 
 class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCombatant] {
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
@@ -62,11 +61,10 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
     val normalBack = if (cmb.isCharacter) charBackground else normal
     label.setFont(if (cmb.matches(acting)) cellFontBold else cellFont)
 
-
-    if (col == 1 && cmb.matches(nextUp)) label.setIcon(IconLibrary.ActionGO)
+    if (col == 1) label.setIcon(if (cmb.matches(nextUp)) IconLibrary.MicroArrowGrey else IconLibrary.MicroBlank)
     else label.setIcon(null)
 
-    label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
+    label.setHorizontalAlignment(if (col == 1) SwingConstants.LEFT else SwingConstants.CENTER)
     setColorPair(label, col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
       case 3 =>
