@@ -37,4 +37,8 @@ object IconLibrary {
   val MetalD20 = loadIcon("/vcc/dnd4e/images/d20metal.png")
 
   val ActionGO = loadIcon("/vcc/dnd4e/images/action_go.gif")
+
+  val MicroArrowGrey = loadIcon("/vcc/dnd4e/images/mi_arrow_grey.png")
+
+  val MicroBlank = loadIcon("/vcc/dnd4e/images/mi_blank.png")
 }
