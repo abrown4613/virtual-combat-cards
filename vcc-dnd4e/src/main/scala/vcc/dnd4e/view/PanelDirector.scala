@@ -158,7 +158,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
     tracker ! action
   }
 
-  def actionCompleted(msg: String) {
+  def actionCompleted(msg: String, producedChanges: Boolean) {
     logger.info("Executed: " + msg)
   }
 

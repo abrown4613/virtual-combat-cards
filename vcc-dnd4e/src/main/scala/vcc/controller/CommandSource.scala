@@ -1,4 +1,5 @@
 //$Id$
+
 /**
  * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
  *
@@ -18,8 +19,7 @@
 package vcc.controller
 
 trait CommandSource {
+  def actionCompleted(msg: String, producedChanges: Boolean)
 
-  def actionCompleted(msg:String)
-  
-  def actionCancelled(reason:String)
+  def actionCancelled(reason: String)
 }

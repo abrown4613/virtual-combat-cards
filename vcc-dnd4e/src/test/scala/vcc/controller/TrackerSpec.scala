@@ -61,19 +61,40 @@ object TrackerSpec extends Specification with Mockito {
 
       tracker ! Command(src, msg)
 
-      there was one(src).actionCompleted("an action")
+      there was one(src).actionCompleted("an action", false)
+      there was no(src).actionCancelled(any[String])
+    }
+
+    "notify CommandSource on success with changes" in {
+      val msg = mock[TransactionalAction]
+      val src = mock[CommandSource]
+
+      mController.dispatch(any[Transaction], any[CommandSource], any[TransactionalAction]) answers {
+        a =>
+          val t = a.asInstanceOf[Array[Any]](0).asInstanceOf[Transaction]
+          //Need to mock a simple UndoMemento
+          val um = mock[UndoMemento[Int]]
+          um.changeNotification returns None
+          t.addMemento(um)
+      }
+
+      msg.description returns "an action"
+
+      tracker ! Command(src, msg)
+
+      there was one(src).actionCompleted("an action", true)
       there was no(src).actionCancelled(any[String])
     }
 
     "notify CommandSource of failure with exception" in {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
-      mController.dispatch(any[Transaction], refEq(src), refEq(msg)) answers {p => throw new Exception("boom!")}
+      mController.dispatch(any[Transaction], refEq(src), refEq(msg)) throws new RuntimeException("boom!")
 
       tracker ! Command(src, msg)
 
       there was one(mController).dispatch(any[Transaction], refEq(src), refEq(msg))
-      there was no(src).actionCompleted(any[String])
+      there was no(src).actionCompleted(any[String], any[Boolean])
       there was one(src).actionCancelled("boom!")
     }
 
@@ -137,7 +158,7 @@ object TrackerSpec extends Specification with Mockito {
     }
 
     "silently do nothing if roll forward is out of bounds not publishing" in {
-      mLog.rollforward(tracker) answers {_ => throw new TransactionLogOutOfBounds("bla")}
+      mLog.rollforward(tracker) throws new TransactionLogOutOfBounds("bla")
 
       tracker ! Redo()
 
@@ -168,7 +189,7 @@ object TrackerSpec extends Specification with Mockito {
     }
 
     "silently do nothing if roll back is out of bounds not publishing " in {
-      mLog.rollback(tracker) answers {_ => throw new TransactionLogOutOfBounds("bla")}
+      mLog.rollback(tracker) throws new TransactionLogOutOfBounds("bla")
 
       tracker ! Undo()
 
