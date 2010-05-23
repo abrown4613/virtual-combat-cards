@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-dnd4e</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.4.0-SNAPSHOT</version>
     <description>Main DND4E Module</description>
     <organization>
         <name>exnebula.org</name>
@@ -203,7 +203,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.2-beta-5</version>
                 <configuration>
-                    <finalName>vcc-${project .version}</finalName>
+                    <finalName>vcc-${project.version}</finalName>
                     <outputDirectory>target</outputDirectory>
                     <workDirectory>target/assembly/work</workDirectory>
                 </configuration>
