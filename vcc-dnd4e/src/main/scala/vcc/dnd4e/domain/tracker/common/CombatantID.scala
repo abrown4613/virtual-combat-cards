@@ -48,7 +48,7 @@ case class InitiativeOrderID(val combId: CombatantID, val seq: Int) {
  */
 case class InitiativeDefinition(combId: CombatantID, bonus: Int, inits: List[Int]) {
   def toResult(): List[InitiativeResult] = {
-    inits.zip((0 to inits.length).toList).map(p => InitiativeResult(InitiativeOrderID(combId, p._2), bonus, p._1, 0))
+    inits.zipWithIndex.map(p => InitiativeResult(InitiativeOrderID(combId, p._2), bonus, p._1, 0))
   }
 }
 
