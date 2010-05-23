@@ -36,7 +36,7 @@ import vcc.controller.message.TransactionalAction
 class Tracker(controller: TrackerController, _tlog: TransactionLog[TransactionalAction]) extends Actor with StartupStep with TransactionChangePublisher {
   def this(controller: TrackerController) = this (controller, new TransactionLog[TransactionalAction]())
 
-  private val logger = org.slf4j.LoggerFactory.getLogger("user")
+  private val logger = org.slf4j.LoggerFactory.getLogger("infra")
 
   def isStartupComplete = true
 
@@ -63,13 +63,11 @@ class Tracker(controller: TrackerController, _tlog: TransactionLog[Transactional
             trans.commit(this)
             if (!trans.isEmpty) {
               _tlog.store(action, trans)
-              logger.info("TLOG[" + _tlog.length + "] Added transaction: " + _tlog.pastActions.head.description)
             }
-            from.actionCompleted(action.description)
+            from.actionCompleted(action.description, !trans.isEmpty)
           } catch {
             case e =>
               logger.warn("An exception occured while processing: " + action, e)
-              e.printStackTrace(System.out)
               logger.warn("Rolling back transaction")
               if (trans.state == Transaction.state.Active) trans.cancel()
               from.actionCancelled(e.getMessage)
