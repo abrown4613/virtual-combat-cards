@@ -20,6 +20,25 @@ package vcc.dnd4e.domain.tracker.snapshot
 import vcc.controller.SnapshotBuilder
 import vcc.controller.transaction.ChangeNotification
 import vcc.dnd4e.domain.tracker.common._
+import java.lang.Throwable
+import vcc.infra.AbnormalEnd
+import org.slf4j.LoggerFactory
+
+
+/**
+ * Helper mixin to cause abort on a failure.
+ */
+trait SnapshotBuilderAborter[T] {
+  self: SnapshotBuilder[T] =>
+
+  def handleFailure(e: Throwable, changes: List[ChangeNotification]) {
+    val logger = LoggerFactory.getLogger("domain")
+    logger.error("Failed to handle changes: {}", changes)
+    logger.error("Causing exception: " + e.getMessage, e)
+    AbnormalEnd(this, "Internal error while updating state", e)
+  }
+
+}
 
 /**
  * Represents a state along with changes.
@@ -34,7 +53,7 @@ case class CombatStateWithChanges(state: CombatState, changes: StateChange)
  * @param subBuilder A builder that will handle CombatState changes
  */
 class CombatChangeAndStateSnapshotBuilder(subBuilder: CombatStateSnapshotBuilder)
-        extends SnapshotBuilder[CombatStateWithChanges] {
+        extends SnapshotBuilder[CombatStateWithChanges] with SnapshotBuilderAborter[CombatStateWithChanges] {
   private var changes: StateChange = null
 
   def this() = this (new CombatStateSnapshotBuilder())
