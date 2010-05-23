@@ -70,14 +70,16 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
 
     "capture exception in even processing" in {
       val change = mock[ChangeNotification]
+      val except = new Exception("Bad move")
 
-      mBuilder.processChange(change) answers {_ => throw new Exception("Bad move")}
+      mBuilder.processChange(change) answers {_ => throw except}
 
       anObserverActor ! TrackerChanged(List(change))
 
       there was one(mBuilder).beginChanges then
-              one(mBuilder).processChange(change) then
-              one(mBuilder).endChanges
+              one(mBuilder).processChange(change)
+      there was no(mBuilder).endChanges
+      there was one(mBuilder).handleFailure(except, List(change))
     }
 
     "send all changes to builder" in {

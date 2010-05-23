@@ -22,8 +22,6 @@ import scala.actors.Actor.{loop, react}
 import message.{TrackerChanged, AddObserver}
 import transaction.ChangeNotification
 import reflect.Manifest
-import vcc.infra.AbnormalEnd
-import org.slf4j.LoggerFactory
 
 /**
  * A snapshot builder is responsible for collecting changes to a combat state as published by the tracker and applying
@@ -52,6 +50,13 @@ trait SnapshotBuilder[S] {
    * @return A snapshot
    */
   def getSnapshot(): S
+
+  /**
+   * Process failure in the handling of changes.
+   * @param e Exception
+   * @param change Change that trigger the exception
+   */
+  def handleFailure(e: Throwable, change: List[ChangeNotification])
 }
 
 
@@ -73,24 +78,20 @@ private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder
               reply(None)
           }
         case TrackerChanged(changes) =>
-          builder.beginChanges()
           try {
+            builder.beginChanges()
             changes.foreach(builder.processChange)
+            builder.endChanges()
           } catch {
             case e =>
-              val logger = LoggerFactory.getLogger("domain")
-              logger.error("Failed to handle changes: {}", changes)
-              logger.error("Causing exception: " + e.getMessage, e)
-              AbnormalEnd(this, "Internal error while updating state", e)
+              builder.handleFailure(e, changes)
           }
-          builder.endChanges()
           callbacks.foreach(cb => cb.snapshotChanged(builder.getSnapshot()))
 
         case TrackerChangeObserver.RegisterCallback(cb, manif) if (manif <:< manifest) =>
           callbacks = cb.asInstanceOf[TrackerChangeAware[S]] :: callbacks
 
         case TrackerChangeObserver.RegisterCallback(cb, manif) if (!(manif <:< manifest)) =>
-        //
       }
     }
   }

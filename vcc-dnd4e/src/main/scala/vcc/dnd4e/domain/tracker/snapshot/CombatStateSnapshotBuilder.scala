@@ -25,7 +25,7 @@ import vcc.dnd4e.domain.tracker.common._
  * This class is used to collect CombatStateChanges and keep a version of the transactional tracker state.
  * It will generate snapshot.CombatState as snapshot.
  */
-class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] {
+class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] with SnapshotBuilderAborter[CombatState] {
 
   /**
    * Internal representation of the combatant.
