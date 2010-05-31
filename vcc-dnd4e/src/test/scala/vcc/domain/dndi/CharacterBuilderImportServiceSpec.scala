@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.domain.dndi
 
 import org.specs.Specification
@@ -27,21 +27,44 @@ import vcc.infra.datastore.naming.EntityID
 import vcc.infra.datastore.{DataStoreIOException, DataStoreEntity}
 import vcc.dnd4e.domain.compendium.{CharacterEntity, CombatantEntityBuilder}
 
-object CharacterBuilderImportServiceSpec extends Specification {
+@RunWith(classOf[JUnitSuiteRunner])
+class CharacterBuilderImportServiceTest extends JUnit4(CharacterBuilderImportServiceSpec)
 
-  var is:InputStream = null
+object CharacterBuilderImportServiceSpec extends Specification {
+  var is: InputStream = null
+
+  "CharacterBuilderObject parsing" should {
+    "accept multiple aliases" in {
+      val stat = (<Stat value="17">
+          <alias name="AC"/>
+          <alias name="Armor Class"/>
+          <statadd Level="1" value="10" charelem="18177d40"/>
+          <statadd Level="1" value="1" statlink="HALF-LEVEL" charelem="18177d40"/>
+          <statadd type="Ability" Level="1" not-wearing="armor:heavy" value="1" statlink="Dexterity" abilmod="true" charelem="18177d40"/>
+          <statadd type="Ability" Level="1" not-wearing="armor:heavy" value="1" statlink="Intelligence" abilmod="true" charelem="18177d40"/>
+          <statadd type="Defensive" Level="1" wearing="DEFENSIVE:" value="1" charelem="18177d40"/>
+          <statadd type="Armor" Level="2" value="6" charelem="1817a218"/>
+      </Stat>)
+
+      val sm = CharacterBuilderObject.extractStat(stat)
+      sm must notBeEmpty
+      sm must contain("ac", 17)
+      sm must contain("armor class", 17)
+    }
+  }
+
 
   val fionn = beforeContext {
     is = this.getClass.getResourceAsStream("/vcc/domain/dndi/Fionn.xml")
   }
 
-  "context setup" ->-(fionn) should {
+  "context setup" ->- (fionn) should {
     is mustNot beNull
     val elem = XML.load(new InputSource(is))
     elem mustNot beNull
   }
 
-  "Import Service with valid file" ->-(fionn) should {
+  "Import Service with valid file" ->- (fionn) should {
     "return a valid DataStoreEntity" in {
       val dse = CharacterBuilderImporter.loadFromStream(is)
       dse mustNot beNull
@@ -59,12 +82,12 @@ object CharacterBuilderImportServiceSpec extends Specification {
 
     "return entity with valid name" in {
       val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.data("base:name") must_== "Fionn"      
+      dse.data("base:name") must_== "Fionn"
     }
 
     "return entity with valid level" in {
       val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.data("base:level") must_== "8"      
+      dse.data("base:level") must_== "8"
     }
 
     "return entity with valid class" in {
@@ -74,7 +97,7 @@ object CharacterBuilderImportServiceSpec extends Specification {
 
     "return entity with valid class" in {
       val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.data("base:race") must_== "Elf"      
+      dse.data("base:race") must_== "Elf"
     }
 
     "return entity with sense" in {
@@ -89,7 +112,7 @@ object CharacterBuilderImportServiceSpec extends Specification {
       val dse = CharacterBuilderImporter.loadFromStream(is)
       dse.data must containAll(expect)
     }
-    
+
     "return all required stats:*" in {
       val expect = Map(
         "stat:ac" -> "22",
@@ -112,22 +135,19 @@ object CharacterBuilderImportServiceSpec extends Specification {
 
   "with invalid files" should {
     "return exception on a non XML file" in {
-      val is:InputStream = new java.io.ByteArrayInputStream("bad file".getBytes())
-      CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("Invalid XML file",null))
+      val is: InputStream = new java.io.ByteArrayInputStream("bad file".getBytes())
+      CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("Invalid XML file", null))
     }
 
     "return exception on a XML file of other type" in {
-      val is:InputStream = new java.io.ByteArrayInputStream("<?xml version='1.0' ?><xml></xml>".getBytes())
-      CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("XML file does not represent a DND4E file",null))
+      val is: InputStream = new java.io.ByteArrayInputStream("<?xml version='1.0' ?><xml></xml>".getBytes())
+      CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("XML file does not represent a DND4E file", null))
     }
 
     "return exception on a XML incomplete DND4e file" in {
-      val is:InputStream = new java.io.ByteArrayInputStream("<D20Character game-system=\"D&amp;D4E\" Version=\"0.07a\" legality=\"rules-legal\"></D20Character>".getBytes())
-      CharacterBuilderImporter.loadFromStream(is) must  throwA(new DataStoreIOException("Incomplete DND4E file",null))
+      val is: InputStream = new java.io.ByteArrayInputStream("<D20Character game-system=\"D&amp;D4E\" Version=\"0.07a\" legality=\"rules-legal\"></D20Character>".getBytes())
+      CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("Incomplete DND4E file", null))
     }
 
   }
 }
-
-@RunWith(classOf[JUnitSuiteRunner])
-class CharacterBuilderImportServiceTest extends JUnit4(CharacterBuilderImportServiceSpec)

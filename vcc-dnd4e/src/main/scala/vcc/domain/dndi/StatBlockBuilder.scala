@@ -18,7 +18,7 @@
 
 package vcc.domain.dndi
 
-import scala.xml.{Node, Text}
+import xml.{TopScope, Elem, Node, Text}
 
 trait StatBlockDataSource {
   def extract(string: String): Option[String]
@@ -48,9 +48,7 @@ object StatBlockBuilder {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
       if (v.isDefined) {
-        Seq((<b>
-          {key}
-        </b>), Text(format(v.get)))
+        Seq(Elem(null, "b", null, TopScope, Text(key)), Text(format(v.get)))
       } else Nil
     }
 
@@ -96,9 +94,7 @@ object StatBlockBuilder {
   case class BoldFormat(key: String, sep: Boolean) extends Chunk {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
-      if (v.isDefined) (<b>
-        {v.get.formatted(if (sep) " %s " else "%s")}
-      </b>)
+      if (v.isDefined) Elem(null, "b", null, TopScope, Text(v.get.formatted(if (sep) " %s " else "%s")))
       else Nil
     }
   }
@@ -106,9 +102,7 @@ object StatBlockBuilder {
   case class EmphasisFormat(key: String, sep: Boolean) extends Chunk {
     def render(source: StatBlockDataSource): Seq[Node] = {
       val v = source.extract(key)
-      if (v.isDefined) (<i>
-        {v.get.formatted(if (sep) " %s " else "%s")}
-      </i>)
+      if (v.isDefined) Elem(null, "i", null, TopScope, Text(v.get.formatted(if (sep) " %s " else "%s")))
       else Nil
     }
   }
