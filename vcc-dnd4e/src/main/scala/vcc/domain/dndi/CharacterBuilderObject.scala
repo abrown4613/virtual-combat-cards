@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2010 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 /*
  * This code is based on Bjarte S. Karlsen  work on outsidertools project.
@@ -27,9 +26,6 @@
 package vcc.domain.dndi
 
 import scala.xml._
-
-//import vcc.domain.dndi.CharacterBuilderObject._ ;
-//CharacterXmlImporter(scala.xml.XML.loadFile("C:/temp/vcc/char/Fionn.dnd4e"))
 
 object CharacterBuilderObject {
   case class Rules(val typ: String, val value: String, val url: Option[String])
@@ -49,21 +45,20 @@ object CharacterBuilderObject {
     val statSkills = ("Strength" -> List("Athletics")) :: ("Constitution" -> List("Endurance")) :: ("Dexterity" -> List("Acrobatics", "Stealth", "Thievery")) :: ("Intelligence" -> List("Arcana", "History", "Religion")) :: ("Wisdom" -> List("Dungeoneering", "Heal", "Insight", "Nature", "Perception")) :: ("Charisma" -> List("Bluff", "Diplomacy", "Intimidate", "Streetwise")) :: Nil
   }
 
+  def extractStat(stat: Node): Seq[(String, Int)] = {
+    val value = (stat \ "@value").text.toInt
+    (stat \\ "alias").map(x => (x \ "@name").text.toLowerCase -> value)
+  }
 }
 
 class CharacterBuilderObject(val char: Elem) {
   import CharacterBuilderObject._
 
-  lazy val stats = {
-    Map() ++ (for{
-      stat <- sheet \\ "Stat"
-      value <- stat \ "@value"
-      name <- stat \ "@name"
-    } yield {
-        name.text.toLowerCase -> value.text.toInt
-      })
-  }
+  val sheet = char \ "CharacterSheet";
 
+  lazy val stats = Map() ++ (sheet \\ "Stat").flatMap(extractStat(_))
+
+  stats.foreach(x => println("STAT:" + x))
   lazy val tally = for{
     tally <- sheet \ "RulesElementTally" \ "RulesElement"
     tt <- tally \ "@type"
@@ -77,14 +72,13 @@ class CharacterBuilderObject(val char: Elem) {
 
   def filterTally(typ: String) = tally.filter(_.typ == typ).map(_.value)
 
-  val sheet = char \ "CharacterSheet";
-
   lazy val details = sheet \ "Details"
 
   def detail(key: String) = (details \ key).text.trim
 
   lazy val race = tally.filter(_.typ == "Race").toList.head
-  lazy val claz = tally.filter(_.typ == "Class").toList.head
+
+  lazy val clazz = tally.filter(_.typ == "Class").toList.head
 
   lazy val power = Map() ++ (for{
     power <- sheet \\ "Power"
@@ -153,10 +147,10 @@ class CharacterBuilderObject(val char: Elem) {
   lazy val stat = Map() ++ (CharacterObject.statOrder.map(name => name -> Stat(name, stats(name.toLowerCase), stats(name.toLowerCase + " modifier"))))
 
 
-  def getDatum():Map[String,String] = {
+  def getDatum(): Map[String, String] = {
     Map(
       "classid" -> "vcc-class:character",
-      "base:class"-> claz.value,
+      "base:class" -> clazz.value,
       "base:level" -> detail("Level"),
       "base:name" -> detail("name"),
       "base:race" -> race.value,
@@ -170,55 +164,4 @@ class CharacterBuilderObject(val char: Elem) {
       "stat:will" -> stats("will defense").toString,
       "base:senses" -> filterTally("Vision").mkString(", "))
   }
-  /*
-    def generate() : Character  = {
-
-      val c = Character();
-      c.name = detail("name")
-      c.level = detail("Level").toInt
-      c.player = detail("Player")
-      c.deity = detail("Deity")
-      c.alignment = filterTally("Alignment").toList match { case List(element) => element; case _ => "" }
-      c.size = filterTally("Size").toList.head
-      c.languages = filterTally("Language").toList
-      c.race = race.value
-      c.raceUrl = race.url
-      c.height = detail("Height")
-      c.weight = detail("Weight")
-      c.gender = detail("Gender")
-      c.age = detail("Age")
-      c.money = detail("CarriedMoney")
-      c.bank = detail("StoredMoney")
-      c.traits = detail("Traits")
-
-      if(detail("Companions") != "") {
-          c.companions = detail("Companions")
-        }
-
-      if(detail("Appearance") != "") {
-          c.appearance = detail("Appearance")
-        }
-
-
-      if(detail("Experience") != "")  {
-        c.xp = detail("Experience").toInt
-       }
-
-      c.hp = stats("hit points").toInt
-      c.surges = stats("healing surges").toInt
-      c.init = stats("initiative").toInt
-      c.speed = stats("speed").toInt
-      c.ac = stats("ac").toInt
-      c.fort = stats("fortitude defense").toInt
-      c.ref = stats("reflex defense").toInt
-      c.will = stats("will defense").toInt
-      c.clazz = claz.value
-      c.clazzUrl = claz.url
-      c.passivePerception = stats("passive perception")
-      c.passiveInsight = stats("passive insight")
-
-
-     c
-    }
-  */
 }
