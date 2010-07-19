@@ -31,7 +31,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   //Init
   val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer()
-    projection = new ProjectionTableModel[UnifiedCombatant](view.tabular.CombatantStateProjection)
+    projection = new ProjectionTableModel[UnifiedCombatant](tabular.CombatantStateProjection)
     autoResizeMode = Table.AutoResizeMode.Off
     selection.intervalMode = Table.IntervalMode.Single
     setColumnWidth(0, 25)

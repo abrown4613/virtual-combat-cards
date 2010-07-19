@@ -54,6 +54,7 @@ object EffectTransformationSpec extends Specification {
 
     "not change effect bount to another InitiativeOrderID" in {
       val et = EffectTransformation.startRound(ioa)
+      durationEoNT must_== durationEoNT
       et.transform(Effect(combA, badCondition, durationEoNT)).duration must_== durationEoNT
       et.transform(Effect(combA, badCondition, durationEoNTS)).duration must_== durationEoNTS
     }

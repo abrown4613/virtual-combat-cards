@@ -56,13 +56,13 @@ trait RoundRobin[T] {
  * @param aHead The head of the array, null if not is set, must be part of array
  * @param aSeq A sequence of array elements.
  */
-class ArrayRoundRobin[T](aHead: T, aSeq: Seq[T]) extends RoundRobin[T] {
+class ArrayRoundRobin[T](aHead: T, aSeq: Seq[T])(implicit manifest : Manifest[T]) extends RoundRobin[T] {
   protected var robin: Seq[T] = new Array[T](0)
 
   setRobin(aHead, aSeq)
 
   def setRobin(aHead: T, aSeq: Seq[T]) {
-    robin = aSeq.toArray
+    robin = aSeq.toArray[T]
     if (aHead != null) advanceTo(aHead)
   }
 

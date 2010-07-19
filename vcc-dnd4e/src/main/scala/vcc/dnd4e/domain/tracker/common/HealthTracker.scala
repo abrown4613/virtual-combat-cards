@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import vcc.dnd4e.model.common.CombatantType
  * @param surgeValue Surge value normally 1/4 of HP
  * @param healingSurges Number os surges
  */
-abstract case class HealthDefinition(totalHP: Int, surgeValue: Int, healingSurges: Int) {
+abstract class HealthDefinition(val totalHP: Int, val surgeValue: Int, val healingSurges: Int) {
   val lowerBound: Int
   val hasTemporaryHP: Boolean
 

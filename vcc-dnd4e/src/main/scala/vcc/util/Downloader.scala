@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
 //$Id$
 package vcc.util
 
-import scala.actors.Actor
 import java.io.File
 import java.net.URL
+import actors.{TIMEOUT, Actor}
 
 
 object Downloader {
@@ -90,13 +90,13 @@ class Downloader(val url:URL, val destFile:File) extends Runnable {
       while (downloaded < size && !stop ) {
         /* Size buffer according to how much of the
            file is left to download. */
-        val buffer = new Array[Byte](Math.min(size - downloaded, MAX_BUFFER_SIZE)) 
-                
-        if(Actor.self.mailboxSize > 0) {
-          Actor.receive {
-            case Downloader.Cancel() => stop=true
-          }
+        val buffer = new Array[Byte](math.min(size - downloaded, MAX_BUFFER_SIZE))
+
+        Actor.receiveWithin(0) {
+          case Downloader.Cancel() => stop = true
+          case TIMEOUT =>
         }
+
         // Read from server into buffer.
         val read = stream.read(buffer);
         if (read == -1) { stop=true}
