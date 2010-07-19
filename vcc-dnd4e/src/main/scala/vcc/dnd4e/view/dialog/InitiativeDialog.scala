@@ -92,8 +92,12 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
       breakGroup.enabled = splitGroup.enabled
   }
 
+  private def getManifest[T]()(implicit manifest:Manifest[T]):Manifest[T] = manifest
+
   table.content = {
-    val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)), (a: UnifiedCombatant, b: UnifiedCombatant) => {a.combId.id < b.combId.id})
+    val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](
+      director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)).toSeq,
+      (a: UnifiedCombatant, b: UnifiedCombatant) => {a.combId.id < b.combId.id})(getManifest[UnifiedCombatant])
     orderedAndFilter.map(
       cmb => new InitiativeDialogEntry(
         Set(cmb.combId), cmb.name, cmb.definition.entity.initiative,

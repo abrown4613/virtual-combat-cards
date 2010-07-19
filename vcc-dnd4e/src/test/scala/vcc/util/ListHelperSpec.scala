@@ -17,7 +17,7 @@
 //$Id$
 package vcc.util
 
-import ListHelper._
+import vcc.util.ListHelper._
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}

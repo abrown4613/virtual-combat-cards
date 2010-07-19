@@ -116,7 +116,7 @@ object TrackerSpec extends Specification with Mockito {
 
       mController.dispatch(any[Transaction], refEq(src), refEq(msg)) answers {
         p =>
-          implicit val t = p.asInstanceOf[Seq[Any]](0).asInstanceOf[Transaction]
+          implicit val t = (p.asInstanceOf[Array[AnyRef]])(0).asInstanceOf[Transaction]
           myData.value = 11
       }
 
@@ -128,7 +128,6 @@ object TrackerSpec extends Specification with Mockito {
     "not save empty transactions" in {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
-
 
       tracker ! Command(src, msg)
 

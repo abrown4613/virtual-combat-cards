@@ -49,7 +49,7 @@ class BoundDurationComboEntry(text: String, limit: Effect.Duration.Limit.Value, 
 }
 
 trait EffectSubPanelComboOption {
-  val name: String
+  val panelName: String
 
   def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition
 
@@ -57,7 +57,7 @@ trait EffectSubPanelComboOption {
 
   def restoreMemento(memento: Any)
 
-  override def toString() = name
+  override def toString() = panelName
 }
 
 object EffectEditor {
@@ -92,7 +92,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
 
   //This is the subPanel for most general case
   private val generalSubPanel = new MigPanel("fillx,gap 1 0, ins 0", "[]", "[24!]") with EffectSubPanelComboOption {
-    val name = "Any"
+    val panelName = "Any"
     private val descField = new TextField()
     add(descField, "growx, h 22!")
     visible = false
@@ -117,7 +117,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     private val markerText = new ExplicitModelComboBox(idComboModel)
     markerText.setFormatRenderer(new StringFormatListCellRenderer(cid => cid.id))
     private val permanentMarkCheck = new CheckBox("cant be superseded")
-    val name = "Mark"
+    val panelName = "Mark"
     add(new Label(" by "), "gap rel")
     add(markerText, "gap rel, wmin 40")
     add(permanentMarkCheck)

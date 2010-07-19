@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,5 +36,4 @@ class MigPanel(layoutConstrains:String, colConstriants:String, rowConstraints:St
     add(new Component { override lazy val peer= new javax.swing.JSeparator()}, "gapleft rel, growx,wrap");
   }
 
-  
 }

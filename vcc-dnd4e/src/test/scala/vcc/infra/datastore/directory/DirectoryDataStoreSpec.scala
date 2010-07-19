@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 package vcc.infra.datastore.directory
 
@@ -23,7 +23,7 @@ import runner.{JUnitSuiteRunner, JUnit4}
 import vcc.infra.datastore.naming._
 import java.io.File
 import org.junit.runner.RunWith
-import vcc.infra.datastore.{DataStoreFactory, DataStoreSpec}
+import vcc.infra.datastore.{DataStoreIOException, DataStoreFactory, DataStoreSpec}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class DirectoryDataStoreTest extends JUnit4(DirectoryDataStoreSpec)
