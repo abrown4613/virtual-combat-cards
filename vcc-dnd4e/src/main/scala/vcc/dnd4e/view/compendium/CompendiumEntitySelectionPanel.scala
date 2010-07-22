@@ -35,8 +35,8 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
     ("Name",classOf[String]),
     ("Role",classOf[String]),
     ("Type",classOf[String]),
-    ("Level",classOf[Integer]),
-    ("XP",classOf[Integer])
+    ("Level",classOf[java.lang.Integer]),
+    ("XP",classOf[java.lang.Integer])
   )
   val setter:PartialFunction[(Int,MonsterSummary,Any),Unit] = null
   def apply(col:Int,obj:MonsterSummary):java.lang.Object = {

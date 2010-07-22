@@ -29,7 +29,7 @@ class StoreBuilder extends DataStoreBuilder {
   
   private def writeMarker(dir:File) {
     val markFile = new File(dir,markFileName)
-    scala.xml.XML.saveFull(markFile.toString,(<datastore version="1.0"/>),"UTF-8",true,null)
+    scala.xml.XML.save(markFile.toString,(<datastore version="1.0"/>),"UTF-8",true,null)
   }
   
   private def markExists(dir:File):Boolean = {

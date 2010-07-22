@@ -58,7 +58,7 @@ object StateChange {
    * Checks if a set of combat Changes include any change to any of: Roster, Order, or OrderFirst change.
    * @param changes Changes to be checked
    */
-  def hasAnySequenceChange(changes: Set[combat.Value]) = !((changes ** Set(combat.Order, combat.Roster, combat.OrderFirst)).isEmpty)
+  def hasAnySequenceChange(changes: Set[combat.Value]) = !((changes & Set(combat.Order, combat.Roster, combat.OrderFirst)).isEmpty)
 
   /**
    * Checks if a set of combat Changes include any change to any of: Roster or Order.

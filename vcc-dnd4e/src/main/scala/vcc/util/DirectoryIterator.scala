@@ -36,7 +36,7 @@ class DirectoryIterator(dir:File, dirFirst:Boolean) extends Iterator[File] {
           subdir.list().map(x=>new File(subdir,x)).toList
         else Nil
       (if(dirFirst) subdir :: list
-      else list ::: List(subdir)).elements
+      else list ::: List(subdir)).iterator
     }
     
     def hasNext:Boolean = iter.hasNext || (parent != null && parent.hasNext)

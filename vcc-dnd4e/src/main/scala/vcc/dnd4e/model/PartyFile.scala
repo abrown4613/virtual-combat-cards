@@ -91,7 +91,7 @@ object PartyFile {
     val doc = (<party version='1.0'>
       {entries.map(_.toXML)}
     </party>)
-    XML.saveFull(file.toString, doc, "UTF-8", true, null)
+    XML.save(file.toString, doc, "UTF-8", true, null)
   }
 
 }

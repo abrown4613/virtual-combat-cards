@@ -30,11 +30,11 @@ object InitiativeTrackerSpec extends Specification {
   val ioa = InitiativeOrderID(CombatantID("A"), 0)
   val iob = InitiativeOrderID(CombatantID("A"), 1) //Just to make sure we use the InitiativeOrderID not the CombatantID 
 
-  val firstTracker = state.map(st => InitiativeTracker(iob, 0, 0, st)).toList
+  val firstTracker = state.values.map(st => InitiativeTracker(iob, 0, 0, st)).toList
   val firstMap = Map(firstTracker.map(it => it.state -> it).toSeq: _*)
 
   def runAllCases(it: InitiativeTracker, trans: Map[(InitiativeTracker, action.Value), InitiativeTracker]) {
-    for (first <- it :: firstTracker; action <- InitiativeTracker.action) {
+    for (first <- it :: firstTracker; action <- InitiativeTracker.action.values) {
       val pair = (first, action)
       val firstp = (it.orderID == first.orderID)
       if (trans.isDefinedAt(pair)) {
