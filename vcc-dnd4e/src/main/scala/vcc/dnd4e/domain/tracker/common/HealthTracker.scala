@@ -99,7 +99,7 @@ object HealthTracker {
    * Create a HealthTracker based on a HealthDefinition
    * @param hdef Base health definition
    */
-  @deprecated
+  @deprecated("Should create from base object")
   def createTracker(ctype: CombatantType.Value, hp: Int): HealthTracker = {
     ctype match {
       case CombatantType.Character => createTracker(CharacterHealthDefinition(hp, hp / 4, 4))

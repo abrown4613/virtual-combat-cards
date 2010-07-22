@@ -60,7 +60,7 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
       currentDatum = null
   	}
 	override def characters(chars:Array[Char],start:Int,end:Int) {
-	  if(currentText != null) currentText.append(chars,start,end)
+	  if(currentText != null) currentText.appendAll(chars,start,end)
 	}
  
 	def loadedData() = (eid,data)

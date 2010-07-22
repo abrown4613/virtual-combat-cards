@@ -93,7 +93,7 @@ object Parser {
      */
     def unapply(node:scala.xml.Node):Option[Value] = {
       if(node.label=="IMG") {
-        val url=(node \ "@src").first.toString
+        val url=(node \ "@src").head.toString
         val img=url.substring(url.lastIndexOf("/")+1)
         if(imageDirectory.contains(img.toLowerCase))
           Some(imageDirectory(img.toLowerCase))
@@ -110,7 +110,7 @@ object Parser {
   object RechargeDice {
     def unapply(node:scala.xml.Node):Option[Text] = {
       if(node.label=="IMG") {
-        val url=(node \ "@src").first.toString
+        val url=(node \ "@src").head.toString
         val img=url.substring(url.lastIndexOf("/")+1)
         img match {
           case "1a.gif" => Some(Text("1"))
@@ -161,7 +161,7 @@ object Parser {
       val thatt = that.text
       if(thist.length==0) that  // Case for trim that return Text("")
       else if(thatt.length==0) this
-      else if(thatt.first.isWhitespace || thist.last.isWhitespace)
+      else if(thatt.head.isWhitespace || thist.last.isWhitespace)
         Text(thist+thatt)
       else
         Text(thist+" "+thatt)
@@ -318,7 +318,7 @@ object Parser {
     var l:List[(String,String)]=Nil
 
     l = (for(span<- xml \\ "SPAN") yield {
-      ( (span \ "@class").first.toString, span.first.child(0).toString.trim)
+      ( (span \ "@class").head.toString, span.head.child(0).toString.trim)
     }).toList
     ("name",(xml\"#PCDATA").toString.trim):: l
   }

@@ -41,13 +41,13 @@ object InitiativeDialogEntryProjection extends TableModelRowProjection[Initiativ
   val columns = List[(String, java.lang.Class[_])](
     ("ID", classOf[String]),
     ("Name", classOf[String]),
-    ("Bonus", classOf[Integer]),
+    ("Bonus", classOf[java.lang.Integer]),
     ("Roll", classOf[InitiativeRoll]),
     ("Skip", classOf[Boolean]))
 
   def apply(col: Int, entry: InitiativeDialogEntry): java.lang.Object = {
     col match {
-      case 0 => entry.ids.elements.map(_.id).mkString(", ")
+      case 0 => entry.ids.iterator.map(_.id).mkString(", ")
       case 1 => entry.name
       case 2 => int2Integer(entry.init)
       case 3 => entry.roll

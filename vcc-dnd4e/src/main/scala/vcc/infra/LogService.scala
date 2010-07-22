@@ -61,10 +61,11 @@ object LogService extends StartupStep {
       if (LogManager.exists(context) == null) {
         val log = Logger.getLogger(context)
 
-        val lvl = level.valueOf(System.getProperty("vcc.log." + context)) match {
+        val lvl = level.values.find(_ == System.getProperty("vcc.log." + context)) match {
           case None => defaultLevel
           case Some(l) => l
         }
+       
         logger.debug("Log level for {} is {}", context, lvl)
         log.setLevel(mapToLog4J(lvl))
 

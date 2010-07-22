@@ -40,7 +40,7 @@ object Registry {
    * 
    */
   def register[T](key: Any, item: T)(implicit m: Manifest[T]) {
-    _map = _map(key) = (m, item)
+    _map = _map.updated(key,(m, item))
   }
   
   /**

@@ -118,7 +118,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
       SwingHelper.invokeLater {
         val idx = sel.toSeq(0)
         val l = partyTableModel.content.toList
-        val nl = l - l(idx)
+        val nl = l filterNot (_ == l(idx))
         partyTableModel.content = nl
         if (!nl.isEmpty) table.selection.rows += (if (idx < nl.length) idx else nl.length - 1)
         recalculateXP(nl)

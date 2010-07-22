@@ -34,13 +34,13 @@ object DirectoryDataStoreSpec extends DataStoreSpec {
   
   def generateStoreID() = {
     val file = new java.io.File(System.getProperty("java.io.tmpdir"),"test"+(new scala.util.Random().nextInt())+".dsd")
-    DataStoreURI.fromStorageString("vcc-store:directory:"+ file.toURL.toURI.toString)
+    DataStoreURI.fromStorageString("vcc-store:directory:"+ file.toURI.toString)
   }
   val testStore = new java.io.File("testdata","datastore")
   
   val badTestEntity = Seq("notxml","noid","extra-xml-entity","bad-encoding","missing-datum-id","bad-xml","id-mismatch").map(x=>EntityID.fromName(x))
   
-  val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:"+testStore.toURL.toURI.toString)
+  val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:"+testStore.toURI.toString)
   val storeContext = beforeContext {
     storeID = testStoreURI
     val dsb = DataStoreFactory.getDataStoreBuilder(storeID)

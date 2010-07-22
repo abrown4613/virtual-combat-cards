@@ -37,6 +37,6 @@ case class CombatState(
 
   def allCombatantIDs: List[CombatantID] = roster.keys.toList
 
-  def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList -- order.map(_.combId)): _*)
+  def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList filterNot (order.map(_.combId) contains) ): _*)
 
 }
