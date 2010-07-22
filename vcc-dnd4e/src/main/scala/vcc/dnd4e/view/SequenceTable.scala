@@ -59,7 +59,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     if (target.isDefined && source.isDefined && source.get.orderId != null) {
       director.requestAction(AddEffect(target.get.combId, source.get.combId,
         Effect.Condition.Mark(source.get.combId, false),
-        Effect.Duration.RoundBound(source.get.orderId, Effect.Duration.Limit.EndOfNextTurn)))
+        Duration.RoundBound(source.get.orderId, Duration.Limit.EndOfNextTurn)))
     }
   })
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
