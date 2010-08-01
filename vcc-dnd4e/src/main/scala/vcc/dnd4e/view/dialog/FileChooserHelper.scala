@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import javax.swing.{JComponent,JFileChooser,JOptionPane}
 import javax.swing.filechooser.{FileFilter,FileNameExtensionFilter}
 import java.io.File
 import vcc.model.Registry
-
+import vcc.dnd4e.{Configuration=>SystemConfiguration}
 /**
  * Series of utility methods for creating dailogs
  * 
@@ -59,7 +59,7 @@ object FileChooserHelper {
   private def getWorkDirectory():File = {
     val lastDir = Registry.get[File]("lastDirectory")
     if(lastDir.isDefined) lastDir.get
-    else Configuration.baseDirectory.value
+    else SystemConfiguration.baseDirectory.value
   }
   /**
    * Open a Save Dialog, get file, and normlize name to add extension.

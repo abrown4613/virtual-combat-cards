@@ -1,6 +1,6 @@
 //$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,8 +35,8 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
     ("Name",classOf[String]),
     ("Role",classOf[String]),
     ("Type",classOf[String]),
-    ("Level",classOf[Integer]),
-    ("XP",classOf[Integer])
+    ("Level",classOf[java.lang.Integer]),
+    ("XP",classOf[java.lang.Integer])
   )
   val setter:PartialFunction[(Int,MonsterSummary,Any),Unit] = null
   def apply(col:Int,obj:MonsterSummary):java.lang.Object = {
@@ -125,7 +125,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
     else Some(activeTable.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(activeTable.selection.rows.toSeq(0)))
   }
 
-  def sortedSummary[T](el:Seq[T], comp:(T,T)=>Boolean):Seq[T] = {
+  def sortedSummary[T](el:Seq[T], comp:(T,T)=>Boolean)(implicit manifest:Manifest[T]):Seq[T] = {
     import scala.util.Sorting.stableSort
     stableSort(el,comp).toSeq
   }

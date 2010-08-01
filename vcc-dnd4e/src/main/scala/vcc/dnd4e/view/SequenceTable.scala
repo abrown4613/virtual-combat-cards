@@ -31,7 +31,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   //Init
   val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer()
-    projection = new ProjectionTableModel[UnifiedCombatant](view.tabular.CombatantStateProjection)
+    projection = new ProjectionTableModel[UnifiedCombatant](tabular.CombatantStateProjection)
     autoResizeMode = Table.AutoResizeMode.Off
     selection.intervalMode = Table.IntervalMode.Single
     setColumnWidth(0, 25)
@@ -59,7 +59,7 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     if (target.isDefined && source.isDefined && source.get.orderId != null) {
       director.requestAction(AddEffect(target.get.combId, source.get.combId,
         Effect.Condition.Mark(source.get.combId, false),
-        Effect.Duration.RoundBound(source.get.orderId, Effect.Duration.Limit.EndOfNextTurn)))
+        Duration.RoundBound(source.get.orderId, Duration.Limit.EndOfNextTurn)))
     }
   })
   KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")

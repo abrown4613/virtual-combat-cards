@@ -30,7 +30,7 @@ trait ReserveViewBuilder {
 
 object SortedIDReserverViewBuilder extends ReserveViewBuilder {
   def buildReserve(combatState: CombatState): Seq[CombatantID] = {
-    combatState.combatantsNotInOrder().toList.sort((a: CombatantID, b: CombatantID) => a.id < b.id)
+    combatState.combatantsNotInOrder().toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
   }
 }
 

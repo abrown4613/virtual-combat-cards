@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.util
 
 import java.io.File
@@ -35,7 +36,7 @@ class DirectoryIterator(dir:File, dirFirst:Boolean) extends Iterator[File] {
           subdir.list().map(x=>new File(subdir,x)).toList
         else Nil
       (if(dirFirst) subdir :: list
-      else list ::: List(subdir)).elements
+      else list ::: List(subdir)).iterator
     }
     
     def hasNext:Boolean = iter.hasNext || (parent != null && parent.hasNext)

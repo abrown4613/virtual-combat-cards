@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ import java.io.File
 import scala.actors.Actor
 import scala.actors.Actor.{actor,loop,react,receive}
 import vcc.util.Downloader
+import vcc.util.swing.MigPanel
 
 class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with AbstractPanel[File] {
   

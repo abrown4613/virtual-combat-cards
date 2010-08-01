@@ -64,7 +64,7 @@ object Command {
           extends TransactionalActionWithMessage(who + " executed initiative action " + action)
 
   // Effect Actions
-  case class AddEffect(target: CombatantID, source: CombatantID, condition: Condition, duration: Effect.Duration)
+  case class AddEffect(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration)
           extends TransactionalActionWithMessage("Add effect: " + condition + " to " + target)
 
   case class CancelEffect(effectId: EffectID) extends TransactionalActionWithMessage("Cancel effect " + effectId)

@@ -30,26 +30,26 @@ import vcc.dnd4e.domain.tracker.common._
 abstract class DurationComboEntry(text: String) {
   def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean
 
-  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Duration
 
   override def toString(): String = text
 }
 
-class StaticDurationComboEntry(text: String, duration: Effect.Duration) extends DurationComboEntry(text) {
+class StaticDurationComboEntry(text: String, duration: Duration) extends DurationComboEntry(text) {
   def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean = true
 
-  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration = duration
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Duration = duration
 }
 
-class BoundDurationComboEntry(text: String, limit: Effect.Duration.Limit.Value, ofSource: Boolean) extends DurationComboEntry(text) {
+class BoundDurationComboEntry(text: String, limit: Duration.Limit.Value, ofSource: Boolean) extends DurationComboEntry(text) {
   def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean = if (ofSource) source.isInOrder else target.isInOrder
 
-  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Effect.Duration =
-    Effect.Duration.RoundBound(if (ofSource) source.orderId else target.orderId, limit)
+  def generate(source: UnifiedCombatant, target: UnifiedCombatant): Duration =
+    Duration.RoundBound(if (ofSource) source.orderId else target.orderId, limit)
 }
 
 trait EffectSubPanelComboOption {
-  val name: String
+  val panelName: String
 
   def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition
 
@@ -57,24 +57,24 @@ trait EffectSubPanelComboOption {
 
   def restoreMemento(memento: Any)
 
-  override def toString() = name
+  override def toString() = panelName
 }
 
 object EffectEditor {
   case class StateMemento(spIdx: Int, spMemento: Any, durIdx: Int, benef: Boolean)
 
   private val durations = List(
-    new BoundDurationComboEntry("End of source's next turn", Effect.Duration.Limit.EndOfNextTurn, true),
-    new BoundDurationComboEntry("End of source's next turn, sustain", Effect.Duration.Limit.EndOfNextTurnSustain, true),
-    new BoundDurationComboEntry("Start of source's next turn", Effect.Duration.Limit.StartOfNextTurn, true),
-    new StaticDurationComboEntry("End of Encounter", Effect.Duration.EndOfEncounter),
-    new StaticDurationComboEntry("Stance", Effect.Duration.Stance),
-    new StaticDurationComboEntry("Rage", Effect.Duration.Rage),
-    new StaticDurationComboEntry("Save End", Effect.Duration.SaveEnd),
-    new StaticDurationComboEntry("Save End (Special)", Effect.Duration.SaveEndSpecial),
-    new StaticDurationComboEntry("Other", Effect.Duration.Other),
-    new BoundDurationComboEntry("End of target's next turn", Effect.Duration.Limit.EndOfNextTurn, false),
-    new BoundDurationComboEntry("Start of target's next turn", Effect.Duration.Limit.StartOfNextTurn, false)
+    new BoundDurationComboEntry("End of source's next turn", Duration.Limit.EndOfNextTurn, true),
+    new BoundDurationComboEntry("End of source's next turn, sustain", Duration.Limit.EndOfNextTurnSustain, true),
+    new BoundDurationComboEntry("Start of source's next turn", Duration.Limit.StartOfNextTurn, true),
+    new StaticDurationComboEntry("End of Encounter", Duration.EndOfEncounter),
+    new StaticDurationComboEntry("Stance", Duration.Stance),
+    new StaticDurationComboEntry("Rage", Duration.Rage),
+    new StaticDurationComboEntry("Save End", Duration.SaveEnd),
+    new StaticDurationComboEntry("Save End (Special)", Duration.SaveEndSpecial),
+    new StaticDurationComboEntry("Other", Duration.Other),
+    new BoundDurationComboEntry("End of target's next turn", Duration.Limit.EndOfNextTurn, false),
+    new BoundDurationComboEntry("Start of target's next turn", Duration.Limit.StartOfNextTurn, false)
     )
 }
 
@@ -92,7 +92,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
 
   //This is the subPanel for most general case
   private val generalSubPanel = new MigPanel("fillx,gap 1 0, ins 0", "[]", "[24!]") with EffectSubPanelComboOption {
-    val name = "Any"
+    val panelName = "Any"
     private val descField = new TextField()
     add(descField, "growx, h 22!")
     visible = false
@@ -117,7 +117,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     private val markerText = new ExplicitModelComboBox(idComboModel)
     markerText.setFormatRenderer(new StringFormatListCellRenderer(cid => cid.id))
     private val permanentMarkCheck = new CheckBox("cant be superseded")
-    val name = "Mark"
+    val panelName = "Mark"
     add(new Label(" by "), "gap rel")
     add(markerText, "gap rel, wmin 40")
     add(permanentMarkCheck)

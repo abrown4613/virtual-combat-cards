@@ -73,7 +73,7 @@ object EffectActionHandlerSpec extends Specification with Mockito {
     mComb.effects returns mEffList
     mComb.definition returns CombatantRosterDefinition(comb, null, null)
     mEffList.transformAndFilter(any[EffectTransformation]) returns mEffList2
-    mEffList.addEffect(any[CombatantID], any[Condition], any[Effect.Duration]) returns mEffList2
+    mEffList.addEffect(any[CombatantID], any[Condition], any[Duration]) returns mEffList2
     (mComb, mEffList, mEffList2)
   }
 
@@ -128,7 +128,7 @@ object EffectActionHandlerSpec extends Specification with Mockito {
   "aController handling a AddEffect" ->- (mockedContext) should {
 
     val newCondition = Effect.Condition.Generic("anything", false)
-    val duration = Effect.Duration.SaveEnd
+    val duration = Duration.SaveEnd
 
     "not handle actions to unexisting combatant" in {
       mRoster.isDefinedAt(combA) returns false

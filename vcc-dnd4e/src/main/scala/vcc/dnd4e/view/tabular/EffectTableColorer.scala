@@ -18,7 +18,7 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.ProjectionTableLabelFormatter
-import vcc.dnd4e.domain.tracker.common.Effect
+import vcc.dnd4e.domain.tracker.common.{Duration, Effect}
 
 object EffectTableColorer extends ProjectionTableLabelFormatter[Effect] {
   import java.awt.Color
@@ -33,7 +33,7 @@ object EffectTableColorer extends ProjectionTableLabelFormatter[Effect] {
   }
 
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, effect: Effect) {
-    val needAttention = effect.sustainable || effect.duration == Effect.Duration.SaveEndSpecial
+    val needAttention = effect.sustainable || effect.duration == Duration.SaveEndSpecial
 
     setColor(label, col match {
       case _ if (isSelected) => (label.getBackground, label.getForeground)

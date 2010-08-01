@@ -21,7 +21,6 @@ package vcc.dnd4e.domain.tracker.common
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import Effect.Duration
 
 @RunWith(classOf[JUnitSuiteRunner])
 class EffectTransformationTest extends JUnit4(EffectTransformationSpec)
@@ -32,12 +31,12 @@ object EffectTransformationSpec extends Specification {
   val badCondition = Effect.Condition.Generic("a condition", false)
   val iob = InitiativeOrderID(CombatantID("B"), 0)
   val ioa = InitiativeOrderID(combA, 0)
-  val durationEoNT = Effect.Duration.RoundBound(iob, Effect.Duration.Limit.EndOfNextTurn)
-  val durationEoT = Effect.Duration.RoundBound(iob, Effect.Duration.Limit.EndOfTurn)
-  val durationSoNT = Effect.Duration.RoundBound(iob, Effect.Duration.Limit.StartOfNextTurn)
-  val durationEoNTS = Effect.Duration.RoundBound(iob, Effect.Duration.Limit.EndOfNextTurnSustain)
-  val durationEoTS = Effect.Duration.RoundBound(iob, Effect.Duration.Limit.EndOfTurnSustain)
-  val saveEnd = Effect.Duration.SaveEnd
+  val durationEoNT = Duration.RoundBound(iob, Duration.Limit.EndOfNextTurn)
+  val durationEoT = Duration.RoundBound(iob, Duration.Limit.EndOfTurn)
+  val durationSoNT = Duration.RoundBound(iob, Duration.Limit.StartOfNextTurn)
+  val durationEoNTS = Duration.RoundBound(iob, Duration.Limit.EndOfNextTurnSustain)
+  val durationEoTS = Duration.RoundBound(iob, Duration.Limit.EndOfTurnSustain)
+  val saveEnd = Duration.SaveEnd
 
   val roundBoundDurations = List[Duration](durationEoNT, durationEoT, durationEoNTS, durationEoTS, durationSoNT)
   val saveDurations = List[Duration](Duration.SaveEnd, Duration.SaveEndSpecial)
@@ -54,6 +53,7 @@ object EffectTransformationSpec extends Specification {
 
     "not change effect bount to another InitiativeOrderID" in {
       val et = EffectTransformation.startRound(ioa)
+      durationEoNT must_== durationEoNT
       et.transform(Effect(combA, badCondition, durationEoNT)).duration must_== durationEoNT
       et.transform(Effect(combA, badCondition, durationEoNTS)).duration must_== durationEoNTS
     }

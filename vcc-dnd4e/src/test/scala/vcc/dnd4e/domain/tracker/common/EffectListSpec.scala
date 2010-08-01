@@ -52,7 +52,7 @@ object EffectListSpec extends Specification with Mockito {
 
     "when adding to a list the new effect must have a unique ID" in {
       val nList = aBigList.addEffect(combB, badCondition, Duration.SaveEnd)
-      (nList.effects -- aBigList.effects).length must_== 1
+      (nList.effects filterNot(aBigList.effects contains)).length must_== 1
       val newEntry = getFirstNewEffect(aBigList, nList)
       aBigList.effects mustNot exist(e => e.effectId == newEntry.effectId)
     }
@@ -111,7 +111,7 @@ object EffectListSpec extends Specification with Mockito {
 
       val nList = aBigList.transformAndFilter(mTransformation)
 
-      (aBigList.effects -- nList.effects) must_== List(aBigList.effects(1))
+      (aBigList.effects filterNot(nList.effects contains)) must_== List(aBigList.effects(1))
 
       there was one(mTransformation).transform(aBigList.effects(0)) then
               one(mTransformation).transform(aBigList.effects(1))
@@ -120,7 +120,7 @@ object EffectListSpec extends Specification with Mockito {
   }
 
   def getFirstNewEffect(oList: EffectList, nList: EffectList): Effect = {
-    val diff = nList.effects -- oList.effects
+    val diff = nList.effects filterNot(oList.effects contains)
     if (diff.isEmpty) null
     else diff(0)
   }

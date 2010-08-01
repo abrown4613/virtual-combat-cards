@@ -94,7 +94,7 @@ object CombatantSpec extends Specification with TransactionalSpecification {
     "update EffectList" in {
 
       val baseEL = EffectList(cid, Nil)
-      val modifiedEL = baseEL.addEffect(cid, Effect.Condition.Generic("safe", true), Effect.Duration.SaveEnd)
+      val modifiedEL = baseEL.addEffect(cid, Effect.Condition.Generic("safe", true), Duration.SaveEnd)
 
       withTransaction {
         trans =>

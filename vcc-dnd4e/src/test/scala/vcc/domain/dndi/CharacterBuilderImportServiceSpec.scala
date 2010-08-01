@@ -20,11 +20,11 @@ package vcc.domain.dndi
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnitSuiteRunner, JUnit4}
-import scala.xml.{Elem, XML}
+import scala.xml.{XML}
 import java.io.InputStream
 import org.xml.sax.InputSource
 import vcc.infra.datastore.naming.EntityID
-import vcc.infra.datastore.{DataStoreIOException, DataStoreEntity}
+import vcc.infra.datastore.{DataStoreIOException}
 import vcc.dnd4e.domain.compendium.{CharacterEntity, CombatantEntityBuilder}
 
 @RunWith(classOf[JUnitSuiteRunner])
@@ -59,9 +59,11 @@ object CharacterBuilderImportServiceSpec extends Specification {
   }
 
   "context setup" ->- (fionn) should {
-    is mustNot beNull
-    val elem = XML.load(new InputSource(is))
-    elem mustNot beNull
+    "point to a valid XML" in {
+      is mustNot beNull
+      val elem = XML.load(new InputSource(is))
+      elem mustNot beNull
+    }
   }
 
   "Import Service with valid file" ->- (fionn) should {
@@ -148,6 +150,5 @@ object CharacterBuilderImportServiceSpec extends Specification {
       val is: InputStream = new java.io.ByteArrayInputStream("<D20Character game-system=\"D&amp;D4E\" Version=\"0.07a\" legality=\"rules-legal\"></D20Character>".getBytes())
       CharacterBuilderImporter.loadFromStream(is) must throwA(new DataStoreIOException("Incomplete DND4E file", null))
     }
-
   }
 }

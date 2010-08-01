@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.dnd4e.model
 
 import scala.xml._
@@ -91,7 +91,7 @@ object PartyFile {
     val doc = (<party version='1.0'>
       {entries.map(_.toXML)}
     </party>)
-    XML.saveFull(file.toString, doc, "UTF-8", true, null)
+    XML.save(file.toString, doc, "UTF-8", true, null)
   }
 
 }

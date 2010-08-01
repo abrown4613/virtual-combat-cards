@@ -26,6 +26,7 @@ import org.mockito.Matchers._
 import actors.Actor
 import collection.mutable.ArrayBuffer
 import transaction._
+import actors.scheduler.SingleThreadedScheduler
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TrackerTest extends JUnit4(TrackerSpec)
@@ -35,7 +36,7 @@ object TrackerSpec extends Specification with Mockito {
   val mLog = mock[TransactionLog[TransactionalAction]]
   val mObserver = mock[Actor]
   val tracker = new Tracker(mController, mLog) {
-    override def scheduler = new scala.actors.SingleThreadedScheduler
+    override def scheduler = new SingleThreadedScheduler
   }
 
   case class MyChange(msg: String) extends ChangeNotification
@@ -116,7 +117,7 @@ object TrackerSpec extends Specification with Mockito {
 
       mController.dispatch(any[Transaction], refEq(src), refEq(msg)) answers {
         p =>
-          implicit val t = p.asInstanceOf[Seq[Any]](0).asInstanceOf[Transaction]
+          implicit val t = (p.asInstanceOf[Array[AnyRef]])(0).asInstanceOf[Transaction]
           myData.value = 11
       }
 
@@ -128,7 +129,6 @@ object TrackerSpec extends Specification with Mockito {
     "not save empty transactions" in {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
-
 
       tracker ! Command(src, msg)
 

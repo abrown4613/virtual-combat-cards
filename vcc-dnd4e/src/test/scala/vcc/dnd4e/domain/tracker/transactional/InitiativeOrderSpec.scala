@@ -117,7 +117,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "throw exception on a startCombat on an empty robin" in {
-      aOrder.startCombat() must throwA[NoSuchElementException]
+      aOrder.startCombat() must throwA[IndexOutOfBoundsException]
     }
   }
 
@@ -446,7 +446,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aOrder.setInitiative(InitiativeDefinition(combC, 3, List(17))) mustNot throwA[Exception]
     }
 
-    "end combat when its started (same as clear)" in {
+    "end combat when its started - same as clear" in {
       withTransaction {
         trans =>
           aOrder.clearOrder()(trans)
@@ -463,7 +463,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
 
-    "end combat when its started (same as clear)" in {
+    "end combat when its started - same as clear" in {
       val trans = new Transaction()
 
       aOrder.clearOrder()(trans)
