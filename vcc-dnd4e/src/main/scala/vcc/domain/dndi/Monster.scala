@@ -19,7 +19,7 @@ package vcc.domain.dndi
 
 import scala.util.matching.Regex
 import scala.xml.{Node, NodeSeq, Text => XmlText, Elem}
-import vcc.domain.dndi.Monster.PowerDescriptionSupplement
+import vcc.domain.dndi.Monster.{Aura, PowerDescriptionSupplement}
 
 object Monster {
 
@@ -102,6 +102,12 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
   def powers = _power
 
   def auras = _auras
+
+  private var _isMM3Format = false
+
+  def isMM3Format = _isMM3Format
+
+  def setMM3Format() {_isMM3Format = true}
 
   def apply(attribute: String): Option[String] = {
     if (_map.contains(attribute)) Some(_map(attribute))
@@ -214,8 +220,21 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
       }
       val keywords: String = p match {
         case Icon(IconType.Separator) :: Key(text) :: Nil => text
+        case Icon(IconType.Separator) :: Key(text) :: Text(range) :: Nil =>
+          //TODO Handle MM3 auras
+          println("keywords (AURA): " + p)
+          null
+        case Icon(IconType.Separator) :: Text(trigger) :: Nil =>
+          //TODO pwer with trigger
+          println("keywords (trigger): " + trigger)
+          null
+        case Key("") :: Nil =>
+          //TODO Handle Iconless MM3 traits.
+          null
         case Nil => null
-        case _ => return None
+        case s =>
+          println("**** Rest: " + s)
+          return None
       }
       Some((icons, name, action, keywords))
     }
@@ -227,6 +246,9 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
       case Block("P#flavor", parts@Key("Initiative") :: _) =>
         processPrimaryBlock(partsToPairs(parts))
 
+      case Block("P#flavor", parts@Key("Alignment") :: _) =>
+        addToMap(partsToPairs(parts))
+
       case Block("P#flavor alt", parts) =>
         parts match {
           case PowerHeader(icons, name, action, keywords) =>
@@ -236,6 +258,10 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
             monster.set("Equipment", text)
 
           case Key("Alignment") :: rest =>
+            addToMap(partsToPairs(parts))
+
+          //Blocks with Skills and Str or just Str
+          case list if (list contains Key("Str")) =>
             addToMap(partsToPairs(parts))
 
           case s => throw new Exception("Failed to process!! " + s)
@@ -249,6 +275,10 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
         } else {
           _lastPower.description = text
         }
+
+      case Block("P#flavorIndent", Emphasis(aspect) :: Text(desc) :: Nil) =>
+      //TODO MM3 power aspect
+
       case Block("P#flavor", Emphasis(comment) :: Nil) if (_lastPower != null) =>
         // A secondary attack
         _powerSupplement = comment
@@ -259,6 +289,11 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
 
       case Block("P#", Emphasis(text) :: Nil) => monster.set("comment", (text))
       case NonBlock(dontcare) => // Don't care
+      case Block("TABLE#bodytable", parts) =>
+        processPrimaryBlock(partsToPairs(parts))
+        monster.setMM3Format()
+
+      case Block("H2#", dontcare) => //TODO Header for trait and actions
       case s =>
         throw new Exception("Failed to process: " + s)
         return false

@@ -1,6 +1,6 @@
-//$Id$
+
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,16 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.domain.dndi
 
 import org.specs._
 
 import Parser._
+import org.junit.runner.RunWith
+import runner.{JUnitSuiteRunner, JUnit4}
+
+@RunWith(classOf[JUnitSuiteRunner])
+class XMLParserTest extends JUnit4(XMLParserSpec)
 
 object XMLParserSpec extends Specification {
-
   org.apache.log4j.BasicConfigurator.configure();
-  
+
   "parts parser" should {
     "left images from bold " in {
       val ret = Parser.parseBlockElement(<P><BR/><I>Lead <A target="_new" href="80786952472">ref</A>.</I></P>,true)
@@ -40,43 +46,56 @@ object XMLParserSpec extends Specification {
       val ret = Parser.parseBlockElement(xml,true)
       ret must_== Block("SPAN#foo",List(Icon(IconType.Bullet),Text("Trap."),Break()))
     }
+
+    "convert mm3 table to Tabular" in {
+      val xml = (<TABLE class="bodytable" xmlns="http://www.w3.org/1999/xhtml"><TBODY><TR><TD><B>HP</B> 220; <B>Bloodied</B> 110</TD><TD class="rightalign"><B>Initiative</B> +7</TD></TR><TR><TD><B>AC</B> 24, <B>Fortitude</B> 22, <B>Reflex</B> 20, <B>Will</B> 22</TD><TD class="rightalign"><B>Perception</B> +15</TD></TR><TR><TD><B>Speed</B> 6</TD><TD class="rightalign">Blindsight 5</TD></TR><TR><TD colspan="2"><B>Resist</B> 5 necrotic</TD></TR><TR><TD colspan="2"><B>Saving Throws</B> +2; <B>Action Points</B> 1</TD></TR></TBODY></TABLE>)
+      val ret = Parser.parseBlockElement(xml, true)
+      ret must_== Block("TABLE#bodytable", List(
+        Key("HP"), Text("220"), Key("Bloodied"), Text("110"),
+        Key("Initiative"), Text("7"),
+        Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"), Key("Perception"), Text("15"),
+        Key("Speed"), Text("6"), Key("Senses"), Text("Blindsight 5"),
+        Key("Resist"), Text("5 necrotic"),
+        Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))
+    }
   }
+
   "Text merger" should {
     "return the last if first is empty" in {
-      Text("")+Text("a") must_== Text("a")
-    } 
+      Text("") + Text("a") must_== Text("a")
+    }
     "return the first if last is empty" in {
-      Text("a")+Text("") must_== Text("a")
+      Text("a") + Text("") must_== Text("a")
     }
     "not add spaces if we have a line or space on either side" in {
-      Text("a ")+Text("c") must_== Text("a c")
-      Text("a\n")+Text("b") must_== Text("a\nb")
-      Text("a")+Text(" b") must_== Text("a b")
-      Text("a")+Text("\nb") must_== Text("a\nb")
+      Text("a ") + Text("c") must_== Text("a c")
+      Text("a\n") + Text("b") must_== Text("a\nb")
+      Text("a") + Text(" b") must_== Text("a b")
+      Text("a") + Text("\nb") must_== Text("a\nb")
     }
     "add space in other cases" in {
-      Text("Abc.")+Text("Cde") must_== Text("Abc. Cde")
-      Text("Abc;")+Text("Cde") must_== Text("Abc; Cde")
-      Text("Abc")+Text("Cde") must_== Text("Abc Cde")
+      Text("Abc.") + Text("Cde") must_== Text("Abc. Cde")
+      Text("Abc;") + Text("Cde") must_== Text("Abc; Cde")
+      Text("Abc") + Text("Cde") must_== Text("Abc Cde")
     }
   }
-    
-  if(System.getProperty("test.basedir")!= null) {
+
+  if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))
     "parser" should {
-       val dirIter = new vcc.util.DirectoryIterator(dir,false)
-       for(file <- dirIter if(file.isFile)) {
-         "load "+file in {
-        	val xml = scala.xml.XML.loadFile(file)
-         val log = org.slf4j.LoggerFactory.getLogger("test")
-        	DNDInsiderCapture.getTypeFromXML(xml).isDefined must beTrue
-        	DNDInsiderCapture.getIdFromXML(xml).isDefined must beTrue
-        	val blocks = parseBlockElements(xml.child,true)
-        	blocks must notBeNull
-        	blocks must notBeEmpty
-            for(b<-blocks) { log.debug("Block:  " + b) }
-         }
-       }
+      val dirIter = new vcc.util.DirectoryIterator(dir, false)
+      for (file <- dirIter if (file.isFile)) {
+        "load " + file in {
+          val xml = scala.xml.XML.loadFile(file)
+          val log = org.slf4j.LoggerFactory.getLogger("test")
+          DNDInsiderCapture.getTypeFromXML(xml).isDefined must beTrue
+          DNDInsiderCapture.getIdFromXML(xml).isDefined must beTrue
+          val blocks = parseBlockElements(xml.child, true)
+          blocks must notBeNull
+          blocks must notBeEmpty
+          for (b <- blocks) {log.debug("Block:  " + b)}
+        }
+      }
     }
   }
 }
