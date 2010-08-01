@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.infra.datastore.directory
 
 import vcc.infra.datastore.naming._
 import java.io._
-import vcc.infra.datastore.{DataStoreEntity}
 import vcc.util.DirectoryIterator
-
+import vcc.infra.datastore.{DataStoreIOException, DataStore, DataStoreEntity}
 
 class DirectoryDataStore(baseDir:File) extends DataStore {
   import org.xml.sax.helpers.DefaultHandler
@@ -60,7 +60,7 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
       currentDatum = null
   	}
 	override def characters(chars:Array[Char],start:Int,end:Int) {
-	  if(currentText != null) currentText.append(chars,start,end)
+	  if(currentText != null) currentText.appendAll(chars,start,end)
 	}
  
 	def loadedData() = (eid,data)

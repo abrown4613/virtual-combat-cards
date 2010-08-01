@@ -25,6 +25,7 @@ import org.specs.mock.Mockito
 import actors.Actor
 import transaction.ChangeNotification
 import reflect.Manifest
+import actors.scheduler.SingleThreadedScheduler
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TrackerChangeObserverTest extends JUnit4(TrackerChangeObserverSpec)
@@ -39,7 +40,7 @@ object TrackerChangeObserverSpec extends Specification with Mockito {
     mBuilder = mock[SnapshotBuilder[String]]
     mTracker = mock[Actor]
     anObserverActor = new TrackerChangeObserverActor(mBuilder) {
-      override def scheduler = new scala.actors.SingleThreadedScheduler
+      override def scheduler = new SingleThreadedScheduler
     }
     anObserverActor.start()
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,9 @@ package vcc.util.swing.multipanel
 import scala.swing._
 import scala.swing.event._
 import vcc.util.UpdateManager.Release
+import vcc.util.swing.{SwingHelper, MigPanel}
 
-class ReleaseSelectPanel(releases:Seq[(Symbol,Release)]) extends MigPanel("") with AbstractPanel[Option[Release]] {  
+class ReleaseSelectPanel(releases:Seq[(Symbol,Release)]) extends MigPanel("") with AbstractPanel[Option[Release]] {
   //Buttons
   private val okButton= new Button("Update")
   private val cancelButton= new Button("Cancel")

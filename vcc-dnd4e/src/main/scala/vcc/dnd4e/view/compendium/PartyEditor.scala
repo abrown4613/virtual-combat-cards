@@ -1,7 +1,5 @@
-//$Id$
-
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 
 package vcc.dnd4e.view.compendium
 
@@ -29,8 +28,8 @@ import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.{PartyMember, PartyFile}
 import vcc.model.Registry
 import vcc.dnd4e.view.helper.PartyLoader
-import vcc.dnd4e.view.PanelDirector
 import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 
 class PartyEditor(director: PanelDirector) extends Frame {
   class PartyTableEntry(val eid: EntityID, val name: String, var alias: String, var id: String, var qty: Int, val xp: Int) extends Ordered[PartyTableEntry] {
@@ -47,8 +46,8 @@ class PartyEditor(director: PanelDirector) extends Frame {
       ("ID", classOf[String]),
       ("Name", classOf[String]),
       ("Alias/Mini", classOf[String]),
-      ("Qty", classOf[Integer]),
-      ("XP", classOf[Integer])
+      ("Qty", classOf[java.lang.Integer]),
+      ("XP", classOf[java.lang.Integer])
       )
     val setter: PartialFunction[(Int, PartyTableEntry, Any), Unit] = {
       case (0, entry, value) if (entry.qty == 1) =>
@@ -119,7 +118,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
       SwingHelper.invokeLater {
         val idx = sel.toSeq(0)
         val l = partyTableModel.content.toList
-        val nl = l - l(idx)
+        val nl = l filterNot (_ == l(idx))
         partyTableModel.content = nl
         if (!nl.isEmpty) table.selection.rows += (if (idx < nl.length) idx else nl.length - 1)
         recalculateXP(nl)
@@ -198,7 +197,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
     PartyLoader.loadToBattle(director, this.menuBar, expandEntries(partyTableModel.content).map(_.toPartyMember))
   }
 
-  private def expandEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = ol.flatMap[PartyTableEntry](x => x.toIndividual())
+  private def expandEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = ol.flatMap(x => x.toIndividual())
 
   private def compressEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = {
     val ul = if (!collapseCheckBox.selected) {

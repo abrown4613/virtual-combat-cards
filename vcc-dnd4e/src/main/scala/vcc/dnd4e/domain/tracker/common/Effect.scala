@@ -43,51 +43,6 @@ object Effect {
     Effect(null, source, condition, duration)
 
   /**
-   *  Determines the duration of an effect.
-   */
-  abstract class Duration(initDesc: String) {
-    def shortDescription = initDesc
-
-    def this() = this (null)
-
-    override def toString() = "Effect.Duration(" + shortDescription + ")"
-  }
-
-  object Duration {
-    object SaveEnd extends Duration("SE")
-
-    object SaveEndSpecial extends Duration("SE*")
-
-    object Stance extends Duration("Stance")
-
-    object Rage extends Duration("Rage")
-
-    object EndOfEncounter extends Duration("EoE")
-
-    object Other extends Duration("Other")
-
-    object Limit extends Enumeration {
-      val EndOfNextTurn = Value("EoNT")
-      val EndOfTurn = Value("EoT")
-      val StartOfNextTurn = Value("SoNT")
-      val EndOfNextTurnSustain = Value("EoNT*")
-      val EndOfTurnSustain = Value("EoT*")
-    }
-
-    /**
-     * Round bound duration are durations that change on the limits (startt and end) of
-     * rounds.
-     * @param id Combatant ID
-     * @param limit Round limit (e.g StartOfNextRound, EndOfRound,EndOfNextRound)
-     * @param sustain Indicates effect is sustainable
-     */
-    case class RoundBound(id: InitiativeOrderID, limit: Limit.Value) extends Duration {
-      override def shortDescription: String = limit.toString + ":" + id.toLabelString
-    }
-  }
-
-
-  /**
    * Condition of the effect, currently this is either a Mark or a generic text.
    */
   object Condition {
@@ -97,7 +52,50 @@ object Effect {
 
     case class Generic(description: String, override val beneficial: Boolean) extends Condition(beneficial)
   }
+}
 
+/**
+ *  Determines the duration of an effect.
+ */
+abstract class Duration(initDesc: String) {
+  def shortDescription = initDesc
+
+  def this() = this (null)
+
+  override def toString() = "Effect.Duration(" + shortDescription + ")"
+}
+
+object Duration {
+  object SaveEnd extends Duration("SE")
+
+  object SaveEndSpecial extends Duration("SE*")
+
+  object Stance extends Duration("Stance")
+
+  object Rage extends Duration("Rage")
+
+  object EndOfEncounter extends Duration("EoE")
+
+  object Other extends Duration("Other")
+
+  object Limit extends Enumeration {
+    val EndOfNextTurn = Value("EoNT")
+    val EndOfTurn = Value("EoT")
+    val StartOfNextTurn = Value("SoNT")
+    val EndOfNextTurnSustain = Value("EoNT*")
+    val EndOfTurnSustain = Value("EoT*")
+  }
+
+  /**
+   * Round bound duration are durations that change on the limits (startt and end) of
+   * rounds.
+   * @param id Combatant ID
+   * @param limit Round limit (e.g StartOfNextRound, EndOfRound,EndOfNextRound)
+   * @param sustain Indicates effect is sustainable
+   */
+  case class RoundBound(id: InitiativeOrderID, limit: Limit.Value) extends Duration {
+    override def shortDescription: String = limit.toString + ":" + id.toLabelString
+  }
 }
 
 /**
@@ -240,11 +238,11 @@ abstract class Condition(val beneficial: Boolean) {
  * @param benefic Indicates if power is good for the target (important for delay)
  * @param duaration An Effect.Duration
  */
-case class Effect(effectId: EffectID, source: CombatantID, condition: Condition, duration: Effect.Duration) {
+case class Effect(effectId: EffectID, source: CombatantID, condition: Condition, duration: Duration) {
   import Effect._
 
   def sustainable = duration match {
-    case Effect.Duration.RoundBound(c, l) => (l == Duration.Limit.EndOfNextTurnSustain) || (l == Duration.Limit.EndOfTurnSustain)
+    case Duration.RoundBound(c, l) => (l == Duration.Limit.EndOfNextTurnSustain) || (l == Duration.Limit.EndOfTurnSustain)
     case _ => false
   }
 }

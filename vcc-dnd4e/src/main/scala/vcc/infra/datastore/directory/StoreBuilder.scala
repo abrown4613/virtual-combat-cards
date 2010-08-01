@@ -1,6 +1,5 @@
-//$Id$
 /**
- * Copyright (C) 2008-2009 tms - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
+
 package vcc.infra.datastore.directory
 
 import vcc.infra.datastore.naming._
 import java.io.File
 import java.net.URI
+import vcc.infra.datastore.{DataStore, DataStoreBuilder}
 
 class StoreBuilder extends DataStoreBuilder {
   
@@ -27,7 +29,7 @@ class StoreBuilder extends DataStoreBuilder {
   
   private def writeMarker(dir:File) {
     val markFile = new File(dir,markFileName)
-    scala.xml.XML.saveFull(markFile.toString,(<datastore version="1.0"/>),"UTF-8",true,null)
+    scala.xml.XML.save(markFile.toString,(<datastore version="1.0"/>),"UTF-8",true,null)
   }
   
   private def markExists(dir:File):Boolean = {

@@ -113,7 +113,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
           val rc = getChangeRosterMap(changes)
           rc must notBeEmpty
           rc.size must_== 1
-          rc.keys.next must notBeNull
+          rc.keys.head must notBeNull
       } afterUndo {
         changes =>
           changes must contain(RosterChange(Map()))
@@ -151,7 +151,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       aRoster.addCombatant(null, "alias2", combEnt)(trans)
       trans.commit(changeLog)
       val nc = getChangeRosterMap(changeLog.changes).keys.toList
-      (nc -- rc).length must_== 1
+      (nc filterNot(rc contains)).length must_== 1
     }
   }
 

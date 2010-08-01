@@ -89,7 +89,7 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] with Snaps
   }
 
   def endChanges() {
-    initiatives --= (initiatives.keys.toList -- order)
+    initiatives --= (initiatives.keys.toList filterNot(order contains))
     if (toBeFirst.isDefined) {
       val who = toBeFirst.get
       if (who != null && !initiatives.isDefinedAt(who)) throw new NoSuchElementException("InitiativeOrder does not include: " + who)

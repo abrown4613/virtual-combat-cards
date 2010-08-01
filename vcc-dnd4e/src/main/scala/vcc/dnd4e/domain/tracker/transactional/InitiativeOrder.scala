@@ -144,7 +144,7 @@ class InitiativeOrder {
     if (robinHead.value != null) throw new IllegalStateException("Can't remove after combat start")
 
     val toRemove = initOrder.value.filter(e => e.combId == comb)
-    initOrder.value = initOrder.value -- toRemove
+    initOrder.value = initOrder.value filterNot(toRemove contains)
     toRemove.foreach {o => updateInitiativeTrackerFor(o, null)}
     trackers.value = trackers.value -- toRemove
     initBaseOrder.value = initBaseOrder.value.filter(e => e.uniqueId.combId != comb)
