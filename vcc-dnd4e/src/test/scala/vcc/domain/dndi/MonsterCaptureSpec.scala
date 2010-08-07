@@ -259,16 +259,19 @@ object MonsterCaptureSpec extends Specification {
   "MonsterImporter working on MM3 entries" ->- (ctx) should {
 
     "process tabular block" in {
-      val blk = Block("TABLE#bodytable", List(
-        Key("HP"), Text("200"), Key("Bloodied"), Text("220"),
-        Key("Initiative"), Text("7"),
-        Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"), Key("Perception"), Text("15"),
-        Key("Speed"), Text("6"), Key("Senses"), Text("Blindsight 5"),
-        Key("Resist"), Text("5 necrotic"),
-        Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))
+      val blk = Table("bodytable", List(
+        Cell(null, List(Key("HP"), Text("220"), Key("Bloodied"), Text("110"))),
+        Cell("rightalign", List(Key("Initiative"), Text("7"))),
+        Cell(null, List(Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"))),
+        Cell("rightalign", List(Key("Perception"), Text("15"))),
+        Cell(null, List(Key("Speed"), Text("6"))),
+        Cell("rightalign", List(Text("Blindsight 5"))),
+        Cell(null, List(Key("Resist"), Text("5 necrotic"))),
+        Cell(null, List(Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))))
+
       reader.processBlock(blk) must beTrue
       monster.isMM3Format must beTrue
-      monster("HP") must_== Some("200")
+      monster("HP") must_== Some("220")
       monster("SAVING THROWS") must_== Some("2")
       monster("SENSES") must_== Some("Blindsight 5")
     }

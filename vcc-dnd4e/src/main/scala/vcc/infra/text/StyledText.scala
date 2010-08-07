@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.infra.text
 
-import xml._
-import java.lang.Exception
+import scala.xml._
 
 object Style extends Enumeration {
   val Bold = Value("Bold")
@@ -29,7 +29,7 @@ object Style extends Enumeration {
  * This class represents a series of blocks of styled text. I can be turned into both XML and XHTML for rendering
  * purposes.
  */
-case class StyledText(blocks: List[Block]) {
+case class StyledText(blocks: List[TextBlock]) {
   def toXML(): Node = <styledText>{blocks.map(_.toXML)}</styledText>
   def toXHTML(): NodeSeq = blocks.map(_.toXHTML)
 }
@@ -37,25 +37,25 @@ case class StyledText(blocks: List[Block]) {
 object StyledText {
 
   def fromXML(node:Node):StyledText = {
-    StyledText((node \ "block").map(Block.fromXML(_)).toList)
+    StyledText((node \ "block").map(TextBlock.fromXML(_)).toList)
   }
 
 }
 
-case class Block(tag: String, clazz: String, segments: List[Segment]) {
+case class TextBlock(tag: String, clazz: String, segments: List[Segment]) {
 
   def toXHTML(): Node = new Elem(null, tag, new UnprefixedAttribute("class", clazz, scala.xml.Null), scala.xml.TopScope, segments.map(_.toXHTML): _*)
 
   def toXML(): Node = <block tag={tag} class={clazz}>{segments.map(_.toXML)}</block>
 }
 
-object Block {
-  def apply(tag: String, clazz: String, segs: Segment*) = new Block(tag, clazz, segs.toList)
+object TextBlock {
+  def apply(tag: String, clazz: String, segs: Segment*) = new TextBlock(tag, clazz, segs.toList)
 
-  def fromXML(node:Node):Block = {
+  def fromXML(node:Node):TextBlock = {
     val tag = (node \ "@tag")(0).text
     val clazz = (node \ "@class")(0).text
-    Block(tag,clazz, node.child.map(extractSegment(_)).filter(_ != null) : _*)
+    TextBlock(tag,clazz, node.child.map(extractSegment(_)).filter(_ != null) : _*)
   }
 
   def extractSegment(node:Node):Segment = {
@@ -87,6 +87,11 @@ abstract class Segment {
   def toXHTML():Node
 }
 
+case class InlineImage(src:String) extends Segment {
+  def toXML() = <image url={src} />
+  val toXHTML = <img src={src} />
+}
+
 case class TextSegment(style: Style.Value, text: String) extends Segment {
   def toXML() = <text style={style.toString}>{text}</text>
 
@@ -105,6 +110,10 @@ case object LineBreak extends Segment {
 object TextSegment {
 
   def apply(text: String) = new TextSegment(Style.None, text)
+
+  def makeBold(text:String) = new TextSegment(Style.Bold, text)
+
+  def makeItalic(text:String) = new TextSegment(Style.Italic, text)
 
   def fromXML(node:Node):TextSegment = {
     val style = Style.withName((node \ "@style")(0).text)

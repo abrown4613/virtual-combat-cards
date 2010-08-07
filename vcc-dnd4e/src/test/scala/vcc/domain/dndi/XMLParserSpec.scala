@@ -47,16 +47,25 @@ object XMLParserSpec extends Specification {
       ret must_== Block("SPAN#foo",List(Icon(IconType.Bullet),Text("Trap."),Break()))
     }
 
+    "parse empty Bold sections" in {
+      // This is found in some traps
+      val xml = (<SPAN class="foo"><B>Standard Action</B> <B></B> <BR></BR></SPAN>)
+      val ret = Parser.parseBlockElement(xml, true)
+      ret must_== Block("SPAN#foo", List(Key("Standard Action"), Text(""), Key(""), Text(""), Break()))
+    }
+
     "convert mm3 table to Tabular" in {
       val xml = (<TABLE class="bodytable" xmlns="http://www.w3.org/1999/xhtml"><TBODY><TR><TD><B>HP</B> 220; <B>Bloodied</B> 110</TD><TD class="rightalign"><B>Initiative</B> +7</TD></TR><TR><TD><B>AC</B> 24, <B>Fortitude</B> 22, <B>Reflex</B> 20, <B>Will</B> 22</TD><TD class="rightalign"><B>Perception</B> +15</TD></TR><TR><TD><B>Speed</B> 6</TD><TD class="rightalign">Blindsight 5</TD></TR><TR><TD colspan="2"><B>Resist</B> 5 necrotic</TD></TR><TR><TD colspan="2"><B>Saving Throws</B> +2; <B>Action Points</B> 1</TD></TR></TBODY></TABLE>)
       val ret = Parser.parseBlockElement(xml, true)
-      ret must_== Block("TABLE#bodytable", List(
-        Key("HP"), Text("220"), Key("Bloodied"), Text("110"),
-        Key("Initiative"), Text("7"),
-        Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"), Key("Perception"), Text("15"),
-        Key("Speed"), Text("6"), Key("Senses"), Text("Blindsight 5"),
-        Key("Resist"), Text("5 necrotic"),
-        Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))
+      ret must_== Table("bodytable", List(
+        Cell(null, List(Key("HP"), Text("220"), Key("Bloodied"), Text("110"))),
+        Cell("rightalign", List(Key("Initiative"), Text("7"))),
+        Cell(null, List(Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"))),
+        Cell("rightalign", List(Key("Perception"), Text("15"))),
+        Cell(null, List(Key("Speed"), Text("6"))),
+        Cell("rightalign", List(Text("Blindsight 5"))),
+        Cell(null, List(Key("Resist"), Text("5 necrotic"))),
+        Cell(null, List(Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))))
     }
   }
 

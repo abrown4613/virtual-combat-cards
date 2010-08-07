@@ -25,26 +25,26 @@ class StyledTextSpec extends SpecificationWithJUnit {
     "add block level elements" in {
       val builder = new TextBuilder()
 
-      builder.append(Block("P", "first", TextSegment(Style.Bold, "Hello"), TextSegment("darling")))
-      builder.getDocument() must_== StyledText(List(Block("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling")))))
+      builder.append(TextBlock("P", "first", TextSegment(Style.Bold, "Hello"), TextSegment("darling")))
+      builder.getDocument() must_== StyledText(List(TextBlock("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling")))))
     }
 
     "append new block to the existing document" in {
       val builder = new TextBuilder()
 
-      builder.append(Block("P", "first", TextSegment(Style.Bold, "Hello"), TextSegment("darling")))
-      builder.append(Block("P", "second", TextSegment(Style.Italic, "you're so fine")))
+      builder.append(TextBlock("P", "first", TextSegment(Style.Bold, "Hello"), TextSegment("darling")))
+      builder.append(TextBlock("P", "second", TextSegment(Style.Italic, "you're so fine")))
       builder.getDocument() must_== StyledText(List(
-        Block("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"))),
-        Block("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
+        TextBlock("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"))),
+        TextBlock("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
         ))
     }
   }
 
   "StyledText serialization" should {
     val text = StyledText(List(
-      Block("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"), LineBreak, TextSegment("love"))),
-      Block("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
+      TextBlock("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"), LineBreak, TextSegment("love"))),
+      TextBlock("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
       ))
 
     "serialize TextSegment" in {
@@ -52,17 +52,22 @@ class StyledTextSpec extends SpecificationWithJUnit {
     }
 
     "deserialize TextSegment" in {
-      Block.extractSegment(<text style="Bold">Hello</text>) must_== TextSegment(Style.Bold,"Hello")
-      Block.extractSegment(<text style="None">Hello</text>) must_== TextSegment(Style.None,"Hello")
-      Block.extractSegment(<text style="Italic">Hello</text>) must_== TextSegment(Style.Italic,"Hello")
+      TextBlock.extractSegment(<text style="Bold">Hello</text>) must_== TextSegment(Style.Bold,"Hello")
+      TextBlock.extractSegment(<text style="None">Hello</text>) must_== TextSegment(Style.None,"Hello")
+      TextBlock.extractSegment(<text style="Italic">Hello</text>) must_== TextSegment(Style.Italic,"Hello")
     }
-    
+
+    //TODO Deserialize LineBreak and Img
     "serialize Block" in {
-      Block("DIV", "blast").toXML must_== <block tag="DIV" class="blast"></block>
+      TextBlock("DIV", "blast").toXML must_== <block tag="DIV" class="blast"></block>
     }
 
     "serialize Break" in {
       LineBreak.toXML must_== <break/>
+    }
+
+    "serialize Image" in {
+      InlineImage("x.gif").toXML must_== <image url="x.gif" />
     }
 
     "serialize to XML" in {
@@ -82,13 +87,16 @@ class StyledTextSpec extends SpecificationWithJUnit {
   }
 
   "StyledText XHTML conversion" should {
-    val blk1 = Block("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"), LineBreak, TextSegment("love")))
-    val blk2 = Block("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
+    val blk1 = TextBlock("P", "first", List(TextSegment(Style.Bold, "Hello"), TextSegment(Style.None, "darling"), LineBreak, TextSegment("love")))
+    val blk2 = TextBlock("P", "second", List(TextSegment(Style.Italic, "you're so fine")))
+    val blk3 = TextBlock("P", "third", List(InlineImage("x.gif"), TextSegment(" a star")))
 
     "produce block level entities" in {
       blk1.toXHTML must_== <P class="first"><b>Hello</b>darling<br/>love</P>
       blk2.toXHTML must_== <P class="second"><i>you're so fine</i></P>
+      blk3.toXHTML must_== <P class="third"><img src="x.gif" /> a star</P>
     }
+
     "produce sequence of nodes" in {
       val fmt = StyledText(List(blk1, blk2)).toXHTML
 

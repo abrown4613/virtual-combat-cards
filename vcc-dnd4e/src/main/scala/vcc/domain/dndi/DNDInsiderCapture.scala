@@ -32,18 +32,21 @@ object DNDInsiderCapture {
         case Some("monster") => new MonsterBuilder(new Monster(id.get))
         case _ => null
       }
-      val blocks = Parser.parseBlockElements(xml.child, true)
-      for (blk <- blocks) {
-        try {
-          reader.processBlock(blk)
-        } catch {
-          case e =>
-            logger.debug("Failed to process block: " + blk)
-            throw e
 
+      val blocks = Parser.parseBlockElements(xml.child, true)
+      if (reader != null) {
+        for (blk <- blocks) {
+          try {
+            reader.processBlock(blk)
+          } catch {
+            case e =>
+              logger.debug("Failed to process block: " + blk)
+              throw e
+          }
         }
-      }
-      reader.getObject
+        reader.getObject
+      } else
+        null
     } else {
       return null
     }
@@ -82,6 +85,7 @@ object DNDInsiderCapture {
     val bout = new java.io.ByteArrayOutputStream();
     val buffer = new Array[Byte](1024);
     var len = 0
+
     while ({len = in.read(buffer); len} > 0) {
       bout.write(buffer, 0, len);
     }
@@ -102,11 +106,5 @@ object DNDInsiderCapture {
     val finalStr = new String(chars)
     finalStr
   }
-
 }
 
-trait DNDIObject {
-  val id: Int
-
-  def apply(attribute: String): Option[String]
-}
