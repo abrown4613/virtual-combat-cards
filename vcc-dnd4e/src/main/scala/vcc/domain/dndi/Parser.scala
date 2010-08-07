@@ -20,7 +20,6 @@ package vcc.domain.dndi
 import scala.util.matching.Regex
 import scala.xml.{Node, NodeSeq}
 
-
 class UntranslatableException(node: scala.xml.Node, e: Throwable) extends Exception("Cant translate node: " + node, e)
 
 /**
@@ -192,6 +191,10 @@ object Parser {
 
   case class NestedBlocks(name: String, blocks: List[BlockElement]) extends BlockElement
 
+  case class Cell(clazz:String, content:List[Part])
+
+  case class Table(clazz:String, cells:List[Cell]) extends BlockElement
+
   /**
    * Transform a simple node into a Part token. This will lift A tags, B to Keys, 
    * images to icon, recharge dice to text, and attempt several triming to get rid
@@ -209,6 +212,7 @@ object Parser {
     node match {
       case <BR></BR> => Break()
       case bi @ <B><IMG/></B>  => parseNode(bi.child(0))
+      case <B></B> => Key("") // From some traps
       case <B>{text}</B> => Key(processString(parseToText(text)))  //Go figure (need because o bi above)
       case <A>{text}</A> => Text(processString(parseToText(text)))
       case <I>{i @ _*}</I> => Emphasis(processString(parseToText(i)))
@@ -279,7 +283,6 @@ object Parser {
     else mergeText((nodes.map(parseNode)).toList)
   }
 
-
   /**
    * Parse to text will remove links and return a text string
    */
@@ -322,7 +325,9 @@ object Parser {
 
   private final val blockElements = Set("BLOCKQUOTE", "P", "H2", "SPAN", "TD")
 
-  private def elementClassAttr(node: Node) = node.label + "#" + (if ((node \ "@class").isEmpty) "" else (node \ "@class")(0).text)
+  private def elementClassAttr(node: Node) = node.label + "#" + elementClass (node, "")
+
+  private def elementClass(node: Node, default: String) = (if ((node \ "@class").isEmpty) default else (node \ "@class")(0).text)
 
   /**
    * This is a set of partial functions to be applied in order trying to convert the
@@ -347,16 +352,8 @@ object Parser {
   }),
   ("Tabular Stats", {
     case table @ <TABLE>{ _* }</TABLE> =>
-      //TODO This is a brittle approach, not all tables are necessarily monster block. Should change to an element that keeps row information
-      val tds = (table \\ "TD").map(node => Block(elementClassAttr(node), parse(node.child)))
-      //TODO This is misplaced should be in monster parser
-      val senses: Block = tds(5) match {
-        case b: Block => b
-        case s => throw new Exception("Should not have reached this point")
-      }
-      val taggedSenses = Block(senses.name, Key("Senses") :: senses.parts)
-      val parts = tds.updated(5, taggedSenses).flatMap(e => e.parts)
-      Block(elementClassAttr(table), parts.toList) //TODO
+      val tds = (table \\ "TD").map(node => Cell(elementClass(node, null), parse(node.child)))
+      Table(elementClass(table, ""), tds.toList)
   }),
   ("NonBlock", {
     case bi @ <B><IMG/></B>  => NonBlock(parse(bi.child))
@@ -365,8 +362,7 @@ object Parser {
     case scala.xml.Text (txt) => NonBlock (List (Text (txt) ) )
     case s => NonBlock (parse (s) )
   })
-)
-
+  )
 
   /**
    *

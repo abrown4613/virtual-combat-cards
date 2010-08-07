@@ -86,6 +86,11 @@ object Monster {
  * Base monster load.
  */
 class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
+
+  final val clazz = "monster"
+
+  var attributes = Map.empty[String,String]
+  
   def extract(key: String): Option[String] = this(key.toUpperCase)
 
   def extractGroup(group: String) = group.toUpperCase match {
@@ -95,7 +100,6 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   import vcc.domain.dndi.Parser._
 
-  private var _map = Map.empty[String, String]
   private var _auras: List[Monster.Aura] = Nil
   private var _power: List[Monster.Power] = Nil
 
@@ -109,11 +113,6 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   def setMM3Format() {_isMM3Format = true}
 
-  def apply(attribute: String): Option[String] = {
-    if (_map.contains(attribute)) Some(_map(attribute))
-    else None
-  }
-
   private[dndi] def set(attribute: String, value: String) {
     // Normalize some cases here:
     val normAttr = attribute.toUpperCase
@@ -122,7 +121,7 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
       case "ROLE" if (value == "Minion") => "No Role"
       case _ => value
     }
-    _map = _map + (normAttr -> normValue)
+    attributes = attributes+ (normAttr -> normValue)
   }
 
   private[dndi] def addAura(name: String, desc: String): Monster.Aura = {
@@ -138,7 +137,7 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
   }
 
   override def toString(): String = {
-    "Monster[" + id + "](" + _map + "; Aura=" + _auras + "; powers=" + _power + ")"
+    "Monster[" + id + "](" + attributes + "; Aura=" + _auras + "; powers=" + _power + ")"
   }
 }
 
@@ -289,7 +288,13 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
 
       case Block("P#", Emphasis(text) :: Nil) => monster.set("comment", (text))
       case NonBlock(dontcare) => // Don't care
-      case Block("TABLE#bodytable", parts) =>
+      case Table("bodytable", cells) =>
+        val senses: Cell = cells(5) match {
+          case b: Cell => b
+          case s => throw new Exception("Should not have reached this point")
+        }
+        val taggedSenses = Cell(senses.clazz, Key("Senses") :: senses.content)
+        val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
         processPrimaryBlock(partsToPairs(parts))
         monster.setMM3Format()
 

@@ -14,18 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.infra.text
 
 /**
  * This is a class to accumulate Block elements.
  */
 class TextBuilder {
-  private var blks:List[Block] = Nil
+  private var blks:List[TextBlock] = Nil
 
   /**
    * Append a new block to the end of the text.
    */
-  def append(block:Block) {
+  def append(block:TextBlock) {
     if(block == null) throw new IllegalArgumentException("Must provide a block")
     blks = block :: blks
   }
@@ -33,5 +34,5 @@ class TextBuilder {
   /**
    *  Return the current styled text (i.e. a list of blocks).
    */
-  def getDocument:StyledText = StyledText(blks.reverse)
+  def getDocument():StyledText = StyledText(blks.reverse)
 }
