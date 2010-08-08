@@ -19,6 +19,14 @@ package vcc.domain.dndi
 
 import scala.xml.{Node, NodeSeq}
 import org.slf4j.LoggerFactory
+import vcc.domain.dndi.Parser.BlockElement
+
+
+trait BlockReader {
+  def processBlock(block: BlockElement): Boolean
+
+  def getObject: DNDIObject
+}
 
 object DNDInsiderCapture {
   val logger = LoggerFactory.getLogger("domain")
@@ -28,12 +36,13 @@ object DNDInsiderCapture {
 
     val id = getIdFromXML(xml)
     if (id.isDefined) {
+      val blocks = Parser.parseBlockElements(xml.child, true)
+
       val reader: BlockReader = getTypeFromXML(xml) match {
         case Some("monster") => new MonsterBuilder(new Monster(id.get))
         case _ => null
       }
 
-      val blocks = Parser.parseBlockElements(xml.child, true)
       if (reader != null) {
         for (blk <- blocks) {
           try {
@@ -45,9 +54,23 @@ object DNDInsiderCapture {
           }
         }
         reader.getObject
-      } else
-        null
+      } else {
+        //TODO Alternative strategy transition till we have new block
+        getTypeFromXML(xml) match {
+          case Some("trap") =>
+            val tr = new TrapReader(id.get)
+            val trap = tr.process(blocks)
+            if (trap != null) {
+              logger.info("Capture 'trap': {}", trap("name").get)
+              trap.attributes.foreach(kv => println("   --- " + kv._1 + " = " + kv._2))
+              trap.sections.foreach(println)
+            }
+            null //TODO
+          case _ => null
+        }
+      }
     } else {
+      //Id is not defined, bad data from plugin or sender
       return null
     }
   }

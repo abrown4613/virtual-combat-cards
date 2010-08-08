@@ -19,8 +19,12 @@ package vcc.domain.dndi
 
 import scala.util.matching.Regex
 import scala.xml.{Node, NodeSeq}
+import java.lang.String
+import vcc.domain.dndi.Parser.BlockElement
 
-class UntranslatableException(node: scala.xml.Node, e: Throwable) extends Exception("Cant translate node: " + node, e)
+class UntranslatableException(node: Node, e: Throwable) extends Exception("Cant translate node: " + node, e)
+
+class UnexpectedBlockElementException(msg: String, block: BlockElement) extends Exception(msg + " unexpected block: "+block)
 
 /**
  * Converts XML nodes form DNDInsiderCapture into a series os Parts.
@@ -139,7 +143,15 @@ object Parser {
   /**
    * Root of all parser tokens
    */
-  abstract class Part
+  abstract class Part {
+    /**
+     * Applies transformation function to the text of the object. And returns a new object with the transformed text.
+     * Default implementation does nothing.
+     * @para tf Transformation Function
+     * @return A new part with the transformed function 
+     */
+    def transform(tf: String => String): Part = this
+  }
 
   /**
    * Line breaks, <BR></BR>
@@ -164,6 +176,10 @@ object Parser {
       else
         Text(thist + " " + thatt)
     }
+
+    override def transform(tf: (String) => String): Part = {
+      Text(tf(text))
+    }
   }
 
   /**
@@ -174,13 +190,25 @@ object Parser {
   /**
    * Text that was surrounded in bold
    */
-  case class Key(key: String) extends Part
+  case class Key(key: String) extends Part {
+    override def transform(tf: (String) => String): Part = {
+      Key(tf(key))
+    }
+  }
 
   /**
    * Text that was surrounded in Italic
    */
-  case class Emphasis(text: String) extends Part
+  case class Emphasis(text: String) extends Part {
 
+    override def transform(tf: (String) => String): Part = {
+      Emphasis(tf(text))
+    }
+  }
+
+  /**
+   * Block level Elements
+   */
   abstract class BlockElement
 
   case class Block(name: String, parts: List[Part]) extends BlockElement
@@ -195,6 +223,14 @@ object Parser {
 
   case class Table(clazz:String, cells:List[Cell]) extends BlockElement
 
+  object TrimProcess extends Function1[String,String] {
+    def apply(str: String): String = str match {
+      case reFlexiInt(sign, value) => if ("-" == sign) sign + value else value
+      case reColonTrim(text) => text
+      case nomatch => nomatch
+    } 
+  }
+
   /**
    * Transform a simple node into a Part token. This will lift A tags, B to Keys, 
    * images to icon, recharge dice to text, and attempt several triming to get rid
@@ -202,23 +238,16 @@ object Parser {
    */
   def parseNode(node: scala.xml.Node): Part = {
 
-    def processString(str: String): String = {
-      str match {
-        case reFlexiInt(sign, value) => if ("-" == sign) sign + value else value
-        case reColonTrim(text) => text
-        case nomatch => nomatch
-      }
-    }
     node match {
       case <BR></BR> => Break()
       case bi @ <B><IMG/></B>  => parseNode(bi.child(0))
       case <B></B> => Key("") // From some traps
-      case <B>{text}</B> => Key(processString(parseToText(text)))  //Go figure (need because o bi above)
-      case <A>{text}</A> => Text(processString(parseToText(text)))
-      case <I>{i @ _*}</I> => Emphasis(processString(parseToText(i)))
+      case <B>{text}</B> => Key(parseToText(text))  //Go figure (need because o bi above)
+      case <A>{text}</A> => Text(parseToText(text))
+      case <I>{i @ _*}</I> => Emphasis(parseToText(i))
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
-      case scala.xml.Text(text) => Text(processString(text))
+      case scala.xml.Text(text) => Text(text)
       case s =>
         logger.debug("Failed to match " + s)
         throw new UntranslatableException(node, null)
@@ -301,7 +330,7 @@ object Parser {
   }
 
   /**
-   * Transform a list of paris of type Key,Text and optional breaks into 
+   * Transform a list of pairs of type Key,Text and optional breaks into
    * a list of key,value pairs.
    */
   def partsToPairs(parts: List[Part]): List[(String, String)] = {
