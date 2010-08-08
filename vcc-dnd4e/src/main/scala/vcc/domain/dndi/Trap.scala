@@ -34,7 +34,7 @@ case class TrapSection(header: String, text: StyledText)
 class TrapBlockStream(blocks: List[BlockElement]) extends TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock])) {
 }
 
-class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
+class TrapReader(val id: Int) {
   private var attributes = Map[String, String](
     "NAME" -> "Unknown",
     "HP" -> "9999",
@@ -77,7 +77,7 @@ class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
         stream.advance()
         name
       case _ =>
-        throw new Exception("Cant handle: " + stream.head)
+        throw new UnexpectedBlockElementException("SPAN trapblocktitle expected", stream.head)
     }
     while (stream.head match {
       case blk@PlainBlock("SPAN#trapblockbody", parts) =>
@@ -95,7 +95,8 @@ class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
     stream.head match {
       case blk@PlainBlock(name, parts) if (name == tag + "#" + clazz) =>
         textBuilder.append(TextBlock(tag, clazz, ParserTextTranslator.partsToStyledText(parts): _*))
-      case s => throw new Exception("Unexpected block: " + s)
+      case s =>
+        throw new UnexpectedBlockElementException("Expect block with name '" + tag + "#" + clazz + "'", s)
     }
     stream.advance()
     TrapSection(null, textBuilder.getDocument())
@@ -104,7 +105,7 @@ class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
   private[dndi] def processHeader(stream: TrapBlockStream) {
     val headMap: Map[String, String] = stream.head match {
       case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
-      case s => throw new Exception("Unexpected block: " + s)
+      case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     for (key <- List("xp", "name", "level", "role", "type")) {
       if (headMap.isDefinedAt(key)) attributes = attributes + (key.toUpperCase -> headMap(key))
@@ -112,7 +113,8 @@ class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
     stream.advance()
   }
 
-  def process(stream: TrapBlockStream): Trap = {
+  def process(blocks: List[BlockElement]): Trap = {
+    val stream = new TrapBlockStream(blocks)
     processHeader(stream)
     while (stream.head match {
       case PlainBlock("SPAN#trapblocktitle", ignore) =>
@@ -124,14 +126,13 @@ class TrapReader(val id: Int, tokenStream: TokenStream[BlockElement]) {
         true
       case PlainBlock("SPAN#traplead", parts) =>
         // Check for special initiative line
-        parts match {
+        parts.map(p => p.transform(Parser.TrimProcess)) match {
           case Key("Initiative") :: Text(value) :: rest =>
             attributes = attributes + ("INITIATIVE" -> value)
           case _ => // Nothing
         }
         secs = oneBlockSection("SPAN", "traplead", stream) :: secs
         true
-
       case _ => false
     }) {
 

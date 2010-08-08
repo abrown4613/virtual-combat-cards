@@ -121,7 +121,7 @@ object MonsterCaptureSpec extends Specification {
       val p = monster.powers(0)
       p.name must_== "Rod Arc"
       p.icon must beEmpty
-      p.description must_== "Birdy ignores the target’s cover; 10" // Note: Trim will remove the last ;
+      p.description must_== "Birdy ignores the target’s cover; 10;  " // Note: Trim will remove the last ;
       p.action must_== "(standard, at-will)"
       p.keywords must_== "Arcane, Implement, Lightning"
     }
@@ -184,6 +184,26 @@ object MonsterCaptureSpec extends Specification {
       p.supplement(0).text must_== "Really bad juju."
     }
 
+    "capture secondary attack information with whtespace" in {
+      val parts = List(
+        (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif" /> <B>Brutal Juju</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif" /> <B>Thunder</B> </P>),
+        (<P class="flavorIndent">Bad juju.</P>),
+        (<P class="flavor"><I>Secondary Attack (poison)</I></P>),
+      	(<P class="flavorIndent">Really bad juju.</P>))
+      parts.foreach{ p => reader.processBlock(Parser.parseBlockElement(p,true)) must beTrue}
+      monster.powers mustNot beEmpty
+      val p = monster.powers(0)
+      p.name must_== "Brutal Juju"
+      p.icon must contain(IconType.Close)
+      p.description must_== "Bad juju."
+      p.action must_== "(standard, at-will)"
+      p.keywords must_== "Thunder"
+      p.supplement mustNot beEmpty
+      p.supplement.length must_== 1
+      p.supplement(0).emphasis must_== "Secondary Attack (poison)"
+      p.supplement(0).text must_== "Really bad juju."
+    }
+
     "capture secondary attack information no keyword" in {
       val parts = List(
         (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif" /><B>Brutal Juju</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif" /><B>Thunder</B></P>),
@@ -200,7 +220,7 @@ object MonsterCaptureSpec extends Specification {
       p.keywords must_== "Thunder"
       p.supplement mustNot beEmpty
       p.supplement.length must_== 1
-      p.supplement(0).emphasis must_== "Secondary Attack"
+      p.supplement(0).emphasis must_== "Secondary Attack "
       p.supplement(0).text must_== "Really bad juju."
     }
 
@@ -260,20 +280,38 @@ object MonsterCaptureSpec extends Specification {
 
     "process tabular block" in {
       val blk = Table("bodytable", List(
-        Cell(null, List(Key("HP"), Text("220"), Key("Bloodied"), Text("110"))),
-        Cell("rightalign", List(Key("Initiative"), Text("7"))),
-        Cell(null, List(Key("AC"), Text("24"), Key("Fortitude"), Text("22"), Key("Reflex"), Text("20"), Key("Will"), Text("22"))),
-        Cell("rightalign", List(Key("Perception"), Text("15"))),
-        Cell(null, List(Key("Speed"), Text("6"))),
+        Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
+        Cell("rightalign", List(Key("Initiative"), Text(" +7"))),
+        Cell(null, List(Key("AC"), Text(" 24, "), Key("Fortitude"), Text(" 22, "), Key("Reflex"), Text(" 20, "), Key("Will"), Text(" 22"))),
+        Cell("rightalign", List(Key("Perception"), Text(" +15"))),
+        Cell(null, List(Key("Speed"), Text(" 6"))),
         Cell("rightalign", List(Text("Blindsight 5"))),
-        Cell(null, List(Key("Resist"), Text("5 necrotic"))),
-        Cell(null, List(Key("Saving Throws"), Text("2"), Key("Action Points"), Text("1")))))
+        Cell(null, List(Key("Resist"), Text(" 5 necrotic"))),
+        Cell(null, List(Key("Saving Throws"), Text(" +2; "), Key("Action Points"), Text(" 1")))))
 
       reader.processBlock(blk) must beTrue
       monster.isMM3Format must beTrue
       monster("HP") must_== Some("220")
       monster("SAVING THROWS") must_== Some("2")
       monster("SENSES") must_== Some("Blindsight 5")
+    }
+
+    "process tabular block with no Senses" in {
+      val blk = Table("bodytable", List(
+        Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
+        Cell("rightalign", List(Key("Initiative"), Text(" +7"))),
+        Cell(null, List(Key("AC"), Text(" 24, "), Key("Fortitude"), Text(" 22, "), Key("Reflex"), Text(" 20, "), Key("Will"), Text(" 22"))),
+        Cell("rightalign", List(Key("Perception"), Text(" +15"))),
+        Cell(null, List(Key("Speed"), Text(" 6"))),
+        Cell("rightalign", List()),
+        Cell(null, List())))
+
+      reader.processBlock(blk) must beTrue
+      monster.isMM3Format must beTrue
+      monster("HP") must_== Some("220")
+      monster("AC") must_== Some("24")
+      monster("SPEED") must_== Some("6")
+      monster("SENSES") must_== None
     }
 
     "block starting with skill" in {

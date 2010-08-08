@@ -143,12 +143,6 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
 import Parser._
 
-trait BlockReader {
-  def processBlock(block: BlockElement): Boolean
-
-  def getObject: DNDIObject
-}
-
 class MonsterBuilder(monster: Monster) extends BlockReader {
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
@@ -196,8 +190,14 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
 
 
   object PowerHeader {
+
+    private val whitespace = """^[\s\n\r\t]*$""".r
+
     def unapply(parts: List[Part]): Option[(List[IconType.Value], String, String, String)] = {
-      var p = breakToSpace(parts)
+      var p = breakToSpace(parts).filter(part=> part match {
+        case Text(this.whitespace()) => false
+        case _ => true
+      })
       var icons: List[IconType.Value] = Nil
 
       while (!p.isEmpty && p.head.isInstanceOf[Icon]) {
@@ -214,7 +214,7 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
       val action: String = p match {
         case Text(text) :: rest =>
           p = p.tail //Advance for last part
-          text
+          text.trim()
         case _ => null
       }
       val keywords: String = p match {
@@ -239,14 +239,16 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
     }
   }
 
+  private def trimParts(parts: List[Part]): List[Part] = parts.map(p => p.transform(Parser.TrimProcess))
+
   def processBlock(block: BlockElement): Boolean = {
     block match {
       case HeaderBlock("H1#monster", pairs) => addToMap(normalizeTitle(pairs))
       case Block("P#flavor", parts@Key("Initiative") :: _) =>
-        processPrimaryBlock(partsToPairs(parts))
+        processPrimaryBlock(partsToPairs(trimParts(parts)))
 
       case Block("P#flavor", parts@Key("Alignment") :: _) =>
-        addToMap(partsToPairs(parts))
+        addToMap(partsToPairs(trimParts(parts)))
 
       case Block("P#flavor alt", parts) =>
         parts match {
@@ -288,12 +290,13 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
 
       case Block("P#", Emphasis(text) :: Nil) => monster.set("comment", (text))
       case NonBlock(dontcare) => // Don't care
-      case Table("bodytable", cells) =>
+      case Table("bodytable", cellsRaw) =>
+        val cells = cellsRaw.map(cell => Cell(cell.clazz, cell.content.map(p => p.transform(Parser.TrimProcess))))
         val senses: Cell = cells(5) match {
           case b: Cell => b
           case s => throw new Exception("Should not have reached this point")
         }
-        val taggedSenses = Cell(senses.clazz, Key("Senses") :: senses.content)
+        val taggedSenses = if(senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
         processPrimaryBlock(partsToPairs(parts))
         monster.setMM3Format()
