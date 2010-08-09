@@ -59,13 +59,7 @@ object DNDInsiderCapture {
         getTypeFromXML(xml) match {
           case Some("trap") =>
             val tr = new TrapReader(id.get)
-            val trap = tr.process(blocks)
-            if (trap != null) {
-              logger.info("Capture 'trap': {}", trap("name").get)
-              trap.attributes.foreach(kv => println("   --- " + kv._1 + " = " + kv._2))
-              trap.sections.foreach(println)
-            }
-            null //TODO
+            tr.process(blocks)
           case _ => null
         }
       }
@@ -101,7 +95,7 @@ object DNDInsiderCapture {
   /**
    * Get a Servlet request data InputStream and load it to a filtered String.
    * It removes bad backslash and reduces several &nnbsp; (Unicode \u00a0), \n, \r to a single space.
-   * @param in InputStream, most likely from Servlet request.getInputStream
+   * @para in InputStream, most likely from Servlet request.getInputStream
    * @return The filter UTF-8 block
    */
   def pluginInputStreamAsFilteredString(in: java.io.InputStream): String = {

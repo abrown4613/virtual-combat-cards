@@ -18,99 +18,106 @@
 
 package vcc.app.dndi
 
-import vcc.domain.dndi.{Monster,DNDInsiderCapture}
 import vcc.infra.diskcache._
-import scala.xml.Node
-import java.io.{File,FileInputStream}
-
+import java.io.{File, FileInputStream}
+import vcc.domain.dndi.{DNDIObject, Trap, Monster, DNDInsiderCapture}
+import xml.{XML, Node}
+import java.lang.String
+import collection.immutable.Map
 
 /**
  * Object designed to hold objects and creatures captured form D&D Insider
  * and serve as an access point to both application and User interface
  */
 object CaptureHoldingArea {
-  
   val logger = org.slf4j.LoggerFactory.getLogger("app")
-  
+
   trait CaptureHoldingObserver[T] {
-	def updateContent(objects:Seq[T])
+    //TODO Change this to new sequence and an options new entry
+    //FIXME New entry is the hook to allow automated updates
+    def updateContent(objects: Seq[T])
   }
 
-  object XMLLoader extends DiskCacheBuilder[MonsterCacheEntry] {
-    def loadFromFile(file:java.io.File):MonsterCacheEntry = {
+  object XMLLoader extends DiskCacheBuilder[DNDIObjectCacheEntry] {
+    def loadFromFile(file: java.io.File): DNDIObjectCacheEntry = {
       try {
         val rawXML = DNDInsiderCapture.pluginInputStreamAsFilteredString(new FileInputStream(file))
         val xml = scala.xml.XML.loadString(rawXML)
         val dndiObject = DNDInsiderCapture.load(xml)
-        dndiObject match {
-          case monster: Monster => new MonsterCacheEntry(monster,xml)
-          case _ => null
-        }
+
+        if(dndiObject != null) new DNDIObjectCacheEntry(dndiObject, xml)
+        else null
       } catch {
-        case e => 
-          logger.warn("Failed to load file {} reason: {}",file,e.getMessage)
+        case e =>
+          logger.warn("Failed to load file {} reason: {}", file, e.getMessage)
           null
       }
     }
   }
-  
-  class MonsterCacheEntry(val monster:Monster, val node:Node) extends DiskCacheable {
-    def saveToCache(file:java.io.File):Boolean = {
-      scala.xml.XML.save(file.getAbsolutePath,node,"UTF-8")
+
+  class DNDIObjectCacheEntry(val dndiObj: DNDIObject, val node: Node) extends DiskCacheable {
+    def saveToCache(file: java.io.File): Boolean = {
+      XML.save(file.getAbsolutePath, node, "UTF-8")
       file.exists && file.isFile && file.canRead
     }
-    override def getCacheFileName():String = {
-      val id = if(node.attribute("id").isDefined) node.attribute("id").get else super.getCacheFileName()
-      "monster-" + id + ".xml"
+
+    override def getCacheFileName(): String = {
+      val id = dndiObj.id.toString
+      val clazz = dndiObj.clazz
+
+      clazz + "/" + clazz + "-" + id + ".xml"
     }
-  } 
-  
-  private var monsters:List[Monster] = Nil
-  private var monstersObserver:List[CaptureHoldingObserver[Monster]] = Nil
-  
-  private val diskCache = new DiskCache[MonsterCacheEntry]({
-	  val base = new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value,"dndicache/monster")
-	  if(!base.exists) base.mkdirs()
-      base
-    },XMLLoader)
-  
-  def addCapturedMonsterAndCacheXML(monster:Monster, xml:scala.xml.Node) {
-    diskCache.save(new MonsterCacheEntry(monster, xml))
-    monsters = monster :: monsters
+  }
+
+  private var entries: List[DNDIObject] = Nil
+  private var observers: List[CaptureHoldingObserver[DNDIObject]] = Nil
+
+  private val diskCache = new DiskCache[DNDIObjectCacheEntry]({
+    val base = new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value, "dndicache")
+    if (!base.exists) base.mkdirs()
+    base
+  }, XMLLoader)
+
+  /**
+   * Add an entry to the holding are and notify observers.
+   * @para obj The object to be stored
+   * @param xml The XML source of the entry
+   */
+  def addCapturedEntry(obj: DNDIObject, xml: scala.xml.Node) {
+    diskCache.save(new DNDIObjectCacheEntry(obj, xml))
+    entries = obj :: entries
     notifyObservers()
   }
-  
-  def loadCachedMonster() {
-    monsters = diskCache.loadAll().map(me => me.monster).toList
+
+  def loadCachedEntries() {
+    entries = diskCache.loadAll().map(me => me.dndiObj).toList
     notifyObservers()
   }
-  
+
   def clearCachedMonster() {
     diskCache.clear()
   }
-  
-  def addMonsterObserver(obs: CaptureHoldingObserver[Monster]) {
-    monstersObserver = obs :: monstersObserver
+
+  def addObserver(obs: CaptureHoldingObserver[DNDIObject]) {
+    observers = obs :: observers
   }
-  
+
   protected def notifyObservers() {
-    monstersObserver.foreach {obs => obs.updateContent(monsters)}
+    observers.foreach {obs => obs.updateContent(entries)}
   }
-}
 
-object CaptureStore {
-  import java.io.File
-  //import scala.xml.Node
-  val logger = org.slf4j.LoggerFactory.getLogger("app")
-
-  def storeObject(otype:String, oid:Int, baseDir:File, node:Node):Boolean = {
-    val targetDir = new File(baseDir,"/dndicache/"+otype)
-    if(!targetDir.exists) targetDir.mkdirs()
-    if(targetDir.exists) {
-      val file = new File(targetDir,otype+"-"+oid+".xml")
-      scala.xml.XML.save(file.getAbsolutePath,node,"UTF-8")
-      logger.debug("Saved {} with id={} to: {}",Seq(otype,oid.toString,file.toString).toArray)
-      file.exists && file.isFile && file.canRead
-    } else false
+  /**
+   * This method will store an incomplete entry. This is used for capturing data for future analysis.
+   * @para clazz Class of DNDIObject
+   * @para id  Class id
+   * @para node XML representation of the object
+   * @return True if saved successfully.
+   */
+  def storeIncompleteObject(clazz: String, id: Int, node: Node): Boolean = {
+    class PartialDNDIObject(val clazz: String, val id: Int) extends DNDIObject {
+      protected var attributes = Map.empty[String, String]
+    }
+    val entry = new DNDIObjectCacheEntry(new PartialDNDIObject(clazz, id), node)
+    diskCache.save(entry)
   }
 }

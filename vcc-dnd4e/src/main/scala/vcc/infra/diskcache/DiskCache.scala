@@ -19,39 +19,40 @@
 package vcc.infra.diskcache
 
 import java.io.File
+import vcc.util.DirectoryIterator
 
 trait DiskCacheBuilder[T] {
-  def loadFromFile(file:File):T
+  def loadFromFile(file: File): T
 }
 
 trait DiskCacheable {
-  def saveToCache(file:File):Boolean
-  
-  def getCacheFileName():String = System.currentTimeMillis.toString+this.hashCode.toString
+  def saveToCache(file: File): Boolean
+
+  def getCacheFileName(): String = System.currentTimeMillis.toString + this.hashCode.toString
 }
 
-class DiskCache[T <: DiskCacheable](val dir:File, builder:DiskCacheBuilder[T]) {
-  
-  assert(dir.isDirectory)
-  
-  def save(obj:T):Boolean =  {
+class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T]) {
+
+  def save(obj: T): Boolean = {
     try {
-      val file = new File(dir,obj.getCacheFileName)
+      val file = new File(dir, obj.getCacheFileName)
       obj.saveToCache(file)
     } catch {
       case e => false
     }
   }
-  
-  def loadAll():Seq[T] = {
-    val dirIter = new vcc.util.DirectoryIterator(dir,false)
-    val l = for(file <- dirIter if(file.isFile)) yield {
+
+  def loadAll(): Seq[T] = {
+    val dirIter = new DirectoryIterator(dir, false)
+
+    val l = for (file <- dirIter if (file.isFile)) yield {
       builder.loadFromFile(file)
     }
     l.filter(x => x != null).toList
   }
+
   def clear() {
-    val dirIter = new vcc.util.DirectoryIterator(dir,false)
-    dirIter.foreach(file=> if(file.isFile())file.delete())
+    val dirIter = new vcc.util.DirectoryIterator(dir, false)
+    dirIter.foreach(file => if (file.isFile()) file.delete())
   }
 }

@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *   Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,7 +108,16 @@ class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
 object MonsterEntity {
   def newInstance() = new MonsterEntity(EntityID.generateRandom())
 
+  /**
+   * Added a monster based ID to this entity.
+   */
   def newInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:monster:" + dndID))
+
+  /**
+   * Create the Trap as a monster (id generation based on dndi:trap:)
+   */
+  //FIXME Traps should have their own calls
+  def newTrapInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:trap:"+ dndID))
 }
 
 case class MonsterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, xp: Int, role: String, minion: Boolean) extends EntitySummary(eid, classid)
