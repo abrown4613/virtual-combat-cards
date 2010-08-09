@@ -22,28 +22,27 @@ import scala.swing._
 import scala.swing.event._
 import vcc.util.swing.MigPanel
 import vcc.app.dndi.CaptureHoldingArea
-import vcc.domain.dndi.Monster
-import vcc.domain.dndi.MonsterImportService
 import vcc.dnd4e.view.IconLibrary
+import vcc.domain.dndi.{DNDIObject, Monster, MonsterImportService}
 
 object DNDICaptureMonitor extends Frame {
   
   private val webserver = vcc.model.Registry.get[vcc.infra.webserver.WebServer]("webserver").get
   private val stateMessage = new Label()
-  private var monsters:Seq[Monster] = Nil
-  private val monsterList = new ListView[String](Nil)
+  private var entries:Seq[DNDIObject] = Nil
+  private val entryList = new ListView[String](Nil)
   
   preferredSize = new java.awt.Dimension(300,400)
   iconImage = IconLibrary.MetalD20.getImage
   title = "D&D Insider Capture Monitor" 
   contents = new MigPanel("fill","[][][]","[][][]") {
     add(stateMessage,"wrap")
-    add(new ScrollPane(monsterList), "span 3,growx, growy, wrap")
+    add(new ScrollPane(entryList), "span 3,growx, growy, wrap")
     add(new Button(Action("Import"){
-      val sel = monsterList.selection.indices
+      val sel = entryList.selection.indices
       if(!sel.isEmpty) {
         for(idx <- sel) {
-          MonsterImportService.importMonster(monsters(idx))
+          MonsterImportService.importObject(entries(idx))
         }
       }
     }))
@@ -76,16 +75,16 @@ object DNDICaptureMonitor extends Frame {
       val ret = Dialog.showConfirmation(stateMessage,"You are about to clear all monsters in your cache, are you sure?","Clear captured monster cache",Dialog.Options.YesNoCancel)
       if(ret.id == 0) CaptureHoldingArea.clearCachedMonster()
     })
-    cacheMenu.contents += new MenuItem(Action("Load cached entries"){ CaptureHoldingArea.loadCachedMonster()})
+    cacheMenu.contents += new MenuItem(Action("Load cached entries"){ CaptureHoldingArea.loadCachedEntries()})
     mb.contents += cacheMenu
     mb
   }
   
   toggleActionState()
-  CaptureHoldingArea.addMonsterObserver(new CaptureHoldingArea.CaptureHoldingObserver[Monster] {
-     def updateContent(newContent: Seq[Monster]) {
-       monsters = scala.util.Sorting.stableSort[Monster](newContent,(a:Monster,b:Monster)=> { a("NAME").get < b("NAME").get })
-       monsterList.listData = monsters.map(monster => monster("NAME").get)
+  CaptureHoldingArea.addObserver(new CaptureHoldingArea.CaptureHoldingObserver[DNDIObject] {
+     def updateContent(newContent: Seq[DNDIObject]) {
+       entries = scala.util.Sorting.stableSort[DNDIObject](newContent,(a:DNDIObject,b:DNDIObject)=> { a("NAME").get < b("NAME").get })
+       entryList.listData = entries.map(monster => monster("NAME").get)
      }                                   
   })
   
