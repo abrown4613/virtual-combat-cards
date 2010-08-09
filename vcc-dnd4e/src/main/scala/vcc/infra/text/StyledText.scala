@@ -43,8 +43,13 @@ object StyledText {
 }
 
 case class TextBlock(tag: String, clazz: String, segments: List[Segment]) {
-
-  def toXHTML(): Node = new Elem(null, tag, new UnprefixedAttribute("class", clazz, scala.xml.Null), scala.xml.TopScope, segments.map(_.toXHTML): _*)
+  def toXHTML(): Node = {
+    val attributes = {
+      if (clazz != null) new UnprefixedAttribute("class", clazz, scala.xml.Null)
+      else scala.xml.Null
+    }
+    new Elem(null, tag.toLowerCase, attributes, scala.xml.TopScope, segments.map(_.toXHTML): _*)
+  }
 
   def toXML(): Node = <block tag={tag} class={clazz}>{segments.map(_.toXML)}</block>
 }
