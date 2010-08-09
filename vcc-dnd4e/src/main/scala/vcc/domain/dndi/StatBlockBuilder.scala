@@ -18,12 +18,26 @@
 
 package vcc.domain.dndi
 
-import xml.{TopScope, Elem, Node, Text}
+import xml._
+import vcc.infra.text.StyledText
 
+/**
+ * Provide information from an object to the StatBlock generators.
+ */
 trait StatBlockDataSource {
-  def extract(string: String): Option[String]
+
+  /**
+   * Wraps a value in an Option. This is a helper to make extrators easier
+   * @para tgt Value to be wrapped
+   * @return None if the tgt is null or Some(tgt) otherwise.
+   */
+  protected def wrapInOption[T](tgt: T): Option[T] = if (tgt != null) Some(tgt) else None
+
+  def extract(key: String): Option[String]
 
   def extractGroup(group: String): Seq[StatBlockDataSource]
+
+  def extractStyledText(key: String): Option[StyledText] = None
 }
 
 object StatBlockBuilder {
@@ -129,6 +143,37 @@ object StatBlockBuilder {
     override def render(source: StatBlockDataSource): Seq[Node] = (<div class={divClass}>
       {formatChunks(source)(parts: _*)}
     </div>)
+  }
+
+  /**
+   * Crate a XHTML Element based on a tag and a class.
+   * @para tagName Name of the tag, will be cast to toLowerCase
+   * @para tagClass Class to be placed on element if any
+   * @para breakAfter Add line break (whitespace after)
+   * @para parts The parts to be placed within this tag.
+   */
+  case class XHTMLElement(tagName: String, tagClass: String, breakAfter: Boolean, parts: Chunk*) extends Chunk {
+    override def render(source: StatBlockDataSource): Seq[Node] = {
+      val attr = {
+        if (tagClass != null) new UnprefixedAttribute("class", tagClass, scala.xml.Null)
+        else scala.xml.Null
+      }
+      val elem = new Elem(null, tagName.toLowerCase, attr, scala.xml.TopScope, formatChunks(source)(parts: _*): _*)
+      if (breakAfter) Seq(elem, xmlLineBreak)
+      else elem
+    }
+  }
+
+  /**
+   * Add a StyledText in it's XHTML form.
+   */
+  case class InlineStyledText(key: String, breakAfter: Boolean) extends Chunk {
+    override def render(source: StatBlockDataSource): Seq[Node] = {
+      val st = source.extractStyledText(key)
+      val blocks = if (st.isDefined) st.get.toXHTML() else Nil
+      if (breakAfter) blocks ++ List(xmlLineBreak)
+      else blocks
+    }
   }
 
   case class IfDefined(key: String, parts: Chunk*) extends Chunk {

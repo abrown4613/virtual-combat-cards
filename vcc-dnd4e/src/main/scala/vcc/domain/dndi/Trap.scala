@@ -20,15 +20,38 @@ package vcc.domain.dndi
 import vcc.infra.text._
 import util.matching.Regex
 import vcc.domain.dndi.Parser.{HeaderBlock, Icon, Break, Emphasis, Key, NonBlock, Text, Block => PlainBlock, BlockElement}
+import collection.Seq
+import java.lang.String
 
 /**
  *  Represents the capture DNDI Trap
  */
-class Trap(val id: Int, var attributes: Map[String, String], val sections: List[TrapSection]) extends DNDIObject {
+class Trap(val id: Int, var attributes: Map[String, String], val sections: List[TrapSection])
+        extends DNDIObject with StatBlockDataSource {
   final val clazz = "trap"
+
+  def extractGroup(group: String): Seq[StatBlockDataSource] = {
+    if(group.toUpperCase() == "SECTIONS") sections.toSeq
+    else Seq()
+  }
+
+  def extract(string: String): Option[String] = apply(string)
 }
 
-case class TrapSection(header: String, text: StyledText)
+case class TrapSection(header: String, text: StyledText) extends StatBlockDataSource {
+
+  def extractGroup(group: String): Seq[StatBlockDataSource] = Seq()
+
+  def extract(key: String): Option[String] = wrapInOption(key.toUpperCase() match {
+      case "HEADER" => header
+      case _ => null
+    })
+
+  override def extractStyledText(key: String):Option[StyledText] = wrapInOption(key.toUpperCase() match {
+    case "TEXT" => text
+    case _ => null
+  })
+}
 
 
 class TrapBlockStream(blocks: List[BlockElement]) extends TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock])) {
