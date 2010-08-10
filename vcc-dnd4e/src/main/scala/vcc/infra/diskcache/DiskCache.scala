@@ -32,10 +32,12 @@ trait DiskCacheable {
 }
 
 class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T]) {
-
   def save(obj: T): Boolean = {
     try {
       val file = new File(dir, obj.getCacheFileName)
+      if (!file.getParentFile.exists()) {
+        file.getParentFile().mkdirs()
+      }
       obj.saveToCache(file)
     } catch {
       case e => false

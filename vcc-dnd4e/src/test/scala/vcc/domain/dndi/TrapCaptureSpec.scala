@@ -94,8 +94,8 @@ object TrapCaptureSpec extends Specification {
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
       trap("name") must_== Some("Angry Crowd")
-      trap("level") must_== Some("0")
-      trap("xp") must_== Some("0")
+      trap("level") must_== Some("1")
+      trap("xp") must_== Some("100")
       trap("role") must_== Some("Unspecified")
       trap("type") must_== Some("Hazard")
     }
@@ -109,8 +109,8 @@ object TrapCaptureSpec extends Specification {
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
       trap("name") must_== Some("Spiked Swinging Gate")
-      trap("level") must_== Some("0")
-      trap("xp") must_== Some("0")
+      trap("level") must_== Some("1")
+      trap("xp") must_== Some("100")
       trap("role") must_== Some("Unspecified")
       trap("type") must_== Some("Trap")
     }
