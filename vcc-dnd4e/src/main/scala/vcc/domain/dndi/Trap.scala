@@ -53,8 +53,13 @@ case class TrapSection(header: String, text: StyledText) extends StatBlockDataSo
   })
 }
 
-
-class TrapBlockStream(blocks: List[BlockElement]) extends TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock])) {
+/**
+ * This extension to the TokenStream[BlockElement] will return all Block elements.
+ * @para blocks any set of block, only interested in the SPAN, H1, and P level so all other elements are
+ * filtered out.
+ */
+class TrapBlockStream(blocks: List[BlockElement])
+        extends TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock])) {
 }
 
 class TrapReader(val id: Int) {
@@ -66,9 +71,9 @@ class TrapReader(val id: Int) {
     "WILL" -> "99",
     "FORTITUDE" -> "99",
     "ROLE" -> "Unspecified",
-    "XP" -> "0",
+    "XP" -> "100",
     "INITIATIVE" -> "-99",
-    "LEVEL" -> "0"
+    "LEVEL" -> "1"
     )
 
   private var secs: List[TrapSection] = Nil
