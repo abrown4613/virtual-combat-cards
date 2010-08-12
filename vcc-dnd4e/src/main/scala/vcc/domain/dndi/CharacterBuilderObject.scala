@@ -58,7 +58,6 @@ class CharacterBuilderObject(val char: Elem) {
 
   lazy val stats = Map() ++ (sheet \\ "Stat").flatMap(extractStat(_))
 
-  stats.foreach(x => println("STAT:" + x))
   lazy val tally = for{
     tally <- sheet \ "RulesElementTally" \ "RulesElement"
     tt <- tally \ "@type"

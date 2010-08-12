@@ -19,9 +19,9 @@
 package vcc.domain.dndi
 
 import vcc.model.Registry
-import vcc.dnd4e.domain.compendium.{Compendium, MonsterEntity}
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
+import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 
 
 /**
@@ -42,14 +42,14 @@ object MonsterImportService {
     }
   }
 
-  //FIXME Trap should have it's own Type
   def importTrap(dndiTrap: Trap) {
     // For this release traps will be Monsters
     val es = Compendium.activeRepository
-    val trap = MonsterEntity.newInstance(dndiTrap.id)
+    val trap = TrapEntity.newInstance(dndiTrap.id)
 
     logger.debug("Load D&DI Trap: {}", dndiTrap)
     processMonsterFieldSet(trap, dndiTrap)
+    trap.trapClass.value = dndiTrap("TYPE").get
     val xml = TrapStatBlockBuilder.generate(dndiTrap)
     trap.statblock.value = xml.toString
     es.store(trap)

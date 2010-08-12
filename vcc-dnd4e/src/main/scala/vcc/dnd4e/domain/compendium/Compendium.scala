@@ -15,16 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.startup.StartupStep
 
 object Compendium extends StartupStep {
   val monsterClassID = EntityClassID(new java.net.URI("vcc-class:monster"))
+  val monsterClassIDStorageString = monsterClassID.uri.toString
   val characterClassID = EntityClassID(new java.net.URI("vcc-class:character"))
-  var _activeRepository:CompendiumRepository = null
-  val logger = org.slf4j.LoggerFactory.getLogger("domain")
+  val characterClassIDStorageString = characterClassID.uri.toString
+  val trapClassID = EntityClassID(new java.net.URI("vcc-class:trap"))
+  val trapClassIDStorageString = trapClassID.uri.toString
+
+  private var _activeRepository:CompendiumRepository = null
+  private val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
   def setActiveRepository(es: CompendiumRepository) {
     _activeRepository = es

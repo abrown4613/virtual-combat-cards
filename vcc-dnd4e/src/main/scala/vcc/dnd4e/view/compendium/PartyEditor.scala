@@ -96,8 +96,9 @@ class PartyEditor(director: PanelDirector) extends Frame {
   private def entitySummaryToPartyEntry(es: EntitySummary): PartyTableEntry =
     es match {
       case m: MonsterSummary => new PartyTableEntry(m.eid, m.name, null, null, 1, m.xp)
+      case m: TrapSummary => new PartyTableEntry(m.eid, m.name, null, null, 1, m.xp)
       case c: CharacterSummary => new PartyTableEntry(c.eid, c.name, null, null, 1, 0)
-      case s: EntitySummary => throw new Exception("Unexpected EntitySummary" + s.classid)
+      case s: EntitySummary => throw new Exception("Unexpected EntitySummary class: " + s.classid)
       case null => null
     }
 
