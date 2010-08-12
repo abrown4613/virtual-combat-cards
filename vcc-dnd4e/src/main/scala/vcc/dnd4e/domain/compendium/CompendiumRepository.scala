@@ -27,108 +27,115 @@ trait CompendiumRepositoryObserver {
   def compendiumChanged()
 }
 
-class CompendiumRepository(dsuri:DataStoreURI) extends StartupStep {
+class CompendiumRepository(dsuri: DataStoreURI) extends StartupStep {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
-  
+
   val dataStore = DataStoreFactory.getDataStoreBuilder(dsuri).open(dsuri)
-  private val monsterSummaries = scala.collection.mutable.Map.empty[EntityID,MonsterSummary] 
-  private val characterSummaries = scala.collection.mutable.Map.empty[EntityID,CharacterSummary]
-  private var observers:List[WeakReference[CompendiumRepositoryObserver]] = Nil
-  
+  private val monsterSummaries = scala.collection.mutable.Map.empty[EntityID, MonsterSummary]
+  private val characterSummaries = scala.collection.mutable.Map.empty[EntityID, CharacterSummary]
+  private val trapSummaries = scala.collection.mutable.Map.empty[EntityID, TrapSummary]
+  private var observers: List[WeakReference[CompendiumRepositoryObserver]] = Nil
+
   initialize()
-  
+
   private def initialize() {
-	if(dataStore == null) throw new Exception("Failed to open datastore "+dsuri)
-	val ents = dataStore.extractEntityData(Set("classid","base:level","base:xp","base:role","base:class","base:name","base:race","stat:hp"))
-	for(ent<-ents) {
-	  storeSummary(ent._1,ent._2)
+    if (dataStore == null) throw new Exception("Failed to open datastore " + dsuri)
+    val ents = dataStore.extractEntityData(Set("classid", "base:level", "base:xp", "base:role", "base:class", "base:name", "base:race", "stat:hp"))
+    for (ent <- ents) {
+      storeSummary(ent._1, ent._2)
     }
   }
-  
+
   def isStartupComplete = dataStore != null
 
-  protected def storeSummary(eid:EntityID,fields:Map[String,String]) {
-    fields.getOrElse("classid",null) match {
-      case "vcc-class:monster" => 
-        val ent = MonsterSummary.fromFieldMap(eid,fields)
-        if(ent != null) monsterSummaries += (eid ->ent)
-      case "vcc-class:character" => 
-        val ent = CharacterSummary.fromFieldMap(eid,fields)
-        if(ent != null) characterSummaries += (eid ->ent)
+  protected def storeSummary(eid: EntityID, fields: Map[String, String]) {
+    fields.getOrElse("classid", null) match {
+      case Compendium.monsterClassIDStorageString =>
+        val ent = MonsterSummary.fromFieldMap(eid, fields)
+        if (ent != null) monsterSummaries += (eid -> ent)
+      case Compendium.characterClassIDStorageString =>
+        val ent = CharacterSummary.fromFieldMap(eid, fields)
+        if (ent != null) characterSummaries += (eid -> ent)
+      case Compendium.trapClassIDStorageString =>
+        val ent = TrapSummary.fromFieldMap(eid, fields)
+        if (ent != null) trapSummaries += (eid -> ent)
       case s =>
-        logger.warn("Can't handle: "+s)
-        logger.warn("Fields:"+fields)
+        logger.warn("Can't handle Entity with EntityClassID: " + s)
+        logger.warn("Fields:" + fields)
         null
     }
     notifyObservers()
   }
-  
-  def createEntity(classid:EntityClassID,eid:EntityID):CombatantEntity = null
 
-  def store(entity:CombatantEntity):Boolean = {
+  def createEntity(classid: EntityClassID, eid: EntityID): CombatantEntity = null
+
+  def store(entity: CombatantEntity): Boolean = {
     val dse = entity.asDataStoreEntity
-    storeSummary(dse.eid,dse.data)
+    storeSummary(dse.eid, dse.data)
     dataStore.storeEntity(dse)
   }
-  
+
   /**
    * Load an CombatantEntity
    * @param eid EntityID to be fetched
    * @param mustBeValid Indicate whether a valid entity is required (true) or not
    * @return The entity if it is found and respects the mustBeValid option
    */
-  def load(eid:EntityID,mustBeValid:Boolean):CombatantEntity = {
+  def load(eid: EntityID, mustBeValid: Boolean): CombatantEntity = {
     val dse = dataStore.loadEntity(eid)
-    logger.debug("Loaded Entity {} from datastore, content: {}",eid,dse)
-    
-    if(dse != null) {
-      if(CombatantEntityBuilder.canHandle(dse)) {
+    logger.debug("Loaded Entity {} from datastore, content: {}", eid, dse)
+
+    if (dse != null) {
+      if (CombatantEntityBuilder.canHandle(dse)) {
         val ent = CombatantEntityBuilder.buildEntity(dse)
-        if(ent!=null) {
-          logger.debug("Loaded entity, is it valid? {}",ent.isValid)
+        if (ent != null) {
+          logger.debug("Loaded entity, is it valid? {}", ent.isValid)
           ent.dump(logger)
         }
-        if(mustBeValid) {
-          if(ent != null && ent.isValid) ent else null
+        if (mustBeValid) {
+          if (ent != null && ent.isValid) ent else null
         } else ent
       } else {
-        logger.warn("Entity loaded with unknown class {}",dse.data.getOrElse("classid","<no classid found>"))
+        logger.warn("Entity loaded with unknown class {}", dse.data.getOrElse("classid", "<no classid found>"))
         null
       }
     } else null
   }
-  
-  def delete(eid:EntityID):Boolean = {
-    
+
+  def delete(eid: EntityID): Boolean = {
+
     val ret = dataStore.deleteEntity(eid)
-    if(ret) { 
-      logger.debug("Deleted entity {}",eid)
+    if (ret) {
+      logger.debug("Deleted entity {}", eid)
       characterSummaries -= eid
       monsterSummaries -= eid
       notifyObservers()
     } else {
-      logger.warn("Failed to delete entity {}",eid)
+      logger.warn("Failed to delete entity {}", eid)
     }
     ret
   }
-  
-  def getMonsterSummaries():Seq[MonsterSummary] = monsterSummaries.values.toList
 
-  def getCharacterSummaries():Seq[CharacterSummary] = characterSummaries.values.toList
-  
-  def getEntitySummary(eid:EntityID):EntitySummary = {
-    if(monsterSummaries.isDefinedAt(eid)) return monsterSummaries(eid)
-    if(characterSummaries.isDefinedAt(eid)) return characterSummaries(eid)
+  def getMonsterSummaries(): Seq[MonsterSummary] = monsterSummaries.values.toList
+
+  def getCharacterSummaries(): Seq[CharacterSummary] = characterSummaries.values.toList
+
+  def getTrapSummaries(): Seq[TrapSummary] = trapSummaries.values.toList
+
+  def getEntitySummary(eid: EntityID): EntitySummary = {
+    if (monsterSummaries.isDefinedAt(eid)) return monsterSummaries(eid)
+    if (characterSummaries.isDefinedAt(eid)) return characterSummaries(eid)
+    if (trapSummaries.isDefinedAt(eid)) return trapSummaries(eid)
     null
   }
-  
-  def registerObserver(obs:CompendiumRepositoryObserver) {
-    observers = new WeakReference(obs) :: observers 
+
+  def registerObserver(obs: CompendiumRepositoryObserver) {
+    observers = new WeakReference(obs) :: observers
   }
-  
+
   private def notifyObservers() {
     observers = observers.map(obs => {
-      if(obs.get.isDefined) {
+      if (obs.get.isDefined) {
         obs.get.get.compendiumChanged
         obs
       } else {

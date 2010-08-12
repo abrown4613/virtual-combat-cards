@@ -66,8 +66,9 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
  */
 object CombatantEntityBuilder {
   protected val entityFactory: PartialFunction[(EntityID, String), CombatantEntity] = {
-    case (eid, "vcc-class:monster") => new MonsterEntity(eid)
-    case (eid, "vcc-class:character") => new CharacterEntity(eid)
+    case (eid, Compendium.monsterClassIDStorageString) => new MonsterEntity(eid)
+    case (eid, Compendium.characterClassIDStorageString) => new CharacterEntity(eid)
+    case (eid, Compendium.trapClassIDStorageString) => new TrapEntity(eid)
   }
 
   /**
@@ -90,103 +91,5 @@ object CombatantEntityBuilder {
     } else {
       null
     }
-  }
-
-}
-
-class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
-  import CombatantEntityFields._
-  val classID = Compendium.monsterClassID
-
-  def combatantType = if (hp == 1) CombatantType.Minion else CombatantType.Monster
-
-  val role = new StringField(this, "base:role", RequiredString)
-  val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-  val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
-}
-
-object MonsterEntity {
-  def newInstance() = new MonsterEntity(EntityID.generateRandom())
-
-  /**
-   * Added a monster based ID to this entity.
-   */
-  def newInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:monster:" + dndID))
-
-  /**
-   * Create the Trap as a monster (id generation based on dndi:trap:)
-   */
-  //FIXME Traps should have their own calls
-  def newTrapInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:trap:"+ dndID))
-}
-
-case class MonsterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, xp: Int, role: String, minion: Boolean) extends EntitySummary(eid, classid)
-
-object MonsterSummary {
-  import CombatantEntityFields._
-
-  private object template extends FieldSet(null) {
-    val name = new StringField(this, "base:name", RequiredString)
-    val role = new StringField(this, "base:role", RequiredString)
-    val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-    val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
-    val hp = new IntField(this, "stat:hp", RequiredIntGreaterZero)
-  }
-
-  def fromFieldMap(eid: EntityID, fields: Map[String, String]) = {
-    template.clear()
-    template.loadFromMap(fields)
-    if (fields("classid") == "vcc-class:monster" && template.isValid)
-      MonsterSummary(eid,
-        Compendium.monsterClassID,
-        template.name.value,
-        template.level.value,
-        template.xp.value,
-        template.role.value,
-        template.hp.value == 1)
-    else null
-  }
-}
-
-class CharacterEntity(eid: EntityID) extends CombatantEntity(eid) {
-  import CombatantEntityFields._
-  val combatantType = CombatantType.Character
-  val classID = Compendium.characterClassID
-  val charClass = new StringField(this, "base:class", RequiredString)
-  val race = new StringField(this, "base:race", RequiredString)
-  val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-  val perception = new IntField(this, "skill:perception", AnyInt)
-  val insight = new IntField(this, "skill:insight", AnyInt)
-  val senses = new StringField(this, "base:senses", AnyString)
-
-}
-
-object CharacterEntity {
-  def newInstance(): CharacterEntity = new CharacterEntity(EntityID.generateRandom())
-}
-
-case class CharacterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, cclass: String, race: String) extends EntitySummary(eid, classid)
-
-object CharacterSummary {
-  import CombatantEntityFields._
-
-  private object template extends FieldSet(null) {
-    val name = new StringField(this, "base:name", RequiredString)
-    val charClass = new StringField(this, "base:class", RequiredString)
-    val race = new StringField(this, "base:race", RequiredString)
-    val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-  }
-
-  def fromFieldMap(eid: EntityID, fields: Map[String, String]) = {
-    template.clear()
-    template.loadFromMap(fields)
-    if (fields("classid") == "vcc-class:character" && template.isValid)
-      CharacterSummary(eid,
-        Compendium.characterClassID,
-        template.name.value,
-        template.level.value,
-        template.charClass.value,
-        template.race.value)
-    else null
   }
 }
