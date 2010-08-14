@@ -19,7 +19,7 @@ package vcc.domain.dndi
 
 import vcc.infra.text._
 import util.matching.Regex
-import vcc.domain.dndi.Parser.{HeaderBlock, Icon, Break, Emphasis, Key, NonBlock, Text, Block => PlainBlock, BlockElement}
+import vcc.domain.dndi.Parser.{HeaderBlock, Icon, Break, Emphasis, Key, NonBlock, Text, Block, BlockElement}
 import collection.Seq
 import java.lang.String
 
@@ -54,14 +54,8 @@ case class TrapSection(header: String, text: StyledText) extends StatBlockDataSo
 }
 
 /**
- * This extension to the TokenStream[BlockElement] will return all Block elements.
- * @para blocks any set of block, only interested in the SPAN, H1, and P level so all other elements are
- * filtered out.
+ * TrapReader is a TokenStream processor that will load a Trap from the Token Stream.
  */
-class TrapBlockStream(blocks: List[BlockElement])
-        extends TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock])) {
-}
-
 class TrapReader(val id: Int) {
   private var attributes = Map[String, String](
     "NAME" -> "Unknown",
@@ -72,7 +66,7 @@ class TrapReader(val id: Int) {
     "FORTITUDE" -> "99",
     "ROLE" -> "Unspecified",
     "XP" -> "100",
-    "INITIATIVE" -> "-99",
+    "INITIATIVE" -> "-99",                                          
     "LEVEL" -> "1"
     )
 
@@ -97,18 +91,18 @@ class TrapReader(val id: Int) {
   }
 
 
-  private[dndi] def processSection(stream: TrapBlockStream): TrapSection = {
+  private[dndi] def processSection(stream: TokenStream[BlockElement]): TrapSection = {
     val textBuilder = new TextBuilder()
 
     val sectionName = stream.head match {
-      case PlainBlock("SPAN#trapblocktitle", Text(name) :: Nil) =>
+      case Block("SPAN#trapblocktitle", Text(name) :: Nil) =>
         stream.advance()
         name
       case _ =>
         throw new UnexpectedBlockElementException("SPAN trapblocktitle expected", stream.head)
     }
     while (stream.head match {
-      case blk@PlainBlock("SPAN#trapblockbody", parts) =>
+      case blk@Block("SPAN#trapblockbody", parts) =>
         textBuilder.append(TextBlock("SPAN", "trapblockbody", ParserTextTranslator.partsToStyledText(parts): _*))
         true
       case _ => false
@@ -118,10 +112,10 @@ class TrapReader(val id: Int) {
     TrapSection(sectionName, textBuilder.getDocument())
   }
 
-  private def oneBlockSection(tag: String, clazz: String, stream: TrapBlockStream): TrapSection = {
+  private def oneBlockSection(tag: String, clazz: String, stream: TokenStream[BlockElement]): TrapSection = {
     val textBuilder = new TextBuilder()
     stream.head match {
-      case blk@PlainBlock(name, parts) if (name == tag + "#" + clazz) =>
+      case blk@Block(name, parts) if (name == tag + "#" + clazz) =>
         textBuilder.append(TextBlock(tag, clazz, ParserTextTranslator.partsToStyledText(parts): _*))
       case s =>
         throw new UnexpectedBlockElementException("Expect block with name '" + tag + "#" + clazz + "'", s)
@@ -130,7 +124,7 @@ class TrapReader(val id: Int) {
     TrapSection(null, textBuilder.getDocument())
   }
 
-  private[dndi] def processHeader(stream: TrapBlockStream) {
+  private[dndi] def processHeader(stream: TokenStream[BlockElement]) {
     val headMap: Map[String, String] = stream.head match {
       case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
@@ -142,17 +136,21 @@ class TrapReader(val id: Int) {
   }
 
   def process(blocks: List[BlockElement]): Trap = {
-    val stream = new TrapBlockStream(blocks)
+    val stream = new TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock]))
+
+    //Safe guard for some empty stream
+    if(!stream.advance) false
+    
     processHeader(stream)
     while (stream.head match {
-      case PlainBlock("SPAN#trapblocktitle", ignore) =>
+      case Block("SPAN#trapblocktitle", ignore) =>
         val sec = processSection(stream)
         secs = sec :: secs
         true
-      case PlainBlock("P#flavor", parts) =>
+      case Block("P#flavor", parts) =>
         secs = oneBlockSection("P", "flavor", stream) :: secs
         true
-      case PlainBlock("SPAN#traplead", parts) =>
+      case Block("SPAN#traplead", parts) =>
         // Check for special initiative line
         parts.map(p => p.transform(Parser.TrimProcess)) match {
           case Key("Initiative") :: Text(value) :: rest =>

@@ -21,7 +21,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4,JUnitSuiteRunner}
 import vcc.infra.text._
-import vcc.domain.dndi.Parser.HeaderBlock
+import vcc.domain.dndi.Parser.{BlockElement} 
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TrapCaptureTest extends JUnit4(TrapCaptureSpec)
@@ -38,7 +38,8 @@ object TrapCaptureSpec extends Specification {
         <SPAN class="trapblockbody"><B>Attack: </B>+8 vs. Reflex</SPAN>,
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>))
 
-      val tbs = new TrapBlockStream(xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      tbs.advance()
 
       val tr = new TrapReader(0)
       val sec = tr.processSection(tbs)
@@ -58,7 +59,8 @@ object TrapCaptureSpec extends Specification {
         (<P xmlns="http://www.w3.org/1999/xhtml">Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/217647400">FR1 Scepter Tower of Spellgard</A>.</P>)
       )
 
-      val tbs = new TrapBlockStream(xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      tbs.advance()
 
       val tr = new TrapReader(0)
       val sec = tr.processSection(tbs)
