@@ -47,7 +47,7 @@ case class TrapSection(header: String, text: StyledText) extends StatBlockDataSo
       case _ => null
     })
 
-  override def extractStyledText(key: String):Option[StyledText] = wrapInOption(key.toUpperCase() match {
+  override def extractRawXHTML(key: String):Option[StyledText] = wrapInOption(key.toUpperCase() match {
     case "TEXT" => text
     case _ => null
   })

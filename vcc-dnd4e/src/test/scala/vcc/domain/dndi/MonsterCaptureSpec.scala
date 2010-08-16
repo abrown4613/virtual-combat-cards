@@ -1,4 +1,3 @@
-
 /**
  * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
@@ -16,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.domain.dndi
 
 import org.specs.runner.JUnit4
@@ -26,6 +24,7 @@ import org.junit.runner.RunWith
 import org.specs._
 
 import Parser._
+import scala.collection.mutable.ListBuffer
 
 @RunWith(classOf[JUnitSuiteRunner])  // Needed to run test in IDEA
 class MonsterCaptureTest extends JUnit4(MonsterCaptureSpec)
@@ -378,23 +377,82 @@ object MonsterCaptureSpec extends Specification {
       reader.processBlock(blk) must beTrue
       0 must_== 1
     }
+  }
 
+  "MonsterBlockStream" should {
+
+    "insert ENDPOWER block before block with starting with Skill" in {
+      val blk = Block("P#flavor alt", List(Key("Skills"), Text("Arcana +13, Bluff +12"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER",Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "insert ENDPOWER block before block with Str" in {
+      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER",Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "insert ENDPOWER block before block with Aligment" in {
+      val blk = Block("P#flavor alt", List(Key("Alignment"), Text("unaligned"), Key("Languages"), Text("-"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)")))
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER", Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "but only add one ENDPOWER" in {
+      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+      val ts = new TokenStream[BlockElement](List(blk, blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER", Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+    "return normal 'flavor alt' when not power end" in {
+      val phl = (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG><B>Mace</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG><B>Arcane, Weapon</B></P>)
+      val blk = Parser.parseBlockElement(phl, true)
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
   }
 
   if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))
-    "Monster Importer" ->- (ctx) should {
-      val dirIter = new vcc.util.DirectoryIterator(dir, false)
-      for (file <- dirIter if (file.isFile)) {
-        "load " + file in {
-          val xml = scala.xml.XML.loadFile(file)
-          val blocks = parseBlockElements(xml.child, true)
-          blocks must notBeNull
-          blocks must notBeEmpty
-          for (b <- blocks) {
-            reader.processBlock(b) must beTrue
+    val failures = new ListBuffer[String]
+    "DNDI Importer" ->- (ctx) should {
+      "load everybody in "+dir.getAbsolutePath in {
+        val dirIter = new vcc.util.DirectoryIterator(dir, false)
+        for (file <- dirIter if (file.isFile)) {
+          val testedOk:Boolean = try {
+            val xml = scala.xml.XML.loadFile(file)
+            val blocks = parseBlockElements(xml.child, true)
+            if(blocks != null && !blocks.isEmpty) {
+              blocks.filterNot(b => reader.processBlock(b)).isEmpty
+              true
+            } else false
+          } catch {
+            case e =>
+              System.err.println("Failed to parse: " + file)
+              //e.printStackTrace
+              false
+          }
+          if(!testedOk.isExpectation) {
+            failures += ("loading failed for " +  file)
           }
         }
+        if (!failures.isEmpty) fail("Failed to process:\n"+failures.mkString("\n"))
       }
     }
   }

@@ -396,6 +396,7 @@ object Parser {
   /**
    *
    */
+  @throws(classOf[UntranslatableException])
   def parseBlockElement(node: Node, strict: Boolean): BlockElement = {
     for ((name, rule) <- blockStrategies) {
       if (rule.isDefinedAt(node)) {
