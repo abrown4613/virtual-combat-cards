@@ -26,10 +26,17 @@ object Style extends Enumeration {
 }
 
 /**
+ * Represents some structure that can be returned as a sequence of XHTML nodes. Convertible a
+ */
+trait XHTMLConvertible {
+  def toXHTML():NodeSeq
+}
+
+/**
  * This class represents a series of blocks of styled text. I can be turned into both XML and XHTML for rendering
  * purposes.
  */
-case class StyledText(blocks: List[TextBlock]) {
+case class StyledText(blocks: List[TextBlock]) extends XHTMLConvertible {
   def toXML(): Node = <styledText>{blocks.map(_.toXML)}</styledText>
   def toXHTML(): NodeSeq = blocks.map(_.toXHTML)
 }

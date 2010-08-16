@@ -19,7 +19,7 @@
 package vcc.domain.dndi
 
 import xml._
-import vcc.infra.text.StyledText
+import vcc.infra.text.{XHTMLConvertible, StyledText}
 
 /**
  * Provide information from an object to the StatBlock generators.
@@ -37,7 +37,7 @@ trait StatBlockDataSource {
 
   def extractGroup(group: String): Seq[StatBlockDataSource]
 
-  def extractStyledText(key: String): Option[StyledText] = None
+  def extractRawXHTML(key: String): Option[XHTMLConvertible] = None
 }
 
 object StatBlockBuilder {
@@ -169,7 +169,7 @@ object StatBlockBuilder {
    */
   case class InlineStyledText(key: String, breakAfter: Boolean) extends Chunk {
     override def render(source: StatBlockDataSource): Seq[Node] = {
-      val st = source.extractStyledText(key)
+      val st = source.extractRawXHTML(key)
       val blocks = if (st.isDefined) st.get.toXHTML() else Nil
       if (breakAfter) blocks ++ List(xmlLineBreak)
       else blocks
