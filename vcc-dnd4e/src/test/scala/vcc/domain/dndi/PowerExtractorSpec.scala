@@ -42,15 +42,18 @@ class PowerExtractorTest extends JUnit4(PowerExtractorSpec)
 
 object PowerExtractorSpec extends Specification {
 
-  final val sampleDesc = StyledText(List(TextBlock("P","flavor",TextSegment("Something happens."))))
+  final val sampleDesc = StyledText(List(
+    TextBlock("P","flavor",TextSegment("Something happens.")),
+    TextBlock("P","flavorIndent",TextSegment.makeItalic("Secondary"))))
 
   // Returns a block stream with already advanced.
   def getBlockStream(xml: Node): TokenStream[BlockElement] = {
     val blk = Parser.parseBlockElement(xml, true)
     val blk2 = Block("P#flavor", List(Text("Something happens.")))
+    val blk3 = Block("P#flavorIndent", List(Emphasis("Secondary")))
     val tailBlock = Block("POWEREND", Nil)
 
-    val ts = new TokenStream(List(blk, blk2, tailBlock))
+    val ts = new TokenStream(List(blk, blk2, blk3, tailBlock))
     ts.advance must beTrue
     ts
   }
@@ -62,10 +65,8 @@ object PowerExtractorSpec extends Specification {
     "read aura with keyword" in {
       val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B> 1</P>)
 
-      println(ts.head)
       val power = mr.processPower(ActionType.Trait,ts)
       power must notBeNull
-      println(power)
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura),"Spider Host","(Poison)", AuraUsage(1))
       power.action must_== ActionType.Trait
@@ -74,11 +75,8 @@ object PowerExtractorSpec extends Specification {
 
     "read power without keyword" in {
       val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>)
-
-      println(ts.head)
       val power = mr.processPower(ActionType.Minor,ts)
       power must notBeNull
-      println(power)
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Range),"Darkfire",null, EncounterUsage(1))
       power.action must_== ActionType.Minor
@@ -171,6 +169,17 @@ object PowerExtractorSpec extends Specification {
       }
     }
 
+    "read power with encounter duration" in {
+      //<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>
+
+      val parts = List(Icon(IconType.Range), Text(" "), Key("Darkfire"), Text(" "), Icon(IconType.Separator), Text(" "), Key("Encounter"))
+      parts match {
+        case SomePowerDefinition(d) =>
+          d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(1))
+        case _ => fail("Should have matched")
+      }
+    }
+
     //TODO: Implement failover strategy. If nothing fits we should get a raw block of StyledText
 
   }
@@ -191,9 +200,46 @@ object PowerExtractorSpec extends Specification {
       SomeUsage.unapply(parts) must_== Some(AuraUsage(1))
     }
 
-    "old keywords to none" in {
-      val parts = List(Key("Aura"), Text(" 1"))
-      SomeUsage.unapply(parts) must_== Some(AuraUsage(1))
+    "extract simple encounter usage" in {
+      val parts = List(Key("Encounter"))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage(1))
+    }
+
+    "extract simple multiple per encounter" in {
+      val parts = List(Key("3 / Encounter"))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage(3))
+
+      val parts2 = List(Key("3/Encounter"))
+      SomeUsage.unapply(parts2) must_== Some(EncounterUsage(3))
+    }
+
+    "handle dice recharge" in {
+      val parts = List(Text(" Recharge 5 6"))
+      SomeUsage.unapply(parts) must_== Some(RechargeDiceUsage(5))
+
+      val parts2 = List(Text(" Recharge 4 5 6"))
+      SomeUsage.unapply(parts2) must_== Some(RechargeDiceUsage(4))
+
+      val parts3 = List(Text(" Recharge 6"))
+      SomeUsage.unapply(parts3) must_== Some(RechargeDiceUsage(6))
+    }
+
+    "handle conditional recharge" in {
+      val parts = List(Key("Recharge"), Text(" when happy"))
+      SomeUsage.unapply(parts) must_== Some(RechargeConditionalUsage("when happy"))
+    }
+
+    "handle round limited at will" in {
+      val parts = List(Key("At-Will"), Text(" 2 / round"))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage(2))
+
+      val parts2 = List(Key("At-Will"), Text(" 2/round"))
+      SomeUsage.unapply(parts2) must_== Some(AtWillUsage(2))
+    }
+
+    "handle unlimited at will" in {
+      val parts = List(Key("At-Will"))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage(0))
     }
   }
 
