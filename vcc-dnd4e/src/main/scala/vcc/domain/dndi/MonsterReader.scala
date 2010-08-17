@@ -18,8 +18,8 @@
 package vcc.domain.dndi
 
 import collection.immutable.List
-import vcc.infra.text.StyledText
 import vcc.domain.dndi.Parser._
+import vcc.infra.text.{TextBlock, TextBuilder, StyledText}
 
 class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
   private var inPowerBlock = true
@@ -48,7 +48,13 @@ object ActionType extends Enumeration {
 trait Usage
 
 case class AuraUsage(radius: Int) extends Usage
+
+/**
+ * At-Will usage, may be limited or unlimited
+ * @para roundLimit If greater then 0, power can be used roundLimit times in a round, otherwise it is unlimited.
+ */
 case class AtWillUsage(roundLimit: Int) extends Usage
+
 case class EncounterUsage(repeat: Int) extends Usage
 object DailyUsage extends Usage
 object NoUsage extends Usage
@@ -71,11 +77,30 @@ case class Power(definition: PowerDefinition, action: ActionType.Value, descript
  */
 object SomeUsage {
   val sep = Icon(IconType.Separator)
+
+  object EncounterText {
+    private val encounterRE = """(\d+)\s*/\s*Encounter""".r
+    def unapply(text:String):Option[Int] = {
+      text.trim match {
+        case this.encounterRE(i) => Some(i.toInt)
+        case "Encounter" => Some(1)
+        case _ => None
+      }
+    }
+  }
+
+  private val rechargeWithDice = """^\s*Recharge\s+(\d+).*""".r
+  private val roundLimit = """^\s*(\d+)\s*/\s*round""".r
   def unapply(parts:List[Part]):Option[Usage] = {
     parts match {
       case Nil => None
       case Key("") :: Nil => Some(NoUsage)
       case Key("Aura") :: Text(range) :: Nil => Some(AuraUsage(range.trim.toInt))
+      case Key(EncounterText(n)) :: Nil => Some(EncounterUsage(n))
+      case Text(`rechargeWithDice`(min)) :: Nil => Some(RechargeDiceUsage(min.toInt))
+      case Key("Recharge") :: Text(condition) :: Nil => Some(RechargeConditionalUsage(condition.trim))
+      case Key("At-Will") :: Nil => Some(AtWillUsage(0))
+      case Key("At-Will") :: Text(`roundLimit`(n)) :: Nil => Some(AtWillUsage(n.toInt))
       case _ => None
     }
   }
@@ -155,6 +180,23 @@ class MonsterReader {
       case Block("P#flavor alt", SomePowerDefinition(pdef)) => pdef
       case _ => throw new UnexpectedBlockElementException("Expected P with class 'flavor alt'",stream.head)
     }
-    Power(definition,action,null)
+    stream.advance
+
+    //From now on we expect P#flavor and P#flavorIndent
+    val textBuilder = new TextBuilder()
+
+    while(stream.head match {
+      case Block("P#flavor", parts) =>
+        textBuilder.append(TextBlock("P", "flavor", ParserTextTranslator.partsToStyledText(parts): _*))
+        true
+      case Block("P#flavorIndent", parts) =>
+        textBuilder.append(TextBlock("P", "flavorIndent", ParserTextTranslator.partsToStyledText(parts): _*))
+        true
+      case _ =>
+        false
+    }) {
+      stream.advance
+    }
+    Power(definition,action,textBuilder.getDocument)
   }
 }
