@@ -257,4 +257,14 @@ object PowerExtractorSpec extends Specification {
       }
     }
   }
+  "SectionActionType extractor" should {
+
+    "handle mixed case and spaces" in {
+      SectionActionType.unapply(List(Text(" StAnDard ActiOns "))) must_== Some(ActionType.Standard)
+    }
+
+    "handle all defined types" in {
+      ActionType.values.foreach(at => SectionActionType.unapply(List(Text((at.toString + "s").toUpperCase))) must_== Some(at))
+    }
+  }
 }

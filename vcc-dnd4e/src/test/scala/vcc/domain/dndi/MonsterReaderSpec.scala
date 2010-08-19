@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@ import org.specs.runner.{JUnit4,JUnitSuiteRunner}
 import vcc.domain.dndi.Parser._
 import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 import xml.Node
+import MonsterBlockStreamRewrite.EndOfPower
+import collection.mutable.ListBuffer
+
 
 @RunWith(classOf[JUnitSuiteRunner])
 class MonsterReaderTest extends JUnit4(MonsterReaderSpec)
@@ -55,11 +58,180 @@ object MonsterReaderSpec extends Specification {
       stream.advance()
       val map = reader.processTailBlock(stream)
 
-      map must haveKey("DESCRIPTION")
-      map("DESCRIPTION") must_== "black and mean.\nRazor sharp"
+      map must haveKey("description")
+      map("description") must_== "black and mean.\nRazor sharp"
+    }
+
+    "read trailing comment" in {
+      // <p>Published in <a href="http://www.wizards.com/dnd/Product.aspx?x=dnd/products/dndacc/253840000" target="_new">Monster Manual 3</a>, page(s) 72.</p>
+      val stream = new TokenStream[BlockElement](List(Block("P#",List(Text("Published in Monster Manual 3 , page(s) 72.")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      map must haveKey("comment")
+      map("comment") must_== "Published in Monster Manual 3 , page(s) 72."
+    }
+
+    "read trailing comment in italic" in {
+      // <p>Published in <a href="http://www.wizards.com/dnd/Product.aspx?x=dnd/products/dndacc/253840000" target="_new">Monster Manual 3</a>, page(s) 72.</p>
+      val stream = new TokenStream[BlockElement](List(Block("P#",List(Emphasis("Published in Dungeon Magazine 155.")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      map must haveKey("comment")
+      map("comment") must_== "Published in Dungeon Magazine 155."
+    }
+    "standalone MM<3 Equipment line" in {
+      //<P class="flavor alt"><B>Equipment</B>: <A href="bla" target="_new">chainmail</A> , <A href="bla" target="_new">crossbow bolt</A>  x10, <A href="bla" target="_new">hand crossbow</A> , <A href="bla" target="_new">light shield</A> , <A href="bla" target="_new">spear</A> .</P>
+      val stream = new TokenStream[BlockElement](List(Block("P#flavor alt",List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      map must haveKey("equipment")
+      map("equipment") must_== "chainmail , crossbow bolt  x10, hand crossbow , light shield , spear ."
+    }
+
+    "read equipment and alignment in MM3 format" in {
+      //<P class="flavor"><B>Alignment</B> chaotic evil      <B> Languages</B> Common<BR/><B>Equipment</B>: <A href="bla" target="_new">club</A> , <A href="bla" target="_new">javelin</A>  x3, <A href="bla" target="_new">light shield</A> .</P>
+      val stream = new TokenStream[BlockElement](List(Block("P#flavor",List(Key("Alignment"), Text(" chaotic evil      "), Key(" Languages"), Text(" Common"), Break(), Key("Equipment"), Text(": club , javelin  x3, light shield .")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      val expects = Map(
+        "alignment" -> "chaotic evil",
+        "languages" -> "Common",
+        "equipment" -> "club , javelin  x3, light shield ."
+        )
+      for((k,v)<- expects) {
+        map must haveKey(k)
+        map(k) must_== v
+      }
+    }
+    "STR block MM3" in {
+      //<P class="flavor alt"><B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
+//TODO Clean this
+//      val xml = <P class="flavor alt"><B>Skills</B> Bluff +8, Stealth +9, Thievery +9<BR/> <B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
+//      val blk = Parser.parseBlockElement(xml,true)
+//      println("Block: "+ blk)
+      val stream = new TokenStream[BlockElement](List(Block("P#flavor alt", List(Key("Skills"), Text(" Bluff +8, Stealth +9, Thievery +9"), Break(),
+        Text(" "), Key("Str"), Text(" 19 (+10)    "), Key("Dex"), Text(" 19 (+10)     "), Key("Wis"), Text(" 15 (+8)"), Break(),
+        Key("Con"), Text(" 20 (+11)        "), Key("Int"), Text(" 8 (+5)    "), Key("Cha"), Text(" 17 (+9)")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      val expects = Map(
+        "skills" -> "Bluff +8, Stealth +9, Thievery +9",
+        "str" -> "19 (+10)",
+        "con" -> "20 (+11)",
+        "cha" -> "17 (+9)")
+      for((k,v)<- expects) {
+        map must haveKey(k)
+        map(k) must_== v
+      }
     }
   }
 
+  "MonsterReader.processPrimaryBlock" should {
+    "handle MM<3 entries and split auras out" in {
+      val stb = Block("P#flavor", List(Key("Initiative"), Text("7"), Key("Senses"), Text("Perception +12; low-light vision"), Break(),
+        Key("Aura name 1"), Text("(Fire) aura 1; Some long description about the aura."), Break(),
+        Key("Aura name 2"), Text("(Thunder) aura 2; Some long description about the aura."), Break(),
+        Key("HP"), Text("360"), Key("Bloodied"), Text("180"), Break(), Key("AC"), Text("23; "), Key("Fortitude"), Text("24, "), Key("Reflex"), Text("19,"), Key("Will"), Text("19"), Break(),
+        Key("Resist"), Text("10 variable (1/encounter)"), Break(),
+        Key("Saving Throws"), Text("+4"), Break(),
+        Key("Speed"), Text("  8, climb 8  "), Break(),
+        Key("Action Points"), Text("2")))
+
+      val stream = new TokenStream[BlockElement](List(stb,EndOfPower)) //EndOfPower is uset to simplify testing, not in real life
+      stream.advance()
+      val (isMM3, map, auras) = reader.processMainStatBlock(stream)
+      //This is a dummy call to make user processMainStatBlock advances
+      stream.head must_== EndOfPower
+      stream.advance() must beFalse // Be sure it move ahead
+      isMM3 must beFalse
+      val expects = Map(
+        "senses" -> "Perception +12; low-light vision",
+        "hp" -> "360",
+        "ac" -> "23",
+        "reflex" -> "19",
+        "saving throws" -> "4",
+        "speed" -> "8, climb 8",
+        "resist" -> "10 variable (1/encounter)")
+      for ((k, v) <- expects) {
+        map must haveKey(k)
+        map(k) must_== v
+      }
+
+      // Check aura capture
+      auras.length must_== 2
+      auras(0)._1 must_== "Aura name 1"
+      auras(0)._2 must_== "(Fire) aura 1; Some long description about the aura."
+      auras(1)._1 must_== "Aura name 2"
+    }
+
+
+    "process tabular block" in {
+      val blk = Table("bodytable", List(
+        Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
+        Cell("rightalign", List(Key("Initiative"), Text(" +7"))),
+        Cell(null, List(Key("AC"), Text(" 24, "), Key("Fortitude"), Text(" 22, "), Key("Reflex"), Text(" 20, "), Key("Will"), Text(" 22"))),
+        Cell("rightalign", List(Key("Perception"), Text(" +15"))),
+        Cell(null, List(Key("Speed"), Text(" 6"))),
+        Cell("rightalign", List(Text("Blindsight 5"))),
+        Cell(null, List(Key("Resist"), Text(" 5 necrotic"))),
+        Cell(null, List(Key("Saving Throws"), Text(" +2; "), Key("Action Points"), Text(" 1")))))
+
+      val stream = new TokenStream[BlockElement](List(blk, EndOfPower))
+      stream.advance()
+      val (isMM3, map, auras) = reader.processMainStatBlock(stream)
+
+      //This is a dummy call to make user processMainStatBlock advances
+      stream.head must_== EndOfPower
+      stream.advance() must beFalse // Be sure it move ahead
+
+      isMM3 must beTrue
+      auras must beEmpty
+
+      val expects = Map(
+        "senses" -> "Blindsight 5",
+        "hp" -> "220",
+        "ac" -> "24",
+        "reflex" -> "20",
+        "saving throws" -> "2",
+        "speed" -> "6",
+        "resist" -> "5 necrotic")
+      for ((k, v) <- expects) {
+        map must haveKey(k)
+        map(k) must_== v
+      }
+
+    }
+
+    "process tabular block with no Senses, saving, or resist" in {
+      val blk = Table("bodytable", List(
+        Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
+        Cell("rightalign", List(Key("Initiative"), Text(" +7"))),
+        Cell(null, List(Key("AC"), Text(" 24, "), Key("Fortitude"), Text(" 22, "), Key("Reflex"), Text(" 20, "), Key("Will"), Text(" 22"))),
+        Cell("rightalign", List(Key("Perception"), Text(" +15"))),
+        Cell(null, List(Key("Speed"), Text(" 6"))),
+        Cell("rightalign", List()),
+        Cell(null, List())))
+
+      val stream = new TokenStream[BlockElement](List(blk))
+      stream.advance()
+      val (isMM3, map, auras) = reader.processMainStatBlock(stream)
+      isMM3 must beTrue
+      auras must beEmpty
+
+      val expects = Map(
+        "hp" -> "220",
+        "ac" -> "24",
+        "reflex" -> "20",
+        "speed" -> "6")
+      for ((k, v) <- expects) {
+        map must haveKey(k)
+        map(k) must_== v
+      }
+      map must notHaveKey("senses")
+      map must notHaveKey("saving throws")
+      map must notHaveKey("resist")
+    }
+  }
 
 
   "MonsterReader.processPower" should {
@@ -85,7 +257,142 @@ object MonsterReaderSpec extends Specification {
       power.action must_== ActionType.Minor
       power.description must_== sampleDesc
     }
+  }
 
+  "MonsterReader.processPowerGroup" should {
+    "read a sequence of powers ending with EndOfPower" in {
+      val ts = new TokenStream[BlockElement](generateMeleePower("hack") ::: generateMeleePower("slash") ::: List(EndOfPower))
+      ts.advance()
+      val powers = reader.processPowerGroup(null, ts)
+      ts.head must_== EndOfPower
+      powers.length must_== 2
+      powers(0).definition.name must_== "hack"
+      powers(1).definition.name must_== "slash"
+    }
+    "read a sequence of powers ending with a H2 header" in {
+      val standardAction = Block("H2", List(Text("Standard Action")))
+      val ts = new TokenStream[BlockElement](generateMeleePower("hack") ::: generateMeleePower("slash") ::: List(standardAction))
+      ts.advance()
+      val powers = reader.processPowerGroup(null, ts)
+      ts.head must_== standardAction
+      powers.length must_== 2
+      powers(0).definition.name must_== "hack"
+      powers(1).definition.name must_== "slash"
+    }
+  }
+
+  "MonsterReader.processActionGroups" should {
+    "read sequence of H2 separated powers" in {
+      val traitAction = Block("H2#", List(Text("Traits")))
+      val standardAction = Block("H2#", List(Text("Standard Actions")))
+      val ts = new TokenStream[BlockElement](
+        traitAction :: generateMeleePower("hack") ::: standardAction :: generateMeleePower("slash") ::: List(EndOfPower))
+      ts.advance()
+      val powersByAction = reader.processActionGroups(ts)
+      ts.head must_== EndOfPower
+      powersByAction.length must_== 2
+      powersByAction(0)._1 must_== ActionType.Trait
+      powersByAction(0)._2(0).definition.name must_== "hack"
+      powersByAction(0)._2(0).action must_== ActionType.Trait
+      powersByAction(1)._1 must_== ActionType.Standard
+      powersByAction(1)._2(0).action must_== ActionType.Standard
+      powersByAction(1)._2(0).definition.name must_== "slash"
+    }
+  }
+
+  "MonsterBlockStream" should {
+
+    "insert ENDPOWER block before block with starting with Skill" in {
+      val blk = Block("P#flavor alt", List(Key("Skills"), Text("Arcana +13, Bluff +12"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER",Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "insert ENDPOWER block before block with Str" in {
+      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER",Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "insert ENDPOWER block before block with Aligment" in {
+      val blk = Block("P#flavor alt", List(Key("Alignment"), Text("unaligned"), Key("Languages"), Text("-"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)")))
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER", Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "but only add one ENDPOWER" in {
+      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
+      val ts = new TokenStream[BlockElement](List(blk, blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== Block("ENDPOWER", Nil)
+      ts.advance() must beTrue
+      ts.head must_== blk
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+    "return normal 'flavor alt' when not power end" in {
+      val phl = (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG><B>Mace</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG><B>Arcane, Weapon</B></P>)
+      val blk = Parser.parseBlockElement(phl, true)
+      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+
+    "consume any NonBlock" in {
+      val blk = Block("P#",List(Text("Hello.")))
+      val ts = new TokenStream[BlockElement](List(NonBlock(List(Break())),blk), new MonsterBlockStreamRewrite())
+      ts.advance() must beTrue
+      ts.head must_== blk
+    }
+  }
+
+  /*
+  * This is a conditional test that will iterate through all cached entris in a directory.
+  */
+  if (System.getProperty("test.basedir") != null) {
+    val dir = new java.io.File(System.getProperty("test.basedir"))
+    val failures = new ListBuffer[String]
+    "DNDI Importer" should {
+      "load everybody in " + dir.getAbsolutePath in {
+        val dirIter = new vcc.util.DirectoryIterator(dir, false)
+        for (file <- dirIter if (file.isFile)) {
+          val testedOk: Boolean = try {
+            val xml = scala.xml.XML.loadFile(file)
+            val blocks = parseBlockElements(xml.child, true)
+            if (blocks != null && !blocks.isEmpty) {
+              val mReader = new MonsterReader(0)
+              val monster = mReader.process(blocks)
+              monster != null
+            } else false
+          } catch {
+            case e =>
+              System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
+              //e.printStackTrace
+              false
+          }
+          if (!testedOk.isExpectation) {
+            failures += ("loading failed for " + file)
+          }
+        }
+        if (!failures.isEmpty) fail("Failed to process:\n" + failures.mkString("\n"))
+      }
+    }
+  }
+
+  def generateMeleePower(name:String):List[BlockElement] = {
+    val header = Block("P#flavor alt", List(Icon(IconType.Melee), Text(" "), Key(name), Text(" "), Icon(IconType.Separator), Text(" "), Key("Encounter")))
+    val blk = Block("P#flavor", List(Text("Something happens.")))
+    List(header, blk)
   }
 
 }

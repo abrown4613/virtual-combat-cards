@@ -35,7 +35,7 @@ object ParserTextTranslator {
       case Key(key) => TextSegment.makeBold(key)
       case Emphasis(em) => TextSegment.makeItalic(em)
       case Text(text) => TextSegment(text)
-      case Break() => LineBreak
+      case Break => LineBreak
       case Icon(img) => InlineImage(Parser.IconType.iconToImage(img))
       case s => throw new Exception("Not styted text equivalent for: " + s)
     })

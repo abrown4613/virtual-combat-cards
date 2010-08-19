@@ -17,6 +17,8 @@
 //$Id$
 package vcc.domain.dndi
 
+import java.io.PrintStream
+
 trait DNDIObject {
 
   /**
@@ -30,7 +32,7 @@ trait DNDIObject {
   val clazz: String
 
   /**
-   * Attributes at the top level object. Note that keys are assumed to be upper cased.
+   * Attributes at the top level object. Note that keys are assumed to be lowercase.
    */
   protected var attributes: Map[String, String]
 
@@ -40,9 +42,16 @@ trait DNDIObject {
    * @return Option of the attribute value
    */
   def apply(attribute: String): Option[String] = {
-    val normalizedAttr = attribute.toUpperCase
+    val normalizedAttr = attribute.toLowerCase
     if (attributes.contains(normalizedAttr)) Some(attributes(normalizedAttr))
     else None
   }
 
+  def dump(os: PrintStream) {
+    os.printf("----- Begin DNIDObject %s-%s\n", clazz, id.toString)
+    for ((k, v) <- attributes) {
+      os.printf("\t[%s] = '%s'\n", k, v)
+    }
+    os.printf("----- End DNIDObject %s-%s\n", clazz, id.toString)
+  }
 }
