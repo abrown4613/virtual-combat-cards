@@ -96,7 +96,7 @@ object Parser {
      * Image name is determined form the last slash onwards of the src attribute
      */
     def unapply(node: scala.xml.Node): Option[Value] = {
-      if (node.label == "IMG") {
+      if (node.label == "IMG" && !(node \ "@src").isEmpty) {
         val url = (node \ "@src").head.toString
         val img = url.substring(url.lastIndexOf("/") + 1)
         if (imageDirectory.contains(img.toLowerCase))
@@ -156,7 +156,9 @@ object Parser {
   /**
    * Line breaks, <BR></BR>
    */
-  case class Break() extends Part
+  case object Break extends Part {
+    def apply() = this
+  }
 
   /**
    * Text blocks, for #PCDATA
@@ -240,9 +242,7 @@ object Parser {
 
     node match {
       case <BR></BR> => Break()
-      case bi @ <B><IMG/></B>  => parseNode(bi.child(0))
-      case <B></B> => Key("") // From some traps
-      case <B>{text}</B> => Key(parseToText(text))  //Go figure (need because o bi above)
+      case <B>{b @ _*}</B> => Key(parseToText(b))  //Go figure (need because o bi above)
       case <A>{text}</A> => Text(parseToText(text))
       case <I>{i @ _*}</I> => Emphasis(parseToText(i))
       case RechargeDice(t) => t
@@ -323,6 +323,7 @@ object Parser {
         case <I>{parts @ _*}</I> => parseToText(parts)
         case <B>{parts @ _*}</B> => parseToText(parts)
         case <A>{parts @ _*}</A> => parseToText(parts)
+        case <BR/> => "\n"
         case node => node.text
        }
     )
@@ -335,8 +336,9 @@ object Parser {
    */
   def partsToPairs(parts: List[Part]): List[(String, String)] = {
     parts match {
+      case Text("") :: rest => partsToPairs(rest)
       case Key(k) :: Text(value) :: rest => (k, value) :: partsToPairs(rest)
-      case Break() :: rest => partsToPairs(rest)
+      case Break :: rest => partsToPairs(rest)
       case Nil => Nil
       case s => throw new Exception("List contains unexpected parts: " + s)
     }
@@ -385,8 +387,7 @@ object Parser {
       Table(elementClass(table, ""), tds.toList)
   }),
   ("NonBlock", {
-    case bi @ <B><IMG/></B>  => NonBlock(parse(bi.child))
-    case <B>{child}</B> => NonBlock(List(Key(parseToText(child))))
+    case <B>{child @ _*}</B> => NonBlock(List(Key(parseToText(child))))
     case <BR/> => NonBlock (List (Break () ) )
     case scala.xml.Text (txt) => NonBlock (List (Text (txt) ) )
     case s => NonBlock (parse (s) )

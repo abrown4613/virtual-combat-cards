@@ -29,6 +29,7 @@ import scala.collection.mutable.ListBuffer
 @RunWith(classOf[JUnitSuiteRunner])  // Needed to run test in IDEA
 class MonsterCaptureTest extends JUnit4(MonsterCaptureSpec)
 
+//TODO: Remove this file when no longer needed.
 object MonsterCaptureSpec extends Specification {
   var monster: Monster = null
   var reader: BlockReader = null
@@ -379,54 +380,6 @@ object MonsterCaptureSpec extends Specification {
     }
   }
 
-  "MonsterBlockStream" should {
-
-    "insert ENDPOWER block before block with starting with Skill" in {
-      val blk = Block("P#flavor alt", List(Key("Skills"), Text("Arcana +13, Bluff +12"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
-
-      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
-      ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER",Nil)
-      ts.advance() must beTrue
-      ts.head must_== blk
-    }
-
-    "insert ENDPOWER block before block with Str" in {
-      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
-      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
-      ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER",Nil)
-      ts.advance() must beTrue
-      ts.head must_== blk
-    }
-
-    "insert ENDPOWER block before block with Aligment" in {
-      val blk = Block("P#flavor alt", List(Key("Alignment"), Text("unaligned"), Key("Languages"), Text("-"), Break(), Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)")))
-      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
-      ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER", Nil)
-      ts.advance() must beTrue
-      ts.head must_== blk
-    }
-
-    "but only add one ENDPOWER" in {
-      val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
-      val ts = new TokenStream[BlockElement](List(blk, blk), new MonsterBlockStreamRewrite())
-      ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER", Nil)
-      ts.advance() must beTrue
-      ts.head must_== blk
-      ts.advance() must beTrue
-      ts.head must_== blk
-    }
-    "return normal 'flavor alt' when not power end" in {
-      val phl = (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG><B>Mace</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG><B>Arcane, Weapon</B></P>)
-      val blk = Parser.parseBlockElement(phl, true)
-      val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
-      ts.advance() must beTrue
-      ts.head must_== blk
-    }
-  }
 
   if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))

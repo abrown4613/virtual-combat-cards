@@ -26,9 +26,9 @@ object Monster {
   //Construction elements
   case class Aura(name: String, desc: String) extends StatBlockDataSource {
     def extract(key: String): Option[String] = {
-      val s: String = key.toUpperCase match {
-        case "NAME" => name
-        case "DESCRIPTION" => desc
+      val s: String = key.toLowerCase match {
+        case "name" => name
+        case "description" => desc
         case _ => null
       }
       if (s != null) Some(s) else None
@@ -39,9 +39,9 @@ object Monster {
 
   case class PowerDescriptionSupplement(emphasis: String, text: String) extends StatBlockDataSource {
     def extract(key: String): Option[String] = {
-      val s: String = key.toUpperCase match {
-        case "HEADER" => emphasis
-        case "DESCRIPTION" => text
+      val s: String = key.toLowerCase match {
+        case "header" => emphasis
+        case "description" => text
         case _ => null
       }
       if (s != null) Some(s) else None
@@ -55,19 +55,19 @@ object Monster {
     private var _supplemnt: List[PowerDescriptionSupplement] = Nil
 
     def extract(key: String): Option[String] = {
-      val s: String = key.toUpperCase match {
-        case "NAME" => name
-        case "DESCRIPTION" => description
-        case "ACTION" => action
-        case "TYPE" if (icon != null && !icon.isEmpty) =>
+      val s: String = key.toLowerCase match {
+        case "name" => name
+        case "description" => description
+        case "action" => action
+        case "type" if (icon != null && !icon.isEmpty) =>
           icon.map(i => Parser.IconType.iconToImage(i)).mkString(";")
-        case "KEYWORDS" => keywords
+        case "keywords" => keywords
         case _ => null
       }
       if (s != null) Some(s) else None
     }
 
-    def extractGroup(key: String) = if (key.toUpperCase == "POWER DESCRIPTION SUPPLEMENT") this._supplemnt.toSeq else Nil
+    def extractGroup(key: String) = if (key.toLowerCase == "power description supplement") this._supplemnt.toSeq else Nil
 
     var description: String = null
 
@@ -82,6 +82,18 @@ object Monster {
 
 }
 
+//TODO Add statblock handling
+//TODO remove other monster data and builder.
+//TODO Move Power definitions to this file
+//TODO Move Usage to this file
+class MonsterNew(val id: Int,
+                 protected var attributes: Map[String, String],
+                 val legacyPowers: List[Power],
+                 val powersByAction: Map[ActionType.Value, List[Power]]
+        ) extends DNDIObject {
+  final val clazz = "monster"
+}
+
 /**
  * Base monster load.
  */
@@ -91,11 +103,11 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   var attributes = Map.empty[String,String]
   
-  def extract(key: String): Option[String] = this(key.toUpperCase)
+  def extract(key: String): Option[String] = this(key.toLowerCase)
 
-  def extractGroup(group: String) = group.toUpperCase match {
-    case "POWERS" => this.powers
-    case "AURAS" => this.auras
+  def extractGroup(group: String) = group.toLowerCase match {
+    case "powers" => this.powers
+    case "auras" => this.auras
   }
 
   import vcc.domain.dndi.Parser._
@@ -115,10 +127,10 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   private[dndi] def set(attribute: String, value: String) {
     // Normalize some cases here:
-    val normAttr = attribute.toUpperCase
+    val normAttr = attribute.toLowerCase
     val normValue: String = normAttr match {
-      case "HP" if (value.startsWith("1;")) => "1"
-      case "ROLE" if (value == "Minion") => "No Role"
+      case "hp" if (value.startsWith("1;")) => "1"
+      case "role" if (value == "Minion") => "No Role"
       case _ => value
     }
     attributes = attributes+ (normAttr -> normValue)

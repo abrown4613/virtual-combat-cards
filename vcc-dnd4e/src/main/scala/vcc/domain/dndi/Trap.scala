@@ -31,7 +31,7 @@ class Trap(val id: Int, var attributes: Map[String, String], val sections: List[
   final val clazz = "trap"
 
   def extractGroup(group: String): Seq[StatBlockDataSource] = {
-    if(group.toUpperCase() == "SECTIONS") sections.toSeq
+    if(group.toLowerCase() == "sections") sections.toSeq
     else Seq()
   }
 
@@ -42,13 +42,13 @@ case class TrapSection(header: String, text: StyledText) extends StatBlockDataSo
 
   def extractGroup(group: String): Seq[StatBlockDataSource] = Seq()
 
-  def extract(key: String): Option[String] = wrapInOption(key.toUpperCase() match {
-      case "HEADER" => header
+  def extract(key: String): Option[String] = wrapInOption(key.toLowerCase() match {
+      case "header" => header
       case _ => null
     })
 
-  override def extractRawXHTML(key: String):Option[StyledText] = wrapInOption(key.toUpperCase() match {
-    case "TEXT" => text
+  override def extractRawXHTML(key: String):Option[StyledText] = wrapInOption(key.toLowerCase() match {
+    case "text" => text
     case _ => null
   })
 }
@@ -58,16 +58,16 @@ case class TrapSection(header: String, text: StyledText) extends StatBlockDataSo
  */
 class TrapReader(val id: Int) {
   private var attributes = Map[String, String](
-    "NAME" -> "Unknown",
-    "HP" -> "9999",
-    "AC" -> "99",
-    "REFLEX" -> "99",
-    "WILL" -> "99",
-    "FORTITUDE" -> "99",
-    "ROLE" -> "Unspecified",
-    "XP" -> "100",
-    "INITIATIVE" -> "-99",                                          
-    "LEVEL" -> "1"
+    "name" -> "Unknown",
+    "hp" -> "9999",
+    "ac" -> "99",
+    "reflex" -> "99",
+    "will" -> "99",
+    "fortitude" -> "99",
+    "role" -> "Unspecified",
+    "xp" -> "100",
+    "initiative" -> "-99",
+    "level" -> "1"
     )
 
   private var secs: List[TrapSection] = Nil
@@ -130,7 +130,7 @@ class TrapReader(val id: Int) {
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     for (key <- List("xp", "name", "level", "role", "type")) {
-      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toUpperCase -> headMap(key))
+      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
     }
     stream.advance()
   }
@@ -154,7 +154,7 @@ class TrapReader(val id: Int) {
         // Check for special initiative line
         parts.map(p => p.transform(Parser.TrimProcess)) match {
           case Key("Initiative") :: Text(value) :: rest =>
-            attributes = attributes + ("INITIATIVE" -> value)
+            attributes = attributes + ("initiative" -> value)
           case _ => // Nothing
         }
         secs = oneBlockSection("SPAN", "traplead", stream) :: secs

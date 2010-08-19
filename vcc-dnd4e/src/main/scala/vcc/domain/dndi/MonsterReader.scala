@@ -37,6 +37,7 @@ class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
       case Block("P#flavor alt", parts) if (isPowerEndBoundary(parts)) =>
         inPowerBlock = false
         List(MonsterBlockStreamRewrite.EndOfPower, token)
+      case NonBlock(_) => Nil // To capture some empty BR around the file
       case _ => List(token)
     }
   }
@@ -44,6 +45,7 @@ class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
 
 object ActionType extends Enumeration {
   val Standard = Value("Standard Action")
+  val Triggered = Value("Triggered Action")
   val Move = Value("Move Action")
   val Minor = Value("Minor Action")
   val Free = Value("Free Action")
@@ -148,6 +150,21 @@ object SomePowerDefinition {
 }
 
 /**
+ * Extracts the correct action from the H2 action type headers
+ */
+object SectionActionType {
+  private final val normalizedActionMap = ActionType.values.map(x => (x.toString.toLowerCase + "s", x)).toMap
+
+  def unapply(parts: List[Part]): Option[ActionType.Value] = {
+    parts match {
+      case Text(text) :: Nil =>
+        normalizedActionMap.get(text.trim.toLowerCase)
+      case _ => None
+    }
+  }
+}
+
+/**
  * Separates the power header into three parts, the Seq[IconType.Value] and parts before and after the Separator (if present).
  * Will also eliminates breaks in the header (some bad entries have that). Will replace the MM3 blank key at the end for
  * Separator blank key
@@ -188,6 +205,12 @@ object PowerHeaderParts {
 class MonsterReader(id: Int) {
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
+
+  private final val primaryStats = Set("Initiative", "Senses", "HP", "Bloodied",
+    "AC", "Fortitude", "Reflex", "Will",
+    "Immune", "Resist", "Vulnerable",
+    "Saving Throws", "Speed", "Action Points")
+
 
   private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
     l match {
@@ -239,16 +262,15 @@ class MonsterReader(id: Int) {
    * Extract primary stats form the a list of String pairs:
    */
   private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[(String, String)]) = {
-    //TODO Separate basic primary stats an the rest (which should be auras).
-    /*
-        for ((k, v) <- pairs) {
-          if (primaryStats(k)) monster.set(k, v)
-          else monster.addAura(k, v)
-        }
-    */
-    (Map.empty[String, String], Nil)
-  }
+    var auras:List[(String,String)] = Nil
+    val attr = scala.collection.mutable.Map.empty[String,String]
 
+    for ((k, v) <- pairs) {
+      if (primaryStats(k)) attr.update(k.toLowerCase, v)
+      else auras = (k, v) :: auras
+    }
+    (attr.toMap, auras.reverse)
+  }
 
   private[dndi] def processMainStatBlock(stream: TokenStream[BlockElement]): (Boolean, Map[String, String], Seq[(String, String)]) = {
     stream.head match {
@@ -260,20 +282,16 @@ class MonsterReader(id: Int) {
         }
         val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts))
+        val (stats, whatever) = processPrimaryBlock(partsToPairs(trimParts(parts)))
+        stream.advance()
         (true, stats, Seq())
       case Block("P#flavor", parts) =>
         val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts)))
+        stream.advance()
         (false, stats, auras)
       case _ =>
         throw new UnexpectedBlockElementException("Expected power Table, or P#flavor block; found:", stream.head)
     }
-  }
-
-
-  private def getActionType(parts: List[Part]): ActionType.Value = {
-    //TODO extract actionType form name
-    null
   }
 
   /**
@@ -282,8 +300,7 @@ class MonsterReader(id: Int) {
   private[dndi] def processActionGroups(stream: TokenStream[BlockElement]): List[(ActionType.Value, List[Power])] = {
     var result = new ListBuffer[(ActionType.Value, List[Power])]
     while (stream.head match {
-      case Block("H2#", section) =>
-        val at = getActionType(section)
+      case Block("H2#", SectionActionType(at)) =>
         stream.advance()
         val powers = processPowerGroup(at, stream)
         result += Pair(at, powers)
@@ -326,7 +343,7 @@ class MonsterReader(id: Int) {
     result.toList
   }
 
-  def process(blocks: List[BlockElement]): Monster = {
+  def process(blocks: List[BlockElement]): MonsterNew = {
     val stream = new TokenStream[BlockElement](blocks, new MonsterBlockStreamRewrite())
 
     stream.advance()
@@ -338,40 +355,35 @@ class MonsterReader(id: Int) {
 
     // Process tail.
     val tailStats = processTailBlock(stream)
-    //TODO Build monster o statMap, tailStats, powersByAction, legacyPower and Auras.
+    //TODO Lift aura to powers and place in traits.
 
-    null //TODO Add reply monster
+    new MonsterNew(id,statMap ++ tailStats, legacyPowers, powersByAction.toMap)
   }
 
   private[dndi] def processTailBlock(stream: TokenStream[BlockElement]): Map[String, String] = {
-    //TODO Complete the tail processing block for both MM3 and MM1 style
-    /*
-         case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
-           monster.set("Description", text)
-
-         case Block("P#", Emphasis(text) :: Nil) => monster.set("comment", (text))
-
-         case Block("P#flavor alt", parts) =>
-           parts match {
-             case Key("Equipment") :: SingleTextBreakToSpace(text) =>
-               monster.set("Equipment", text)
-
-             case Key("Alignment") :: rest =>
-               addToMap(partsToPairs(parts))
-
-             //Blocks with Skills and Str or just Str
-             case list if (list contains Key("Str")) =>
-               addToMap(partsToPairs(parts))
-          }
-    */
     val result = scala.collection.mutable.Map.empty[String, String]
     while (stream.head match {
       case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
         var ret = text.trim
-        if(ret.startsWith(":")) ret = ret.tail
-        result.update("DESCRIPTION", ret.trim)
-        stream.advance
+        if (ret.startsWith(":")) ret = ret.tail
+        result.update("description", ret.trim)
+        stream.advance()
+      case Block("P#", commentPart :: Nil) =>
+        val comment:String = commentPart match {
+          case Text(text) => text
+          case Emphasis(text) => text
+          case _ => null // Dont care much for this
+        }
+        if(comment != null) result.update("comment", comment)
+        stream.advance()
+      case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
+        val normalizedParts = partsToPairs(trimParts(parts)).map(p => p._1.toLowerCase() -> p._2)
+        result ++= normalizedParts
+        stream.advance()
+      case blk =>
+        throw new UnexpectedBlockElementException("Expected P blocks in the trailing stat block, found:", blk)
     }) {
+
     }
     result.toMap
   }
