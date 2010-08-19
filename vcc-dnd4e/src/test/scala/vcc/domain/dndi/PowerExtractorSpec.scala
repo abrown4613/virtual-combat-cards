@@ -42,49 +42,6 @@ class PowerExtractorTest extends JUnit4(PowerExtractorSpec)
 
 object PowerExtractorSpec extends Specification {
 
-  final val sampleDesc = StyledText(List(
-    TextBlock("P","flavor",TextSegment("Something happens.")),
-    TextBlock("P","flavorIndent",TextSegment.makeItalic("Secondary"))))
-
-  // Returns a block stream with already advanced.
-  def getBlockStream(xml: Node): TokenStream[BlockElement] = {
-    val blk = Parser.parseBlockElement(xml, true)
-    val blk2 = Block("P#flavor", List(Text("Something happens.")))
-    val blk3 = Block("P#flavorIndent", List(Emphasis("Secondary")))
-    val tailBlock = Block("POWEREND", Nil)
-
-    val ts = new TokenStream(List(blk, blk2, blk3, tailBlock))
-    ts.advance must beTrue
-    ts
-  }
-
-  "PowerExtractor" should {
-
-    val mr = new MonsterReader()
-
-    "read aura with keyword" in {
-      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B> 1</P>)
-
-      val power = mr.processPower(ActionType.Trait,ts)
-      power must notBeNull
-
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura),"Spider Host","(Poison)", AuraUsage(1))
-      power.action must_== ActionType.Trait
-      power.description must_== sampleDesc
-    }
-
-    "read power without keyword" in {
-      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>)
-      val power = mr.processPower(ActionType.Minor,ts)
-      power must notBeNull
-
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Range),"Darkfire",null, EncounterUsage(1))
-      power.action must_== ActionType.Minor
-      power.description must_== sampleDesc
-    }
-
-  }
-
   "SomePowerDefinition" should {
     "read power with name and keyword" in {
       val parts = List(Icon(IconType.Melee), Key(" Name "), Text(" Keyword "), Icon(IconType.Separator), Key("Aura"), Text(" 1"))
