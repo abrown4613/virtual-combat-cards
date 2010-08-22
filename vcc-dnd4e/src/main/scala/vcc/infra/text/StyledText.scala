@@ -47,6 +47,14 @@ object StyledText {
     StyledText((node \ "block").map(TextBlock.fromXML(_)).toList)
   }
 
+  /**
+   * Generate a simple text in a block.
+   * @param blockTag Tag for then internal block
+   * @param blockClass Class for the Tag
+   * @param text Text in the block
+   */
+  def singleBlock(blockTag:String, blockClass:String, text:String):StyledText =
+    StyledText(List(TextBlock(blockTag,blockClass,TextSegment(text))))
 }
 
 case class TextBlock(tag: String, clazz: String, segments: List[Segment]) {

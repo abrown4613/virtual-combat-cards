@@ -26,17 +26,17 @@ trait TemplateDataSource {
   /**
    * String value for a given key.
    */
-  def get(key:String):Option[String]
+  def templateVariable(key:String):Option[String]
 
   /**
    * Return a data source for a nested TemplateDataSource.
    */
-  def group(key:String):List[TemplateDataSource]
+  def templateGroup(key:String):List[TemplateDataSource]
 
   /**
    * Return a XML NodeSeq for a give name.
    */
-  def getInlineXML(key:String):Option[NodeSeq]
+  def templateInlineXML(key:String):NodeSeq
 }
 
 /**

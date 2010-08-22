@@ -25,7 +25,7 @@ import xml.{NodeSeq, Node}
  */
 object GroupDirective extends TemplateDirective[String]("foreach", false) {
   def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = {
-    val groups = ds.group(node.arguments)
+    val groups = ds.templateGroup(node.arguments)
     groups.flatMap(ds => renderChildren(ds, node.child))
   }
 
