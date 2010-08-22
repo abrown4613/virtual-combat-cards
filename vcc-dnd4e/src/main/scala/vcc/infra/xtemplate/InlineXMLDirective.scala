@@ -23,7 +23,7 @@ import scala.xml.{NodeSeq, Node}
  * Directive that will render the TemplateDataSource getInlineXML element if present or nothing that inline is not defined.
  */
 object InlineXMLDirective extends TemplateDirective[String]("inline", true) {
-  def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = ds.getInlineXML(node.arguments).getOrElse(Nil)
+  def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = ds.templateInlineXML(node.arguments)
 
   protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): String = validateSingleArgument("id", node)
 }

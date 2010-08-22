@@ -30,11 +30,11 @@ class TemplateDirectiveTest extends JUnit4(TemplateDirectiveSpec)
 
 class MapDataSource(values: Map[String, String], groups: Map[String, List[TemplateDataSource]], styled: Map[String, NodeSeq])
         extends TemplateDataSource {
-  def group(key: String): List[TemplateDataSource] = groups.getOrElse(key, Nil)
+  def templateGroup(key: String): List[TemplateDataSource] = groups.getOrElse(key, Nil)
 
-  def getInlineXML(key: String): Option[NodeSeq] = styled.get(key)
+  def templateInlineXML(key: String): NodeSeq = styled.getOrElse(key,Nil)
 
-  def get(key: String): Option[String] = values.get(key)
+  def templateVariable(key: String): Option[String] = values.get(key)
 }
 
 object TemplateDirectiveSpec extends Specification {
@@ -95,7 +95,7 @@ object TemplateDirectiveSpec extends Specification {
       val tn = resolveIfDefined(<t:ifdefined id="foo"/>,  Nil)
       tn mustNot beNull
       tn.label must_== "ifdefined"
-      simpleDS.get("foo").isDefined must beTrue
+      simpleDS.templateVariable("foo").isDefined must beTrue
       tn.arguments(simpleDS) must beTrue
       tn.arguments(emptyDS) must beFalse
     }
@@ -108,7 +108,7 @@ object TemplateDirectiveSpec extends Specification {
     }
 
     "accept styled" in {
-      val tn = resolveIfDefined(<t:ifdefined styled="foo"/>,  Nil)
+      val tn = resolveIfDefined(<t:ifdefined inline="foo"/>,  Nil)
       tn mustNot beNull
       tn.arguments(simpleDS) must beTrue
       tn.arguments(emptyDS) must beFalse

@@ -24,7 +24,7 @@ import xml.{Text, NodeSeq, Node}
  */
 object EchoDataDirective extends TemplateDirective[(String, TemplateFormatter)]("data", true) {
   def render(ds: TemplateDataSource, node: TemplateNode[(String, TemplateFormatter)]): NodeSeq = {
-    val v = ds.get(node.arguments._1)
+    val v = ds.templateVariable(node.arguments._1)
     if (v.isDefined) Seq(Text(if (node.arguments._2 != null) node.arguments._2.format(v.get) else v.get))
     else Nil
   }
