@@ -17,11 +17,12 @@
 //$Id$
 package vcc.infra.xtemplate 
 
-
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4,JUnitSuiteRunner}
 import org.specs.mock.Mockito
+import java.io.StringReader
+import org.xml.sax.InputSource
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TemplateLoaderTest extends JUnit4(TemplateLoaderSpec)
@@ -31,15 +32,16 @@ object TemplateLoaderSpec extends Specification with Mockito {
   engine.registerDirective(EchoDataDirective)
   engine.registerDirective(IfDefinedDirective)
   val spyEngine = spy(engine)
+  val template = new Template("t")
 
   "Load plain xml" in {
     val loader = new TemplateLoader("t", engine)
-    loader.resolveTemplate(<foo>bar</foo>) must_== <foo>bar</foo>
+    loader.resolveNode(<foo>bar</foo>, template) must_== <foo>bar</foo>
   }
 
   "resolve simple directive" in {
     val loader = new TemplateLoader("t", spyEngine)
-    val t = loader.resolveTemplate(<foo><t:data id="foo"/></foo>)
+    val t = loader.resolveNode(<foo><t:data id="foo"/></foo>, template)
 
     there was one(spyEngine).hasDirective("data")
     t.child(0).isInstanceOf[TemplateNode[_]] must beTrue
@@ -47,7 +49,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
 
   "resolve simple directive in nested xml" in {
     val loader = new TemplateLoader("t", spyEngine)
-    val t = loader.resolveTemplate(<hey><foo><t:data id="foo"/></foo></hey>)
+    val t = loader.resolveNode(<hey><foo><t:data id="foo"/></foo></hey>, template)
 
     there was one(spyEngine).hasDirective("data")
     val tn = (t \ "foo")(0).child(0)
@@ -56,7 +58,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
 
   "depth recursion first" in {
     val loader = new TemplateLoader("t", spyEngine)
-    val t = loader.resolveTemplate(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>)
+    val t = loader.resolveNode(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>, template)
     there was one(spyEngine).hasDirective("data") then
       one(spyEngine).hasDirective("ifdefined")
 
@@ -69,13 +71,31 @@ object TemplateLoaderSpec extends Specification with Mockito {
 
   "surface no directive exception" in {
     val loader = new TemplateLoader("t", spyEngine)
-    loader.resolveTemplate(<hey><foo><t:foo id="foo"/></foo></hey>) must
+    loader.resolveNode(<hey><foo><t:foo id="foo"/></foo></hey>, template) must
             throwAn(new IllegalTemplateDirectiveException("Directive 'foo' not defined",(<t:foo id="foo"/>)))
   }
 
   "surface failed exceptions" in {
     val loader = new TemplateLoader("t", spyEngine)
-    loader.resolveTemplate(<hey><t:ifdefined id="foo"><foo><t:data ida="foo"/></foo></t:ifdefined></hey>) must
+    loader.resolveNode(<hey><t:ifdefined id="foo"><foo><t:data ida="foo"/></foo></t:ifdefined></hey>, template) must
             throwA[IllegalTemplateDirectiveException]
   }
+
+  "throw exception on null inputsource" in {
+    val loader = new TemplateLoader("t", engine)
+    loader.load(null) must throwA[IllegalArgumentException]
+  }
+
+  "load from inputsource" in {
+    val loader = new TemplateLoader("t", engine)
+    val t = loader.load(new InputSource(new StringReader("<hey><t:data id='foo' /></hey>")))
+    t mustNot beNull
+    t.prefix must_== "t"
+  }
+
+  "throw exception if top level element of XML is not a Elem" in {
+    val loader = new TemplateLoader("t", engine)
+    loader.load(new InputSource(new StringReader("<t:data id='foo' />"))) must throwAn[IllegalTemplateDirectiveException]
+  }
+
 }

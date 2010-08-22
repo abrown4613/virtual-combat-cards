@@ -19,13 +19,9 @@ package vcc.infra.xtemplate
 
 import scala.xml.{Node, NodeSeq}
 
-final class TemplateNode[T](override val prefix: String, val label: String, val directive: TemplateDirective[T], val arguments: T, val child: Seq[Node]) extends Node {
-  def render(ds: TemplateDataSource) = directive.render(ds, this)
-
-
-  override def toString(): String = "[" + super.toString + "]"
-}
-
+/**
+ *
+ */
 class IllegalTemplateDirectiveException(msg: String, node: Node) extends Exception(msg + "; offending node: " + node)
 
 /**
@@ -43,13 +39,13 @@ abstract class TemplateDirective[T](val name: String, val empty: Boolean) {
    * @throws IllegalTemplateDirectiveException If the node not correctly formatted, this exception should be thrown.
    */
   @throws(classOf[IllegalTemplateDirectiveException])
-  protected def processArguments(node: Node, engine: TemplateEngine): T
+  protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): T
 
-  final def resolveTemplateNode(node: Node, engine: TemplateEngine, child: Seq[Node]): TemplateNode[T] = {
+  final def resolveTemplateNode(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): TemplateNode[T] = {
     if (node.label == name) {
       if (empty && !node.child.isEmpty)
         throw new IllegalTemplateDirectiveException("Directive does does not allow child nodes", node)
-      new TemplateNode(node.prefix, name, this, processArguments(node, engine), child)
+      new TemplateNode(node.prefix, name, this, processArguments(node, engine, template, child), child)
     } else
       throw new AssertionError("node label must match Directive name")
   }
@@ -75,6 +71,21 @@ abstract class TemplateDirective[T](val name: String, val empty: Boolean) {
   }
 
   final protected def renderChildren(ds: TemplateDataSource, child: NodeSeq): NodeSeq = {
-    TemplateUtil.mergeTexts(child.flatMap(node => TemplateUtil.renderNode(ds,node)))
+    TemplateNode.mergeTexts(child.flatMap(node => TemplateNode.renderNode(ds, node)))
+  }
+
+  /**
+   * This is a help method that makes sure the Directive has only one argument and returns that argument value.
+   * @param name Name of the argument to be searched for
+   * @return The value of the arguments
+   * @throws IllegalTemplateDirectiveException If argument not found, of if more than one argument passed on node.
+   **/
+  final protected def validateSingleArgument(name: String, node: Node): String = {
+    val attr = getAttribute(node, name, null)
+    if (attr != null) {
+      if (node.attributes.length != 1)
+        throw new IllegalTemplateDirectiveException("Only '" + name + "' argument accepted", node)
+      attr
+    } else throw new IllegalTemplateDirectiveException("Must specify '" + name + "' argument", node)
   }
 }

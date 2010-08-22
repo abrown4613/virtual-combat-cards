@@ -29,7 +29,7 @@ object EchoDataDirective extends TemplateDirective[(String, TemplateFormatter)](
     else Nil
   }
 
-  protected def processArguments(node: Node, engine: TemplateEngine): (String, TemplateFormatter) = {
+  protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): (String, TemplateFormatter) = {
     val id = getAttribute(node, "id", null)
     if (id == null) throw new IllegalTemplateDirectiveException("must specify the data 'id'", node)
     val fmt = getAttribute(node, "fmt", null)

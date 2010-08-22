@@ -26,13 +26,17 @@ import scala.xml._
  * @para engine Engine containing the definition of TemplateDirective and TemplateFormatter
  */
 class TemplateLoader(defaultPrefix: String, engine: TemplateEngine) {
-  private[xtemplate] def resolveTemplate(node: Node): Node = {
+
+  /**
+   * Resolves a template node, by either copying it with it resolved children, or expanding TemplateDirective.
+   */
+  private[xtemplate] def resolveNode(node: Node, template: Template): Node = {
     //First resolver child
-    val rChild = node.child.map(c => resolveTemplate(c))
+    val rChild = node.child.map(c => resolveNode(c, template))
     if (node.prefix == defaultPrefix) {
       if (engine.hasDirective(node.label)) {
         val directive = engine.getDirective(node.label)
-        directive.resolveTemplateNode(node, engine, rChild)
+        directive.resolveTemplateNode(node, engine, template, rChild)
       } else {
         throw new IllegalTemplateDirectiveException("Directive '" + node.label + "' not defined", node)
       }
@@ -44,4 +48,18 @@ class TemplateLoader(defaultPrefix: String, engine: TemplateEngine) {
     }
   }
 
+  /**
+   * Loads an XML file from an InputSource then processes all the nodes to provided a resolved Template.
+   * @para is The InputSource for the XML data
+   * @return A Resolved template.
+   * @throws IllegalTemplateDirectiveException if template expansion produced an error
+   */
+  @throws(classOf[IllegalTemplateDirectiveException])
+  def load(is: InputSource):Template = {
+    if(is == null) throw new IllegalArgumentException("InputSource must not be null")
+    val xml = XML.load(is)
+    val template = new Template(defaultPrefix)
+    template.setTopNode(resolveNode(xml, template))
+    template
+  }
 }
