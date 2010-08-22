@@ -29,14 +29,14 @@ object IfDefinedDirective extends TemplateDirective[TemplateDataSource => Boolea
     else Nil
   }
 
-  protected def processArguments(node: Node, engine: TemplateEngine): (TemplateDataSource) => Boolean = {
+  protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): (TemplateDataSource) => Boolean = {
     if (node.attributes.length != 1)
       throw new IllegalTemplateDirectiveException("Must specify exactly ONE of: group, id, styled", node)
     val attr = node.attributes.toSeq(0)
     attr.key match {
       case "id" => ((ds: TemplateDataSource) => ds.get(attr.value.text).isDefined)
       case "group" => ((ds: TemplateDataSource) => !ds.group(attr.value.text).isEmpty)
-      case "styled" => ((ds: TemplateDataSource) => ds.getStyledText(attr.value.text).isDefined)
+      case "styled" => ((ds: TemplateDataSource) => ds.getInlineXML(attr.value.text).isDefined)
       case s => throw new IllegalTemplateDirectiveException("Attribute '" + s + "' is not valid for ifdefined", node)
     }
   }

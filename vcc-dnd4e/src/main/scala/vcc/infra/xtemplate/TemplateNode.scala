@@ -21,9 +21,19 @@ import scala.xml._
 import collection.mutable.ListBuffer
 
 /**
+ * This XML Node represents an resolved TemplateDirective in the XML template.
+ */
+final class TemplateNode[T](override val prefix: String, val label: String, val directive: TemplateDirective[T], val arguments: T, val child: Seq[Node]) extends Node {
+  def render(ds: TemplateDataSource) = directive.render(ds, this)
+
+
+  override def toString(): String = "[" + super.toString + "]"
+}
+
+/**
  * Several utility functions for the Template Engine.
  */
-final object TemplateUtil {
+final object TemplateNode {
 
   /**
    * Merge adjacent scala.xml.Text nodes.
@@ -67,7 +77,7 @@ final object TemplateUtil {
     node match {
       case tn: TemplateNode[_] => tn.render(ds)
       case e: Elem =>
-        new Elem(e.prefix, e.label, e.attributes, e.scope, TemplateUtil.mergeTexts(e.child.flatMap(n => renderNode(ds, n))): _*)
+        new Elem(e.prefix, e.label, e.attributes, e.scope, TemplateNode.mergeTexts(e.child.flatMap(n => renderNode(ds, n))): _*)
       case t => t
     }
   }

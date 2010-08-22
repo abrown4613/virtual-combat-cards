@@ -18,29 +18,70 @@
 package vcc.infra.xtemplate
 
 import scala.xml._
-import collection.mutable.ListBuffer
-import vcc.infra.text.StyledText
 
+/**
+ * Provides information for the rendering of the template.
+ */
 trait TemplateDataSource {
+  /**
+   * String value for a given key.
+   */
   def get(key:String):Option[String]
+
+  /**
+   * Return a data source for a nested TemplateDataSource.
+   */
   def group(key:String):List[TemplateDataSource]
-  def getStyledText(key:String):Option[StyledText]
+
+  /**
+   * Return a XML NodeSeq for a give name.
+   */
+  def getInlineXML(key:String):Option[NodeSeq]
 }
+
+/**
+ * Template hold the master node for a template, and allow the definition of macros.
+ */
 class Template(val prefix: String) {
-  def renderNode(ds: TemplateDataSource, node: Node):NodeSeq = {
-    if (node.prefix == prefix) {
-      node.label match {
-        case "data" =>
-          val v = ds.get(node.attribute("id").get(0).text)
-          if (v.isDefined) Seq(Text(v.get))
-          else Nil
-      }
-    } else {
-      node match {
-        case e: Elem =>
-          new Elem(e.prefix, e.label, e.attributes, e.scope, TemplateUtil.mergeTexts(e.child.flatMap(n => renderNode(ds, n))): _*)
-        case t => t
-      }
-    }
+
+  private var macros = Map.empty[String,NodeSeq]
+
+  private var topNode:Node = null
+
+  /**
+   * Returns the existence or a given macro.  
+   */
+  def hasMacro(name:String) = macros.isDefinedAt(name)
+
+  /**
+   * Define or redefine a macro.
+   */
+  def defineMacro(name:String, tn: NodeSeq) {
+    if(macros.isDefinedAt(name))
+      throw new IllegalArgumentException("Redefinition of macro '"+ name + "' is not allowed")
+    macros = macros + (name -> tn)
+  }
+
+  /**
+   * Return a macro, will not check for the existance.
+   */
+  def getMacro(name:String):NodeSeq = macros(name)
+
+
+  private [xtemplate] def setTopNode(node: Node) {
+    if(!node.isInstanceOf[Elem])
+      throw new IllegalTemplateDirectiveException("Template top level Node must be an Elem",node)
+    topNode = node
+  }
+
+  /**
+   * Generate the XML resultant of applying this template to the data source supplied.
+   * @para ds The source of information to be expanded in the template.
+   * @return A single node representing the entire template 
+   */
+  def render(ds: TemplateDataSource): Node = {
+    val ns = TemplateNode.renderNode(ds, topNode)
+    if(ns.length == 1) ns(0)
+    else throw new AssertionError("Rendering of topNode must yield a single node.")
   }
 }

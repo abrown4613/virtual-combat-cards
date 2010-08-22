@@ -22,50 +22,70 @@ import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import scala.xml.{NodeSeq, Text, Node}
 import vcc.infra.text.StyledText
+import org.xml.sax.InputSource
+import java.io.StringReader
 
 @RunWith(classOf[JUnitSuiteRunner])
 class TemplateTest extends JUnit4(TemplateSpec)
 
 object TemplateSpec extends Specification {
-
-  val fooDS = new MapDataSource(Map("foo"->"bar"), Map(),Map())
-  val simpleDS = new MapDataSource(Map("foo"->"bar"), Map("foo"->List(fooDS)),Map("foo"->StyledText.singleBlock("P",null,"bar")))
-  val emptyDS = new MapDataSource(Map(), Map(),Map())
+  val fooDS = new MapDataSource(Map("foo" -> "bar"), Map(), Map())
+  val simpleDS = new MapDataSource(Map("foo" -> "bar"), Map("foo" -> List(fooDS)), Map("foo" -> Text("bar")))
+  val emptyDS = new MapDataSource(Map(), Map(), Map())
 
   val tmpl = new Template("t")
+  val engine = new TemplateEngine()
+  engine.registerDirective(EchoDataDirective)
+  val loader = new TemplateLoader("t", engine)
+  val macro = loader.resolveNode(<t:data id="foo"/>, null).asInstanceOf[TemplateNode[Any]]
+  val macro2 = loader.resolveNode(<t:data id="bar"/>, null).asInstanceOf[TemplateNode[Any]]
 
-  "Template.renderNode" should {
-    "expand variable" in {
-      tmpl.renderNode(simpleDS, <t:data id="foo" />) must_== NodeSeq.fromSeq(Seq(Text("bar")))
+  "Template" should {
+
+    "define macro" in {
+      tmpl.defineMacro("macroname", macro)
+      tmpl.hasMacro("macroname") must beTrue
     }
 
-    "expand variable not there" in {
-      tmpl.renderNode(simpleDS, <t:data id="who" />) must_== Nil
+    "fecth macro" in {
+      tmpl.defineMacro("macroname", macro)
+      val m: TemplateNode[Any] = tmpl.getMacro("macroname").asInstanceOf[TemplateNode[Any]]
+      m must beEqual[TemplateNode[Any]](macro)
     }
 
-    "expand variable wrapped in non prefixed XML" in {
-      tmpl.renderNode(simpleDS, <b><t:data id="foo" /></b>) must_== <b>bar</b>
+    "fail to redefine macro" in {
+      tmpl.defineMacro("macroname", macro)
+      tmpl.defineMacro("macroname", macro2) must throwAn[IllegalArgumentException]
     }
 
-    "expand variable with whitespace " in {
-      tmpl.renderNode(simpleDS, <b> <t:data id="foo" /> </b>) must_== <b> bar </b>
+    "throw exception while fetching non existant" in {
+      tmpl.getMacro("notfound").asInstanceOf[TemplateNode[Any]] must throwA[NoSuchElementException]
     }
 
-    "expand variable twice" in {
-      tmpl.renderNode(simpleDS, <b><t:data id="foo" /><t:data id="foo" /></b>) must_== <b>barbar</b>
+    "while setting top level node, allow Elem" in {
+      tmpl.setTopNode(<b>bar</b>)
+      tmpl.render(null) must_== <b>bar</b>
     }
 
-    "expand variable in nested non prefixed XML" in {
-      tmpl.renderNode(simpleDS, <a><b><c><t:data id="foo" /></c></b></a>) must_== <a><b><c>bar</c></b></a>
+    "while setting top level node, reject TemplateNode" in {
+      tmpl.setTopNode(macro) must throwAn(new IllegalTemplateDirectiveException("Template top level Node must be an Elem", macro))
     }
+
+    "correctly render a loaded template" in {
+      val t = loader.load(new InputSource(new StringReader("<hey><t:data id='foo' /></hey>")))
+      t mustNot beNull
+      t.prefix must_== "t"
+      t.render(simpleDS) must_== <hey>bar</hey>
+    }
+
   }
 
-  "TemplateUtil.mergeTexts" should {
+  "TemplateNode.mergeTexts" should {
     "merge text" in {
-      TemplateUtil.mergeTexts(NodeSeq.fromSeq(Seq(Text("a"),Text("b")))) must_== NodeSeq.fromSeq(Seq(Text("ab")))
+      TemplateNode.mergeTexts(NodeSeq.fromSeq(Seq(Text("a"), Text("b")))) must_== NodeSeq.fromSeq(Seq(Text("ab")))
     }
     "preserve XML in the middle" in {
-      TemplateUtil.mergeTexts(NodeSeq.fromSeq(Seq[Node](Text("a"),Text("b"),(<b/>),Text("c")))) must_== NodeSeq.fromSeq(Seq[Node](Text("ab"),(<b/>),Text("c")))
+      TemplateNode.mergeTexts(NodeSeq.fromSeq(Seq[Node](Text("a"), Text("b"), (<b/>), Text("c")))) must_== NodeSeq.fromSeq(Seq[Node](Text("ab"), (<b/>), Text("c")))
     }
   }
 }
