@@ -91,8 +91,10 @@ object Parser {
       Unknown -> "x.gif"
       )
 
+    final val diceImage:Map[Int,String] = (1 to 6).map(d => (d -> d.formatted("%da.gif"))).toMap
+
     /**
-     * Extractor to get a Icon out of a img with the proper image name.
+     * Extractor to templateVariable a Icon out of a img with the proper image name.
      * Image name is determined form the last slash onwards of the src attribute
      */
     def unapply(node: scala.xml.Node): Option[Value] = {
@@ -235,7 +237,7 @@ object Parser {
 
   /**
    * Transform a simple node into a Part token. This will lift A tags, B to Keys, 
-   * images to icon, recharge dice to text, and attempt several triming to get rid
+   * images to icon, recharge dice to text, and attempt several triming to templateVariable rid
    * of colons, semi-colons, and other noise after valuable data
    */
   def parseNode(node: scala.xml.Node): Part = {
@@ -266,7 +268,7 @@ object Parser {
   }
 
   /**
-   * This is an extractor that will get all the text and replace Break for 
+   * This is an extractor that will templateVariable all the text and replace Break for
    * new line. Returning a single text.
    */
   object SingleTextBreakToNewLine {
@@ -281,7 +283,7 @@ object Parser {
   }
 
   /**
-   * This is an extractor that will get all the text and replace Break for 
+   * This is an extractor that will templateVariable all the text and replace Break for
    * new line. Returning a single text.
    */
   object SingleTextBreakToSpace {

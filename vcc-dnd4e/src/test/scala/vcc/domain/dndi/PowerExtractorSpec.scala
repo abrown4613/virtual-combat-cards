@@ -267,4 +267,11 @@ object PowerExtractorSpec extends Specification {
       ActionType.values.foreach(at => SectionActionType.unapply(List(Text((at.toString + "s").toUpperCase))) must_== Some(at))
     }
   }
+
+  "ActionType extractor" should {
+    "handle all defined types" in {
+      ActionType.values.foreach(at => ActionType.unapply(at.toString.toUpperCase) must_== Some(at))
+    }
+
+  }
 }

@@ -41,11 +41,7 @@ trait DNDIObject {
    * @para attribute Name of the attribute
    * @return Option of the attribute value
    */
-  def apply(attribute: String): Option[String] = {
-    val normalizedAttr = attribute.toLowerCase
-    if (attributes.contains(normalizedAttr)) Some(attributes(normalizedAttr))
-    else None
-  }
+  def apply(attribute: String): Option[String] = attributes.get(attribute.toLowerCase)
 
   def dump(os: PrintStream) {
     os.printf("----- Begin DNIDObject %s-%s\n", clazz, id.toString)

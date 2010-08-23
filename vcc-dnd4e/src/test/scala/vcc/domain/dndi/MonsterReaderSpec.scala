@@ -356,6 +356,39 @@ object MonsterReaderSpec extends Specification {
     }
   }
 
+  "MonsterReader.promoteAuraLike" should {
+    val auraDesc = StyledText.singleBlock("P", "flavorIndent", "some description.")
+    "lift simple aura to new power" in {
+      val power = reader.promoteAuraLike("Mocking Eye", "aura 10; some description.")
+      power mustNot beNull
+      power.action must_== ActionType.Trait
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage(10))
+      power.description must_== auraDesc
+    }
+    "lift simple aura with keyword to new power" in {
+      val power = reader.promoteAuraLike("Aura of Terror", "(Fear) aura 5; some description.")
+      power mustNot beNull
+      power.action must_== ActionType.Trait
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage(5))
+      power.description must_== auraDesc
+    }
+
+    "lift regeneration with only a number" in {
+      val power = reader.promoteAuraLike("Regeneration", "10")
+      power mustNot beNull
+      power.action must_== ActionType.Trait
+      power.definition must_== CompletePowerDefinition(Seq(), "Regeneration", null, NoUsage)
+      power.description must_== StyledText(List(TextBlock("P", "flavorIndent", TextSegment("10"))))
+    }
+    "lift regeneration with a description" in {
+      val power = reader.promoteAuraLike("Regeneration", "3 (if the werewolf takes damage from a silver weapon)")
+      power mustNot beNull
+      power.action must_== ActionType.Trait
+      power.definition must_== CompletePowerDefinition(Seq(), "Regeneration", null, NoUsage)
+      power.description must_== StyledText(List(TextBlock("P", "flavorIndent", TextSegment("3 (if the werewolf takes damage from a silver weapon)"))))
+    }
+  }
+
   /*
   * This is a conditional test that will iterate through all cached entris in a directory.
   */

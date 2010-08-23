@@ -20,6 +20,7 @@ package vcc.domain.dndi
 import scala.util.matching.Regex
 import scala.xml.{Node, NodeSeq, Text => XmlText, Elem}
 import vcc.domain.dndi.Monster.{Aura, PowerDescriptionSupplement}
+import vcc.infra.xtemplate.TemplateDataSource
 
 object Monster {
 
@@ -82,16 +83,30 @@ object Monster {
 
 }
 
-//TODO Add statblock handling
-//TODO remove other monster data and builder.
-//TODO Move Power definitions to this file
-//TODO Move Usage to this file
+/**
+ * A monster imported from DNDI.
+ * @param id DNDI ID value
+ * @param legacyPowers list of power that where not in their own power sections
+ * @param powersByAction Powers that are in sections, this will include Auras moved from previous format
+ */
 class MonsterNew(val id: Int,
                  protected var attributes: Map[String, String],
                  val legacyPowers: List[Power],
                  val powersByAction: Map[ActionType.Value, List[Power]]
-        ) extends DNDIObject {
+        ) extends DNDIObject with TemplateDataSource {
   final val clazz = "monster"
+
+  def templateGroup(key: String): List[TemplateDataSource] = key match {
+    case "legacy" => legacyPowers
+    case ActionType(at) => powersByAction.getOrElse(at,Nil)
+    case _ => Nil
+  }
+
+  // No inlines yet
+  def templateInlineXML(key: String): NodeSeq = Nil
+
+
+  def templateVariable(key: String): Option[String] = this(key)
 }
 
 /**
