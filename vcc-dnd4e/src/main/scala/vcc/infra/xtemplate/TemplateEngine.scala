@@ -53,4 +53,15 @@ class TemplateEngine {
     directive += (td.name -> td)
   }
 
+  /**
+   * Loads all xtemplate defined directive to the engine.
+   */
+  def registerDefaultDirectives() {
+    this.registerDirective(EchoDataDirective)
+    this.registerDirective(IfDefinedDirective)
+    this.registerDirective(GroupDirective)
+    this.registerDirective(InlineXMLDirective)
+    this.registerDirective(MacroDefineDirective)
+    this.registerDirective(MacroIncludeDirective)
+  }
 }
