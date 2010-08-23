@@ -50,6 +50,12 @@ class CaptureServlet extends HttpServlet {
         logger.debug("XML Raw: {}", xmlRaw)
         throw s
     }
+    if (System.getProperty("vcc.dndi.captureall") != null) {
+      // This is an option parameter to allow store objects that are not normally captured
+      val otype = DNDInsiderCapture.getTypeFromXML(xml)
+      val oid = DNDInsiderCapture.getIdFromXML(xml)
+      if (otype.isDefined && oid.isDefined) CaptureHoldingArea.storeIncompleteObject(otype.get, oid.get, xml)
+    }
 
     try {
       logger.debug("Parsed XML is: {}", xml)
@@ -73,12 +79,7 @@ class CaptureServlet extends HttpServlet {
       }
       if (entry != null) {
         CaptureHoldingArea.addCapturedEntry(entry, xml)
-      } else if (System.getProperty("vcc.dndi.captureall") != null) {
-        // This is an option parameter to allow store objects that are not normally captured
-        val otype = DNDInsiderCapture.getTypeFromXML(xml)
-        val oid = DNDInsiderCapture.getIdFromXML(xml)
-        if (otype.isDefined && oid.isDefined) CaptureHoldingArea.storeIncompleteObject(otype.get, oid.get, xml)
-      }
+      } 
     } catch {
       case ue: Exception =>
         // XML is ok, but can be parsed so we save it for debuging

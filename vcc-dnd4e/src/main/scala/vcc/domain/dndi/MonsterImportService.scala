@@ -25,7 +25,7 @@ import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 
 
 /**
- * This service is used to get Monster form the DNDI Capture model into 
+ * This service is used to get Monster form the DNDI Capture model into
  * the MonsterEntity model.
  */
 object MonsterImportService {

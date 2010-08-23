@@ -43,43 +43,6 @@ class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
   }
 }
 
-object ActionType extends Enumeration {
-  val Standard = Value("Standard Action")
-  val Triggered = Value("Triggered Action")
-  val Move = Value("Move Action")
-  val Minor = Value("Minor Action")
-  val Free = Value("Free Action")
-  val No = Value("No Action")
-  val Trait = Value("Trait")
-}
-
-trait Usage
-
-case class AuraUsage(radius: Int) extends Usage
-
-/**
- * At-Will usage, may be limited or unlimited
- * @para roundLimit If greater then 0, power can be used roundLimit times in a round, otherwise it is unlimited.
- */
-case class AtWillUsage(roundLimit: Int) extends Usage
-
-case class EncounterUsage(repeat: Int) extends Usage
-object DailyUsage extends Usage
-object NoUsage extends Usage
-case class RechargeConditionalUsage(val condition: String) extends Usage
-case class RechargeDiceUsage(val from: Int) extends Usage
-
-abstract class PowerDefinition {
-  val name: String
-  val usage: Usage
-}
-
-case class CompletePowerDefinition(icons: Seq[IconType.Value], name: String, keyword: String, usage: Usage) extends PowerDefinition
-
-case class LegacyPowerDefinition(icons: Seq[IconType.Value], name: String, actionUsage: String, keyword: String, usage: Usage) extends PowerDefinition
-
-case class Power(definition: PowerDefinition, action: ActionType.Value, description: StyledText)
-
 /**
  * Extract form the parts the usage of MM3 style usages
  */
@@ -348,16 +311,24 @@ class MonsterReader(id: Int) {
 
     stream.advance()
 
-    processHeader(stream)
+    val headMap = processHeader(stream)
     val (isMM3Format, statMap, auras) = processMainStatBlock(stream)
     val powersByAction: List[(ActionType.Value, List[Power])] = if (isMM3Format) processActionGroups(stream) else Nil
     val legacyPowers: List[Power] = if (!isMM3Format) processLegacyPowers(stream) else Nil
 
     // Process tail.
     val tailStats = processTailBlock(stream)
-    //TODO Lift aura to powers and place in traits.
 
-    new MonsterNew(id,statMap ++ tailStats, legacyPowers, powersByAction.toMap)
+    var aurasAsTraits = auras.map( x => promoteAuraLike(x._1,x._2)).toList
+    var powersActionMap = powersByAction.toMap
+    //Should need this, but just to be safe
+    if (!aurasAsTraits.isEmpty) {
+      powersActionMap = powersActionMap +
+              (ActionType.Trait -> (powersActionMap.getOrElse(ActionType.Trait, Nil) ::: aurasAsTraits))
+    }
+    new MonsterNew(id,
+      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+      legacyPowers, powersByAction.toMap)
   }
 
   private[dndi] def processTailBlock(stream: TokenStream[BlockElement]): Map[String, String] = {
@@ -386,6 +357,30 @@ class MonsterReader(id: Int) {
 
     }
     result.toMap
+  }
+
+  private final val auraMatcher = """(\(.+\)\s+)?aura\s+(\d+)\s*;(.*)""".r
+
+  /**
+   * Takes stats from primary block, that may be aura or regeneration and promotes them to the MM3
+   * trait format.
+   * @para name Key name (usually aura name or 'Regeneration')
+   * @para desc Description of aura or generation
+   * @return A new power.
+   */
+  private[dndi] def promoteAuraLike(name: String, desc: String): Power = {
+    desc match {
+      case `auraMatcher`(keyword, range, auraDesc) =>
+        Power(
+          CompletePowerDefinition(Seq(IconType.Aura), name, if (keyword != null) keyword.trim else null, AuraUsage(range.toInt)),
+          ActionType.Trait,
+          StyledText.singleBlock("P", "flavorIndent", auraDesc.trim))
+      case _ =>
+        Power(
+          CompletePowerDefinition(Seq(), name, null, NoUsage),
+          ActionType.Trait,
+          StyledText.singleBlock("P", "flavorIndent", desc))
+    }
   }
 
   private def trimParts(parts: List[Part]): List[Part] = parts.map(p => p.transform(Parser.TrimProcess))
