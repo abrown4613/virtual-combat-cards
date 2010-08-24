@@ -100,7 +100,10 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
   private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
-      statBlock.text = SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
+      //FIXME need to generate statblock
+      //SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+      statBlock.text = "<html><body>PENDING IMPLEMENTATION</body></html>"
+              // SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
       statBlock.sync()
     }
   }
