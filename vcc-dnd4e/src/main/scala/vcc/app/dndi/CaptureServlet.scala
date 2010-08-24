@@ -62,14 +62,14 @@ class CaptureServlet extends HttpServlet {
       val dndiObject = DNDInsiderCapture.load(xml)
       val entry: DNDIObject = dndiObject match {
         case monster: Monster =>
-          logger.info("Captured monster {}", monster("NAME"))
+          logger.info("Captured monster {}", monster("base:name"))
           logger.debug("Catured Monster: {}", monster)
-          response.getWriter().println("Captured monster " + monster("NAME").get);
+          response.getWriter().println("Captured monster " + monster("base:name").get);
           monster
         case trap: Trap =>
           logger.info("Capture 'trap': {}", trap("name").get)
           logger.debug("Catured trap: {}", trap)
-          response.getWriter().println("Captured trap " + trap("NAME").get);
+          response.getWriter().println("Captured trap " + trap("base:name").get);
           trap
         case _ =>
           val otype = DNDInsiderCapture.getTypeFromXML(xml)

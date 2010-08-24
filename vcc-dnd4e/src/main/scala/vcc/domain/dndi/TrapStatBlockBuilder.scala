@@ -19,6 +19,8 @@ package vcc.domain.dndi
 
 import xml.Node
 
+//TODO Delete
+@deprecated("move to XTEMPLATE")
 object TrapStatBlockBuilder extends StatBlockBuilder {
   import StatBlockBuilder._
 

@@ -1,0 +1,26 @@
+<?xml version='1.0' ?>
+<html xmlns:t="http://org.exnebula/xtemplate/1.0">
+    <t:define macro="section">
+        <t:ifdefined id="header">
+            <span class="trapblocktitle"> <t:data id="header"/> </span>
+            <t:inline id="text"/>
+        </t:ifdefined>
+    </t:define>
+    <head>
+        <link rel="stylesheet" type="text/css" href="dndi.css"/>
+    </head>
+    <body>
+        <div id="detail">
+            <h1 class="trap">
+                <t:data id="base:name"/>
+                <span class="type">
+                    <t:data id="base:type"/>
+                    <t:data id="base:role"/>
+                </span>
+            </h1>
+            <t:foreach ingroup="sections">
+                <t:include macro="section"/>
+            </t:foreach>
+        </div>
+    </body>
+</html>

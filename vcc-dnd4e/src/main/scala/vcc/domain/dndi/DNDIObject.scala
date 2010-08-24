@@ -18,6 +18,16 @@
 package vcc.domain.dndi
 
 import java.io.PrintStream
+import vcc.domain.dndi.Parser.BlockElement
+
+/**
+ * Common parsing logic for reading captured D&D Insider objects.
+ */
+trait DNDIObjectReader[T <: DNDIObject] {
+  def process(blocks: List[BlockElement]): T
+
+  def read(blocks: List[BlockElement]): DNDIObject = this.process(blocks)
+}
 
 trait DNDIObject {
 

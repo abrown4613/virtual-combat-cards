@@ -24,9 +24,9 @@ import vcc.infra.text._
 import vcc.domain.dndi.Parser.{BlockElement} 
 
 @RunWith(classOf[JUnitSuiteRunner])
-class TrapCaptureTest extends JUnit4(TrapCaptureSpec)
+class TrapReaderTest extends JUnit4(TrapReaderSpec)
 
-object TrapCaptureSpec extends Specification {
+object TrapReaderSpec extends Specification {
 
   "TrapSectionReader" should {
 
@@ -80,11 +80,11 @@ object TrapCaptureSpec extends Specification {
       val tr = new TrapReader(0)
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
-      trap("name") must_== Some("Razor Spores (Elite)")
-      trap("level") must_== Some("1")
-      trap("xp") must_== Some("200")
-      trap("role") must_== Some("Elite Lurker")
-      trap("type") must_== Some("Hazard")
+      trap("base:name") must_== Some("Razor Spores (Elite)")
+      trap("base:level") must_== Some("1")
+      trap("base:xp") must_== Some("200")
+      trap("base:role") must_== Some("Elite Lurker")
+      trap("base:type") must_== Some("Hazard")
     }
 
     "handle partial head 1" in {
@@ -95,11 +95,11 @@ object TrapCaptureSpec extends Specification {
       val tr = new TrapReader(0)
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
-      trap("name") must_== Some("Angry Crowd")
-      trap("level") must_== Some("1")
-      trap("xp") must_== Some("100")
-      trap("role") must_== Some("Unspecified")
-      trap("type") must_== Some("Hazard")
+      trap("base:name") must_== Some("Angry Crowd")
+      trap("base:level") must_== Some("1")
+      trap("base:xp") must_== Some("100")
+      trap("base:role") must_== Some("Unspecified")
+      trap("base:type") must_== Some("Hazard")
     }
 
     "handle partial head 2" in {
@@ -110,11 +110,11 @@ object TrapCaptureSpec extends Specification {
       val tr = new TrapReader(0)
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
-      trap("name") must_== Some("Spiked Swinging Gate")
-      trap("level") must_== Some("1")
-      trap("xp") must_== Some("100")
-      trap("role") must_== Some("Unspecified")
-      trap("type") must_== Some("Trap")
+      trap("base:name") must_== Some("Spiked Swinging Gate")
+      trap("base:level") must_== Some("1")
+      trap("base:xp") must_== Some("100")
+      trap("base:role") must_== Some("Unspecified")
+      trap("base:type") must_== Some("Trap")
     }
 
     "handle flavor line" in {
@@ -139,7 +139,7 @@ object TrapCaptureSpec extends Specification {
       val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
 
       trap.sections must_== List(TrapSection(null, StyledText(List(TextBlock("SPAN","traplead",TextSegment.makeBold("Initiative"),TextSegment(" +5"))))))
-      trap("initiative") must_== Some("5")
+      trap("stat:initiative") must_== Some("5")
     }
 
     "handle description line" in {

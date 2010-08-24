@@ -29,13 +29,13 @@ import scala.collection.mutable.ListBuffer
 @RunWith(classOf[JUnitSuiteRunner])  // Needed to run test in IDEA
 class MonsterCaptureTest extends JUnit4(MonsterCaptureSpec)
 
-//TODO: Remove this file when no longer needed.
+//TODO DELETE: Remove this file when no longer needed.
 object MonsterCaptureSpec extends Specification {
-  var monster: Monster = null
+  var monster: MonsterOld = null
   var reader: BlockReader = null
 
   val ctx = beforeContext {
-    monster = new Monster(0)
+    monster = new MonsterOld(0)
     reader = new MonsterBuilder(monster)
   }
 
@@ -86,8 +86,8 @@ object MonsterCaptureSpec extends Specification {
       monster("RESIST") must_== Some("10 variable (1/encounter)")
       monster("ACTION POINTS") must_== Some("2")
       monster.auras mustNot beEmpty
-      monster.auras must contain(Monster.Aura("Aura name 1", "(Fire) aura 1; Some long description about the aura."))
-      monster.auras must contain(Monster.Aura("Aura name 2", "(Thunder) aura 2; Some long description about the aura."))
+      monster.auras must contain(MonsterOld.Aura("Aura name 1", "(Fire) aura 1; Some long description about the aura."))
+      monster.auras must contain(MonsterOld.Aura("Aura name 2", "(Thunder) aura 2; Some long description about the aura."))
     }
     "capture minion primary stat block" in {
       val xstb =(<P class="flavor"><B>Initiative</B> +7 <B>Senses</B> Perception +5; low-light vision<BR></BR><B>HP</B> 1; a missed attack never damages a minion.<BR></BR><B>AC</B> 22; <B>Fortitude</B> 20, <B>Reflex</B> 18, <B>Will</B> 18<BR></BR><B>Speed</B> 7</P>)
