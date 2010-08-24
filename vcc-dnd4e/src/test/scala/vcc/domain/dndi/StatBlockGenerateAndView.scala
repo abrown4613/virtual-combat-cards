@@ -16,44 +16,41 @@
  */
 package vcc.domain.dndi
 
-import java.awt.Dimension
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
 import swing.{Button, Action, MainFrame}
-import vcc.infra.xtemplate.{TemplateLoader, TemplateEngine}
-import org.xml.sax.InputSource
-import java.io.{FileInputStream, File}
+import java.io.{File}
+import vcc.dnd4e.view.dialog.FileChooserHelper
+import vcc.model.Registry
+import vcc.infra.xtemplate.{TemplateDataSource, TemplateLoader, TemplateEngine}
 
 object StatBlockGenerateAndView {
   val baseDir = new File("vcc-dnd4e/fs-wc")
+  val templateDir = new File(baseDir, "template")
   XHTMLPaneAgent.createInstance(baseDir)
   println("File exists: " + (baseDir.getAbsolutePath) + (if (baseDir.exists) " exists" else " not exists"))
 
-  val xhtmlPane = new XHTMLPane()
-  val reloadButton = new Button(Action("Regenerate template") {
-    this.regenerateTemplate()
-  })
-
-  val mainWindow = new MainFrame {
-    title = this.getClass.getSimpleName
-    contents = new MigPanel("fill", "[350]", "[40][500]") {
-      add(reloadButton, "wrap")
-      add(xhtmlPane, "growx, growy")
-    }
-    minimumSize = new Dimension(500, 600)
-  }
-
-  var monster: MonsterNew = null
+  var monster: DNDIObject = null
   var templateFile: File = null
 
   private val loader = CaptureTemplateEngine.getLoader()
 
-  def regenerateTemplate() {
-    monster.dump(System.out)
-    try {
-      val template = loader.load(new InputSource(new FileInputStream(templateFile)))
-      val xml = template.render(monster)
-      xhtmlPane.setDocumentFromText(xml.toString)
+  def loadMonster(file: File): DNDIObject = {
+    monster = try {
+      val xml = scala.xml.XML.loadFile(file)
+      DNDInsiderCapture.load(xml)
+    } catch {
+      case e =>
+        System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
+        null
+    }
+    monster
+  }
 
+  def regenerateTemplate() {
+    try {
+      val template = CaptureTemplateEngine.fetchClassTemplate(monster.clazz,templateDir)
+      val xml = template.render(monster.asInstanceOf[TemplateDataSource])
+      xhtmlPane.setDocumentFromText(xml.toString)
     } catch {
       case e =>
         e.printStackTrace
@@ -62,9 +59,31 @@ object StatBlockGenerateAndView {
     }
   }
 
+  val xhtmlPane = new XHTMLPane()
+  val reloadButton = new Button(Action("Regenerate template") {
+    this.regenerateTemplate()
+  })
+
+  lazy val loadMonsterButton = new Button(Action("Load monster") {
+    val fileOption: Option[File] = FileChooserHelper.chooseOpenFile(this.mainWindow.peer.getRootPane, null)
+    if (fileOption.isDefined && this.loadMonster(fileOption.get) != null) {
+      this.regenerateTemplate()
+    }
+  })
+
+
+  val mainWindow: MainFrame = new MainFrame {
+    title = "StatBlock Generator Test"
+    contents = new MigPanel("fill", "[250]", "[40][500]") {
+      add(loadMonsterButton, "split 2")
+      add(reloadButton, "wrap")
+      add(xhtmlPane, "growx, growy")
+    }
+  }
+
   def main(args: Array[String]) {
     org.apache.log4j.BasicConfigurator.configure();
-    if (args.length != 2) {
+    if (args.length != 1) {
       System.err.println("Please specify a a monster file and a template file.")
       exit
     }
@@ -75,25 +94,10 @@ object StatBlockGenerateAndView {
       exit()
     }
 
-    templateFile = new File(args(1))
-    if (!templateFile.exists) {
-      System.err.println("Must give the name of an existant file, you specified: " + templateFile.getAbsolutePath)
-      exit()
-    }
+    Registry.register("lastDirectory", file.getParentFile)
 
-    monster = try {
-      val xml = scala.xml.XML.loadFile(file)
-      val blocks = Parser.parseBlockElements(xml.child, true)
-      if (blocks != null && !blocks.isEmpty) {
-        val mReader = new MonsterReader(0)
-        val monster = mReader.process(blocks)
-        monster
-      } else null
-    } catch {
-      case e =>
-        System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
-        null
-    }
+    monster = loadMonster(file)
+
     if (monster != null) {
       mainWindow.visible = true
     } else {

@@ -31,14 +31,17 @@ import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 object MonsterImportService {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  private final val defReformat = Set("AC", "REFLEX", "WILL", "FORTITUDE")
+  //FIXME this is hardcoded for testing
+  private val templateDirectory = new java.io.File("fs-wc/template")
+
+  private final val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude")
   private final val reformatRE = """^\s*(\d+)\s*.*""".r
 
   def importObject(obj: DNDIObject) {
     obj match {
       case monster: Monster => importMonster(monster)
       case trap: Trap => importTrap(trap)
-      case _ => logger.warn("Dont have import procedure for object {}.", obj.clazz)
+      case _ => logger.warn("Dont have import procedure for object class={}.", obj.clazz)
     }
   }
 
@@ -49,11 +52,12 @@ object MonsterImportService {
 
     logger.debug("Load D&DI Trap: {}", dndiTrap)
     processMonsterFieldSet(trap, dndiTrap)
-    trap.trapClass.value = dndiTrap("TYPE").get
-    val xml = TrapStatBlockBuilder.generate(dndiTrap)
+    trap.trapClass.value = dndiTrap("base:type").get
+    val template = CaptureTemplateEngine.fetchClassTemplate(dndiTrap.clazz, templateDirectory)
+    val xml = template.render(dndiTrap)
     trap.statblock.value = xml.toString
     es.store(trap)
-    logger.info("Imported DNDI trap {} as MonsterEntity: {}", dndiTrap.id, trap.eid)
+    logger.info("Imported DNDI trap {} as TrapEntity: {}", dndiTrap.id, trap.eid)
   }
 
   def importMonster(dndiMonster: Monster) {
@@ -62,7 +66,9 @@ object MonsterImportService {
     val monster = MonsterEntity.newInstance(dndiMonster.id)
     logger.debug("Load D&DI Monster: {}", dndiMonster)
     processMonsterFieldSet(monster, dndiMonster)
-    val xml = MonsterStatBlockBuilder.generate(dndiMonster)
+
+    val template = CaptureTemplateEngine.fetchClassTemplate(dndiMonster.clazz, templateDirectory)
+    val xml = template.render(dndiMonster)
     monster.statblock.value = xml.toString
     es.store(monster)
     logger.info("Imported DNDI monster {} as MonsterEntity: {}", dndiMonster.id, monster.eid)
@@ -70,16 +76,16 @@ object MonsterImportService {
 
   private def processMonsterFieldSet(monster: MonsterEntity, dndiMonster: DNDIObject) = {
     val fieldMap = Map[String, Field[_]](
-      "NAME" -> monster.name,
-      "HP" -> monster.hp,
-      "AC" -> monster.ac,
-      "REFLEX" -> monster.reflex,
-      "WILL" -> monster.will,
-      "FORTITUDE" -> monster.fortitude,
-      "ROLE" -> monster.role,
-      "XP" -> monster.xp,
-      "INITIATIVE" -> monster.initiative,
-      "LEVEL" -> monster.level
+      "base:name" -> monster.name,
+      "stat:hp" -> monster.hp,
+      "stat:ac" -> monster.ac,
+      "stat:reflex" -> monster.reflex,
+      "stat:will" -> monster.will,
+      "stat:fortitude" -> monster.fortitude,
+      "base:role" -> monster.role,
+      "base:xp" -> monster.xp,
+      "stat:initiative" -> monster.initiative,
+      "base:level" -> monster.level
       )
     for ((key, field) <- fieldMap) {
       val v = dndiMonster(key)

@@ -19,10 +19,12 @@ package vcc.domain.dndi
 
 import scala.util.matching.Regex
 import scala.xml.{Node, NodeSeq, Text => XmlText, Elem}
-import vcc.domain.dndi.Monster.{Aura, PowerDescriptionSupplement}
+import vcc.domain.dndi.MonsterOld.{Aura, PowerDescriptionSupplement}
 import vcc.infra.xtemplate.TemplateDataSource
 
-object Monster {
+//TODO DELETE
+@deprecated("Use new monster")
+object MonsterOld {
 
   //Construction elements
   case class Aura(name: String, desc: String) extends StatBlockDataSource {
@@ -89,7 +91,7 @@ object Monster {
  * @param legacyPowers list of power that where not in their own power sections
  * @param powersByAction Powers that are in sections, this will include Auras moved from previous format
  */
-class MonsterNew(val id: Int,
+class Monster(val id: Int,
                  protected var attributes: Map[String, String],
                  val legacyPowers: List[Power],
                  val powersByAction: Map[ActionType.Value, List[Power]]
@@ -112,7 +114,7 @@ class MonsterNew(val id: Int,
 /**
  * Base monster load.
  */
-class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
+class MonsterOld(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   final val clazz = "monster"
 
@@ -127,8 +129,8 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
   import vcc.domain.dndi.Parser._
 
-  private var _auras: List[Monster.Aura] = Nil
-  private var _power: List[Monster.Power] = Nil
+  private var _auras: List[MonsterOld.Aura] = Nil
+  private var _power: List[MonsterOld.Power] = Nil
 
   def powers = _power
 
@@ -151,14 +153,14 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
     attributes = attributes+ (normAttr -> normValue)
   }
 
-  private[dndi] def addAura(name: String, desc: String): Monster.Aura = {
-    val a = new Monster.Aura(name, desc)
+  private[dndi] def addAura(name: String, desc: String): MonsterOld.Aura = {
+    val a = new MonsterOld.Aura(name, desc)
     _auras = _auras ::: List(a)
     a
   }
 
-  protected[dndi] def addPower(icons: Seq[Parser.IconType.Value], name: String, action: String, keywords: String): Monster.Power = {
-    val p = Monster.Power(icons, name, action, keywords)
+  protected[dndi] def addPower(icons: Seq[Parser.IconType.Value], name: String, action: String, keywords: String): MonsterOld.Power = {
+    val p = MonsterOld.Power(icons, name, action, keywords)
     _power = _power ::: List(p)
     p
   }
@@ -170,7 +172,9 @@ class Monster(val id: Int) extends DNDIObject with StatBlockDataSource {
 
 import Parser._
 
-class MonsterBuilder(monster: Monster) extends BlockReader {
+//TODO DELETE
+@deprecated("Use MonsterReader")
+class MonsterBuilder(monster: MonsterOld) extends BlockReader {
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
   final val reSecondary = """^Secondary Attack\s*(.*)\s*$""".r
@@ -179,7 +183,7 @@ class MonsterBuilder(monster: Monster) extends BlockReader {
     "Immune", "Resist", "Vulnerable",
     "Saving Throws", "Speed", "Action Points")
 
-  private var _lastPower: Monster.Power = null
+  private var _lastPower: MonsterOld.Power = null
 
   private var _powerSupplement: String = null
 

@@ -21,6 +21,8 @@ package vcc.domain.dndi
 import xml._
 import vcc.infra.text.{XHTMLConvertible, StyledText}
 
+
+//TODO DELETE
 /**
  * Provide information from an object to the StatBlock generators.
  */

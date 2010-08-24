@@ -21,7 +21,7 @@ import scala.xml.{Node, NodeSeq}
 import org.slf4j.LoggerFactory
 import vcc.domain.dndi.Parser.BlockElement
 
-
+//TODO Delete this one
 trait BlockReader {
   def processBlock(block: BlockElement): Boolean
 
@@ -35,36 +35,32 @@ object DNDInsiderCapture {
     if (xml == null) return null
 
     val id = getIdFromXML(xml)
-    if (id.isDefined) {
-      val blocks = Parser.parseBlockElements(xml.child, true)
-
-      val reader: BlockReader = getTypeFromXML(xml) match {
-        case Some("monster") => new MonsterBuilder(new Monster(id.get))
+    val clazz = getTypeFromXML(xml)
+    if (id.isDefined && clazz.isDefined) {
+      val reader: DNDIObjectReader[_] = clazz.get match {
+        case "monster" => new MonsterReader(id.get)
+        case "trap" => new TrapReader(id.get)
         case _ => null
       }
 
       if (reader != null) {
-        for (blk <- blocks) {
-          try {
-            reader.processBlock(blk)
-          } catch {
-            case e =>
-              logger.debug("Failed to process block: " + blk)
-              throw e
-          }
+        try {
+          val blocks = Parser.parseBlockElements(xml.child, true)
+          val m = reader.read(blocks)
+          logger.debug("Got entity: {}", m)
+          m
+        } catch {
+          case e =>
+            logger.debug("Failed to import class='{}' id='{}'.", Array(id.get, clazz.get), e)
+            //THINK Should this be thrown
+            throw e
         }
-        reader.getObject
       } else {
-        //TODO Alternative strategy transition till we have new block
-        getTypeFromXML(xml) match {
-          case Some("trap") =>
-            val tr = new TrapReader(id.get)
-            tr.process(blocks)
-          case _ => null
-        }
+        logger.debug("Reader for class='{}' not found.", Array(clazz.get), null)
+        null
       }
     } else {
-      //Id is not defined, bad data from plugin or sender
+      //Id or class not defined, bad data from plugin or sender
       return null
     }
   }

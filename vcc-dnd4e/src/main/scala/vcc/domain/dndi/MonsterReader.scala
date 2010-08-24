@@ -1,5 +1,5 @@
 /*
-  * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+   * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,7 +97,8 @@ object SomePowerDefinition {
         if (keywords.isDefined) {
           names match {
             case Key(name) :: Nil => LegacyPowerDefinition(icons, name.trim, null, keywords.get, null)
-            case Key(name) :: Text(actionUsage) :: Nil => LegacyPowerDefinition(icons, name.trim, actionUsage.trim, keywords.get, null)
+            case Key(name) :: Text(actionUsage) :: Nil =>
+              LegacyPowerDefinition(icons, name.trim, actionUsage.trim, keywords.get, null)
             case _ => null
           }
         } else null // Something failed on the keywords parse
@@ -116,7 +117,7 @@ object SomePowerDefinition {
  * Extracts the correct action from the H2 action type headers
  */
 object SectionActionType {
-  private final val normalizedActionMap = ActionType.values.map(x => (x.toString.toLowerCase + "s", x)).toMap
+  private val normalizedActionMap = ActionType.values.map(x => (x.toString.toLowerCase + "s", x)).toMap
 
   def unapply(parts: List[Part]): Option[ActionType.Value] = {
     parts match {
@@ -165,14 +166,14 @@ object PowerHeaderParts {
 /**
  * Reads DNDI monster entries in both MM3 and previous format
  */
-class MonsterReader(id: Int) {
+class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
 
   private final val primaryStats = Set("Initiative", "Senses", "HP", "Bloodied",
     "AC", "Fortitude", "Reflex", "Will",
     "Immune", "Resist", "Vulnerable",
-    "Saving Throws", "Speed", "Action Points")
+    "Saving Throws", "Speed", "Action Points", "Perception")
 
 
   private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
@@ -245,13 +246,13 @@ class MonsterReader(id: Int) {
         }
         val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-        val (stats, whatever) = processPrimaryBlock(partsToPairs(trimParts(parts)))
+        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts))
         stream.advance()
-        (true, stats, Seq())
+        (true, stats, whatever)
       case Block("P#flavor", parts) =>
         val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts)))
         stream.advance()
-        (false, stats, auras)
+        (false, normalizeLegacySenses(stats), auras)
       case _ =>
         throw new UnexpectedBlockElementException("Expected power Table, or P#flavor block; found:", stream.head)
     }
@@ -306,7 +307,7 @@ class MonsterReader(id: Int) {
     result.toList
   }
 
-  def process(blocks: List[BlockElement]): MonsterNew = {
+  def process(blocks: List[BlockElement]): Monster = {
     val stream = new TokenStream[BlockElement](blocks, new MonsterBlockStreamRewrite())
 
     stream.advance()
@@ -326,7 +327,7 @@ class MonsterReader(id: Int) {
       powersActionMap = powersActionMap +
               (ActionType.Trait -> (powersActionMap.getOrElse(ActionType.Trait, Nil) ::: aurasAsTraits))
     }
-    new MonsterNew(id,
+    new Monster(id,
       CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
       legacyPowers, powersByAction.toMap)
   }
@@ -382,6 +383,33 @@ class MonsterReader(id: Int) {
           StyledText.singleBlock("P", "flavorIndent", desc))
     }
   }
+
+  final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
+  final private val senseMatcher = """^.*;\s+(.+)$""".r
+
+  /**
+   * Normalize perception and senses from a MM<3 senses expression. Normally in format: 'Perception +15; sense'. This
+   * will split the senses and perception.
+   * @param inMap The string from the file
+   * @return Map with perception key and possibly a senses key
+   */
+  def normalizeLegacySenses(inMap: Map[String, String]): Map[String, String] = {
+    if (inMap.isDefinedAt("senses")) {
+      val senses = inMap("senses").toLowerCase
+      val per: String = senses match {
+        case `perceptionMatcher`(value) => Parser.TrimProcess(value)
+        case _ => "0"
+      }
+      val sense: String = senses match {
+        case `senseMatcher`(value) => value
+        case _ => null
+      }
+      val addMap = if (sense != null) Map("perception" -> per, "senses" -> sense) else Map("perception" -> per)
+      inMap - ("senses") ++ addMap
+    } else
+      inMap
+  }
+
 
   private def trimParts(parts: List[Part]): List[Part] = parts.map(p => p.transform(Parser.TrimProcess))
 

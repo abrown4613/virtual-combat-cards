@@ -20,7 +20,7 @@ package vcc.app.dndi
 
 import vcc.infra.diskcache._
 import java.io.{File, FileInputStream}
-import vcc.domain.dndi.{DNDIObject, Trap, Monster, DNDInsiderCapture}
+import vcc.domain.dndi.{DNDIObject, DNDInsiderCapture}
 import xml.{XML, Node}
 import java.lang.String
 import collection.immutable.Map
@@ -39,7 +39,7 @@ object CaptureHoldingArea {
   }
 
   object XMLLoader extends DiskCacheBuilder[DNDIObjectCacheEntry] {
-    def loadFromFile(file: java.io.File): DNDIObjectCacheEntry = {
+    def loadFromFile(file: File): DNDIObjectCacheEntry = {
       try {
         val rawXML = DNDInsiderCapture.pluginInputStreamAsFilteredString(new FileInputStream(file))
         val xml = scala.xml.XML.loadString(rawXML)
@@ -56,7 +56,7 @@ object CaptureHoldingArea {
   }
 
   class DNDIObjectCacheEntry(val dndiObj: DNDIObject, val node: Node) extends DiskCacheable {
-    def saveToCache(file: java.io.File): Boolean = {
+    def saveToCache(file: File): Boolean = {
       XML.save(file.getAbsolutePath, node, "UTF-8")
       file.exists && file.isFile && file.canRead
     }
@@ -73,7 +73,7 @@ object CaptureHoldingArea {
   private var observers: List[CaptureHoldingObserver[DNDIObject]] = Nil
 
   private val diskCache = new DiskCache[DNDIObjectCacheEntry]({
-    val base = new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value, "dndicache")
+    val base = new File(vcc.dnd4e.Configuration.baseDirectory.value, "dndicache")
     if (!base.exists) base.mkdirs()
     base
   }, XMLLoader)

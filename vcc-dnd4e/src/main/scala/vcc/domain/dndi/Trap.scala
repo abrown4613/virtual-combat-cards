@@ -22,41 +22,51 @@ import util.matching.Regex
 import vcc.domain.dndi.Parser.{HeaderBlock, Icon, Break, Emphasis, Key, NonBlock, Text, Block, BlockElement}
 import collection.Seq
 import java.lang.String
+import xml.NodeSeq
+import vcc.infra.xtemplate.TemplateDataSource
 
 /**
  *  Represents the capture DNDI Trap
  */
 class Trap(val id: Int, var attributes: Map[String, String], val sections: List[TrapSection])
-        extends DNDIObject with StatBlockDataSource {
+        extends DNDIObject with TemplateDataSource {
   final val clazz = "trap"
 
-  def extractGroup(group: String): Seq[StatBlockDataSource] = {
-    if(group.toLowerCase() == "sections") sections.toSeq
-    else Seq()
-  }
+  def templateVariable(key: String): Option[String] = apply(key)
 
-  def extract(string: String): Option[String] = apply(string)
+  def templateInlineXML(key: String): NodeSeq = null
+
+  def templateGroup(key: String): List[TemplateDataSource] = {
+    if(key.toLowerCase() == "sections") sections
+    else Nil
+  }
 }
 
-case class TrapSection(header: String, text: StyledText) extends StatBlockDataSource {
+case class TrapSection(header: String, text: StyledText) extends TemplateDataSource {
 
-  def extractGroup(group: String): Seq[StatBlockDataSource] = Seq()
+  /**
+   * Helper funtion to make null into None, and other values to Some
+   * @param tgt What should be wrapped in an option
+   */
+  protected def wrapInOption[T](tgt: T): Option[T] = if (tgt != null) Some(tgt) else None
 
-  def extract(key: String): Option[String] = wrapInOption(key.toLowerCase() match {
+  def templateGroup(group: String): List[TemplateDataSource] = Nil
+
+  def templateVariable(key: String): Option[String] = wrapInOption(key.toLowerCase() match {
       case "header" => header
       case _ => null
     })
 
-  override def extractRawXHTML(key: String):Option[StyledText] = wrapInOption(key.toLowerCase() match {
-    case "text" => text
-    case _ => null
-  })
+  def templateInlineXML(key: String): NodeSeq = key.toLowerCase() match {
+    case "text" => text.toXHTML()
+    case _ => Nil
+  }
 }
 
 /**
  * TrapReader is a TokenStream processor that will load a Trap from the Token Stream.
  */
-class TrapReader(val id: Int) {
+class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private var attributes = Map[String, String](
     "name" -> "Unknown",
     "hp" -> "9999",
@@ -163,6 +173,6 @@ class TrapReader(val id: Int) {
     }) {
 
     }
-    new Trap(id, attributes, secs.reverse)
+    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), secs.reverse)
   }
 }

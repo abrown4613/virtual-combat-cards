@@ -105,10 +105,6 @@ object MonsterReaderSpec extends Specification {
     }
     "STR block MM3" in {
       //<P class="flavor alt"><B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
-//TODO Clean this
-//      val xml = <P class="flavor alt"><B>Skills</B> Bluff +8, Stealth +9, Thievery +9<BR/> <B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
-//      val blk = Parser.parseBlockElement(xml,true)
-//      println("Block: "+ blk)
       val stream = new TokenStream[BlockElement](List(Block("P#flavor alt", List(Key("Skills"), Text(" Bluff +8, Stealth +9, Thievery +9"), Break(),
         Text(" "), Key("Str"), Text(" 19 (+10)    "), Key("Dex"), Text(" 19 (+10)     "), Key("Wis"), Text(" 15 (+8)"), Break(),
         Key("Con"), Text(" 20 (+11)        "), Key("Int"), Text(" 8 (+5)    "), Key("Cha"), Text(" 17 (+9)")))))
@@ -145,7 +141,8 @@ object MonsterReaderSpec extends Specification {
       stream.advance() must beFalse // Be sure it move ahead
       isMM3 must beFalse
       val expects = Map(
-        "senses" -> "Perception +12; low-light vision",
+        "senses" -> "low-light vision",
+        "perception" -> "12",
         "hp" -> "360",
         "ac" -> "23",
         "reflex" -> "19",
@@ -194,6 +191,7 @@ object MonsterReaderSpec extends Specification {
         "reflex" -> "20",
         "saving throws" -> "2",
         "speed" -> "6",
+        "perception" -> "15",
         "resist" -> "5 necrotic")
       for ((k, v) <- expects) {
         map must haveKey(k)
@@ -389,6 +387,35 @@ object MonsterReaderSpec extends Specification {
     }
   }
 
+  "MonsterReader.normalizeLegacySenses" should {
+
+    "leave other unchanged" in {
+      val senses = Map("hp" -> "100", "ac" -> "25")
+      val norm = reader.normalizeLegacySenses(senses)
+      norm must_== senses
+    }
+    "normalize broken Senses" in {
+      val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "; low-light vision"))
+      norm must_== Map("hp" -> "100", "perception" -> "0", "senses" -> "low-light vision")
+    }
+    "normalize Senses with two modes" in {
+      val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10; blindsight 10, tremorsense 20"))
+      norm must_== Map("hp" -> "100", "perception" -> "10", "senses" -> "blindsight 10, tremorsense 20")
+    }
+    "normalize Senses with one modes" in {
+      val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10; darkvision"))
+      norm must_== Map("hp" -> "100", "perception" -> "10", "senses" -> "darkvision")
+    }
+    "normalize Senses with one modes, negative perception" in {
+      val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception -10; darkvision"))
+      norm must_== Map("hp" -> "100", "perception" -> "-10", "senses" -> "darkvision")
+    }
+    "normalize Senses with no modes" in {
+      val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10"))
+      norm must_== Map("hp" -> "100", "perception" -> "10")
+      norm mustNot haveKey("senses")
+    }
+  }
   /*
   * This is a conditional test that will iterate through all cached entris in a directory.
   */

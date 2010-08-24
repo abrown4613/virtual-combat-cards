@@ -18,6 +18,8 @@
 package vcc.domain.dndi
 
 import vcc.infra.xtemplate.{FunctionTemplateFormatter, TemplateLoader, TemplateEngine}
+import org.xml.sax.InputSource
+import java.io.{FileInputStream, File}
 
 object CaptureTemplateEngine {
   private[dndi] val engine = new TemplateEngine()
@@ -37,4 +39,9 @@ object CaptureTemplateEngine {
    */
   def getLoader() = loader
 
+  //TODO fetchTemplate caching
+  //FIXME this is just a very quick patch
+  def fetchClassTemplate(clazz:String, templateDirectory: File) = {
+    loader.load(new InputSource(new FileInputStream(new File(templateDirectory,clazz + ".xtmpl"))))
+  }
 }

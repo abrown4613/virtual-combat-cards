@@ -86,7 +86,7 @@ object MonsterDataSourceSpec extends Specification with Mockito {
     val mockLegacy = mock[List[Power]]
     val mockPowerGroup = mock[List[Power]]
     val mockAttribute = mock[Map[String, String]]
-    val monster = new MonsterNew(10, mockAttribute, mockLegacy, Map(ActionType.Standard -> mockPowerGroup))
+    val monster = new Monster(10, mockAttribute, mockLegacy, Map(ActionType.Standard -> mockPowerGroup))
 
     "return an attribute" in {
       //Should be case insentive

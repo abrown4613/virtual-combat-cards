@@ -53,14 +53,17 @@
                         <t:ifdefined id="stat:immune">
                             <b>Immune</b>
                             <t:data id="stat:immune"/>;
+                            <br/>
                         </t:ifdefined>
                         <t:ifdefined id="stat:resist">
                             <b>Resist</b>
                             <t:data id="stat:resist"/>;
+                            <br/>
                         </t:ifdefined>
                         <t:ifdefined id="stat:vulnerable">
                             <b>Vulnerable</b>
                             <t:data id="stat:vulnerable"/>
+                            <br/>
                         </t:ifdefined>
                     </td>
                 </tr>
@@ -121,25 +124,25 @@
                 </t:ifdefined>
                 <b>Str</b>
                 <t:data id="stat:str"/>
-                &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+                &#160;&#160;&#160;
                 <b>Dex</b>
                 <t:data id="stat:dex"/>
-                &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+                &#160;&#160;&#160;
                 <b>Wis</b>
                 <t:data id="stat:wis"/>
                 <br/>
                 <b>Con</b>
                 <t:data id="stat:con"/>
-                &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+                &#160;&#160;&#160;
                 <b>Int</b>
                 <t:data id="stat:int"/>
-                &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+                &#160;&#160;&#160;
                 <b>Cha</b>
                 <t:data id="stat:cha"/>
             </p>
             <p class="flavor">
                 <b>Alignment</b>
-                <t:data id="stat:alignment"/>&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+                <t:data id="stat:alignment"/>&#160;&#160;&#160;
                 <b>Languages</b>
                 <t:data id="stat:languages"/>
                 <t:ifdefined id="stat:equipment">
