@@ -17,78 +17,86 @@
 //$Id$
 package vcc.dnd4e.view.dialog
 
-import javax.swing.{JComponent,JFileChooser,JOptionPane}
-import javax.swing.filechooser.{FileFilter,FileNameExtensionFilter}
+import javax.swing.{JComponent, JFileChooser, JOptionPane}
+import javax.swing.filechooser.{FileFilter, FileNameExtensionFilter}
 import java.io.File
 import vcc.model.Registry
-import vcc.dnd4e.{Configuration=>SystemConfiguration}
+import vcc.dnd4e.{Configuration => SystemConfiguration}
+
 /**
- * Series of utility methods for creating dailogs
- * 
+ * Series of utility methods for creating File dialogs.
  */
 object FileChooserHelper {
-  
+
   /**
    * Filter files that are party. 
    */
-  val partyFilter=new javax.swing.filechooser.FileNameExtensionFilter("XML Files","peml","xml")
-  
-  val characterBuilderFilter=new javax.swing.filechooser.FileNameExtensionFilter("Character Builder Files","dnd4e")
+  val partyFilter = new FileNameExtensionFilter("XML Files", "peml", "xml")
 
-  protected def normalizeFileName(file:File,filter:FileFilter):File = {
+  /**
+   * Filter for DND4E file (.dnd4e)
+   */
+  val characterBuilderFilter = new FileNameExtensionFilter("Character Builder Files", "dnd4e")
+
+  protected def normalizeFileName(file: File, filter: FileFilter): File = {
     filter match {
-      case `partyFilter` => 
-        var filename=file.getAbsolutePath
-        if(!filename.endsWith(".xml") && !filename.endsWith(".peml")) 
-          new File(filename+".peml")
+      case `partyFilter` =>
+        val filename = file.getAbsolutePath
+        if (!filename.endsWith(".xml") && !filename.endsWith(".peml"))
+          new File(filename + ".peml")
         else file
     }
   }
-  
-  protected def confirmOverwrite(file:File):Option[File] = {
-    if(file.exists) {
-      var res=JOptionPane.showConfirmDialog(
-        null,"Are you sure you want to overwrite "+file.getAbsolutePath+"?",
+
+  protected def confirmOverwrite(file: File): Option[File] = {
+    if (file.exists) {
+      var res = JOptionPane.showConfirmDialog(
+        null, "Are you sure you want to overwrite " + file.getAbsolutePath + "?",
         "Overwrite File?", JOptionPane.YES_NO_OPTION)
-      if(res== JOptionPane.YES_OPTION) Some(file)
+      if (res == JOptionPane.YES_OPTION) Some(file)
       else None
-    } else 
+    } else
       Some(file)
   }
 
-  private def getWorkDirectory():File = {
+  private def getWorkDirectory(): File = {
     val lastDir = Registry.get[File]("lastDirectory")
-    if(lastDir.isDefined) lastDir.get
+    if (lastDir.isDefined) lastDir.get
     else SystemConfiguration.baseDirectory.value
   }
+
   /**
-   * Open a Save Dialog, get file, and normlize name to add extension.
-   * Return None on a cancel.
+   * Open a Save Dialog, get file, and normalize name to add extension.
+   * @param over Component to place over (for MainFrame, use frame.peer.getRootPane)
+   * @param filter Optional file filter.
+   * @return Return None on a cancel, Some(file) otherwise
    */
-  def chooseSaveFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(getWorkDirectory)
-    if(filter!=null) fileDiag.setFileFilter(filter)
-    
-    val result=fileDiag.showSaveDialog(over)
-    if(result==JFileChooser.APPROVE_OPTION) {
-      var file=normalizeFileName(fileDiag.getSelectedFile,filter)
-      Registry.register("lastDirectory",fileDiag.getSelectedFile.getParentFile)
+  def chooseSaveFile(over: JComponent, filter: FileFilter): Option[java.io.File] = {
+    val fileDiag = new JFileChooser(getWorkDirectory)
+    if (filter != null) fileDiag.setFileFilter(filter)
+
+    val result = fileDiag.showSaveDialog(over)
+    if (result == JFileChooser.APPROVE_OPTION) {
+      val file = normalizeFileName(fileDiag.getSelectedFile, filter)
+      Registry.register("lastDirectory", fileDiag.getSelectedFile.getParentFile)
       confirmOverwrite(file)
-    } else 
+    } else
       None
   }
 
   /**
-   * Open a Open Dialog, get selection. 
-   * Return None on a cancel.
+   * Open a file Open Dialog, get selection.
+   * @param over Component to place over (for MainFrame, use frame.peer.getRootPane)
+   * @param filter Optional file filter.
+   * @return Return None on a cancel, Some(file) otherwise
    */
-  def chooseOpenFile(over:JComponent,filter:FileFilter):Option[java.io.File] = {
-    val fileDiag= new JFileChooser(getWorkDirectory)
-    if(filter!=null) fileDiag.setFileFilter(filter)
-    
-    val result=fileDiag.showOpenDialog(over)
-    if(result==JFileChooser.APPROVE_OPTION) {
-      Registry.register("lastDirectory",fileDiag.getSelectedFile.getParentFile)
+  def chooseOpenFile(over: JComponent, filter: FileFilter): Option[java.io.File] = {
+    val fileDiag = new JFileChooser(getWorkDirectory)
+    if (filter != null) fileDiag.setFileFilter(filter)
+
+    val result = fileDiag.showOpenDialog(over)
+    if (result == JFileChooser.APPROVE_OPTION) {
+      Registry.register("lastDirectory", fileDiag.getSelectedFile.getParentFile)
       Some(fileDiag.getSelectedFile)
     } else
       None
