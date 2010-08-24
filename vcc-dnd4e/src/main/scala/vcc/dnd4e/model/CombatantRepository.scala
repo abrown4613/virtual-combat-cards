@@ -22,8 +22,7 @@ import common.CombatantType
 import vcc.dnd4e.domain.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition}
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
-import vcc.dnd4e.view.compendium.SimpleStatBlockBuilder
-import vcc.domain.dndi.StatBlockDataSource
+import vcc.infra.xtemplate.TemplateDataSource
 
 case class CombatantEntityID(ceid: Int)
 
@@ -31,7 +30,8 @@ case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinit
   override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
 }
 
-class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity) extends StatBlockDataSource {
+//FIXME, extends vcc.infra.xtemplate.TemplateDataSource to allow new stat block
+class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity)  {
   import vcc.infra.fields._
 
   private def valueExtract[_](v: Field[_]): Option[String] = {
@@ -75,7 +75,7 @@ class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity) exten
     }
   }
 
-  def extractGroup(group: String): Seq[StatBlockDataSource] = Nil
+  def extractGroup(group: String): Seq[TemplateDataSource] = Nil
 
 }
 
@@ -95,7 +95,9 @@ object CombatantEntity {
     val statBlock = if (comp.statblock.isDefined) {
       comp.statblock.value
     } else {
-      SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+      //FIXME need to generate statblock
+      //SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
+      "<html><body>PENDING IMPLEMENTATION</body></html>"
     }
     CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
   }
