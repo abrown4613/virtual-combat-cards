@@ -159,7 +159,7 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "User Interface Elements") {
       vcc.dnd4e.view.compendium.DNDICaptureMonitor
-      XHTMLPaneAgent.createInstance(new File(UpdateManager.getInstallDirectory, "fs-wc"))
+      XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
       XHTMLPaneAgent
     }
 
