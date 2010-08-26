@@ -20,6 +20,10 @@ package vcc.domain.dndi
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import vcc.dnd4e.Configuration
+import java.io.File
+import vcc.infra.xtemplate.Template
+import vcc.infra.diskcache.FileUpdateAwareLoader
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CaptureTemplateEngineTest extends JUnit4(CaptureTemplateEngineSpec)
@@ -38,4 +42,22 @@ object CaptureTemplateEngineSpec extends Specification {
       "have formatter " + fmt in {CaptureTemplateEngine.engine.hasFormatter(fmt) must beTrue}
     }
   }
+
+  "CaptureTemplateEngine as a TemplateStore" should {
+    "get correct file from classname" in {
+      val bo = CaptureTemplateEngine.getObjectUpdateAwareLoader("monster")
+      bo match {
+        case fbo: FileUpdateAwareLoader[Template] => fbo.file must_== new File(new File(Configuration.dataDirectory,"template"),"monster.xtmpl")
+        case _  => fail("Should be a file backed object")
+      }
+    }
+
+    "provide static template error template if something goes wrong" in {
+      val bo = CaptureTemplateEngine.getObjectUpdateAwareLoader("no-there")
+      val to = bo.getCurrent
+      to.isDefined must beTrue
+      to.get.render(null).toString.startsWith("<html><body>Failed to load template") must beTrue
+    }
+  }
+
 }

@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -25,6 +24,8 @@ import vcc.util.swing.forms._
 
 import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
+import vcc.domain.dndi.CaptureTemplateEngine
+import vcc.infra.xtemplate.MapDataSource
 
 class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
   title = "Edit Combatant: " + (if (combatant.name.isValid) combatant.name.storageString else "")
@@ -40,10 +41,10 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
       }
   }
 
-  private val f = new Form(null)
+  private val form = new Form(null)
 
   private val saveButton: Button = new Button(Action("Save & Close") {
-    combatant.loadFromMap(f.extractMap + ("text:statblock" -> statBlock.text))
+    combatant.loadFromMap(form.extractMap + ("text:statblock" -> statBlock.text))
     if (combatant.isValid) {
       if (Compendium.activeRepository.store(combatant)) {
         // Ok
@@ -58,9 +59,9 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
     this.dispose()
   })
 
-  f.setChangeAction(field => {
-    saveButton.enabled = f.isValid
-    generateAction.enabled = f.isValid
+  form.setChangeAction(field => {
+    saveButton.enabled = form.isValid
+    generateAction.enabled = form.isValid
     if (field.id == combatant.name.id) title = "Edit Combatant: " + field.storageString
   })
 
@@ -95,23 +96,21 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
           }) :::
           List(("Comment", combatant.comment))
 
-  fs.foreach(t => new FormTextField(t._1, t._2, f))
+  fs.foreach(t => new FormTextField(t._1, t._2, form))
 
   private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
-      //FIXME need to generate statblock
-      //SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
-      statBlock.text = "<html><body>PENDING IMPLEMENTATION</body></html>"
-              // SimpleStatBlockBuilder.generate(new FormFieldStatBlockSource(f)).toString
+      val template = CaptureTemplateEngine.fetchClassTemplate(combatant.classID.shortClassName)
+      statBlock.text = template.render(new MapDataSource(form.extractMap,Map(),Map())).toString
       statBlock.sync()
     }
   }
   private val statBlock: XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
   private val fc = new MigPanelFormContainter("[50][200,fill][250]")
 
-  f.layout(fc)
-  generateAction.enabled = f.isValid
+  form.layout(fc)
+  generateAction.enabled = form.isValid
 
   private val tabPane = new TabbedPane {
     pages += new TabbedPane.Page("Data", fc)

@@ -329,7 +329,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
     }
     new Monster(id,
       CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
-      legacyPowers, powersByAction.toMap)
+      legacyPowers, powersActionMap.toMap)
   }
 
   private[dndi] def processTailBlock(stream: TokenStream[BlockElement]): Map[String, String] = {

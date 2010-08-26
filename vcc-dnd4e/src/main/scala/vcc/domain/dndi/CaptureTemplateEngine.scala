@@ -17,13 +17,17 @@
 //$Id$
 package vcc.domain.dndi
 
-import vcc.infra.xtemplate.{FunctionTemplateFormatter, TemplateLoader, TemplateEngine}
 import org.xml.sax.InputSource
-import java.io.{FileInputStream, File}
+import vcc.dnd4e.Configuration
+import vcc.infra.xtemplate.{Template, FunctionTemplateFormatter, TemplateLoader, TemplateEngine}
+import org.slf4j.LoggerFactory
+import java.io.{StringReader, FileInputStream, File}
+import vcc.infra.diskcache.{UpdateableObjectStore, FileUpdateAwareLoader, UpdateAwareLoader, UpdateableObjectStoreResolver}
 
-object CaptureTemplateEngine {
+object CaptureTemplateEngine extends UpdateableObjectStoreResolver[String, Template] {
   private[dndi] val engine = new TemplateEngine()
   private val loader = new TemplateLoader("t", engine)
+  private val logger = LoggerFactory.getLogger("domain")
 
   val formatterCSV = new FunctionTemplateFormatter("csv", s => s.formatted("%s, "))
   val formatterSemiCSV = new FunctionTemplateFormatter("scsv", s => s.formatted("%s; "))
@@ -37,11 +41,26 @@ object CaptureTemplateEngine {
   /**
    * Get TemplateLoader
    */
-  def getLoader() = loader
-
-  //TODO fetchTemplate caching
-  //FIXME this is just a very quick patch
-  def fetchClassTemplate(clazz:String, templateDirectory: File) = {
-    loader.load(new InputSource(new FileInputStream(new File(templateDirectory,clazz + ".xtmpl"))))
+  def getObjectUpdateAwareLoader(clazz: String): UpdateAwareLoader[Template] = {
+    val file = new File(templateDirectory, clazz + ".xtmpl")
+    new FileUpdateAwareLoader(file, loadTemplateFromFile(_))
   }
+
+  private[dndi] def loadTemplateFromFile(file : File): Option[Template] = {
+    val t:Template = try {
+      loader.load(new InputSource(new FileInputStream(file)))
+    } catch {
+      case e =>
+        logger.error("Failed to load template from file = {}",Array(file.getAbsolutePath),e)
+        val reader = new StringReader("<html><body>Failed to load template "+file.getAbsolutePath +"; reason: "+e.getMessage+"</body></html>")
+        loader.load(new InputSource(reader))
+    }
+    if(t != null) Some(t) else None
+  }
+
+  private val templateDirectory: File = new File(Configuration.dataDirectory, "template")
+
+  private val store = new UpdateableObjectStore[String,Template](this)
+
+  def fetchClassTemplate(clazz: String) = store.fetch(clazz).get
 }

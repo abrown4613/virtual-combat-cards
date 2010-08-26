@@ -31,9 +31,6 @@ import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 object MonsterImportService {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  //FIXME this is hardcoded for testing
-  private val templateDirectory = new java.io.File("fs-wc/template")
-
   private final val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude")
   private final val reformatRE = """^\s*(\d+)\s*.*""".r
 
@@ -53,7 +50,7 @@ object MonsterImportService {
     logger.debug("Load D&DI Trap: {}", dndiTrap)
     processMonsterFieldSet(trap, dndiTrap)
     trap.trapClass.value = dndiTrap("base:type").get
-    val template = CaptureTemplateEngine.fetchClassTemplate(dndiTrap.clazz, templateDirectory)
+    val template = CaptureTemplateEngine.fetchClassTemplate(dndiTrap.clazz)
     val xml = template.render(dndiTrap)
     trap.statblock.value = xml.toString
     es.store(trap)
@@ -67,7 +64,7 @@ object MonsterImportService {
     logger.debug("Load D&DI Monster: {}", dndiMonster)
     processMonsterFieldSet(monster, dndiMonster)
 
-    val template = CaptureTemplateEngine.fetchClassTemplate(dndiMonster.clazz, templateDirectory)
+    val template = CaptureTemplateEngine.fetchClassTemplate(dndiMonster.clazz)
     val xml = template.render(dndiMonster)
     monster.statblock.value = xml.toString
     es.store(monster)
