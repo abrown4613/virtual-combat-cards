@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.datastore.naming._
@@ -109,6 +108,7 @@ class CompendiumRepository(dsuri: DataStoreURI) extends StartupStep {
       logger.debug("Deleted entity {}", eid)
       characterSummaries -= eid
       monsterSummaries -= eid
+      trapSummaries -= eid
       notifyObservers()
     } else {
       logger.warn("Failed to delete entity {}", eid)

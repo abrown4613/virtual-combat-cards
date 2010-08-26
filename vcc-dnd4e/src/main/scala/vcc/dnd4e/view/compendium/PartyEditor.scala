@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -30,6 +29,19 @@ import vcc.model.Registry
 import vcc.dnd4e.view.helper.PartyLoader
 import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
+
+object ExperienceCalculator {
+  private val incrementList = List(25, 50, 100, 200, 400, 950, 2000)
+
+  def levelFromXP(xp: Int): Int = {
+    def levelFromXP_r(x: Int, l: Int, il: List[Int]): Int = {
+      if (x > 4 * il.head) levelFromXP_r(x - 4 * il.head, l + 4, if (il.tail == Nil) List(il.head * 2) else il.tail)
+      else l + ((x - 1) / il.head)
+    }
+    if (xp <= 100) 1
+    else levelFromXP_r(xp - 100, 2, incrementList)
+  }
+}
 
 class PartyEditor(director: PanelDirector) extends Frame {
   class PartyTableEntry(val eid: EntityID, val name: String, var alias: String, var id: String, var qty: Int, val xp: Int) extends Ordered[PartyTableEntry] {
@@ -73,9 +85,8 @@ class PartyEditor(director: PanelDirector) extends Frame {
     }
   }
 
-  title = "Edit Party"
+  title = "Edit/Encounter Party"
   iconImage = IconLibrary.MetalD20.getImage
-
 
   private val partyTableModel = new ProjectionTableModel[PartyTableEntry](PartyTableEntryProject)
   private val table = new RowProjectionTable[PartyTableEntry]() {
@@ -91,6 +102,8 @@ class PartyEditor(director: PanelDirector) extends Frame {
 
   private val compendiumEntries = new CompendiumEntitySelectionPanel
   private val totalXPLabel = new Label()
+  private val partySizeCombo = new ComboBox((1 to 10).toSeq)
+  partySizeCombo.selection.item = 5
   recalculateXP(Nil)
 
   private def entitySummaryToPartyEntry(es: EntitySummary): PartyTableEntry =
@@ -139,8 +152,10 @@ class PartyEditor(director: PanelDirector) extends Frame {
     add(removeButton, "growx")
     add(clearAllButton, "growx,wrap")
     add(new MigPanel("fill,ins 0") {
-      add(collapseCheckBox, "")
-      add(totalXPLabel, "wrap, align right")
+      add(new Label("Party Size:"), "split 3")
+      add(partySizeCombo, "")
+      add(totalXPLabel, "gap 20px, align right, wrap")
+      add(collapseCheckBox, "wrap")
       add(new ScrollPane(table), "span 2,grow")
     }, "grow")
   }
@@ -158,11 +173,14 @@ class PartyEditor(director: PanelDirector) extends Frame {
 
   // Listen logic
 
-  listenTo(collapseCheckBox)
+  listenTo(collapseCheckBox, partySizeCombo.selection)
 
   reactions += {
     case ButtonClicked(this.collapseCheckBox) =>
       partyTableModel.content = compressEntries(partyTableModel.content)
+    case SelectionChanged(this.partySizeCombo) =>
+      fireQuantityChange()
+
   }
 
   private def doSave() {
@@ -225,7 +243,8 @@ class PartyEditor(director: PanelDirector) extends Frame {
 
   private def recalculateXP(pml: Seq[PartyTableEntry]) {
     val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _)
-    totalXPLabel.text = "Total XP: " + xp
+    val level = ExperienceCalculator.levelFromXP(xp / partySizeCombo.selection.item)
+    totalXPLabel.text = "Total XP: " + xp + " Level: " + level
   }
 
 }

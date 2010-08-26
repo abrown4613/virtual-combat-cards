@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -25,10 +24,7 @@ import vcc.util.swing._
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-import vcc.infra.datastore.naming.{EntityID, DataStoreURI}
-import vcc.infra.datastore.DataStore
 import vcc.dnd4e.domain.compendium._
-import vcc.model.Registry
 
 object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] {
   val columns: List[(String, java.lang.Class[_])] = List(
@@ -96,6 +92,10 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
   private val trapButton = new RadioButton("Trap")
+  private val minLevelCombo = new ComboBox((1 to 40).toSeq)
+  minLevelCombo.selection.item = 1
+  private val maxLevelCombo = new ComboBox((1 to 40).toSeq)
+  maxLevelCombo.selection.item = 40
   private val buttonGroup = new ButtonGroup(monsterButton, characterButton, trapButton)
   private val monsterTableModel = new ProjectionTableModel(MonsterSummaryProjection)
   private val monsterTable = new RowProjectionTable[EntitySummary]() {
@@ -133,7 +133,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
   var doubleClickAction: Action = null
 
   val mouseAdapter = new MouseAdapter() {
-    override def mouseClicked(e: java.awt.event.MouseEvent) {
+    override def mouseClicked(e: MouseEvent) {
       if (e.getClickCount() % 2 == 0 && doubleClickAction != null) doubleClickAction()
     }
   }
@@ -144,9 +144,13 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
   add(monsterButton, "split 4")
   add(trapButton)
   add(characterButton, "wrap")
+  add(new Label("Show level:"), "split 4")
+  add(minLevelCombo, "gap unrel")
+  add(new Label(" to"), "")
+  add(maxLevelCombo, "wrap")
   add(scrollPane, "span 3,wrap, growx, growy")
 
-  listenTo(monsterButton, characterButton, trapButton)
+  listenTo(monsterButton, characterButton, trapButton, minLevelCombo.selection, maxLevelCombo.selection)
   reactions += {
     case ButtonClicked(this.monsterButton) =>
       scrollPane.contents = monsterTable
@@ -154,6 +158,14 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
       scrollPane.contents = characterTable
     case ButtonClicked(this.trapButton) =>
       scrollPane.contents = trapTable
+    case SelectionChanged(this.minLevelCombo) =>
+      val level = minLevelCombo.selection.item
+      if (maxLevelCombo.selection.item < level) maxLevelCombo.selection.item = level
+      refreshList()
+    case SelectionChanged(this.maxLevelCombo) =>
+      val level = maxLevelCombo.selection.item
+      if (minLevelCombo.selection.item > level) minLevelCombo.selection.item = level
+      refreshList()
   }
 
   def currentSelection(): Option[EntitySummary] = {
@@ -166,15 +178,21 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
     else Some(activeTable.model.asInstanceOf[ProjectionTableModel[EntitySummary]].content(activeTable.selection.rows.toSeq(0)))
   }
 
-  def sortedSummary[T](el: Seq[T], comp: (T, T) => Boolean)(implicit manifest: Manifest[T]): Seq[T] = {
+  def sortedSummary[T](el: Seq[T], filter: T => Boolean, comp: (T, T) => Boolean)(implicit manifest: Manifest[T]): Seq[T] = {
     import scala.util.Sorting.stableSort
-    stableSort(el, comp).toSeq
+    val filtered = el.filter(filter)
+    stableSort(filtered, comp).toSeq
   }
 
+
   def refreshList() {
-    monsterTableModel.content = sortedSummary[MonsterSummary](Compendium.activeRepository.getMonsterSummaries(), (x, y) => x.name < y.name)
-    characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries(), (x, y) => x.name < y.name)
-    trapTableModel.content = sortedSummary[TrapSummary](Compendium.activeRepository.getTrapSummaries(), (x, y) => x.name < y.name)
+    val levelRange = (minLevelCombo.selection.item to maxLevelCombo.selection.item)
+    monsterTableModel.content = sortedSummary[MonsterSummary](Compendium.activeRepository.getMonsterSummaries(),
+      x => levelRange.contains(x.level), (x, y) => x.name < y.name)
+    characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries(),
+      x => levelRange.contains(x.level), (x, y) => x.name < y.name)
+    trapTableModel.content = sortedSummary[TrapSummary](Compendium.activeRepository.getTrapSummaries(),
+      x => levelRange.contains(x.level), (x, y) => x.name < y.name)
   }
 
   def compendiumChanged() {
