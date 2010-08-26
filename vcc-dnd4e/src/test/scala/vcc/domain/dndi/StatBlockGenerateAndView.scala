@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+//$Id$
 package vcc.domain.dndi
 
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
@@ -21,18 +22,15 @@ import swing.{Button, Action, MainFrame}
 import java.io.{File}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.model.Registry
-import vcc.infra.xtemplate.{TemplateDataSource, TemplateLoader, TemplateEngine}
+import vcc.infra.xtemplate.{TemplateDataSource}
+import vcc.dnd4e.Configuration
 
 object StatBlockGenerateAndView {
-  val baseDir = new File("vcc-dnd4e/fs-wc")
-  val templateDir = new File(baseDir, "template")
+  val baseDir = Configuration.dataDirectory
   XHTMLPaneAgent.createInstance(baseDir)
   println("File exists: " + (baseDir.getAbsolutePath) + (if (baseDir.exists) " exists" else " not exists"))
 
   var monster: DNDIObject = null
-  var templateFile: File = null
-
-  private val loader = CaptureTemplateEngine.getLoader()
 
   def loadMonster(file: File): DNDIObject = {
     monster = try {
@@ -47,15 +45,16 @@ object StatBlockGenerateAndView {
   }
 
   def regenerateTemplate() {
-    try {
-      val template = CaptureTemplateEngine.fetchClassTemplate(monster.clazz,templateDir)
-      val xml = template.render(monster.asInstanceOf[TemplateDataSource])
-      xhtmlPane.setDocumentFromText(xml.toString)
-    } catch {
-      case e =>
-        e.printStackTrace
-        xhtmlPane.setDocumentFromText("<html><body>" + e.getMessage() + "</body></html>")
-
+    if(monster != null) {
+      try {
+        val template = CaptureTemplateEngine.fetchClassTemplate(monster.clazz)
+        val xml = template.render(monster.asInstanceOf[TemplateDataSource])
+        xhtmlPane.setDocumentFromText(xml.toString)
+      } catch {
+        case e =>
+          e.printStackTrace
+          xhtmlPane.setDocumentFromText("<html><body>" + e.getMessage() + "</body></html>")
+      }
     }
   }
 
@@ -83,26 +82,13 @@ object StatBlockGenerateAndView {
 
   def main(args: Array[String]) {
     org.apache.log4j.BasicConfigurator.configure();
-    if (args.length != 1) {
-      System.err.println("Please specify a a monster file and a template file.")
-      exit
+    if (args.length > 0) {
+      val file = new File(args(0))
+      if (file.exists && file.isDirectory) {
+        Registry.register("lastDirectory", file.getParentFile)
+      }
     }
 
-    val file = new File(args(0))
-    if (!file.exists) {
-      System.err.println("Must give the name of an existant file, you specified: " + file.getAbsolutePath)
-      exit()
-    }
-
-    Registry.register("lastDirectory", file.getParentFile)
-
-    monster = loadMonster(file)
-
-    if (monster != null) {
-      mainWindow.visible = true
-    } else {
-      System.err.println("Failed to load monster..")
-      exit
-    }
+    mainWindow.visible = true
   }
 }

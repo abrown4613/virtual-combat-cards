@@ -116,41 +116,46 @@
                     <t:include macro="power"/>
                 </t:foreach>
             </t:ifdefined>
-            <p class="flavor alt">
-                <t:ifdefined id="stat:skills">
-                    <b>Skills</b>
-                    <t:data id="stat:skills"/>
+
+            <t:ifdefined id="stat:str">
+                <p class="flavor alt">
+                    <t:ifdefined id="stat:skills">
+                        <b>Skills</b>
+                        <t:data id="stat:skills"/>
+                        <br/>
+                    </t:ifdefined>
+                    <b>Str</b>
+                    <t:data id="stat:str"/>
+                    &#160;&#160;&#160;
+                    <b>Dex</b>
+                    <t:data id="stat:dex"/>
+                    &#160;&#160;&#160;
+                    <b>Wis</b>
+                    <t:data id="stat:wis"/>
                     <br/>
-                </t:ifdefined>
-                <b>Str</b>
-                <t:data id="stat:str"/>
-                &#160;&#160;&#160;
-                <b>Dex</b>
-                <t:data id="stat:dex"/>
-                &#160;&#160;&#160;
-                <b>Wis</b>
-                <t:data id="stat:wis"/>
-                <br/>
-                <b>Con</b>
-                <t:data id="stat:con"/>
-                &#160;&#160;&#160;
-                <b>Int</b>
-                <t:data id="stat:int"/>
-                &#160;&#160;&#160;
-                <b>Cha</b>
-                <t:data id="stat:cha"/>
-            </p>
-            <p class="flavor">
-                <b>Alignment</b>
-                <t:data id="stat:alignment"/>&#160;&#160;&#160;
-                <b>Languages</b>
-                <t:data id="stat:languages"/>
-                <t:ifdefined id="stat:equipment">
-                    <br/>
-                    <b>Equipment</b>
-                    <t:data id="stat:equipment"/>
-                </t:ifdefined>
-            </p>
+                    <b>Con</b>
+                    <t:data id="stat:con"/>
+                    &#160;&#160;&#160;
+                    <b>Int</b>
+                    <t:data id="stat:int"/>
+                    &#160;&#160;&#160;
+                    <b>Cha</b>
+                    <t:data id="stat:cha"/>
+                </p>
+            </t:ifdefined>
+            <t:ifdefined id="stat:alignment">
+                <p class="flavor">
+                    <b>Alignment</b>
+                    <t:data id="stat:alignment"/>&#160;&#160;&#160;
+                    <b>Languages</b>
+                    <t:data id="stat:languages"/>
+                    <t:ifdefined id="stat:equipment">
+                        <br/>
+                        <b>Equipment</b>
+                        <t:data id="stat:equipment"/>
+                    </t:ifdefined>
+                </p>
+            </t:ifdefined>
             <t:ifdefined id="text:description">
                 <p class="flavor"><b>Description</b>: <t:data id="text:description"/></p>
             </t:ifdefined>

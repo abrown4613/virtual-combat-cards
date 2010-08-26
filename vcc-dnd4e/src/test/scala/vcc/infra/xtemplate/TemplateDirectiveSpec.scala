@@ -129,18 +129,10 @@ object TemplateDirectiveSpec extends Specification {
     }
   }
 
-  "render complex nestedt pasrsed template" in {
+  "render complex nested parsed template" in {
     val loader = new TemplateLoader("t", TemplateLoaderSpec.engine)
-    val t = loader.resolveNode(<hey class="nice">
-      <t:ifdefined id="foo">
-        <foo>
-            <t:data id="foo"/>
-        </foo>
-      </t:ifdefined>
-    </hey>, null)
-    TemplateNode.renderNode(simpleDS, t) must_== (<hey class="nice">
-      <foo>bar</foo>
-    </hey>)
+    val t = loader.resolveNode(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>, null)
+    TemplateNode.renderNode(simpleDS, t) must_== (<hey class="nice"><foo>bar</foo></hey>)
   }
 
 }

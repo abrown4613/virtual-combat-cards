@@ -15,71 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.model
 
 import common.CombatantType
 import vcc.dnd4e.domain.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition}
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
-import vcc.infra.xtemplate.TemplateDataSource
+import vcc.domain.dndi.CaptureTemplateEngine
+import vcc.infra.xtemplate.{MapDataSource, TemplateDataSource}
 
 case class CombatantEntityID(ceid: Int)
 
 case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
   override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
 }
-
-//FIXME, extends vcc.infra.xtemplate.TemplateDataSource to allow new stat block
-class CompendiumCombatantEntityDataSource(comb: CompendiumCombatantEntity)  {
-  import vcc.infra.fields._
-
-  private def valueExtract[_](v: Field[_]): Option[String] = {
-    if (v.isDefined) Some(v.storageString)
-    else None
-  }
-
-  def extract(key: String): Option[String] = {
-    val vkey = key.toUpperCase
-    comb match {
-      case monster: MonsterEntity =>
-        vkey match {
-          case "TYPE" => if (monster.hp == 1) Some("Minion") else Some("Standard")
-          case "ROLE" => valueExtract(monster.role)
-          case s => extractCommon(vkey)
-        }
-      case char: CharacterEntity =>
-        vkey match {
-          case "PCLASS" => valueExtract(char.charClass)
-          case "TYPE" => valueExtract(char.race)
-          case "ROLE" => valueExtract(char.charClass)
-          case "SENSES" => valueExtract(char.senses)
-          case "INSIGHT" => valueExtract(char.insight)
-          case "PERCEPTION" => valueExtract(char.perception)
-          case s => extractCommon(vkey)
-        }
-      case _ => None //ERROR
-    }
-  }
-
-  def extractCommon(key: String): Option[String] = {
-    key match {
-      case "NAME" => valueExtract(comb.name)
-      case "HP" => valueExtract(comb.hp)
-      case "INITIATIVE" => valueExtract(comb.initiative)
-      case "AC" => valueExtract(comb.ac)
-      case "WILL" => valueExtract(comb.will)
-      case "REFLEX" => valueExtract(comb.reflex)
-      case "FORTITUDE" => valueExtract(comb.fortitude)
-      case _ => None
-    }
-  }
-
-  def extractGroup(group: String): Seq[TemplateDataSource] = Nil
-
-}
-
-
 
 object CombatantEntity {
 
@@ -95,9 +44,9 @@ object CombatantEntity {
     val statBlock = if (comp.statblock.isDefined) {
       comp.statblock.value
     } else {
-      //FIXME need to generate statblock
-      //SimpleStatBlockBuilder.generate(new CompendiumCombatantEntityDataSource(comp)).toString
-      "<html><body>PENDING IMPLEMENTATION</body></html>"
+      val template = CaptureTemplateEngine.fetchClassTemplate(comp.classID.shortClassName)
+      val dse = comp.asDataStoreEntity
+      template.render(new MapDataSource(dse.data,Map(),Map())).toString
     }
     CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
   }

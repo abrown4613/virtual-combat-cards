@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.datastore.naming._
@@ -23,7 +22,9 @@ import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
 import vcc.dnd4e.model.common.CombatantType
 
-case class EntityClassID(uri: java.net.URI)
+case class EntityClassID(uri: java.net.URI) {
+  def shortClassName() = uri.getSchemeSpecificPart()
+}
 
 abstract class EntitySummary(val eid: EntityID, val classid: EntityClassID)
 
