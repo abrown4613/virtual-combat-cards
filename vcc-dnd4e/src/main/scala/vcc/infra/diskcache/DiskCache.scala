@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.infra.diskcache
 
 import java.io.File
@@ -58,3 +57,4 @@ class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T])
     dirIter.foreach(file => if (file.isFile()) file.delete())
   }
 }
+
