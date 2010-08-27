@@ -213,13 +213,16 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
   /**
    * Process the header H1 entry and return a map of values.
    */
-  private def processHeader(stream: TokenStream[BlockElement]): Map[String, String] = {
+  private[dndi] def processHeader(stream: TokenStream[BlockElement]): Map[String, String] = {
     val headMap: Map[String, String] = stream.head match {
       case HeaderBlock("H1#monster", values) => normalizeTitle(values).toMap[String, String]
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     stream.advance()
-    headMap
+    var role = headMap("role")
+    if(role == "Minion" ) role = "No Role"
+    if(role.startsWith("Minion ")) role = role.substring(7)
+    headMap + ("role" -> role)
   }
 
   /**
