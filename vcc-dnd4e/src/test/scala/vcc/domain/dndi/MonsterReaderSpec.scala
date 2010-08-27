@@ -122,6 +122,37 @@ object MonsterReaderSpec extends Specification {
     }
   }
 
+  "MonsterReader.processHeader" should {
+    "simplify minion role" in {
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Minion Controller"), ("xp","XP 25")))))
+      ts.advance()
+      val fields = reader.processHeader(ts)
+
+      fields must_== Map(
+        "name" -> "Pest", "type" -> "dude", "level" -> "1",
+        "xp" -> "25", "role" -> "Controller")
+    }
+    "provide No Role for old minion format" in {
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Minion"), ("xp","XP 25")))))
+      ts.advance()
+      val fields = reader.processHeader(ts)
+      
+      fields must_== Map(
+        "name" -> "Pest", "type" -> "dude", "level" -> "1",
+        "xp" -> "25", "role" -> "No Role")
+    }
+    "leave other roles unchanged" in {
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Elite Brute (Leader)"), ("xp","XP 25")))))
+      ts.advance()
+      val fields = reader.processHeader(ts)
+
+      fields must_== Map(
+        "name" -> "Pest", "type" -> "dude", "level" -> "1",
+        "xp" -> "25", "role" -> "Elite Brute (Leader)")
+    }
+
+  }
+
   "MonsterReader.processPrimaryBlock" should {
     "handle MM<3 entries and split auras out" in {
       val stb = Block("P#flavor", List(Key("Initiative"), Text("7"), Key("Senses"), Text("Perception +12; low-light vision"), Break(),
