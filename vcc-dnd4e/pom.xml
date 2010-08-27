@@ -53,7 +53,7 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
             <version>${scala.version}</version>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -125,7 +125,7 @@
         <dependency>
             <groupId>com.miglayout</groupId>
             <artifactId>miglayout</artifactId>
-            <version>3.6.2</version>
+            <version>3.7.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.xhtmlrenderer</groupId>
@@ -168,6 +168,7 @@
                 <directory>src/main/scala</directory>
                 <includes>
                     <include>**/*.png</include>
+                    <include>**/*.gif</include>
                 </includes>
             </resource>
         </resources>
