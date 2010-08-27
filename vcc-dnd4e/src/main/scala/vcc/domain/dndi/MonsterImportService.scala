@@ -31,7 +31,7 @@ import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 object MonsterImportService {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  private final val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude")
+  private final val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude", "stat:hp")
   private final val reformatRE = """^\s*(\d+)\s*.*""".r
 
   def importObject(obj: DNDIObject) {
@@ -102,5 +102,22 @@ object MonsterImportService {
       }
     }
     fieldMap
+  }
+
+  /**
+   * Indicate whether or not the captured object should be imported automatically. In this implementaion
+   * automatic import should happen if the compendium does not contain the entity.
+   * @param obj Captured object to verify for auto import.
+   * @return True if the object should be imported.
+   */
+  def shouldImportAutomatically(obj: DNDIObject): Boolean = {
+    // Check for version of each monster in base
+    val entityID: EntityID = obj.clazz match {
+      case "trap" => TrapEntity.newInstance(obj.id).eid
+      case "monster" => MonsterEntity.newInstance(obj.id).eid
+      case _ => null
+    }
+    if (entityID != null) !Compendium.activeRepository.containsEntity(entityID)
+    else false
   }
 }
