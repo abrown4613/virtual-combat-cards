@@ -33,9 +33,13 @@ object CaptureHoldingArea {
   val logger = org.slf4j.LoggerFactory.getLogger("app")
 
   trait CaptureHoldingObserver[T] {
-    //TODO Change this to new sequence and an options new entry
-    //FIXME New entry is the hook to allow automated updates
-    def updateContent(objects: Seq[T])
+    /**
+     * Informs of a change in the object in the holding area. If a single object has been added
+     * the observer receives the new list and that object.
+     * @param newObject If not null indicates the single object that was added. If several changed it will be null.
+     * @param objects ew sequecne of objects in the holding area.
+     */
+    def updateContent(newObject:T, objects: Seq[T])
   }
 
   object XMLLoader extends DiskCacheBuilder[DNDIObjectCacheEntry] {
@@ -86,12 +90,12 @@ object CaptureHoldingArea {
   def addCapturedEntry(obj: DNDIObject, xml: scala.xml.Node) {
     diskCache.save(new DNDIObjectCacheEntry(obj, xml))
     entries = obj :: entries
-    notifyObservers()
+    notifyObservers(obj)
   }
 
   def loadCachedEntries() {
     entries = diskCache.loadAll().map(me => me.dndiObj).toList
-    notifyObservers()
+    notifyObservers(null)
   }
 
   def clearCachedMonster() {
@@ -102,8 +106,8 @@ object CaptureHoldingArea {
     observers = obs :: observers
   }
 
-  protected def notifyObservers() {
-    observers.foreach {obs => obs.updateContent(entries)}
+  protected def notifyObservers(singleObject: DNDIObject) {
+    observers.foreach {obs => obs.updateContent(singleObject, entries)}
   }
 
   /**

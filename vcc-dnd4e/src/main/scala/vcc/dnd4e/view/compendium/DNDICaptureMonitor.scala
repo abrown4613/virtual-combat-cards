@@ -24,9 +24,11 @@ import vcc.util.swing.MigPanel
 import vcc.app.dndi.CaptureHoldingArea
 import vcc.dnd4e.view.IconLibrary
 import vcc.domain.dndi.{DNDIObject, MonsterImportService}
+import vcc.infra.webserver.WebServer
+import vcc.model.Registry
 
 object DNDICaptureMonitor extends Frame {
-  private val webserver = vcc.model.Registry.get[vcc.infra.webserver.WebServer]("webserver").get
+  private val webServer = Registry.get[WebServer]("webserver").get
   private val stateMessage = new Label()
   private var entries: Seq[DNDIObject] = Nil
   private val entryList = new ListView[String](Nil)
@@ -34,9 +36,9 @@ object DNDICaptureMonitor extends Frame {
   preferredSize = new java.awt.Dimension(300, 400)
   iconImage = IconLibrary.MetalD20.getImage
   title = "D&D Insider Capture Monitor"
-  contents = new MigPanel("fill", "[][][]", "[][][]") {
+  contents = new MigPanel("ins dialog, fill", "[]", "[grow 0][fill][grow 0]") {
     add(stateMessage, "wrap")
-    add(new ScrollPane(entryList), "span 3,growx, growy, wrap")
+    add(new ScrollPane(entryList), "grow, wrap")
     add(new Button(Action("Import") {
       val sel = entryList.selection.indices
       if (!sel.isEmpty) {
@@ -44,23 +46,23 @@ object DNDICaptureMonitor extends Frame {
           MonsterImportService.importObject(entries(idx))
         }
       }
-    }))
+    }), "split 3")
     add(new Button(Action("Close") {DNDICaptureMonitor.visible = false}))
   }
 
   private val startServerAction = Action("Start") {
-    webserver.start()
+    webServer.start()
     toggleActionState()
   }
   private val stopServerAction = Action("Stop") {
-    webserver.stop()
+    webServer.stop()
     toggleActionState()
   }
 
   private def toggleActionState() {
-    stopServerAction.enabled = webserver.running
-    startServerAction.enabled = !webserver.running
-    stateMessage.text = "Capture " + (if (webserver.running) "Server is running" else "Server is stopped")
+    stopServerAction.enabled = webServer.running
+    startServerAction.enabled = !webServer.running
+    stateMessage.text = "Capture " + (if (webServer.running) "Server is running" else "Server is stopped")
   }
 
   menuBar = {
@@ -80,10 +82,16 @@ object DNDICaptureMonitor extends Frame {
   }
 
   toggleActionState()
+
   CaptureHoldingArea.addObserver(new CaptureHoldingArea.CaptureHoldingObserver[DNDIObject] {
-    def updateContent(newContent: Seq[DNDIObject]) {
+    def updateContent(newObject: DNDIObject, newContent: Seq[DNDIObject]) {
       entries = scala.util.Sorting.stableSort[DNDIObject](newContent, (a: DNDIObject, b: DNDIObject) => {a("base:name").get < b("base:name").get})
       entryList.listData = entries.map(monster => monster("base:name").get)
+      if(newObject != null) {
+        if(MonsterImportService.shouldImportAutomatically(newObject)) {
+          MonsterImportService.importObject(newObject)
+        }
+      }
     }
   })
 

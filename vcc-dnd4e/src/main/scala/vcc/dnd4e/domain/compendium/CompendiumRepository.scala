@@ -66,8 +66,16 @@ class CompendiumRepository(dsuri: DataStoreURI) extends StartupStep {
     notifyObservers()
   }
 
-  def createEntity(classid: EntityClassID, eid: EntityID): CombatantEntity = null
+  /**
+   * Indicates if the repository has an entity with a give EntityID
+   * @param entity Entity to search for
+   * @return True is repository has the entity.
+   */
+  def containsEntity(entity: EntityID) = dataStore.entityExists(entity)
 
+  /**
+   * Store entity to the repository.
+   */
   def store(entity: CombatantEntity): Boolean = {
     val dse = entity.asDataStoreEntity
     storeSummary(dse.eid, dse.data)
@@ -75,7 +83,7 @@ class CompendiumRepository(dsuri: DataStoreURI) extends StartupStep {
   }
 
   /**
-   * Load an CombatantEntity
+   *  Load an CombatantEntity
    * @param eid EntityID to be fetched
    * @param mustBeValid Indicate whether a valid entity is required (true) or not
    * @return The entity if it is found and respects the mustBeValid option
