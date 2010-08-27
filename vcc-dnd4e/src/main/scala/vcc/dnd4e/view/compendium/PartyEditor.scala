@@ -29,17 +29,29 @@ import vcc.model.Registry
 import vcc.dnd4e.view.helper.PartyLoader
 import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
+import annotation.tailrec
 
+/**
+ * Helper methods for XP operations.
+ */
 object ExperienceCalculator {
   private val incrementList = List(25, 50, 100, 200, 400, 950, 2000)
 
-  def levelFromXP(xp: Int): Int = {
-    def levelFromXP_r(x: Int, l: Int, il: List[Int]): Int = {
+  /**
+   * Returns the level of an encounter from total XP and the party size.
+   * @param partySize Number of character in the party (if less then 1, will assume 1)
+   * @param xp Total XP of the encounter 
+   * @return Encounter level
+   */
+  def encounterLevel(partySize: Int, xp: Int): Int = {
+    @tailrec def levelFromXP_r(x: Int, l: Int, il: List[Int]): Int = {
       if (x > 4 * il.head) levelFromXP_r(x - 4 * il.head, l + 4, if (il.tail == Nil) List(il.head * 2) else il.tail)
       else l + ((x - 1) / il.head)
     }
-    if (xp <= 100) 1
-    else levelFromXP_r(xp - 100, 2, incrementList)
+
+    val xppp = xp / (if (partySize < 1) 1 else partySize)
+    if (xppp <= 100) 1
+    else levelFromXP_r(xppp - 100, 2, incrementList)
   }
 }
 
@@ -184,7 +196,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
   }
 
   private def doSave() {
-    var file = FileChooserHelper.chooseSaveFile(table.peer, FileChooserHelper.partyFilter)
+    val file = FileChooserHelper.chooseSaveFile(table.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
       val pml = expandEntries(partyTableModel.content).map(_.toPartyMember())
       PartyFile.saveToFile(file.get, pml)
@@ -192,10 +204,10 @@ class PartyEditor(director: PanelDirector) extends Frame {
   }
 
   private def doLoad() {
-    var file = FileChooserHelper.chooseOpenFile(table.peer, FileChooserHelper.partyFilter)
+    val file = FileChooserHelper.chooseOpenFile(table.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
       val es = Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).get
-      var combs = PartyLoader.validatePartyLoadAndWarn(menuBar, PartyFile.loadFromFile(file.get))
+      val combs = PartyLoader.validatePartyLoadAndWarn(menuBar, PartyFile.loadFromFile(file.get))
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
         val pe = entitySummaryToPartyEntry(es.getEntitySummary(pm.eid))
@@ -243,7 +255,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
 
   private def recalculateXP(pml: Seq[PartyTableEntry]) {
     val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _)
-    val level = ExperienceCalculator.levelFromXP(xp / partySizeCombo.selection.item)
+    val level = ExperienceCalculator.encounterLevel(partySizeCombo.selection.item, xp)
     totalXPLabel.text = "Total XP: " + xp + " Level: " + level
   }
 
