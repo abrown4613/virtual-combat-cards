@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.util
 
 import java.net.URL
@@ -50,6 +49,10 @@ object UpdateManager {
 
     def isPatch(other: Version): Boolean = {
       ((this.major == other.major) && (this.minor == other.minor) && this.patch > other.patch)
+    }
+
+    def isEligibleUpgradeFromVersion(fromVersion: Version): Boolean = {
+      this > fromVersion && ((this.major == fromVersion.major && this.minor == fromVersion.minor) || this.patch == 0)
     }
   }
 
@@ -149,16 +152,25 @@ object UpdateManager {
 
     import vcc.util.swing.multipanel.ReleaseSelectPanel
 
-    def scanForVersions(afile: File): List[(Symbol, Release)] = {
+    /**
+     * @return ( possible release, hasMore ) hasMore indicates that some newer versions where skipped because of full
+     * upgrade policy.
+     */
+    def scanForVersions(afile: File): (List[(Symbol, Release)], Boolean) = {
       val rels = checkAvailableVersions(new InputSource(new java.io.FileInputStream(afile)))
       afile.delete()
 
-      rels.filter(r => {r.version > BootStrap.version}).map({
+      val possible = rels.filter(r => {r.version > BootStrap.version}).map({
         rel =>
-          if (rel.version.extra != null) ('RC, rel)
-          else if (rel.version.isPatch(BootStrap.version)) ('PATCH, rel)
-          else ('UPGRADE, rel)
+          if (rel.version.isEligibleUpgradeFromVersion(BootStrap.version)) {
+            if (rel.version.extra != null) ('RC, rel)
+            else if (rel.version.isPatch(BootStrap.version)) ('PATCH, rel)
+            else ('UPGRADE, rel)
+          } else {
+            ('NOTALLOWED, rel)
+          }
       }).toList
+      (possible.filter(x => x._1 != 'NOTALLOWED), possible.exists(x => x._1 == 'NOTALLOWED))
     }
 
     def checkFileMD5Sum(file: File, md5sum: String): Boolean = {
@@ -176,9 +188,9 @@ object UpdateManager {
 
     val afile = umd.downloadFile(url, File.createTempFile("vcc", ".xml"))
     if (afile != null) {
-      var releases = scanForVersions(afile)
+      val (releases, hasMore) = scanForVersions(afile)
       if (releases.length > 0) {
-        val releaseOpt = umd.customPanel(new ReleaseSelectPanel(releases))
+        val releaseOpt = umd.customPanel(new ReleaseSelectPanel(releases, hasMore))
 
         if (releaseOpt.isDefined) {
           val release = releaseOpt.get
