@@ -60,4 +60,26 @@ object UpdateManagerSpec extends Specification {
       Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/Main.class")) must_== UpdateManager.NotFoundVersion
     }
   }
+
+  "UpdateManager.Version.eligibleVersion" should {
+    // From, To, should happene
+    val versionTests = Seq[(Version, Version, Boolean)](
+      (Version(1, 1, 0, null), Version(1, 1, 2, null), true),
+      (Version(1, 1, 1, null), Version(1, 1, 2, null), true),
+      (Version(1, 1, 1, null), Version(1, 2, 0, null), true),
+      (Version(1, 1, 1, null), Version(1, 3, 0, null), true),
+      (Version(1, 1, 1, null), Version(1, 3, 1, null), false),
+      (Version(1, 1, 1, null), Version(1, 3, 0, "RC"), true),
+      (Version(1, 1, 1, null), Version(1, 3, 1, "RC"), false),
+      (Version(1, 1, 1, null), Version(1, 3, 0, "SNAPSHOT"), true),
+      // Migrate from
+      (Version(1, 1, 1, "RC"), Version(1, 1, 1, null), true),
+      (Version(1, 1, 1, "SNAPSHOT"), Version(1, 1, 1, null), true))
+
+    for ((from, to, result) <- versionTests) {
+      (if (result) "allow" else "not allow") + " migration from " + from.toString + " to " + to.toString in {
+        to.isEligibleUpgradeFromVersion(from) must_== result
+      }
+    }
+  }
 }
