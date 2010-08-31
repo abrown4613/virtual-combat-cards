@@ -19,8 +19,7 @@ package vcc.domain.dndi
 
 import vcc.infra.text._
 import util.matching.Regex
-import vcc.domain.dndi.Parser.{HeaderBlock, Icon, Break, Emphasis, Key, NonBlock, Text, Block, BlockElement}
-import collection.Seq
+import vcc.domain.dndi.Parser.{HeaderBlock, Emphasis, Key, NonBlock, Text, Block, BlockElement}
 import java.lang.String
 import xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
@@ -169,6 +168,15 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
         }
         secs = oneBlockSection("SPAN", "traplead", stream) :: secs
         true
+      case Block("P#", commentPart :: Nil) =>
+        val comment: String = commentPart match {
+          case Text(text) => text
+          case Emphasis(text) => text
+          case _ => null // Dont care much for this
+        }
+        if (comment != null) attributes = attributes + ("comment" -> comment)
+        stream.advance()
+        false
       case _ => false
     }) {
 

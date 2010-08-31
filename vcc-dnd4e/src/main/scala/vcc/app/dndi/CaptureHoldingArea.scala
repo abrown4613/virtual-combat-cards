@@ -45,11 +45,9 @@ object CaptureHoldingArea {
   object XMLLoader extends DiskCacheBuilder[DNDIObjectCacheEntry] {
     def loadFromFile(file: File): DNDIObjectCacheEntry = {
       try {
-        val rawXML = DNDInsiderCapture.pluginInputStreamAsFilteredString(new FileInputStream(file))
-        val xml = scala.xml.XML.loadString(rawXML)
-        val dndiObject = DNDInsiderCapture.load(xml)
-
-        if(dndiObject != null) new DNDIObjectCacheEntry(dndiObject, xml)
+        val dndiObject = DNDInsiderCapture.loadEntry(new FileInputStream(file))
+        if(dndiObject != null)
+          new DNDIObjectCacheEntry(dndiObject, null) // Since this is a restore we don't need the to store again 
         else null
       } catch {
         case e =>
@@ -61,7 +59,7 @@ object CaptureHoldingArea {
 
   class DNDIObjectCacheEntry(val dndiObj: DNDIObject, val node: Node) extends DiskCacheable {
     def saveToCache(file: File): Boolean = {
-      XML.save(file.getAbsolutePath, node, "UTF-8")
+      if(node != null) XML.save(file.getAbsolutePath, node, "UTF-8")
       file.exists && file.isFile && file.canRead
     }
 

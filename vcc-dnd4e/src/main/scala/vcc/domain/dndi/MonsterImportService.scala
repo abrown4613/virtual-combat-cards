@@ -15,10 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.domain.dndi
 
-import vcc.model.Registry
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
 import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
@@ -31,8 +29,8 @@ import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
 object MonsterImportService {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  private final val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude", "stat:hp")
-  private final val reformatRE = """^\s*(\d+)\s*.*""".r
+  private val defReformat = Set("stat:ac", "stat:reflex", "stat:will", "stat:fortitude", "stat:hp")
+  private val reformatRE = """^\s*(\d+)\s*.*""".r
 
   def importObject(obj: DNDIObject) {
     obj match {
@@ -82,8 +80,8 @@ object MonsterImportService {
       "base:role" -> monster.role,
       "base:xp" -> monster.xp,
       "stat:initiative" -> monster.initiative,
-      "base:level" -> monster.level
-      )
+      "base:level" -> monster.level,
+      "text:comment" -> monster.comment)
     for ((key, field) <- fieldMap) {
       val v = dndiMonster(key)
       try {

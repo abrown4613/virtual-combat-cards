@@ -21,6 +21,7 @@
             <t:foreach ingroup="sections">
                 <t:include macro="section"/>
             </t:foreach>
+            <t:ifdefined id="text:comment"><p><t:data id="text:comment" /></p></t:ifdefined>
         </div>
     </body>
 </html>

@@ -153,5 +153,16 @@ object TrapReaderSpec extends Specification {
 
       trap.sections must_== List(TrapSection(null, StyledText(List(TextBlock("SPAN","traplead",TextSegment.makeBold("Hazard:"),TextSegment(" Something pops."))))))
     }
+
+    "handle comnment line " in {
+      val xmlChunks = List(
+        (<H1 class="trap">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
+        (<P>Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/9780786950171">Seekers of the Ashen Crown</A>.</P>))
+
+      val tr = new TrapReader(0)
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+
+      trap("text:comment") must_== Some("Published in Seekers of the Ashen Crown .")
+    }
   }
 }

@@ -70,8 +70,8 @@
                 <tr>
                     <td colspan="2">
                         <t:ifdefined id="stat:saving throws">
-                            <b>Action points</b>
-                            <t:data id="stat:saving throws"/>;
+                            <b>Saving Throws</b>
+                            <t:data id="stat:saving throws" fmt="modifier"/>;
                         </t:ifdefined>
                         <t:ifdefined id="stat:action points">
                             <b>Action points</b>
