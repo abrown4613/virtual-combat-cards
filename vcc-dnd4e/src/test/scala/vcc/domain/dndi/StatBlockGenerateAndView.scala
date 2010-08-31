@@ -19,11 +19,11 @@ package vcc.domain.dndi
 
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
 import swing.{Button, Action, MainFrame}
-import java.io.{File}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.model.Registry
 import vcc.infra.xtemplate.{TemplateDataSource}
 import vcc.dnd4e.Configuration
+import java.io.{FileInputStream, File}
 
 object StatBlockGenerateAndView {
   val baseDir = Configuration.dataDirectory
@@ -34,8 +34,13 @@ object StatBlockGenerateAndView {
 
   def loadMonster(file: File): DNDIObject = {
     monster = try {
-      val xml = scala.xml.XML.loadFile(file)
-      DNDInsiderCapture.load(xml)
+      DNDInsiderCapture.captureEntry(new FileInputStream(file),false,false,false) match {
+        case None => null
+        case Some(Left(p)) =>
+          println("Failed to load entity: "+p)
+          null
+        case Some(Right(obj)) => obj
+      }
     } catch {
       case e =>
         System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)

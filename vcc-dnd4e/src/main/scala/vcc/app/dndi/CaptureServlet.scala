@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,13 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.app.dndi
 
 import javax.servlet.http.HttpServlet
 import vcc.domain.dndi._
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -40,55 +38,20 @@ class CaptureServlet extends HttpServlet {
     response.setContentType("text/html");
     response.setStatus(HttpServletResponse.SC_OK);
     logger.debug("Request: {}", request.toString)
-    val xmlRaw = DNDInsiderCapture.pluginInputStreamAsFilteredString(request.getInputStream)
-    logger.debug("Raw stream data: " + xmlRaw)
-    val xml = try {
-      scala.xml.XML.loadString(xmlRaw)
-    } catch {
-      case s =>
-        logger.warn("Failed to parse XML", s)
-        logger.debug("XML Raw: {}", xmlRaw)
-        throw s
-    }
-    if (System.getProperty("vcc.dndi.captureall") != null) {
-      // This is an option parameter to allow store objects that are not normally captured
-      val otype = DNDInsiderCapture.getTypeFromXML(xml)
-      val oid = DNDInsiderCapture.getIdFromXML(xml)
-      if (otype.isDefined && oid.isDefined) CaptureHoldingArea.storeIncompleteObject(otype.get, oid.get, xml)
-    }
 
-    try {
-      logger.debug("Parsed XML is: {}", xml)
-      val dndiObject = DNDInsiderCapture.load(xml)
-      val entry: DNDIObject = dndiObject match {
-        case monster: Monster =>
-          logger.info("Captured monster {}", monster("base:name"))
-          logger.debug("Catured Monster: {}", monster)
-          response.getWriter().println("Captured monster " + monster("base:name").get);
-          monster
-        case trap: Trap =>
-          logger.info("Capture 'trap': {}", trap("name").get)
-          logger.debug("Catured trap: {}", trap)
-          response.getWriter().println("Captured trap " + trap("base:name").get);
-          trap
-        case _ =>
-          val otype = DNDInsiderCapture.getTypeFromXML(xml)
-          if (otype.isDefined) response.getWriter.println("VCC cannot capture '" + otype.get + "' entries yet.")
-          else response.getWriter.println("You sent something that VCC cannot capture.")
-          null
-      }
-      if (entry != null) {
-        CaptureHoldingArea.addCapturedEntry(entry, xml)
-      } 
-    } catch {
-      case ue: Exception =>
-        // XML is ok, but can be parsed so we save it for debuging
-        logger.warn("Failed to capture monster", ue)
-        val file = java.io.File.createTempFile("capture", ".xml")
-        logger.warn("Write to file" + file.getAbsolutePath)
-        scala.xml.XML.save(file.getAbsolutePath, xml, "UTF-8")
-        logger.warn("Failed capture informations saved at: {}", file.getAbsolutePath)
-        response.getWriter().println("Could not process capture correctly. Save XML to " + file.getAbsoluteFile + ". If you thing the information should be captured, report an bug on http://www.exnebula.org/vcc and send us the file.")
+
+    val captureAll = System.getProperty("vcc.dndi.captureall") != null
+    val result = DNDInsiderCapture.captureEntry(request.getInputStream, captureAll, captureAll, true)
+
+    result match {
+      case Some(Left((clazz, id))) =>
+        response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
+      case Some(Right(dObject)) =>
+        logger.info("Captured '{}': {}", dObject.clazz, dObject("base:name").get)
+        logger.debug("Catured {} is: {}", dObject.clazz, dObject)
+        response.getWriter().printf("Captured %s: %s", dObject.clazz, dObject("base:name").get);
+      case None =>
+        response.getWriter.println("You sent something that VCC cannot capture.")
     }
   }
 }
