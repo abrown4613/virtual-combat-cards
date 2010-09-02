@@ -25,33 +25,68 @@ import javax.servlet.http.HttpServletResponse;
 
 
 class CaptureServlet extends HttpServlet {
-  val logger = org.slf4j.LoggerFactory.getLogger("app")
+  private val logger = org.slf4j.LoggerFactory.getLogger("app")
 
   override protected def doGet(request: HttpServletRequest, response: HttpServletResponse) {
     response.setContentType("text/html");
     response.setStatus(HttpServletResponse.SC_OK);
-    response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
+
+    logger.debug("Request: "+request)
+    val hasQuery = request.getParameter("has")
+    if(hasQuery == null) {
+      response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
+    } else {
+      response.getWriter().print(if(hasQuery=="auto") "true" else "false")
+    }
   }
 
+  type CaptureReply = Option[Either[(String, Int), DNDIObject]]
+
+  private def humanReply(result: CaptureReply, response: HttpServletResponse) {
+    result match {
+      case Some(Left((clazz, -1))) =>
+        response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
+      case Some(Left((clazz, id))) =>
+        response.getWriter.printf("VCC failed to capture '%s' with id=%s, please report.", clazz, id.toString)
+      case Some(Right(dObject)) =>
+        response.getWriter().printf("Captured %s: %s", dObject.clazz, dObject("base:name").get);
+      case None =>
+        response.getWriter.println("You sent something that VCC cannot capture.")
+    }
+  }
+
+  private def pluginReply(result: CaptureReply, response: HttpServletResponse) {
+    result match {
+      case Some(Left((clazz, -1))) =>
+        response.getWriter.printf("FATAL: Unknown entry type '%s'", clazz)
+      case Some(Left((clazz, id))) =>
+        response.getWriter.printf("ERROR: Failed capture of '%s' with id=%s.", clazz, id.toString)
+      case Some(Right(dObject)) =>
+        response.getWriter().printf("SUCCESS: %s (%s)", dObject("base:name").get, dObject.clazz);
+      case None =>
+        response.getWriter.println("FATAL: Bad Request.")
+    }
+  }
 
   override protected def doPost(request: HttpServletRequest, response: HttpServletResponse) {
     response.setContentType("text/html");
     response.setStatus(HttpServletResponse.SC_OK);
     logger.debug("Request: {}", request.toString)
 
-
     val captureAll = System.getProperty("vcc.dndi.captureall") != null
     val result = DNDInsiderCapture.captureEntry(request.getInputStream, captureAll, captureAll, true)
 
+    //Send output
+    request.getParameter("reply") match {
+      case "plugin-text" => pluginReply(result, response)
+      case _ => humanReply(result, response)
+    }
     result match {
-      case Some(Left((clazz, id))) =>
-        response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
       case Some(Right(dObject)) =>
         logger.info("Captured '{}': {}", dObject.clazz, dObject("base:name").get)
         logger.debug("Catured {} is: {}", dObject.clazz, dObject)
-        response.getWriter().printf("Captured %s: %s", dObject.clazz, dObject("base:name").get);
-      case None =>
-        response.getWriter.println("You sent something that VCC cannot capture.")
+      case _ =>
+        logger.warn("Capture failed.")
     }
   }
 }
