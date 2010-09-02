@@ -152,6 +152,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     
     processHeader(stream)
     while (stream.head match {
+      case Block("SPAN#trapblocktitle", Nil) =>
+        stream.advance()
       case Block("SPAN#trapblocktitle", ignore) =>
         val sec = processSection(stream)
         secs = sec :: secs
