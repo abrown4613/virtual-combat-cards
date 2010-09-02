@@ -164,5 +164,18 @@ object TrapReaderSpec extends Specification {
 
       trap("text:comment") must_== Some("Published in Seekers of the Ashen Crown .")
     }
+
+    "handle blank trapblocktitle" in {
+      val xmlChunks = List(
+        (<H1 class="trap">Lake of Dreams<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
+        (<SPAN class="trapblocktitle"></SPAN>),
+        (<P>Bad lake,bad!</P>))
+
+      val tr = new TrapReader(0)
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+
+      trap("text:comment") must_== Some("Bad lake,bad!")
+      trap.sections.length must_== 0
+    }
   }
 }

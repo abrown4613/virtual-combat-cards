@@ -60,9 +60,9 @@ class CaptureServlet extends HttpServlet {
       case Some(Left((clazz, -1))) =>
         response.getWriter.printf("FATAL: Unknown entry type '%s'", clazz)
       case Some(Left((clazz, id))) =>
-        response.getWriter.printf("ERROR: Failed capture of '%s' with id=%s.", clazz, id.toString)
+        response.getWriter.printf("Error: Failed capture of '%s' with id=%s.", clazz, id.toString)
       case Some(Right(dObject)) =>
-        response.getWriter().printf("SUCCESS: %s (%s)", dObject("base:name").get, dObject.clazz);
+        response.getWriter().printf("Success: %s (%s)", dObject("base:name").get, dObject.clazz);
       case None =>
         response.getWriter.println("FATAL: Bad Request.")
     }
