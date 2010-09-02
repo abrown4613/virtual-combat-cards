@@ -26,6 +26,7 @@ object DNDInsiderCapture {
   private val logger = LoggerFactory.getLogger("domain")
   private val reSpaces = "[\\s\\n\\r\u00a0]+".r
   private val fixBadXML1 = " \\\\=\"\"".r
+  private val handles = Set("monster","trap")
 
   private def load(xml: scala.xml.Node): DNDIObject = {
     if (xml == null) return null
@@ -127,6 +128,9 @@ object DNDInsiderCapture {
     if (node == null || !(clazz.isDefined && id.isDefined)) {
       // Failed to read XML or xml does not contain required fields
       None
+    } else if(!handles.contains(clazz.get)) {
+       //The object is of a class we dont capture yet.
+      Some(Left(clazz.get,-1))
     } else {
       logger.debug("Parsed XML is: {}", node)
       val dndiObject = load(node)
