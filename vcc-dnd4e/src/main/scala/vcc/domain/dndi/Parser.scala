@@ -33,9 +33,9 @@ class UnexpectedBlockElementException(msg: String, block: BlockElement) extends 
 object Parser {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  final val reColonTrim = new Regex("^[:\\s]*(.*?)[;\\s]*$")
-  final val reFlexiInt = new Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
-  final val reSpaces = new Regex("[\\s\u00a0]+")
+  val reColonTrim = new Regex("^[:\\s]*(.*?)[;\\s]*$")
+  val reFlexiInt = new Regex("^\\s*([\\+\\-])?\\s*(\\d+)\\s*[\\,\\;]?\\s*$")
+  val reSpaces = new Regex("[\\s\u00a0]+")
 
   /**
    * Symbolic names for the DND Insider icons, we don't need them, this will make the text
@@ -58,7 +58,7 @@ object Parser {
     /**
      * A map of names to value
      */
-    final val imageDirectory = Map(
+    val imageDirectory = Map(
       "x.gif" -> Separator,
       "s1.gif" -> CloseBasic,
       "s2.gif" -> MeleeBasic,
@@ -76,7 +76,7 @@ object Parser {
       "aura.png" -> Aura
       )
 
-    final val iconToImage = Map(
+    val iconToImage = Map(
       Separator -> "x.gif",
       CloseBasic -> "s1.gif",
       MeleeBasic -> "s2.gif",
@@ -91,7 +91,7 @@ object Parser {
       Unknown -> "x.gif"
       )
 
-    final val diceImage:Map[Int,String] = (1 to 6).map(d => (d -> d.formatted("%da.gif"))).toMap
+    val diceImage:Map[Int,String] = (1 to 6).map(d => (d -> d.formatted("%da.gif"))).toMap
 
     /**
      * Extractor to templateVariable a Icon out of a img with the proper image name.
@@ -318,7 +318,7 @@ object Parser {
    * Parse to text will remove links and return a text string
    */
   def parseToText(nodes: NodeSeq): String = {
-    var s = new StringBuffer("")
+    val s = new StringBuffer("")
     val ss = nodes.map(
       _ match {
         case IconType(icon) =>  "["+icon.toString+"]"
@@ -335,14 +335,21 @@ object Parser {
   /**
    * Transform a list of pairs of type Key,Text and optional breaks into
    * a list of key,value pairs.
+   * @param parts   List to parse
+   * @param relaxed Ignore remainder of list if not in proper format
    */
-  def partsToPairs(parts: List[Part]): List[(String, String)] = {
+  def partsToPairs(parts: List[Part], relaxed: Boolean): List[(String, String)] = {
     parts match {
-      case Text("") :: rest => partsToPairs(rest)
-      case Key(k) :: Text(value) :: rest => (k, value) :: partsToPairs(rest)
-      case Break :: rest => partsToPairs(rest)
+      case Text("") :: rest => partsToPairs(rest, relaxed)
+      case Key(k) :: Text(value) :: rest => (k, value) :: partsToPairs(rest, relaxed)
+      case Break :: rest => partsToPairs(rest, relaxed)
       case Nil => Nil
-      case s => throw new Exception("List contains unexpected parts: " + s)
+      case s =>
+        if (relaxed) {
+          logger.warn("Trimming tail block: {}", parts)
+          Nil
+        }
+        else throw new Exception("List contains unexpected parts: " + s)
     }
   }
 
@@ -356,7 +363,7 @@ object Parser {
     ("name", (xml \ "#PCDATA").toString.trim) :: l
   }
 
-  private final val blockElements = Set("BLOCKQUOTE", "P", "H2", "SPAN", "TD")
+  private val blockElements = Set("BLOCKQUOTE", "P", "H2", "SPAN", "TD")
 
   private def elementClassAttr(node: Node) = node.label + "#" + elementClass (node, "")
 

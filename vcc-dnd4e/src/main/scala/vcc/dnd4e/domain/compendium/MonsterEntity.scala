@@ -30,7 +30,7 @@ class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
 
   val role = new StringField(this, "base:role", RequiredString)
   val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-  val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
+  val xp = new IntField(this, "base:xp", RequiredInt)
 }
 
 object MonsterEntity {
@@ -53,7 +53,7 @@ object MonsterSummary {
     val name = new StringField(this, "base:name", RequiredString)
     val role = new StringField(this, "base:role", RequiredString)
     val level = new IntField(this, "base:level", RequiredIntGreaterZero)
-    val xp = new IntField(this, "base:xp", RequiredIntGreaterZero)
+    val xp = new IntField(this, "base:xp", RequiredInt)
     val hp = new IntField(this, "stat:hp", RequiredIntGreaterZero)
   }
 

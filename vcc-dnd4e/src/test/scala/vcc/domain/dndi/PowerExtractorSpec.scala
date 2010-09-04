@@ -20,25 +20,10 @@ package vcc.domain.dndi
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4,JUnitSuiteRunner}
-import xml.Node
 import vcc.domain.dndi.Parser._
-import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class PowerExtractorTest extends JUnit4(PowerExtractorSpec)
-
-/*
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B> 1</P>
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG> <B>Fullblade</B> (Weapon) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>At-Will</B></P>
-<P class="flavor alt"> <B>Spider Burst</B> (Poison, Zone) <B></B></P>
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z4a.gif"></IMG> <B>Unholy Whispers</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> Recharge <IMG src="http://www.wizards.com/dnd/images/symbol/5a.gif"></IMG> <IMG src="http://www.wizards.com/dnd/images/symbol/6a.gif"></IMG></P>
-<P class="flavor alt"> <B>Variable Resistance</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>3/Encounter</B></P>
-<P class="flavor alt"> <B>Mercurial Body</B> <B></B></P>
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z2a.gif"></IMG> <B>Scour the Mind</B> (Psychic) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>At-Will</B> 1/round</P>
-<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif"></IMG> <B>Rising Tremors</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Recharge</B> at the start of any turn when quaking earth is aura 1</P>
-<P class="flavor alt"> <B>Sudden Quake</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>At-Will</B></P>
- */
 
 object PowerExtractorSpec extends Specification {
 
@@ -138,7 +123,16 @@ object PowerExtractorSpec extends Specification {
     }
 
     //TODO: Implement failover strategy. If nothing fits we should get a raw block of StyledText
+    "read power with recharge all in bold" in {
+      //<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif"></IMG> <B>Poison Spew</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Recharge when first bloodied</B></P>
 
+      val parts = List(Icon(IconType.Range), Text(" "), Key("Poison Spew"), Text(" "), Icon(IconType.Separator), Text(" "), Key("Recharge when first bloodied"))
+      parts match {
+        case SomePowerDefinition(d) =>
+          d must_== CompletePowerDefinition(Seq(IconType.Range), "Poison Spew", null, RechargeConditionalUsage("when first bloodied"))
+        case _ => fail("Should have matched")
+      }
+    }
   }
 
 
@@ -183,6 +177,11 @@ object PowerExtractorSpec extends Specification {
 
     "handle conditional recharge" in {
       val parts = List(Key("Recharge"), Text(" when happy"))
+      SomeUsage.unapply(parts) must_== Some(RechargeConditionalUsage("when happy"))
+    }
+
+    "handle conditional recharge all in bold" in {
+      val parts = List(Key("Recharge when happy"))
       SomeUsage.unapply(parts) must_== Some(RechargeConditionalUsage("when happy"))
     }
 
