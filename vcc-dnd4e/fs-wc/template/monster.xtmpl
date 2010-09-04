@@ -5,7 +5,7 @@
         <t:inline id="description"/>
     </t:define>
     <t:define macro="legacy-power">
-        <p class="flavor alt"> <t:inline id="iconset-short"/> <b><t:data id="name"/></b> <t:data id="action-usage"/> <t:ifdefined id="keyword"> <img src="x.gif"/> <t:data id="keyword"/></t:ifdefined> 
+        <p class="flavor alt"> <t:inline id="iconset-short"/> <b><t:data id="name"/></b> <t:data id="action-usage"/> <t:ifdefined id="keyword"> <img src="x.gif"/><b><t:data id="keyword"/></b></t:ifdefined> 
         </p>
         <t:inline id="description"/>
     </t:define>

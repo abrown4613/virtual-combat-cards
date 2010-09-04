@@ -133,7 +133,13 @@ object DNDInsiderCapture {
       Some(Left(clazz.get,-1))
     } else {
       logger.debug("Parsed XML is: {}", node)
-      val dndiObject = load(node)
+      val dndiObject = try {
+        load(node)
+      } catch {
+        case e =>
+          logger.error("Failed to import {} with id={}, reason", Array(clazz.get, id.get), e)
+          null
+      }
       if (dndiObject == null) {
         if (storeFailure) {
           // This is an option parameter to allow store objects that are not normally captured

@@ -63,6 +63,7 @@ object SomeUsage {
 
   private val rechargeWithDice = """^\s*Recharge\s+(\d+).*""".r
   private val roundLimit = """^\s*(\d+)\s*/\s*round""".r
+  private val rechargeAllBold = """^\s*Recharge\s+(.*)$""".r
 
   def unapply(parts: List[Part]): Option[Usage] = {
     parts match {
@@ -72,6 +73,7 @@ object SomeUsage {
       case Key(EncounterText(n)) :: Nil => Some(EncounterUsage(n))
       case Text(`rechargeWithDice`(min)) :: Nil => Some(RechargeDiceUsage(min.toInt))
       case Key("Recharge") :: Text(condition) :: Nil => Some(RechargeConditionalUsage(condition.trim))
+      case Key(`rechargeAllBold`(condition)) :: Nil => Some(RechargeConditionalUsage(condition.trim))
       case Key("At-Will") :: Nil => Some(AtWillUsage(0))
       case Key("At-Will") :: Text(`roundLimit`(n)) :: Nil => Some(AtWillUsage(n.toInt))
       case _ => None
@@ -105,7 +107,7 @@ object SomePowerDefinition {
       case _ => null
     }
     if (pdef == null) {
-      //TODO: Implement simplifed failover.
+      //TODO: Implement simplified fail-over.
       throw new Exception("FAILOVER")
     } else {
       Some(pdef)
@@ -249,11 +251,11 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
         }
         val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts))
+        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts, false))
         stream.advance()
         (true, stats, whatever)
       case Block("P#flavor", parts) =>
-        val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts)))
+        val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts), false))
         stream.advance()
         (false, normalizeLegacySenses(stats), auras)
       case _ =>
@@ -323,7 +325,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
     // Process tail.
     val tailStats = processTailBlock(stream)
 
-    var aurasAsTraits = auras.map( x => promoteAuraLike(x._1,x._2)).toList
+    val aurasAsTraits = auras.map( x => promoteAuraLike(x._1,x._2)).toList
     var powersActionMap = powersByAction.toMap
     //Should need this, but just to be safe
     if (!aurasAsTraits.isEmpty) {
@@ -352,13 +354,20 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
         if(comment != null) result.update("comment", comment)
         stream.advance()
       case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
-        val normalizedParts = partsToPairs(trimParts(parts)).map(p => p._1.toLowerCase() -> p._2)
+        val trimmedList = trimParts(parts)
+        val pairs: List[(String, String)] = try {
+          partsToPairs(trimmedList, false)
+        } catch {
+          case s =>
+            partsToPairs(trimmedList, true)
+        }
+        val normalizedParts = pairs.map(p => p._1.toLowerCase() -> p._2)
         result ++= normalizedParts
         stream.advance()
       case blk =>
         throw new UnexpectedBlockElementException("Expected P blocks in the trailing stat block, found:", blk)
     }) {
-
+      //Nothing to do
     }
     result.toMap
   }
@@ -412,7 +421,6 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
     } else
       inMap
   }
-
 
   private def trimParts(parts: List[Part]): List[Part] = parts.map(p => p.transform(Parser.TrimProcess))
 

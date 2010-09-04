@@ -31,11 +31,11 @@ object ActionType extends Enumeration {
   val No = Value("No Action")
   val Trait = Value("Trait")
 
-  private val caseInsensiveMap = this.values.map( x => x.toString.toLowerCase -> x).toMap
+  private val caseInsensitiveMap = this.values.map( x => x.toString.toLowerCase -> x).toMap
   /**
    * case insensitive match
    */
-  def unapply(name:String):Option[this.Value] = caseInsensiveMap.get(name.toLowerCase)
+  def unapply(name:String):Option[this.Value] = caseInsensitiveMap.get(name.toLowerCase)
 }
 
 sealed trait Usage
@@ -91,6 +91,7 @@ object UsageFormatter {
     case RechargeConditionalUsage(condition) =>  prefix  ++ Seq(<b>Recharge</b>, Text(" "+condition))
     case RechargeDiceUsage(start) => prefix  ++ Seq(<b>Recharge</b>, Text(" ")) ++ (start to 6).map(d => <img src={IconType.diceImage(d)}/>)
     case NoUsage => <b></b>
+    case null => <b>[NULL]</b>
   }
 }
 
