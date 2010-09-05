@@ -19,10 +19,8 @@ package vcc.app.dndi
 
 import javax.servlet.http.HttpServlet
 import vcc.domain.dndi._
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 
 class CaptureServlet extends HttpServlet {
   private val logger = org.slf4j.LoggerFactory.getLogger("app")
@@ -36,7 +34,7 @@ class CaptureServlet extends HttpServlet {
     if(hasQuery == null) {
       response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
     } else {
-      response.getWriter().print(if(hasQuery=="auto") "true" else "false")
+      response.getWriter().print(if(hasQuery=="reply-text") "true" else "false")
     }
   }
 
