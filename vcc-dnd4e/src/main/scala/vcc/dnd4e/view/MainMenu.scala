@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view
 
 import scala.swing._
@@ -24,6 +23,11 @@ import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
 import vcc.controller.message.ClearTransactionLog
 import vcc.dnd4e.view.helper.PartyLoader
+import vcc.util.UpdateManager
+import java.net.URL
+import javax.swing.KeyStroke
+import java.awt.Desktop
+import vcc.dnd4e.{ConfigurationDialog, BootStrap}
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties
@@ -55,7 +59,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   })
   fileMenu.contents += new Separator()
   fileMenu.contents += new MenuItem(Action("Preferences ...") {
-    val cdiag = new vcc.dnd4e.ConfigurationDialog(null, false)
+    val cdiag = new ConfigurationDialog(null, false)
     cdiag.visible = true
   })
 
@@ -66,13 +70,13 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     def apply(): Unit = {
       director requestControllerOperation vcc.controller.message.Undo()
     }
-    accelerator = Some(javax.swing.KeyStroke.getKeyStroke('Z'.toInt, java.awt.Event.CTRL_MASK))
+    accelerator = Some(KeyStroke.getKeyStroke('Z'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new MenuItem(new Action("Redo") {
     def apply(): Unit = {
       director requestControllerOperation vcc.controller.message.Redo()
     }
-    accelerator = Some(javax.swing.KeyStroke.getKeyStroke('Y'.toInt, java.awt.Event.CTRL_MASK))
+    accelerator = Some(KeyStroke.getKeyStroke('Y'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new Separator
   historyMenu.contents += new MenuItem(Action("Clear History") {
@@ -108,13 +112,13 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   //Help menu
   private val helpMenu = new Menu("Help")
   helpMenu.contents += new MenuItem(Action("Online Manual") {
-    val dsk = java.awt.Desktop.getDesktop
-    dsk.browse(new java.net.URL("http://www.exnebula.org/vcc/manual").toURI)
+    val dsk = Desktop.getDesktop
+    dsk.browse(new URL("http://www.exnebula.org/vcc/manual").toURI)
   })
 
   helpMenu.contents += new MenuItem(Action("Firefox plugin") {
-    val dsk = java.awt.Desktop.getDesktop
-    dsk.browse(new java.net.URL("http://www.exnebula.org/vcc/plugin").toURI)
+    val dsk = Desktop.getDesktop
+    dsk.browse(new URL("http://www.exnebula.org/vcc/plugin").toURI)
   })
 
   helpMenu.contents += new MenuItem(Action("Check for Updates ...") {
@@ -122,7 +126,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
       logger.info("Update manager: Starting update")
       val url = System.getProperty("vcc.update.url", "http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
       logger.info("Update manager: Fetch version from URL: " + url)
-      vcc.util.UpdateManager.runUpgradeProcess(new java.net.URL(url))
+      UpdateManager.runUpgradeProcess(new URL(url), BootStrap.version, IconLibrary.MetalD20.getImage())
       logger.info("Update manager: End update")
     }
   })
@@ -134,7 +138,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
       "This is Virtual Combant Cards version: " + vcc.dnd4e.BootStrap.version.versionString +
               "\nDesigned at: www.exnebula.org",
       "About Virtual Combat Cards",
-      Dialog.Message.Info, vcc.dnd4e.view.IconLibrary.MetalD20
+      Dialog.Message.Info, IconLibrary.MetalD20
       )
   })
 
