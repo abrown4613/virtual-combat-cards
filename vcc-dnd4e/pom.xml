@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-dnd4e</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0-SNAPSHOT</version>
     <description>Main DND4E Module</description>
     <organization>
         <name>exnebula.org</name>
@@ -123,40 +123,14 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.miglayout</groupId>
-            <artifactId>miglayout</artifactId>
-            <version>3.7.3.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.xhtmlrenderer</groupId>
-            <artifactId>core-renderer</artifactId>
-            <version>R8</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.lowagie</groupId>
-                    <artifactId>itext</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-            <version>[6.1.14,)</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-            <version>[6.1.14,)</version>
-        </dependency>
-        <dependency>
-            <groupId>com.infonode</groupId>
-            <artifactId>idw-gpl</artifactId>
-            <version>1.6.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.exnebula</groupId>
             <artifactId>vcc-run</artifactId>
             <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
+            <artifactId>vcc-infra</artifactId>
+            <version>1.5.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
