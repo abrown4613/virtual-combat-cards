@@ -65,6 +65,16 @@ object PowerExtractorSpec extends Specification {
       }
     }
 
+    "read power with name, separator and round limited At-Will" in {
+      //<P class="flavor alt"> <B>Mercurial Body</B> <B></B></P>)
+      val parts = List(Text(" "), Key("Fey Light"), Text(" "), Icon(IconType.Separator), Text(" "), Key("At-Will"), Text(" (1/round)"))
+      parts match {
+        case SomePowerDefinition(d) =>
+          d must_== CompletePowerDefinition(Seq(), "Fey Light", null, AtWillUsage(1))
+        case _ => fail("Should have matched")
+      }
+    }
+
     "read power with name and no keyword" in {
       val parts = List(Icon(IconType.Melee), Key(" Name "), Icon(IconType.Separator), Key("Aura"), Text(" 1"))
       parts match {
@@ -135,6 +145,18 @@ object PowerExtractorSpec extends Specification {
     }
   }
 
+  "WithoutParenthensis" should {
+    "strip parenthesis" in {
+      WithoutParenthesis.unapply("  (  test one, two 3, 4 )  ") must_== Some("test one, two 3, 4")
+    }
+    "keep without parenthesis" in {
+      WithoutParenthesis.unapply("     test one, two 3, 4    ") must_== Some("test one, two 3, 4")
+    }
+
+    "strip one layer of parenthesis" in {
+      WithoutParenthesis.unapply("  ( ( test one, two 3, 4 ))  ") must_== Some("( test one, two 3, 4 )")
+    }
+  }
 
   "SomeUsage extractor" should {
 
@@ -191,6 +213,11 @@ object PowerExtractorSpec extends Specification {
 
       val parts2 = List(Key("At-Will"), Text(" 2/round"))
       SomeUsage.unapply(parts2) must_== Some(AtWillUsage(2))
+    }
+
+    "handle round limited at will in parenthesis" in {
+      val parts3 = List(Key("At-Will"), Text(" (1/round)"))
+      SomeUsage.unapply(parts3) must_== Some(AtWillUsage(1))
     }
 
     "handle unlimited at will" in {
