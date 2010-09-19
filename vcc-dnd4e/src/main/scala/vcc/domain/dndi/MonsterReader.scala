@@ -73,10 +73,24 @@ object SomeUsage {
       case Key(EncounterText(n)) :: Nil => Some(EncounterUsage(n))
       case Text(`rechargeWithDice`(min)) :: Nil => Some(RechargeDiceUsage(min.toInt))
       case Key("Recharge") :: Text(condition) :: Nil => Some(RechargeConditionalUsage(condition.trim))
-      case Key(`rechargeAllBold`(condition)) :: Nil => Some(RechargeConditionalUsage(condition.trim))
+      case Key(`rechargeAllBold`(WithoutParenthesis(condition))) :: Nil => Some(RechargeConditionalUsage(condition.trim))
       case Key("At-Will") :: Nil => Some(AtWillUsage(0))
-      case Key("At-Will") :: Text(`roundLimit`(n)) :: Nil => Some(AtWillUsage(n.toInt))
+      case Key("At-Will") :: Text(WithoutParenthesis(`roundLimit`(n))) :: Nil => Some(AtWillUsage(n.toInt))
       case _ => None
+    }
+  }
+}
+
+/**
+ * Remove parenthesis if the string has.
+ */
+object WithoutParenthesis {
+  private val parenthesis = """^\s*\((.*)\)\s*$""".r
+
+  def unapply(text: String): Option[String] = {
+    text match {
+      case this.parenthesis(s) => Some(s.trim)
+      case s => Some(s.trim)
     }
   }
 }
@@ -107,8 +121,10 @@ object SomePowerDefinition {
       case _ => null
     }
     if (pdef == null) {
-      //TODO: Implement simplified fail-over.
-      throw new Exception("FAILOVER")
+//      //TODO: Implement simplified fail-over.
+//      println("Parts: " + PowerHeaderParts.unapply(parts))
+//      throw new Exception("Processing of power header failed, content: " + parts)
+      None
     } else {
       Some(pdef)
     }
@@ -168,7 +184,7 @@ object PowerHeaderParts {
 /**
  * Reads DNDI monster entries in both MM3 and previous format
  */
-class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
+class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
 
@@ -222,8 +238,8 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
     }
     stream.advance()
     var role = headMap("role")
-    if(role == "Minion" ) role = "No Role"
-    if(role.startsWith("Minion ")) role = role.substring(7)
+    if (role == "Minion") role = "No Role"
+    if (role.startsWith("Minion ")) role = role.substring(7)
     headMap + ("role" -> role)
   }
 
@@ -231,8 +247,8 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
    * Extract primary stats form the a list of String pairs:
    */
   private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[(String, String)]) = {
-    var auras:List[(String,String)] = Nil
-    val attr = scala.collection.mutable.Map.empty[String,String]
+    var auras: List[(String, String)] = Nil
+    val attr = scala.collection.mutable.Map.empty[String, String]
 
     for ((k, v) <- pairs) {
       if (primaryStats(k)) attr.update(k.toLowerCase, v)
@@ -325,7 +341,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
     // Process tail.
     val tailStats = processTailBlock(stream)
 
-    val aurasAsTraits = auras.map( x => promoteAuraLike(x._1,x._2)).toList
+    val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
     var powersActionMap = powersByAction.toMap
     //Should need this, but just to be safe
     if (!aurasAsTraits.isEmpty) {
@@ -346,12 +362,12 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster]{
         result.update("description", ret.trim)
         stream.advance()
       case Block("P#", commentPart :: Nil) =>
-        val comment:String = commentPart match {
+        val comment: String = commentPart match {
           case Text(text) => text
           case Emphasis(text) => text
           case _ => null // Dont care much for this
         }
-        if(comment != null) result.update("comment", comment)
+        if (comment != null) result.update("comment", comment)
         stream.advance()
       case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
         val trimmedList = trimParts(parts)

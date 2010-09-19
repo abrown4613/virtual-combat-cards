@@ -286,6 +286,12 @@ object MonsterReaderSpec extends Specification {
       power.action must_== ActionType.Minor
       power.description must_== sampleDesc
     }
+
+    "failed broken power" in {
+      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Bad</B> <B>Power</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>)
+      mr.processPower(ActionType.Minor, ts) must throwAn[UnexpectedBlockElementException]
+    }
+
   }
 
   "MonsterReader.processPowerGroup" should {
