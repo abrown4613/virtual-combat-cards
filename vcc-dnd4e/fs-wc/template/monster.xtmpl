@@ -110,6 +110,12 @@
                     <t:include macro="power"/>
                 </t:foreach>
             </t:ifdefined>
+            <t:ifdefined group="free action">
+                <h2>Free Actions</h2>
+                <t:foreach ingroup="free action">
+                    <t:include macro="power"/>
+                </t:foreach>
+            </t:ifdefined>
             <t:ifdefined group="triggered action">
                 <h2>Triggered Actions</h2>
                 <t:foreach ingroup="triggered action">
