@@ -64,6 +64,7 @@ class ArrayRoundRobin[T](aHead: T, aSeq: Seq[T])(implicit manifest : Manifest[T]
   def setRobin(aHead: T, aSeq: Seq[T]) {
     robin = aSeq.toArray[T]
     if (aHead != null) advanceTo(aHead)
+    else headIdx = 0
   }
 
 }

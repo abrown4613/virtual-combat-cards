@@ -64,6 +64,13 @@ object RoundRobinSpec extends Specification {
       roundRobin.advance()
       roundRobin.headOption must_== Some('A)
     }
+
+    "after clearing a new definition will with not head maintains order - issue 197" in {
+      roundRobin.headOption must_== Some('B)
+      roundRobin.setRobin(null, Seq('A, 'B, 'C, 'D))
+      roundRobin.apply(0) must_== 'A
+
+    }
   }
   "a full RoundRobin without explicit head " ->- (beforeContext {
     roundRobin = new ArrayRoundRobin(null, Seq('A, 'B))
