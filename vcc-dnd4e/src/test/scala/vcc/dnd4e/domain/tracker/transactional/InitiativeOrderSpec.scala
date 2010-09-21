@@ -474,7 +474,44 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       trans.redo(changeLog)
       0 must_== 0
     }
+
+    "issue 197 end combat after changing robin head and start again must delay to second" in {
+
+      aOrder.rotate()(aTrans)
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioa0))
+
+      aTrans = new Transaction()
+      aOrder.rotate()(aTrans)
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderFirstChange(iob))
+
+      aTrans = new Transaction()
+      aOrder.clearOrder()(aTrans)
+      aTrans.commit(changeLog)
+
+      aTrans = new Transaction()
+      changeLog = new TransactionChangeLogger()
+
+      aOrder.setInitiative(InitiativeDefinition(combA, 10, List(14, 9)))
+      aOrder.setInitiative(InitiativeDefinition(combB, 10, List(10)))
+      aOrder.setInitiative(InitiativeDefinition(combC, 8, List(18)))
+      aOrder.setInitiative(InitiativeDefinition(combD, 4, List(7)))
+      aTrans.commit(changeLog)
+
+      aTrans = new Transaction()
+      aOrder.startCombat()
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioc))
+
+      aTrans = new Transaction()
+      changeLog = new TransactionChangeLogger()
+      aOrder.rotate()(aTrans)
+      aTrans.commit(changeLog)
+      changeLog.changes must contain(InitiativeOrderFirstChange(ioa0))
+    }
   }
+
 
   def extractOrderChange(changes: Seq[ChangeNotification]): List[InitiativeOrderID] = {
     val orderChange = changes.find(x => x.isInstanceOf[InitiativeOrderChange]).get.asInstanceOf[InitiativeOrderChange]
