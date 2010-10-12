@@ -22,11 +22,7 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases</url>
         </repository>
-        <repository>
-            <id>scala-tools.org snapshot</id>
-            <name>Scala-Tools Maven2 Repository SNAPSHOT</name>
-            <url>http://scala-tools.org/repo-snapshots</url>
-        </repository>
+<!--
         <repository>
             <id>maven2-repository.dev.java.net</id>
             <name>JavaNet Repository</name>
@@ -38,6 +34,7 @@
             <name>MigLayout</name>
             <url>http://www.miglayout.com/mavensite</url>
         </repository>
+-->
     </repositories>
 
     <pluginRepositories>
