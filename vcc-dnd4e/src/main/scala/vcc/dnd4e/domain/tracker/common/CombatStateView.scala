@@ -47,4 +47,10 @@ trait CombatStateView {
   def combatComment: String
 
   def nextUp: Option[InitiativeOrderID]
+
+  /**
+   * Returns a sequence of all effect in the combat
+   * @return Sequence of all effect in all combatants
+   */
+  def allEffects():Seq[Effect] = allCombatantIDs.map(id => combatantViewFromID(id).effects).flatMap(elist => elist.effects)
 }

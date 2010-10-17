@@ -21,8 +21,8 @@ package vcc.dnd4e.domain.tracker.snapshot
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import vcc.dnd4e.domain.tracker.common.CombatantStateView
 import org.specs.mock.Mockito
+import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateTest extends JUnit4(CombatStateSpec)
@@ -40,4 +40,34 @@ object CombatStateSpec extends Specification with Mockito with CombatStateSnapsh
     }
   }
 
+  "a CombatStateView" should {
+    "provide sequence of all effects" in {
+      val mCombA = mock[CombatantStateView]
+      val mCombB = mock[CombatantStateView]
+      val badCondition = Effect.Condition.Generic("any", false)
+      val goodCondition = Effect.Condition.Generic("any", true)
+      val eff1 = Effect(EffectID(combA, 0), combA, goodCondition, Duration.Stance)
+      val eff2 = Effect(EffectID(combA, 1), combA, goodCondition, Duration.Rage)
+      val eff3 = Effect(EffectID(combB, 2), combA, badCondition, Duration.Rage)
+      val aBigList = EffectList(combA, List(eff1, eff2))
+      val aShortList = EffectList(combB, List(eff3))
+      val cs = CombatState(
+        false,
+        null,
+        List(ioa0), Map(ioa0 -> ita0),
+        Some(ioa0),
+        Map(combA -> mCombA, combB -> mCombB))
+      mCombA.effects returns aBigList
+      mCombB.effects returns aShortList
+
+      val effects = cs.allEffects()
+
+      effects.size must_== 3
+      effects contains eff1
+      effects contains eff2
+      effects contains eff3
+
+
+    }
+  }
 }
