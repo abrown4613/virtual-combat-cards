@@ -67,9 +67,9 @@ trait InitiativeActionHandler {
         val health = context.roster.combatant(nextIT.orderID.combId).health
         if (health.status == HealthTracker.Status.Dead) {
           if (nextIT.state == InitiativeTracker.state.Delaying)
-            msgQueue += InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound)
-          msgQueue += InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.StartRound)
-          msgQueue += InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound)
+            enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound))
+          enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.StartRound))
+          enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound))
         }
       }
 

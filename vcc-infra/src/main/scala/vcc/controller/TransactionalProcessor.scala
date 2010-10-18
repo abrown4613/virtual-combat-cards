@@ -38,7 +38,7 @@ class UnhandledActionException(action: TransactionalAction) extends Exception("C
  * traits in order to access context and transaction fields.
  */
 abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[TransactionalAction]) extends TrackerController {
-  protected val msgQueue: Queue[TransactionalAction] = aQueue
+  private val msgQueue: Queue[TransactionalAction] = aQueue
 
   def this(context: C) = this (context, new Queue[TransactionalAction])
 
@@ -68,16 +68,24 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
    * processing a TransactionalAction.
    * @param handler A partial function on TransactionalAction
    */
-  def addHandler(handler: PartialFunction[TransactionalAction, Unit]) {
+  protected def addHandler(handler: PartialFunction[TransactionalAction, Unit]) {
     handlers = handlers ::: List(handler)
   }
 
-  def addRewriteRule(rule: PartialFunction[TransactionalAction, Seq[TransactionalAction]]) {
+  protected def addRewriteRule(rule: PartialFunction[TransactionalAction, Seq[TransactionalAction]]) {
     rewriteRules = rewriteRules ::: List(rule)
   }
 
   /**
-   * Call internal handlers, but first set the transaction and then unset the transaction
+   * Adds a new action to the end of the primary action queue. This method bypasses rewrite mechanism.
+   * @param action Action to be enqueued at first level.
+   */
+  protected def enqueueAction(action: TransactionalAction) {
+    msgQueue.enqueue(action)
+  }
+
+  /**
+   *  Call internal handlers, but first set the transaction and then unset the transaction
    */
   def dispatch(transaction: Transaction, source: CommandSource, action: TransactionalAction): Unit = {
 
@@ -92,6 +100,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
     this.source = source
     try {
       while (!msgQueue.isEmpty) {
+        //TODO: Peek message and check for necessary rulings.
         val msg = msgQueue.dequeue
         var handled = false
         for (hndl <- handlers) {

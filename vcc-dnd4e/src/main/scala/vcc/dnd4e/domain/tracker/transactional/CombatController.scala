@@ -42,7 +42,7 @@ trait TrackerControllerValidatingPublisher {
 /**
  * Base class for testing and build CombatController, this is used for isolated testing of individual handlers.
  */
-abstract class AbstractCombatController(val rules: CombatStateRules, val state: CombatState, queue: Queue[TransactionalAction])
+abstract class AbstractCombatController(val rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
         extends TransactionalProcessor(state, queue)
                 with TrackerControllerValidatingPublisher
 
