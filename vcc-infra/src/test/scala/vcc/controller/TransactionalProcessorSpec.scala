@@ -40,6 +40,8 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       case DummyAction('THROW) =>
         throw new IllegalStateException("Cant handle")
       case DummyAction('DOIT) =>
+      case DummyAction('AGAIN) =>
+        enqueueAction(DummyAction('DOIT))
     }
 
     addRewriteRule {
@@ -64,7 +66,15 @@ object TransactionalProcessorSpec extends Specification with Mockito {
       aProcessor.dispatch(new Transaction(), aSource, actionTwice)
       there was one(mQueue).+=(actionOnce) then
               one(mQueue).+=(actionOnce)
+    }
 
+    "must enqueue a action if handler asks it" in {
+      val actionAgain = DummyAction('AGAIN)
+      val actionOnce = DummyAction('DOIT)
+      aProcessor.dispatch(new Transaction(), aSource, actionAgain)
+      there was one(mQueue).+=(actionAgain) then
+              one(mQueue).dequeue() then // after the dequeue
+              one(mQueue).+=(actionOnce)
     }
 
     "dequeue messages when dispatching" in {
