@@ -38,7 +38,7 @@ object ReorderListBuilderSpec extends Specification {
   implicit def listInt2ListUIInt(lst: List[Int]): List[UIInt] = lst.map(int2UIInt(_))
 
 
-  val empty = beforeContext {
+  val emptyList = beforeContext {
     theList = new ReorderedListBuilder[Int, UIInt](Nil, Nil, comparator)
   }
 
@@ -70,7 +70,7 @@ object ReorderListBuilderSpec extends Specification {
     }
   }
 
-  "empty ReorderListBuilder" ->- (empty) should {
+  "empty ReorderListBuilder" ->- (emptyList) should {
 
     "initialize correctly" in {
       theList.baseList must_== Nil
