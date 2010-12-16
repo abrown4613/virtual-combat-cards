@@ -77,5 +77,5 @@ trait CommandSource {
    * @return The return must include a single Decision for each Ruling in the order they were provided in the
    * {@code ruling} parameter. 
    */
-  def provideDecisionsForRulings(rulings: List[Ruling[_]]): List[Decision[_]] = Nil
+  def provideDecisionsForRulings(rulings: List[Ruling[_]]): List[Decision[_]]
 }

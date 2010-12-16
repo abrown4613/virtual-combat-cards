@@ -25,7 +25,7 @@ import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
 import scala.actors.Actor
 import vcc.controller.message.Command
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatStateWithChanges}
-import vcc.controller.{TrackerChangeObserver, TrackerChangeAware, CommandSource}
+import vcc.controller._
 
 trait ContextObserver {
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
@@ -165,4 +165,10 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   def actionCancelled(reason: String) {
     logger.warn("Failed to execute action, reason: " + reason)
   }
+
+  /**
+   *
+   */
+  //TODO Implement this really
+  def provideDecisionsForRulings(rulings: List[Ruling[_]]): List[Decision[_]] = Nil
 }
