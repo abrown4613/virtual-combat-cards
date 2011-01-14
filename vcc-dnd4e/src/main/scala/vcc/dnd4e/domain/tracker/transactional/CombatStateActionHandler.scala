@@ -63,5 +63,6 @@ trait CombatStateActionHandler {
     case ClearRoster(all) =>
       if (context.isCombatStarted) throw new IllegalActionException("Can not clear combatant during a combat.")
       context.roster.clear(all)
+      context.order.syncOrderToRoster(context.roster.allCombatantIDs)
   }
 }
