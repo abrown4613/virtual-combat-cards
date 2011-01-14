@@ -24,11 +24,11 @@ import vcc.util.swing._
 import scala.util.Sorting
 import vcc.dnd4e.domain.tracker.common.{InitiativeDefinition}
 import vcc.dnd4e.view.helper.{InitiativeRollEditor, InitiativeRoll}
-import vcc.dnd4e.view.{UnifiedCombatant, PanelDirector}
 import vcc.util.{ListHelper, DiceBag}
+import vcc.dnd4e.view.{IconLibrary, UnifiedCombatant, PanelDirector}
 
-class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDialog[List[InitiativeDefinition]](window, "Roll Initiative") {
-  val table = new RowProjectionTable[InitiativeDialogEntry] with CustomRenderedRowProjectionTable[InitiativeDialogEntry] {
+class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalPromptDialog[(Boolean, List[InitiativeDefinition])](window, "Roll Initiative") {
+  private val table = new RowProjectionTable[InitiativeDialogEntry] with CustomRenderedRowProjectionTable[InitiativeDialogEntry] {
     projection = new ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
     val labelFormatter = new InitiativeDialogEntryFormatter()
     autoResizeMode = Table.AutoResizeMode.Off
@@ -40,6 +40,14 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
     scrollablePeer.setDefaultEditor(classOf[InitiativeRoll], new InitiativeRollEditor())
     this.peer.putClientProperty("terminateEditOnFocusLost", true) // Make sure we close the edit
   }
+
+  private val rollButton = new Button(Action("Roll") {
+    setDialogResultAndClose(Some((false, getResult)))
+  })
+  private val rollAndStartButton = new Button(Action("Roll and Start Combat") {
+    val ir = getResult()
+    setDialogResultAndClose(Some((!ir.isEmpty, ir)))  //Only start if there are initiative
+  })
 
   private val groupCheckbox = new Button(Action("Group similar") {
     table.content = mergeSimilar(table.content.toList)
@@ -68,19 +76,24 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
   })
 
   contents = new MigPanel("") {
-    add(new ScrollPane {contents = table}, "growx,growy,wrap")
+    add(new ScrollPane {
+      contents = table
+    }, "growx,growy,wrap")
     add(groupCheckbox, "split 4")
     add(splitGroup)
     add(breakGroup, "wrap")
-    add(new Label("<html><body style='font-weight: normal;'><b>Roll column can be one of:</b> <dl><dt>blank</dt><dd>will not be in initiative order</dd><dt>r</dt><dd>Roll for me</dd><dt>number</dt><dd>The value of the dice roll</dd></dl><p>Combatant with multiple initiative entries should have <br>several numbers or 'r' separated by slash ('/').</p></body></html>"), "wrap")
-    add(new Button(okAction), "split 3")
+    add(new Label("<html><body style='font-weight: normal; font-size: small;'><b>Roll column can be one of:</b> <dl><dt>blank</dt><dd>will not be in initiative order</dd><dt>r</dt><dd>Roll for me</dd><dt>number</dt><dd>The value of the dice roll</dd></dl><p>Combatant with multiple initiative entries should have <br>several numbers or 'r' separated by slash ('/').</p></body></html>"), "wrap")
+
+    add(rollAndStartButton, "split 4")
+    add(rollButton)
     add(new Button(cancelAction), "")
   }
   minimumSize = new java.awt.Dimension(360, 550)
   splitGroup.enabled = false
   breakGroup.enabled = false
-
   this.placeOnScreenCenter()
+  this.peer.setIconImage(IconLibrary.MetalD20.getImage)
+
   listenTo(table.selection)
 
   reactions += {
@@ -92,24 +105,31 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
       breakGroup.enabled = splitGroup.enabled
   }
 
-  private def getManifest[T]()(implicit manifest:Manifest[T]):Manifest[T] = manifest
-
+  //Setup table and checkbox
   table.content = {
     val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](
       director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)).toSeq,
-      (a: UnifiedCombatant, b: UnifiedCombatant) => {a.combId.id < b.combId.id})(getManifest[UnifiedCombatant])
+      (a: UnifiedCombatant, b: UnifiedCombatant) => {
+        a.combId.id < b.combId.id
+      })
     orderedAndFilter.map(
       cmb => new InitiativeDialogEntry(
         Set(cmb.combId), cmb.name, cmb.definition.entity.initiative,
         if (cmb.isInOrder) InitiativeRoll(List(Some(cmb.initiative.initScore))) else InitiativeRoll.simpleRoll,
         cmb.isInOrder)
-      ).toList.foldLeft(List[InitiativeDialogEntry]())(joinInitiativeRolls)
+    ).toList.foldLeft(List[InitiativeDialogEntry]())(joinInitiativeRolls)
+  }
+  rollAndStartButton.enabled = !director.currentState.state.isCombatStarted
+
+
+  def collectResult(): Option[(Boolean, List[InitiativeDefinition])] = {
+    None // This should not be called
   }
 
-  def processOK() {
-    dialogResult = Some(table.content.filter(e => !e.skip).
-            map(ie => (ie.ids, ie.init, ie.roll.resolve(ie.init, DiceBag))). //Tuple( Ids, InitBonus, Rolls)
-            flatMap(tpl => tpl._1.map(id => InitiativeDefinition(id, tpl._2, tpl._3))).toList)
+  private def getResult(): List[InitiativeDefinition] = {
+    table.content.filter(e => !e.skip).
+      map(ie => (ie.ids, ie.init, ie.roll.resolve(ie.init, DiceBag))). //Tuple( Ids, InitBonus, Rolls)
+      flatMap(tpl => tpl._1.map(id => InitiativeDefinition(id, tpl._2, tpl._3))).toList
   }
 
   private def getSelectedRow(): Option[Int] = {
@@ -139,5 +159,4 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalDial
   def mergeSimilar(lst: List[InitiativeDialogEntry]): List[InitiativeDialogEntry] = {
     lst.foldLeft(List[InitiativeDialogEntry]())(insertSimilar)
   }
-
 }

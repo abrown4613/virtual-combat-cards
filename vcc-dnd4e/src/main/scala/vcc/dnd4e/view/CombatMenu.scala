@@ -29,10 +29,12 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
 
   private val menuRollInitiative = new MenuItem(Action("Roll Initiative...") {
     val dlg = new InitiativeDialog(parent, director)
-    dlg.visible = true
-    val res = dlg.dialogResult
+    //Result is Pair (Boolean, List[InitiativeDefinition])
+    val res = dlg.promptUser()
     if (res.isDefined) {
-      director requestAction SetInitiative(res.get)
+      val (startCombat, initiative) = res.get
+      director requestAction SetInitiative(initiative)
+      if (startCombat && !initiative.isEmpty) director requestAction StartCombat()
     }
   })
 
