@@ -49,8 +49,7 @@ object BootStrap extends StartupRoutine {
       if (!ConfigurationFinder.foundConfiguration) {
         logger.info("Can't find the configuration, will configure")
         val cdiag = new ConfigurationDialog(srw.ownerWindow, true)
-        cdiag.visible = true
-        val result = cdiag.dialogResult
+        val result = cdiag.promptUser()
         if (result == None) {
           logger.warn("Failed to complete configuration, will exit")
           return null
@@ -65,7 +64,7 @@ object BootStrap extends StartupRoutine {
     }
     callStartupStep(srw, "Logging") {
       val logs = Seq("org.mortbay.log", "domain", "app", "infra", "user", "fs-agent")
-      val file = new java.io.File(Configuration.baseDirectory.value, "vcc.log")
+      val file = new File(Configuration.baseDirectory.value, "vcc.log")
       logger.info("Starting to logging operations to: {}", file)
       LogService.initializeLog(logs, file.toString, LogService.level.Debug, Configuration.storeLogs.value)
       LogService
@@ -88,7 +87,7 @@ object BootStrap extends StartupRoutine {
             logger.error("Failed to create compendium {}", Configuration.compendiumStoreID.value)
             false
           } else {
-            val sampleFile = new java.io.File(UpdateManager.getInstallDirectory, "sample-comp.zip")
+            val sampleFile = new File(UpdateManager.getInstallDirectory, "sample-comp.zip")
             if (importSampleCompendium) {
               logger.info("Importing sample compendium from {} if it exists.", sampleFile)
               if (sampleFile.exists) {

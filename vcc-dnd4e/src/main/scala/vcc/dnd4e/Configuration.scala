@@ -79,7 +79,7 @@ import scala.swing._
 import vcc.util.swing._
 import java.awt.Window
 
-class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalDialog[Boolean](owner, "Virtual Combat Cards Configuration") {
+class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalPromptDialog[Boolean](owner, "Virtual Combat Cards Configuration") {
   Configuration.dumpToLog()
 
   private val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -122,7 +122,7 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalDialog[B
   contents = mpanel
   placeOnScreenCenter()
 
-  def processOK() {
+  def collectResult():Option[Boolean] = {
     val dir = if (homeDirRadioButton.selected) userHome else vccHome
     val cFile = if (initial) new File(dir.getParentFile, ConfigurationFinder.configFilename)
     else ConfigurationFinder.locateFile
@@ -130,7 +130,7 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalDialog[B
     if (initial) {
       if (!Configuration.createDirectoryTree(dir)) {
         logger.error("Failed to create data structure")
-        return
+        return None
       }
     }
 
@@ -146,6 +146,6 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalDialog[B
     Configuration.storeLogs.value = logStore.selected
     Configuration.save(cFile)
     Configuration.load(cFile)
-    dialogResult = Some(importSample.selected)
+    Some(importSample.selected)
   }
 }

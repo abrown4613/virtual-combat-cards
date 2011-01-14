@@ -23,7 +23,7 @@ import scala.swing.event._
 import vcc.util.swing._
 import vcc.dnd4e.domain.compendium.{CombatantEntity,CharacterEntity,MonsterEntity}
 
-class NewCombatantDialog(owner: Frame) extends ModalDialog[CombatantEntity](owner,"New Compendium Entry") {
+class NewCombatantDialog(owner: Frame) extends ModalPromptDialog[CombatantEntity](owner,"New Compendium Entry") {
 
   val helpText = (<html><body>
     D&amp;D Insider ID is the number that appear in the URL from the monster on Wizards site.
@@ -75,9 +75,10 @@ class NewCombatantDialog(owner: Frame) extends ModalDialog[CombatantEntity](owne
     case ValueChanged(this.idField) => 
       toggleOkAction()
   }
-  
-  def processOK() {
-    dialogResult = buttonGroup.selected match { 
+
+
+  def collectResult(): Option[CombatantEntity] = {
+    buttonGroup.selected match {
       case Some(this.characterRadioButton) => Some(CharacterEntity.newInstance())
       case Some(this.customMonsterRadioButton) => Some(MonsterEntity.newInstance())
       case Some(this.officialMonsterRadioButton) => Some(MonsterEntity.newInstance(idField.text.toInt))

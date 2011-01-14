@@ -20,55 +20,56 @@ package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.swing.{MigPanel,SwingHelper}
+import vcc.util.swing.{MigPanel, SwingHelper}
 
 import vcc.dnd4e.domain.compendium._
 import vcc.dnd4e.view.IconLibrary
 
 object CompendiumView extends Frame {
-  
+
   title = "Compendium Entries"
   iconImage = IconLibrary.MetalD20.getImage
-  
+
   val window = this
 
-  private val entListPanel = new CompendiumEntitySelectionPanel() 
-  
+  private val entListPanel = new CompendiumEntitySelectionPanel()
+
   val newEntryAction = Action("New Entry ...") {
-	val diag = new NewCombatantDialog(window)
-	diag.visible = true
-	if(diag.dialogResult.isDefined)
-	  doEditEntry(diag.dialogResult.get)
+    val diag = new NewCombatantDialog(window)
+    var result = diag.promptUser()
+    if (result.isDefined)
+      doEditEntry(result.get)
   }
-  
-  private val editAction= Action("Edit ...") {
-    if(entListPanel.currentSelection.isDefined) {
-      val ent = Compendium.activeRepository.load(entListPanel.currentSelection.get.eid,false)
-      if(ent != null) doEditEntry(ent)
+
+  private val editAction = Action("Edit ...") {
+    if (entListPanel.currentSelection.isDefined) {
+      val ent = Compendium.activeRepository.load(entListPanel.currentSelection.get.eid, false)
+      if (ent != null) doEditEntry(ent)
     }
   }
-  
-  
-  
+
+
   entListPanel.doubleClickAction = editAction
-  
+
   contents = new MigPanel("fill") {
-    add(entListPanel,"span 3,wrap")
-	add(new Button(newEntryAction), "split 5")
-	add(new Button(editAction))
-	add(new Button(Action("Delete") {
-      if(entListPanel.currentSelection.isDefined) {
+    add(entListPanel, "span 3,wrap")
+    add(new Button(newEntryAction), "split 5")
+    add(new Button(editAction))
+    add(new Button(Action("Delete") {
+      if (entListPanel.currentSelection.isDefined) {
         Compendium.activeRepository.delete(entListPanel.currentSelection.get.eid)
-      }              
-    }),"")
-	add(new Button(Action("Close") {CompendiumView.visible = false }),"skip 1")
+      }
+    }), "")
+    add(new Button(Action("Close") {
+      CompendiumView.visible = false
+    }), "skip 1")
   }
-  
-  
-  def doEditEntry(ent:CombatantEntity) {
+
+
+  def doEditEntry(ent: CombatantEntity) {
     val nd = new CombatantEditorDialog(ent)
     SwingHelper.centerFrameOnScreen(nd)
     nd.visible = true
-    
+
   }
 }

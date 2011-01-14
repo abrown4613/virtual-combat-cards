@@ -60,7 +60,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   fileMenu.contents += new Separator()
   fileMenu.contents += new MenuItem(Action("Preferences ...") {
     val cdiag = new ConfigurationDialog(null, false)
-    cdiag.visible = true
+    cdiag.promptUser()
   })
 
   private val combatMenu = new CombatMenu(director, parent)
