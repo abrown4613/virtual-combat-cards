@@ -52,7 +52,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
 
   var changeLog: TransactionChangeLogger = null
 
-  val emptyOrder = beforeContext {
+  val emptyOrder = beforeContext{
     aTrans = new Transaction()
     aOrder = new InitiativeOrder()
     changeLog = new TransactionChangeLogger()
@@ -86,7 +86,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
 
     "add compound InitiativeDefinition" in {
 
-      withTransaction {
+      withTransaction{
         trans =>
           val iDef = InitiativeDefinition(combA, 10, List(14, 25))
           aOrder.setInitiative(iDef)(trans)
@@ -121,7 +121,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
   }
 
-  val loadedOrder = beforeContext {
+  val loadedOrder = beforeContext{
     aTrans = new Transaction()
     aOrder = new InitiativeOrder()
     changeLog = new TransactionChangeLogger()
@@ -134,7 +134,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     aTrans = new Transaction()
   }
 
-  val loadedAndStartedOrder = beforeContext {
+  val loadedAndStartedOrder = beforeContext{
     aTrans = new Transaction()
     aOrder = new InitiativeOrder()
     changeLog = new TransactionChangeLogger()
@@ -188,7 +188,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "added tracker with setInitiative" in {
-      withTransaction {
+      withTransaction{
         trans => aOrder.setInitiative(InitiativeDefinition(combE, 3, List(5)))(trans)
       } afterCommit {
         changes =>
@@ -217,7 +217,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
 
   "an InitiativeOrder transactionally" ->- (loadedOrder) should {
     "go to the first combatant on the order on a startCombat" in {
-      withTransaction {
+      withTransaction{
         transaction => aOrder.startCombat()(transaction)
       } afterCommit {
         changes => changes must contain(InitiativeOrderFirstChange(ioc))
@@ -268,7 +268,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "remove a combatant information from the order" in {
-      withTransaction {
+      withTransaction{
         trans =>
           aOrder.removeCombatant(combA)(trans)
       } afterCommit {
@@ -301,6 +301,28 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       aTrans.commit(changeLog)
 
       changeLog.changes.toList must_== List((InitiativeOrderChange(Nil)))
+    }
+  }
+
+  "Issue 210 need to clear order if combatants" ->- (loadedOrder) should {
+    "synchronize must clear some combatants" in {
+      withTransaction{
+        transaction =>
+          aOrder.syncOrderToRoster(List(combC, combD))(transaction)
+      } afterCommit {
+        changes =>
+          extractOrderChange(changes) must_== List(ioc, iod)
+      } afterUndo {
+        changes =>
+          extractOrderChange(changes) must_== List(ioc, ioa0,  iob, ioa1, iod)
+      } afterRedoAsInCommit ()
+    }
+  }
+
+  "Issue 210 need to clear order if combatants after combat start" ->- (loadedAndStartedOrder) should {
+    "synchronize after start of combat must fail" in {
+      val trans = new Transaction()
+      aOrder.syncOrderToRoster(List(combC, combD))(trans) must throwA[IllegalStateException]
     }
   }
 
@@ -397,7 +419,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "clear the entire order" in {
-      withTransaction {
+      withTransaction{
         trans => aOrder.clearOrder()(trans)
       } afterCommit {
         changes =>
@@ -410,14 +432,14 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
       } afterRedo {
         changes =>
           changes must containAll(List(InitiativeOrderFirstChange(null), InitiativeOrderChange(Nil)))
-          List(ioa0, ioa1, iob, ioc, iod).foreach {
+          List(ioa0, ioa1, iob, ioc, iod).foreach{
             e =>
               aOrder.initiativeTrackerFor(e) must throwA[NoSuchElementException]
           }
       }
     }
     "setRobinHead if element is in Robin" in {
-      withTransaction {
+      withTransaction{
         trans =>
           aOrder.setRobinHead(iod)(trans)
       } afterCommit {
@@ -447,7 +469,7 @@ object InitiativeOrderSpec extends Specification with TransactionalSpecification
     }
 
     "end combat when its started - same as clear" in {
-      withTransaction {
+      withTransaction{
         trans =>
           aOrder.clearOrder()(trans)
       } afterCommit {

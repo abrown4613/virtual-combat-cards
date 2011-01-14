@@ -35,9 +35,10 @@ import vcc.dnd4e.model.common.CombatantType
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
 
 object CombatStateActionHandlerSpec extends Specification with Mockito {
+
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends AbstractCombatController(rules, state, queue)
-                  with CombatStateActionHandler
+    extends AbstractCombatController(rules, state, queue)
+    with CombatStateActionHandler
 
   val mOrder = mock[InitiativeOrder]
   val mRoster = mock[CombatantRoster]
@@ -132,7 +133,7 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
       there was one(mMeta).inCombat
       there was one(mOrder).isInOrder(combA)
       there was one(mOrder).removeCombatant(combA)(trans) then
-              one(mOrder).setInitiative(iDef1)(trans)
+        one(mOrder).setInitiative(iDef1)(trans)
     }
 
     "not remove from list if already there and in combat" in {
@@ -206,17 +207,26 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
     "clear all combatant from the roster when not in combat" in {
       val trans = new Transaction()
       mMeta.inCombat returns false
+      mRoster.allCombatantIDs returns Nil
+
       aCombatController.dispatch(trans, mSource, ClearRoster(true))
       there was one(mMeta).inCombat
-      there was one(mRoster).clear(true)(trans)
+      there was one(mRoster).clear(true)(trans) then
+        one(mRoster).allCombatantIDs then
+        one(mOrder).syncOrderToRoster(Nil)(trans)
     }
 
-    "clear all combatant from the roster when not in combat" in {
+    "clear all monster from the roster when not in combat" in {
       val trans = new Transaction()
       mMeta.inCombat returns false
+      val mList = mock[List[CombatantID]]
+      mRoster.allCombatantIDs returns mList
+
       aCombatController.dispatch(trans, mSource, ClearRoster(false))
       there was one(mMeta).inCombat
-      there was one(mRoster).clear(false)(trans)
+      there was one(mRoster).clear(false)(trans) then
+        one(mRoster).allCombatantIDs then
+        one(mOrder).syncOrderToRoster(mList)(trans)
     }
   }
 }

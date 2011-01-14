@@ -28,6 +28,7 @@ import vcc.dnd4e.domain.tracker.common._
  * the RoundRobin.
  */
 class InitiativeOrder {
+
   private object initiativeResultComparator extends ReorderedListBuilderCompare[InitiativeResult] {
     def isBefore(a: InitiativeResult, b: InitiativeResult): Boolean = {
       if (a.compare(b) == 0) DiceBag.flipCoin()
@@ -44,7 +45,7 @@ class InitiativeOrder {
   private var robinHeadToReturn: InitiativeOrderID = null
 
   private val robinHead = new Undoable[InitiativeOrderID](null, x => InitiativeOrderFirstChange(x.value)) with
-          UndoableWithCallback[InitiativeOrderID] {
+    UndoableWithCallback[InitiativeOrderID] {
     def restoreCallback(oldValue: InitiativeOrderID) {
       if (oldValue != null) {
         try {
@@ -145,10 +146,12 @@ class InitiativeOrder {
 
     val toRemove = initOrder.value.filter(e => e.combId == comb)
     initOrder.value = initOrder.value filterNot (toRemove contains)
-    toRemove.foreach {o => updateInitiativeTrackerFor(o, null)}
+    toRemove.foreach{
+      o => updateInitiativeTrackerFor(o, null)
+    }
     trackers.value = trackers.value -- toRemove
     initBaseOrder.value = initBaseOrder.value.filter(e => e.uniqueId.combId != comb)
-    robin.setRobin(null,Nil)
+    robin.setRobin(null, Nil)
   }
 
   /**
@@ -206,4 +209,15 @@ class InitiativeOrder {
    * @param cmb The Combatant to search in the order.
    */
   def isInOrder(cmb: CombatantID): Boolean = initOrder.value.exists(x => x.combId == cmb)
+
+  /**
+   * Will eliminate all Trackers that are  not in list of ID. Must not be in combat.
+   * @param combatants List of combatant to be kept
+   */
+  def syncOrderToRoster(combatants: List[CombatantID])(implicit trans: Transaction) {
+    val missing = getIDsInOrder().map(id => id.combId).toSet -- combatants
+    missing.foreach{
+      id => removeCombatant(id)
+    }
+  }
 }
