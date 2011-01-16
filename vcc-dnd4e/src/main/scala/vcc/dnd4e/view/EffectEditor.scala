@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package vcc.dnd4e.view
 import scala.swing._
 import vcc.util.swing._
 import vcc.dnd4e.domain.tracker.common._
+import org.slf4j.LoggerFactory
 
 /**
  * A combo box option that included the information to display and what to
@@ -76,6 +77,24 @@ object EffectEditor {
     new BoundDurationComboEntry("End of target's next turn", Duration.Limit.EndOfNextTurn, false),
     new BoundDurationComboEntry("Start of target's next turn", Duration.Limit.StartOfNextTurn, false)
     )
+
+  val dictionary:AutoCompleteDictionary = {
+    val logger = LoggerFactory.getLogger("startup")
+    val resource = this.getClass.getResource("/vcc/dnd4e/view/autocomplete.dict")
+    if(resource != null) {
+      try  {
+        AutoCompleteDictionary.fromStream(resource.openStream(), (term,msg) => {
+          logger.warn("AutoComplete[{}]: {}",term, msg)
+        })
+      } catch {
+        case e =>
+          logger.warn("Failed to open resource: /vcc/dnd4e/view/autocomplete.dict",e)
+          new AutoCompleteDictionary(Nil)
+      }
+    } else {
+      new AutoCompleteDictionary(Nil)
+    }
+  }
 }
 
 class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
@@ -93,7 +112,8 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   //This is the subPanel for most general case
   private val generalSubPanel = new MigPanel("fillx,gap 1 0, ins 0", "[]", "[24!]") with EffectSubPanelComboOption {
     val panelName = "Any"
-    private val descField = new TextField()
+    private val descField = new TextField() with AutoCompleteTextComponent
+    descField.enableAutoComplete(EffectEditor.dictionary)
     add(descField, "growx, h 22!")
     visible = false
     def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {

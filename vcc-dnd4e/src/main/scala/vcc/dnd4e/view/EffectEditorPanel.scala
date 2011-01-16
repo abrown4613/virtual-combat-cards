@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import vcc.infra.docking._
 import vcc.dnd4e.BootStrap
 import vcc.dnd4e.model.common.CombatantType
 import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, CombatState, StateChange}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
 import vcc.infra.datastore.naming.EntityID
 
 class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
@@ -70,7 +70,13 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
   listenTo(activeCombo.selection)
   reactions += {
     case event.SelectionChanged(`activeCombo`) =>
-      if (!_changing) director.setActiveCombatant(Some(activeCombo.selection.item.unifiedId))
+      if (!_changing) {
+        director.setActiveCombatant(Some(activeCombo.selection.item.unifiedId))
+        if(activeCombo.selection.item.unifiedId.combId == otherId) {
+          // This is used to reset target for Terrain
+          for (efp <- efpl) efp.setContext(Some(activeCombo.selection.item),false)
+        }
+      }
       switchActive(activeCombo.selection.item.definition.entity.eid)
   }
 

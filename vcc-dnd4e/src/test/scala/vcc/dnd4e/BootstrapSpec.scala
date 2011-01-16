@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ package vcc.dnd4e
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4,JUnitSuiteRunner}
-import view.IconLibrary
 import vcc.util.swing.XHTMLPaneAgent
+import view.{EffectEditor, IconLibrary}
 
 @RunWith(classOf[JUnitSuiteRunner])
 class BootstrapTest extends JUnit4(BootstrapSpec)
@@ -39,4 +39,10 @@ object BootstrapSpec extends Specification {
     XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
     XHTMLPaneAgent.isStartupComplete must beTrue
   }
+
+  "Load AutoComplete term" in {
+    EffectEditor.dictionary.findSuggestion("ong") must_== Some("ongoing")
+    EffectEditor.dictionary.findSuggestion("reg") must_== Some("regenerate")
+  }
+
 }
