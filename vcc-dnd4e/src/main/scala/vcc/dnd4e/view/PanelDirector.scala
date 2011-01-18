@@ -36,10 +36,12 @@ trait PaneDirectorPropertyObserver {
 }
 
 object PanelDirector {
+
   object property extends Enumeration {
     val HideDead = Value("Hide Dead")
     val RobinView = Value("Robin View")
   }
+
 }
 
 trait CombatStateObserver {
@@ -86,7 +88,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
 
   def snapshotChanged(newState: CombatStateWithChanges) {
     //newState.prettyPrint()
-    SwingHelper.invokeInEventDispatchThread {
+    SwingHelper.invokeInEventDispatchThread{
       unifiedTable = UnifiedSequenceTable.buildList(newState.state,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
         SortedIDReserverViewBuilder)
@@ -170,5 +172,5 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
    *
    */
   //TODO Implement this really
-  def provideDecisionsForRulings(rulings: List[Ruling[_]]): List[Decision[_]] = Nil
+  def provideDecisionsForRulings(rulings: List[Ruling]): List[Decision[_ <: Ruling]] = Nil
 }
