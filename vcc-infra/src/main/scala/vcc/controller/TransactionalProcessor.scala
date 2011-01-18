@@ -22,12 +22,12 @@ import vcc.controller.message.TransactionalAction
 import scala.collection.mutable.Queue
 
 /**
- * This exceptions is used to indicate that the CommandSource failed to return a decision for all rulings requested. This
+ * This exceptions is used to indicate that the CommandSource failed to return a question for all rulings requested. This
  * may also occur if decisions are supplied in the wrong order.
  * @see TransactionalProcessor.queryCommandSource
  * @param ruling The missing ruling
  */
-class MissingDecisionException(ruling: Ruling[_]) extends Exception("Missing Decision for Ruling: " + ruling)
+class MissingDecisionException(ruling: Ruling) extends Exception("Missing Decision for Ruling: " + ruling)
 
 /**
  * This exception should be thrown when the action requested cant be executed
@@ -75,7 +75,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
   /**
    * List of Ruling search partial functions
    */
-  private var rulingSearch: List[PartialFunction[TransactionalAction, List[Ruling[_]]]] = Nil
+  private var rulingSearch: List[PartialFunction[TransactionalAction, List[PendingRuling[List[TransactionalAction]]]]] = Nil
 
   /**
    *  Add a handler to the processor, all handlers that apply will be executed while
@@ -112,7 +112,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
    * TransactionalActions generated.
    * @param search Partial function that will be checked for generation of Rulings 
    */
-  protected def addRulingSearch(search: PartialFunction[TransactionalAction, List[Ruling[_]]]) {
+  protected def addRulingSearch(search: PartialFunction[TransactionalAction, List[PendingRuling[List[TransactionalAction]]]]) {
     rulingSearch = rulingSearch ::: List(search)
   }
 
@@ -124,34 +124,47 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
    * @param rulings List of issues that need ruling
    * @return List of TransactionalAction generated concatenating each Decision.generateRulingActions all the decisions.
    */
-  private[controller] def queryCommandSource(source: CommandSource, rulings: List[Ruling[_]]): List[TransactionalAction] = {
+  private[controller] def queryCommandSource(source: CommandSource, pending: List[PendingRuling[List[TransactionalAction]]]): List[TransactionalAction] = {
+    val rulings = pending.map(pr => pr.ruling)
     val decisions = source.provideDecisionsForRulings(rulings)
-    val zipped = rulings zip decisions
-    for ((q, d) <- zipped) {
-      if (q != d.decisionFor)
-        throw new MissingDecisionException(q)
-    }
+    val zipped = pending zip decisions
+
     //Less answers than questions
-    if (zipped.size < rulings.size) {
-      throw new MissingDecisionException(rulings(zipped.size))
+    if (zipped.size < pending.size) {
+      throw new MissingDecisionException(pending(zipped.size).ruling)
     }
 
-    decisions.flatMap(d => d.generateRulingActions())
+    val ret: List[List[TransactionalAction]] = for ((pr, d) <- zipped) yield {
+      val actions = if (pr.ruling.isValidDecision(d)) pr.processDecision(d) else None
+      if (actions.isDefined) actions.get
+      else throw new MissingDecisionException(pr.ruling)
+    }
+    ret.flatMap(identity)
   }
 
   /**
-   *  Call internal handlers, but first set the transaction and then unset the transaction
+   *  Call internal handlers, but first set the transaction and then unset the transaction.
+   *
+   * This function executes the following loop:
+   *
+   * 1 - Scan rewriteRules for some rewrite that apply on the action (only first match is executed)
+   * 2 - Place all rewriteRules into the msgQueue (place all messages sent from the rewrite)
+   * 3 - For each message in msgQueue:
+   *    3.1 - Dequeue a message (msg)
+   *    3.2 - See if there are PendingRuling for the given msg
+   *    3.3 - Enqueue all ruling generated actions and then msg into the ruledMessage
+   *    3.4 - For each ruledMessage, apply all applicable handlers in order.
+   *
    */
   def dispatch(transaction: Transaction, source: CommandSource, action: TransactionalAction): Unit = {
 
     //Check for a valid rewrite and apply or else enqueue the unmodified message
-    var rewrite = rewriteRules.find(rule => rule.isDefinedAt(action))
+    val rewrite = rewriteRules.find(rule => rule.isDefinedAt(action))
     if (rewrite.isDefined)
       for (act <- rewrite.get.apply(action)) msgQueue += act
     else
       msgQueue += action
 
-    trans = transaction
     this.source = source
     try {
       while (!msgQueue.isEmpty) {
@@ -166,6 +179,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
         }
 
         //Loop through ruled actions
+        trans = transaction
         for (message <- ruledActions) {
           var handled = false
           for (hndl <- handlers) {
@@ -181,6 +195,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
       // We had an exception, flush message buffer to avoid leaving trash messages
       case e =>
         msgQueue.clear()
+        trans = null
         throw e
     }
     trans = null
