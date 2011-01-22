@@ -1,5 +1,5 @@
 /*
-  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id
+//$Id$
 package vcc.util.swing
 
 import org.uispec4j.{Trigger, UISpecAdapter}
@@ -39,7 +39,6 @@ class SwingComponentWrapperAdapter(component: Component) extends UISpecAdapter {
     WindowInterceptor.run(new Trigger() {
       def run() {
         new SwingComponentWrapper(component)
-
       }
     })
   }
