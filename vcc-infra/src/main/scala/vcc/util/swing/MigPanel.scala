@@ -39,13 +39,17 @@ class MigPanel(layoutConstrains: String, colConstraints: String, rowConstraints:
    * @param c Component to add
    * @param layout The MigLayout specific format string.
    */
-  protected def add(c: Component, layout: String) {peer.add(c.peer, layout)}
+  protected def add(c: Component, layout: String) {
+    peer.add(c.peer, layout)
+  }
 
   /**
    * Add a component to the panel.
    * @param c Component to add
    */
-  protected def add(c: Component) {peer.add(c.peer)}
+  protected def add(c: Component) {
+    peer.add(c.peer)
+  }
 
   /**
    * Introduce a separator with a possible title.
@@ -54,7 +58,18 @@ class MigPanel(layoutConstrains: String, colConstraints: String, rowConstraints:
   protected def addSeparator(title: String) {
     if (title != null && !"".equals(title))
       add(new Label(title), "gapbottom 1, span, split 2");
-    add(new Component {override lazy val peer = new javax.swing.JSeparator()}, "gapleft rel, growx,wrap");
+    add(new Component {
+      override lazy val peer = new javax.swing.JSeparator()
+    }, "gapleft rel, growx,wrap");
   }
 
+  /**
+   * Get minimum layout size for the internal content
+   */
+  def minimumLayoutSize = layoutManager.minimumLayoutSize(this.peer)
+
+  /**
+   * Get preferred layout size for the internal content
+   */
+  def preferredLayoutSize = layoutManager.preferredLayoutSize(this.peer)
 }
