@@ -18,25 +18,38 @@
 package vcc.infra.prompter
 
 import vcc.util.swing.MigPanel
-import swing.{Label, TextField}
-import swing.event.ValueChanged
 import java.awt.Color
+import java.awt.event.{ActionEvent, ActionListener}
+import swing.{Button, Label, TextField}
+import swing.event.{ButtonClicked, ValueChanged}
 
-class TextFieldValuePanel(question: String, validator: String => Boolean) extends MigPanel("ins dialog, fill") with ValuePanel[String] {
+class TextFieldValuePanel(question: String, validator: String => Boolean) extends MigPanel("ins dialog,  fill", "[]", "[][]push[]") with ValuePanel[String] {
 
   private val warning = new Color(255, 228, 196)
   private val editField = new TextField
   editField.name = "editField"
   private val questionLabel = new Label(question)
+  private val acceptButton = new Button("Accept")
+  acceptButton.name = "acceptButton"
+  acceptButton.enabled = false
 
   add(questionLabel, "wrap")
   add(editField, "growx, wrap")
+  add(acceptButton, "w button!")
 
-  listenTo(editField)
+  listenTo(editField, acceptButton)
+
+  editField.peer.addActionListener(new ActionListener() {
+    def actionPerformed(e: ActionEvent) {
+      if (acceptButton.enabled) notifyListener()
+    }
+  })
 
   reactions += {
     case ValueChanged(`editField`) =>
       validateInput()
+    case ButtonClicked(`acceptButton`) =>
+      notifyListener()
   }
 
   //After setup, validate
@@ -44,10 +57,7 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
 
   private def validateInput() {
     val valid = validator(editField.text)
-    if (mediator != null) {
-      val v = if (valid) Some(editField.text) else None
-      mediator.valuePanelChanged(v)
-    }
+    acceptButton.enabled = valid
     editField.background = if (valid) Color.WHITE else warning
   }
 

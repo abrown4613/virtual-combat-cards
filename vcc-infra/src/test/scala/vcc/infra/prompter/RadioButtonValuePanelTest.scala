@@ -69,10 +69,10 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
       panel.value must_== Some(1)
     }
 
-    "fire of value change to mediator" in {
+    "fire of value change to listener" in {
       val mMediator = mock[ValuePanelChangeListener[Int]]
       setAdapter(getComponent)
-      panel.setMediator(mMediator)
+      panel.setListener(mMediator)
       getMainWindow.getRadioButton("two").click
       there was one(mMediator).valuePanelChanged(Some(1))
     }
@@ -96,7 +96,7 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
     "not fire value change when value is set externally" in {
       val mMediator = mock[ValuePanelChangeListener[Int]]
       setAdapter(getComponent)
-      panel.setMediator(mMediator)
+      panel.setListener(mMediator)
 
       SwingHelper.invokeInEventDispatchThread{
         panel.setValue(Some(0))

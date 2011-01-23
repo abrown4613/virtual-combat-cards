@@ -33,7 +33,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
   when(validator.apply("10")).thenReturn(true)
   private val listener = Mockito.mock(classOf[ValuePanelChangeListener[String]])
   private var panel = new TextFieldValuePanel("question", validator)
-  panel.setMediator(listener)
+  panel.setListener(listener)
 
   def makeAdapter() = {
     new SwingComponentWrapperAdapter(panel)
@@ -45,6 +45,12 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList.head
     assertTrue(assertion("label must match", ef.asInstanceOf[JLabel].getText == "question"))
+  }
+
+  def testAcceptButtonNotEnable() {
+    setAdapter(makeAdapter)
+    val but = getMainWindow.getButton("acceptButton")
+    assertTrue(not(but.isEnabled))
   }
 
   def testTextFieldPresentAndEditable() {
@@ -62,17 +68,60 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     verify(validator, atLeastOnce()).apply("abc")
   }
 
-  def testNotifyListenerWithNoneOnBadInput {
+  def testNotNotifyListenerOnChange {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
     ef.setText("abc")
-    verify(listener, atLeastOnce()).valuePanelChanged(None)
+    verify(listener, never).valuePanelChanged(None)
+  }
+
+  def testNotNotifyListenerOnChangeWithValidValue {
+    setAdapter(makeAdapter)
+    val ef = getMainWindow.getTextBox("editField")
+    ef.setText("10", false)
+    verify(listener, never).valuePanelChanged(Some("10"))
+  }
+
+  def testKeepAcceptButtonDisabledOnBadInput {
+    setAdapter(makeAdapter)
+    val ef = getMainWindow.getTextBox("editField")
+    ef.setText("abc")
+    val but = getMainWindow.getButton("acceptButton")
+    assertTrue(not(but.isEnabled))
+  }
+
+  def testEnableAcceptButtonOnValidInput {
+    setAdapter(makeAdapter)
+    val ef = getMainWindow.getTextBox("editField")
+    ef.setText("10")
+    assertTrue(ef.textEquals("10"))
+    val but = getMainWindow.getButton("acceptButton")
+    assertTrue(but.isEnabled)
+  }
+
+  def testDisableAfterChangingToValidInput {
+    setAdapter(makeAdapter)
+    val ef = getMainWindow.getTextBox("editField")
+    val but = getMainWindow.getButton("acceptButton")
+    ef.setText("10")
+    assertTrue(ef.textEquals("10"))
+    ef.setText("abc")
+    assertTrue(not(but.isEnabled))
   }
 
   def testNotifyListenerWhenChangeIsValid {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
-    ef.setText("10")
+    ef.setText("10", true)
+    verify(listener, atLeastOnce()).valuePanelChanged(Some("10"))
+  }
+
+  def testNotifyListenerWhenValueIsValidAndClickedAccept {
+    setAdapter(makeAdapter)
+    val ef = getMainWindow.getTextBox("editField")
+    ef.setText("10", false)
+    verify(listener, never()).valuePanelChanged(Some("10"))
+    getMainWindow.getButton("acceptButton").click()
     verify(listener, atLeastOnce()).valuePanelChanged(Some("10"))
   }
 
@@ -118,7 +167,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     panel.setValue(Some("abc"))
     assertTrue(ef.textEquals("abc"))
     verify(validator, atLeastOnce()).apply("abc")
-    verify(listener, atLeastOnce()).valuePanelChanged(None)
+    verify(listener, never()).valuePanelChanged(None)
     assertTrue(assertion("Reply value as none on error", panel.value == None))
   }
 
@@ -130,7 +179,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     panel.setValue(None)
     assertTrue(ef.textEquals(""))
     verify(validator, atLeastOnce()).apply("")
-    verify(listener, atLeastOnce()).valuePanelChanged(None)
+    verify(listener, never()).valuePanelChanged(None)
     assertTrue(assertion("Reply value as none on error", panel.value == None))
   }
 
