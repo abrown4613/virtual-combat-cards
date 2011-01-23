@@ -24,7 +24,7 @@ import scala.swing.event.ButtonClicked
 /**
  * A RadioButton ValuePanel.
  */
-class RadioButtonValuePanel(label: String, options: List[String]) extends MigPanel("ins dialog") with ValuePanel[Int] {
+class RadioButtonValuePanel(label: String, options: List[String]) extends MigPanel("ins dialog, flowy") with ValuePanel[Int] {
   private val optionLabel = new Label(label + ":")
   private val buttons = options.map(x => new RadioButton(x))
   private val radios = new ButtonGroup(buttons: _*);
@@ -32,16 +32,16 @@ class RadioButtonValuePanel(label: String, options: List[String]) extends MigPan
   private val validRange = (0 until buttons.length)
 
 
-  add(optionLabel, "wrap")
+  add(optionLabel)
   for (x <- buttons) {
-    add(x, "wrap")
+    add(x)
     listenTo(x)
   }
 
   reactions += {
     case ButtonClicked(button) =>
       selected = buttons.indexOf(button)
-      if (mediator != null) mediator.valuePanelChanged(value)
+      notifyListener()
   }
 
   def value(): Option[Int] = radios.selected.map(btn => options.indexOf(radios.selected.get.text))

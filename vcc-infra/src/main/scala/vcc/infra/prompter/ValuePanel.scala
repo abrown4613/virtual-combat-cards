@@ -17,25 +17,51 @@
 //$Id$
 package vcc.infra.prompter
 
+import swing.Panel
+
 /**
  * Notifies observer of changes in this ValuePane
  */
 trait ValuePanelChangeListener[T] {
+  /**
+   * Panel value has changed and been accepted by the user.
+   */
   def valuePanelChanged(newValue: Option[T])
-
 }
 
 /**
  * A panel that defines on value
  */
 trait ValuePanel[T] {
-  protected var mediator: ValuePanelChangeListener[T] = null
 
-  def setMediator(mediator: ValuePanelChangeListener[T]) {
-    this.mediator = mediator
+  private var listener: ValuePanelChangeListener[T] = null
+
+  /**
+   * Set object that wishes to receive notification on change on this panel.
+   * Usually this will be the a MultiplePromptPanel. The listener will be triggered when
+   * user produces a valid and accepted value.
+   * @param listener Listener, only one can be set at a given time.
+   */
+  def setListener(listener: ValuePanelChangeListener[T]) {
+    this.listener = listener
   }
 
+  /**
+   * Notify listener of a change in the value.
+   */
+  protected def notifyListener() {
+    if (listener != null) listener.valuePanelChanged(value())
+  }
+
+  /**
+   * Set value of the panel.
+   * @param value To be set, if None will clear the input panel.
+   */
   def setValue(value: Option[T])
 
+  /**
+   * Returns current value defined in the panel
+   * @return None if no value has been set, or Some(v) is the Panel has some valid value.
+   */
   def value(): Option[T]
 }
