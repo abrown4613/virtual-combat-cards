@@ -31,7 +31,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
   when(validator.apply("")).thenReturn(false)
   when(validator.apply("abc")).thenReturn(false)
   when(validator.apply("10")).thenReturn(true)
-  private val listener = Mockito.mock(classOf[ValuePanelChangeListener[String]])
+  private val listener = Mockito.mock(classOf[ValuePanel.ChangeListener])
   private var panel = new TextFieldValuePanel("question", validator)
   panel.setListener(listener)
 
@@ -72,14 +72,14 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
     ef.setText("abc")
-    verify(listener, never).valuePanelChanged(None)
+    verify(listener, never).valuePanelChanged(TextFieldValuePanel.Return(None))
   }
 
   def testNotNotifyListenerOnChangeWithValidValue {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
     ef.setText("10", false)
-    verify(listener, never).valuePanelChanged(Some("10"))
+    verify(listener, never).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
   }
 
   def testKeepAcceptButtonDisabledOnBadInput {
@@ -113,16 +113,16 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
     ef.setText("10", true)
-    verify(listener, atLeastOnce()).valuePanelChanged(Some("10"))
+    verify(listener, atLeastOnce()).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
   }
 
   def testNotifyListenerWhenValueIsValidAndClickedAccept {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")
     ef.setText("10", false)
-    verify(listener, never()).valuePanelChanged(Some("10"))
+    verify(listener, never()).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
     getMainWindow.getButton("acceptButton").click()
-    verify(listener, atLeastOnce()).valuePanelChanged(Some("10"))
+    verify(listener, atLeastOnce()).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
   }
 
   def testChangeBackgroundToShowProblem {
@@ -167,7 +167,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     panel.setValue(Some("abc"))
     assertTrue(ef.textEquals("abc"))
     verify(validator, atLeastOnce()).apply("abc")
-    verify(listener, never()).valuePanelChanged(None)
+    verify(listener, never()).valuePanelChanged(TextFieldValuePanel.Return(None))
     assertTrue(assertion("Reply value as none on error", panel.value == None))
   }
 
@@ -179,7 +179,7 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     panel.setValue(None)
     assertTrue(ef.textEquals(""))
     verify(validator, atLeastOnce()).apply("")
-    verify(listener, never()).valuePanelChanged(None)
+    verify(listener, never()).valuePanelChanged(TextFieldValuePanel.Return(None))
     assertTrue(assertion("Reply value as none on error", panel.value == None))
   }
 

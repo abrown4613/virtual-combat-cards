@@ -23,6 +23,18 @@ import java.awt.event.{ActionEvent, ActionListener}
 import swing.{Button, Label, TextField}
 import swing.event.{ButtonClicked, ValueChanged}
 
+object TextFieldValuePanel {
+
+  case class Return(value: Option[String]) extends ValuePanel.Return
+
+}
+
+/**
+ * A TextField backed ValuePanel
+ * @param question Question to place over the TextField. Should be generic and explain what should be placed in the
+ * field.
+ * @param validator A function that should accept a string and validate the output.
+ */
 class TextFieldValuePanel(question: String, validator: String => Boolean) extends MigPanel("ins dialog,  fill", "[]", "[][]push[]") with ValuePanel[String] {
 
   private val warning = new Color(255, 228, 196)
@@ -41,7 +53,7 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
 
   editField.peer.addActionListener(new ActionListener() {
     def actionPerformed(e: ActionEvent) {
-      if (acceptButton.enabled) notifyListener()
+      if (acceptButton.enabled) notifyListener(TextFieldValuePanel.Return(value))
     }
   })
 
@@ -49,7 +61,7 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
     case ValueChanged(`editField`) =>
       validateInput()
     case ButtonClicked(`acceptButton`) =>
-      notifyListener()
+      notifyListener(TextFieldValuePanel.Return(value))
   }
 
   //After setup, validate
@@ -66,5 +78,9 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
   def setValue(value: Option[String]) {
     if (value.isDefined) editField.text = value.get
     else editField.text = ""
+  }
+
+  def adjustFocus() {
+    editField.requestFocus()
   }
 }

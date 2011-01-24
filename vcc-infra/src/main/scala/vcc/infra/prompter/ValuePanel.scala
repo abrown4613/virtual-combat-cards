@@ -20,13 +20,26 @@ package vcc.infra.prompter
 import swing.Panel
 
 /**
- * Notifies observer of changes in this ValuePane
+ * ValuePanel companion object
  */
-trait ValuePanelChangeListener[T] {
+object ValuePanel {
+
   /**
-   * Panel value has changed and been accepted by the user.
+   * Value panel return object
    */
-  def valuePanelChanged(newValue: Option[T])
+  trait Return
+
+  /**
+   * Object that should be notified by a change on the value panel.
+   */
+  trait ChangeListener {
+    /**
+     * Panel value has changed and been accepted by the user.
+     * @param newValue The value being sent from the panel.
+     */
+    def valuePanelChanged(newValue: Return)
+  }
+
 }
 
 /**
@@ -34,7 +47,9 @@ trait ValuePanelChangeListener[T] {
  */
 trait ValuePanel[T] {
 
-  private var listener: ValuePanelChangeListener[T] = null
+  panel: Panel =>
+
+  private var listener: ValuePanel.ChangeListener = null
 
   /**
    * Set object that wishes to receive notification on change on this panel.
@@ -42,15 +57,15 @@ trait ValuePanel[T] {
    * user produces a valid and accepted value.
    * @param listener Listener, only one can be set at a given time.
    */
-  def setListener(listener: ValuePanelChangeListener[T]) {
+  def setListener(listener: ValuePanel.ChangeListener) {
     this.listener = listener
   }
 
   /**
    * Notify listener of a change in the value.
    */
-  protected def notifyListener() {
-    if (listener != null) listener.valuePanelChanged(value())
+  protected def notifyListener(newValue: ValuePanel.Return) {
+    if (listener != null) listener.valuePanelChanged(newValue)
   }
 
   /**
@@ -64,4 +79,9 @@ trait ValuePanel[T] {
    * @return None if no value has been set, or Some(v) is the Panel has some valid value.
    */
   def value(): Option[T]
+
+  /**
+   * Set focus to the important input element.
+   */
+  def adjustFocus()
 }
