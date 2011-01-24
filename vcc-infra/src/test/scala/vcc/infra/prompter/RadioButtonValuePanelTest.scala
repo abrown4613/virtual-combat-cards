@@ -70,11 +70,11 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
     }
 
     "fire of value change to listener" in {
-      val mMediator = mock[ValuePanelChangeListener[Int]]
+      val mMediator = mock[ValuePanel.ChangeListener]
       setAdapter(getComponent)
       panel.setListener(mMediator)
       getMainWindow.getRadioButton("two").click
-      there was one(mMediator).valuePanelChanged(Some(1))
+      there was one(mMediator).valuePanelChanged(RadioButtonValuePanel.Return(Some(1)))
     }
 
     "clear all option when value is set to null" in {
@@ -94,7 +94,7 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
 
     }
     "not fire value change when value is set externally" in {
-      val mMediator = mock[ValuePanelChangeListener[Int]]
+      val mMediator = mock[ValuePanel.ChangeListener]
       setAdapter(getComponent)
       panel.setListener(mMediator)
 

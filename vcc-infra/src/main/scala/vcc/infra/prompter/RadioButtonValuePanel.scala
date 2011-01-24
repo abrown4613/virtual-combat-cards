@@ -21,6 +21,12 @@ import vcc.util.swing.MigPanel
 import swing._
 import scala.swing.event.ButtonClicked
 
+object RadioButtonValuePanel {
+
+  case class Return(value: Option[Int]) extends ValuePanel.Return
+
+}
+
 /**
  * A RadioButton ValuePanel.
  */
@@ -31,7 +37,6 @@ class RadioButtonValuePanel(label: String, options: List[String]) extends MigPan
   private var selected = -1
   private val validRange = (0 until buttons.length)
 
-
   add(optionLabel)
   for (x <- buttons) {
     add(x)
@@ -41,7 +46,7 @@ class RadioButtonValuePanel(label: String, options: List[String]) extends MigPan
   reactions += {
     case ButtonClicked(button) =>
       selected = buttons.indexOf(button)
-      notifyListener()
+      notifyListener(RadioButtonValuePanel.Return(value))
   }
 
   def value(): Option[Int] = radios.selected.map(btn => options.indexOf(radios.selected.get.text))
@@ -49,8 +54,13 @@ class RadioButtonValuePanel(label: String, options: List[String]) extends MigPan
   def setValue(value: Option[Int]) {
     if (value.isDefined && validRange.contains(value.get)) {
       radios.select(buttons(value.get))
+      selected = value.get
     } else {
       radios.peer.clearSelection()
     }
+  }
+
+  def adjustFocus() {
+    buttons(if (validRange.contains(selected)) selected else 0).requestFocus()
   }
 }
