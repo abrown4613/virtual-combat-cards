@@ -47,10 +47,15 @@ trait PromptController {
    * Action to be done when the user provides and input from the panel.
    */
   def handleAccept(value: ValuePanel.Return): Boolean
+
+  /**
+   * Indicate if an accept value has been provided and this prompt is considered answered.
+   */
+  def hasAnswer: Boolean
 }
 
 /**
- *  Compendium MultiplePromptPanel.
+ *   Compendium MultiplePromptPanel.
  */
 object MultiplePromptPanel {
 
@@ -62,7 +67,7 @@ object MultiplePromptPanel {
      * Prompt has been answered by user
      * @param controller The prompt controller that was answered
      */
-    def promptAnswer(controller: PromptController)
+    def answerProvided(controller: PromptController)
   }
 
 }
@@ -97,7 +102,7 @@ class MultiplePromptPanel(listener: MultiplePromptPanel.InputListener) extends M
    * Use this method to register a Panel, should be done a construction time.
    * @param panel Must be a scala.swing.Panel that has the ValuePanel trait. Names must be unique.
    */
-  protected def addValuePanel(id: String, panel: Panel with ValuePanel[_]) {
+  protected[prompter] def addValuePanel(id: String, panel: Panel with ValuePanel[_]) {
     panelMap = panelMap.updated(id, panel)
     panel.setListener(this)
     cardPanel.addCard(panel, id)
@@ -105,7 +110,7 @@ class MultiplePromptPanel(listener: MultiplePromptPanel.InputListener) extends M
 
   def valuePanelChanged(newValue: Return) {
     if (controller.handleAccept(newValue))
-      listener.promptAnswer(controller)
+      listener.answerProvided(controller)
   }
 
   /**

@@ -89,12 +89,12 @@ class MultiplePromptPanelTest extends UISpecTestCase {
     when(controller.handleAccept(RadioButtonValuePanel.Return(Some(0)))).thenReturn(true)
     uiPanel.getRadioButton("Yes").click()
     assertTrue(uiPanel.getRadioButton("Yes").isSelected)
-    verify(listener).promptAnswer(controller)
+    verify(listener).answerProvided(controller)
   }
 
   def testNotSendValidAcceptToCompletionListenerIfNotValid {
     panel.show(controller)
     uiPanel.getRadioButton("Yes").click()
-    verify(listener, never).promptAnswer(controller)
+    verify(listener, never).answerProvided(controller)
   }
 }
