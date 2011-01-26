@@ -12,6 +12,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>exnebula</id>
+            <uniqueVersion>false</uniqueVersion>
+            <name>ExNebula.org</name>
+            <url>scp://petra.exnebula.org/var/repo</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>log4j</groupId>
