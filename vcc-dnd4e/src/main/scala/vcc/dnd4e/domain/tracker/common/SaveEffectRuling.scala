@@ -23,26 +23,66 @@ import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEff
 
 //SAVE
 
-case class SaveEffectRuling(eid: EffectID, bonus: Int, text: String, special: Boolean) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+object SaveEffectRuling {
+  def fromEffect(effect: Effect): SaveEffectRuling = {
+    effect.duration match {
+      case Duration.SaveEnd =>
+        SaveEffectRuling(effect.effectId, effect.condition.description)
+      case _ => null
+    }
+  }
+}
+
+/**
+ * For effect that degenerate into worst things
+ */
+case class SaveEffectSpecialRuling(eid: EffectID, text: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
   def decisionValidator(decision: Decision[_]): Boolean = decision match {
-    case SaveEffectDecision(q, true) => true
-    case SaveEffectDecision(q, false) if (!q.special) => true // not saved only valid is not special
-    case SaveFailedAndChangedDecision(q, _) if (q.special) => true // Change only valid is special
+    case SaveEffectSpecialDecision(q, _) => true
+    case _ => false
+  }
+
+  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+    decision match {
+      case SaveEffectSpecialDecision(q, None) => List(CancelEffect(q.eid))
+      case SaveEffectSpecialDecision(q, Some(newEffect)) => List(UpdateEffectCondition(q.eid, Effect.Condition.Generic(newEffect, false)))
+      case _ => Nil
+    }
+  }
+
+}
+
+/**
+ * For effect normal effects that save ends
+ */
+case class SaveEffectRuling(eid: EffectID, text: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+  def decisionValidator(decision: Decision[_]): Boolean = decision match {
+    case SaveEffectDecision(q, _) => true
     case _ => false
   }
 
   def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
     decision match {
       case SaveEffectDecision(q, true) => List(CancelEffect(q.eid))
-      case SaveFailedAndChangedDecision(q, newEffect) => List(UpdateEffectCondition(q.eid, Effect.Condition.Generic(newEffect, false)))
       case _ => Nil
     }
   }
 }
 
+/**
+ * Decision for a normal SaveEffectDecision.
+ * @param ruling Referred ruling
+ * @param hasSaved True indicate that the save has been done.
+ */
 case class SaveEffectDecision(ruling: SaveEffectRuling, hasSaved: Boolean) extends Decision[SaveEffectRuling]
 
-case class SaveFailedAndChangedDecision(ruling: SaveEffectRuling, newEffect: String) extends Decision[SaveEffectRuling]
+/**
+ * Decision for a SaveEffectSpecialRuling.
+ * @param ruling Referred ruling
+ * @param newEffect An option of the new effect None means that save was done, Some(t) means that the new effect should
+ * be t
+ */
+case class SaveEffectSpecialDecision(ruling: SaveEffectSpecialRuling, newEffect: Option[String]) extends Decision[SaveEffectSpecialRuling]
 
 //REGENERATE
 
