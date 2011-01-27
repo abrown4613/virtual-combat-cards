@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+//$Id: PanelDirector.scala 716 2011-01-18 20:24:18Z mailleux@gmail.com $
 
 package vcc.dnd4e.view
 
@@ -26,6 +26,7 @@ import scala.actors.Actor
 import vcc.controller.message.Command
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatStateWithChanges}
 import vcc.controller._
+import vcc.infra.prompter.RulingBroker
 
 trait ContextObserver {
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
@@ -66,7 +67,7 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithChanges], statusBar: StatusBar) extends TrackerChangeAware[CombatStateWithChanges] with CommandSource {
+class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithChanges], statusBar: StatusBar, rulingBroker: RulingBroker) extends TrackerChangeAware[CombatStateWithChanges] with CommandSource {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
   private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
@@ -169,8 +170,12 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   }
 
   /**
-   *
+   * Send a resquest to get user input on ruling.
+   * @param rulings A List of Ruling that require some user Decision
+   * @return A list of Decision in order according to the rulings
    */
-  //TODO Implement this really
-  def provideDecisionsForRulings(rulings: List[Ruling]): List[Decision[_ <: Ruling]] = Nil
+  def provideDecisionsForRulings(rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
+    if (rulings.isEmpty) Nil
+    else rulingBroker.promptRuling(rulings)
+  }
 }
