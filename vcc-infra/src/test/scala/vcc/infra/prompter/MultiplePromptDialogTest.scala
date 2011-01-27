@@ -23,6 +23,43 @@ import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j._
 import assertion.Assertion
 
+
+/**
+ * MockQuestion
+ */
+class MockQuestion[T](val prompt: String, val panelIdentity: String, setup: PartialFunction[(ValuePanel[_], Option[T]), Unit]) extends PromptController {
+  private var retVal: ValuePanel.Return = null
+  private var lastValue: Option[T] = None
+
+  def handleAccept(value: Return): Boolean = {
+    value match {
+    //This is a hack
+      case RadioButtonValuePanel.Return(r) => lastValue = r.asInstanceOf[Option[T]]
+      case TextFieldValuePanel.Return(r) => lastValue = r.asInstanceOf[Option[T]]
+    }
+    retVal = value
+    true
+  }
+
+  def decoratePanel(panel: ValuePanel[_]) = if (setup.isDefinedAt(panel, lastValue)) {
+    setup(panel, lastValue)
+  } else {
+    throw new IllegalArgumentException("Panel not of the correct type: " + prompt + "P: " + panel.getClass.getName)
+  }
+
+  def hasAnswer() = (retVal != null)
+
+  def acceptedValue = lastValue
+
+  /**
+   * Little hack to chain tests
+   */
+  def clear() {
+    lastValue = None
+    retVal = null
+  }
+}
+
 class MultiplePromptDialogTest extends UISpecTestCase {
 
   UISpec4J.init()
@@ -59,42 +96,6 @@ class MultiplePromptDialogTest extends UISpecTestCase {
           }.visible = true
         }
       })
-    }
-  }
-
-  /**
-   * MockQuestion
-   */
-  class MockQuestion[T](val prompt: String, val panelIdentity: String, setup: PartialFunction[(ValuePanel[_], Option[T]), Unit]) extends PromptController {
-    private var retVal: ValuePanel.Return = null
-    private var lastValue: Option[T] = None
-
-    def handleAccept(value: Return): Boolean = {
-      value match {
-      //This is a hack
-        case RadioButtonValuePanel.Return(r) => lastValue = r.asInstanceOf[Option[T]]
-        case TextFieldValuePanel.Return(r) => lastValue = r.asInstanceOf[Option[T]]
-      }
-      retVal = value
-      true
-    }
-
-    def decoratePanel(panel: ValuePanel[_]) = if (setup.isDefinedAt(panel, lastValue)) {
-      setup(panel, lastValue)
-    } else {
-      throw new IllegalArgumentException("Panel not of the correct type: " + prompt + "P: " + panel.getClass.getName)
-    }
-
-    def hasAnswer() = (retVal != null)
-
-    def acceptedValue = lastValue
-
-    /**
-     * Little hack to chain tests
-     */
-    def clear() {
-      lastValue = None
-      retVal = null
     }
   }
 
