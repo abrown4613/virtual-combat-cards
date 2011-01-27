@@ -21,6 +21,14 @@ import scala.swing._
 import java.lang.String
 import vcc.util.swing.{ModalFrame, MigPanel}
 
+/**
+ * This is a dialog window that houses a set of ValuePanel in it. You can send a series of questions/prompts via
+ * PromptController. This dialog and they will be shown to the user. Action on the ValuePanel will result in
+ * sent to the PromptController that is related to that prompt. If all prompts have been supplied answer the OK button
+ * will be activated.
+ * @param frame Controlling object
+ * @param title Prompt title
+ */
 class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame, title) with MultiplePromptPanel.InputListener {
   // Indicate that OK has been clicked
   private var accepted = false
@@ -67,6 +75,10 @@ class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame
     visible = true
   }
 
+  /**
+   * Show dialog and wait for use inputs on each prompt provided.
+   * @param toPrompt List of PromptController one for each prompt to be asked from the user
+   */
   def promptUser(toPrompt: List[PromptController]): Boolean = {
     questionList.listData = toPrompt
     nextUnanswered
@@ -74,6 +86,11 @@ class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame
     this.accepted
   }
 
+  /**
+   * Add a ValuePanel as one of the options for the PromptControllers.
+   * @param id String identifier of the panel
+   * @param panel The panel to be added
+   */
   protected def addValuePanel(id: String, panel: Panel with ValuePanel[_]) {
     questionPanel.addValuePanel(id, panel)
   }
