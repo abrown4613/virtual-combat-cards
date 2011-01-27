@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+//$Id: MasterFrame.scala 584 2010-05-07 21:34:37Z mailleux $
 package vcc.dnd4e.view
 
+import ruling.{TranslatorService, RulingDialog}
 import scala.actors.Actor
 import scala.swing._
 import scala.swing.event.WindowClosing
@@ -25,14 +26,16 @@ import vcc.infra.docking._
 import vcc.util.swing.KeystrokeContainer
 import vcc.controller.TrackerChangeObserver
 import vcc.dnd4e.domain.tracker.snapshot.{CombatChangeAndStateSnapshotBuilder, CombatStateWithChanges}
+import vcc.infra.prompter.RulingBroker
 
 class MasterFrame extends Frame {
-  val docker = new CustomDockingAdapter()
-  val tracker = Registry.get[Actor]("tracker").get
+  private val docker = new CustomDockingAdapter()
+  private val tracker = Registry.get[Actor]("tracker").get
 
-  val statusBar = new StatusBar()
-  val csm = new TrackerChangeObserver[CombatStateWithChanges](new CombatChangeAndStateSnapshotBuilder(), tracker)
-  val director = new PanelDirector(tracker, csm, statusBar)
+  private val statusBar = new StatusBar()
+  private val csm = new TrackerChangeObserver[CombatStateWithChanges](new CombatChangeAndStateSnapshotBuilder(), tracker)
+  private val director = new PanelDirector(tracker, csm, statusBar,
+    new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance))
 
   val docks = List[DockableComponent](
     new DamageCommandPanel(director),
@@ -48,7 +51,7 @@ class MasterFrame extends Frame {
     new CombatantCard(director, false),
     new EffectViewPanel(director, false),
     new CombatantCommentPanel(director, false)
-    )
+  )
 
   title = "Virtual Combat Cards"
 
@@ -57,7 +60,7 @@ class MasterFrame extends Frame {
   reactions += {
     case WindowClosing(win) =>
       if (System.getProperty("vcc.quickexit") != null ||
-              Dialog.showConfirmation(Component.wrap(this.peer.getRootPane), "Quitting Virtual Combat Cards will mean you loose all the combat information.\nAre you sure?", "Quit?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
+        Dialog.showConfirmation(Component.wrap(this.peer.getRootPane), "Quitting Virtual Combat Cards will mean you loose all the combat information.\nAre you sure?", "Quit?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
         this.dispose
         System.exit(1)
       }
@@ -80,7 +83,7 @@ class MasterFrame extends Frame {
     if (dock.isInstanceOf[PaneDirectorPropertyObserver]) director.registerPropertyObserver(dock.asInstanceOf[PaneDirectorPropertyObserver])
   }
 
-  val mainMenu = new MainMenu(director, docker, this)
+  private val mainMenu = new MainMenu(director, docker, this)
 
   for ((dock, keystroke) <- docks.zip(List("F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "alt F6", "alt F7", "alt F8"))) {
     docker.addDockable(dock)
@@ -100,7 +103,7 @@ class MasterFrame extends Frame {
   iconImage = IconLibrary.MetalD20.getImage()
 
   //Last operations
-  vcc.util.swing.SwingHelper.invokeLater {
+  vcc.util.swing.SwingHelper.invokeLater{
     for (dock <- docks)
       if (dock.isInstanceOf[KeystrokeContainer]) dock.asInstanceOf[KeystrokeContainer].registerKeystroke
   }
