@@ -18,21 +18,24 @@
 package vcc.dnd4e.view.ruling
 
 import swing.Frame
-import vcc.infra.prompter.{MultiplePromptDialogController, MultiplePromptDialog}
 import vcc.dnd4e.view.IconLibrary
+import vcc.infra.prompter.{RadioButtonValuePanel, MultiplePromptDialogAsyncController, MultiplePromptDialogController, MultiplePromptDialog}
 
 /**
  * RulingDialog companion object
  */
 object RulingDialog {
   def getInstanceAndController(frame: Frame): MultiplePromptDialogController = {
-    new MultiplePromptDialogController(new RulingDialog(frame))
+    new MultiplePromptDialogAsyncController(new RulingDialog(frame))
   }
+
+  val SimpleSavePanelIdentity = "SimpleSavePanel"
 }
 
 /**
  * Dialog that provides panels to handle all ruling from the Tracker.
  */
 class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling that need your decision") {
-  iconImage = IconLibrary.MetalD20.getImage
+  this.iconImage_=(IconLibrary.MetalD20.getImage)
+  addValuePanel(RulingDialog.SimpleSavePanelIdentity, new RadioButtonValuePanel("Saved?", List("Yes", "No")))
 }
