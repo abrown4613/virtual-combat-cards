@@ -55,6 +55,7 @@ class SaveSpecialPromptControllerTest extends SpecificationWithJUnit with Mockit
       controller.handleAccept(Value(Some(Saved))) must beTrue
       controller.decoratePanel(mPanel)
       there was one(mPanel).setValue(Some(Saved))
+      controller.hasAnswer must beTrue
     }
 
     "decorate to Changed on second time" in {
@@ -62,6 +63,7 @@ class SaveSpecialPromptControllerTest extends SpecificationWithJUnit with Mockit
       controller.decoratePanel(mPanel)
       there was one(mPanel).setValue(Some(Changed("stoned")))
       there was one(mPanel).setNewCondition("stoned")
+      controller.hasAnswer must beTrue
     }
     "decorate to original new condition when moving from changed to saved " in {
       controller.handleAccept(Value(Some(Changed("stoned")))) must beTrue

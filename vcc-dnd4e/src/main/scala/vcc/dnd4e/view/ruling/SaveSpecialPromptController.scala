@@ -34,7 +34,7 @@ class SaveSpecialPromptController(ruling: SaveEffectSpecialRuling) extends Rulin
     case None => null
   }
 
-  def hasAnswer: Boolean = false
+  def hasAnswer: Boolean = result.isDefined
 
   def handleAccept(value: Return): Boolean = {
     value match {
