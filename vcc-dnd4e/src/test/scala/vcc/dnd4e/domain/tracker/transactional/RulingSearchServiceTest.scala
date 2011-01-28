@@ -31,6 +31,7 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
   //val simpleSaveEnd = Effect()
 
   val effects = makeEffects(combA, Duration.Stance, Duration.SaveEnd) ::: makeEffects(combB, Duration.SaveEnd)
+  val saveSpecialEffects = makeEffects(combA, Duration.Stance, Duration.SaveEndSpecial) ::: makeEffects(combB, Duration.SaveEndSpecial)
 
   import RulingSearchService._
 
@@ -43,10 +44,16 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
       there was one(mState).allEffects()
     }
 
-    "return the effect that a save will end form the combatant ending the  round" in {
+    "return the effect that a save will end form the combatant ending the round" in {
       mState.allEffects returns effects
       var ruling = searchEndRound(mState, combA).map(_.ruling)
       ruling must_== List(SaveEffectRuling.fromEffect(effects(1)))
+    }
+
+    "return the effect that a save will end specail form the combatant ending the round" in {
+      mState.allEffects returns saveSpecialEffects
+      var ruling = searchEndRound(mState, combA).map(_.ruling)
+      ruling must_== List(SaveEffectSpecialRuling.fromEffect(saveSpecialEffects(1)))
     }
 
   }

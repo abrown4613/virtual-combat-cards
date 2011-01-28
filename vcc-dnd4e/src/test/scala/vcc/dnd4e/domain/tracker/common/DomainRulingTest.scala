@@ -21,6 +21,7 @@ import org.specs.SpecificationWithJUnit
 import vcc.controller.{PendingRuling, Ruling, Decision}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
+import vcc.dnd4e.domain.tracker.common.Effect.Condition
 
 class DomainRulingTest extends SpecificationWithJUnit {
   private val eid = EffectID(CombatantID("A"), 1)
@@ -46,13 +47,6 @@ class DomainRulingTest extends SpecificationWithJUnit {
       se2.isValidDecision(saved2) must beFalse
     }
 
-    "Change is only valid on special save" in {
-      val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Changed("new effect"))
-      val saved2 = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Saved)
-      ses.isValidDecision(saved) must beTrue
-      ses.isValidDecision(saved2) must beFalse
-    }
-
     "PendingRuling should provide valid None on wrong operation" in {
       val saved = SaveEffectDecision(se2, true)
       pending.processDecision(saved) must_== None
@@ -67,10 +61,50 @@ class DomainRulingTest extends SpecificationWithJUnit {
       pending.processDecision(saved) must_== Some(Nil)
     }
 
-    "PendingRuling should provide update on failed and changed condition" in {
-      val pending2: PendingRuling[List[TransactionalAction]] = new PendingRuling(ses2)
-      val saved = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Changed("new effect"))
-      pending2.processDecision(saved) must_== Some(List(UpdateEffectCondition(eid, Effect.Condition.Generic("new effect", false))))
+    "fromEffect return null for bad incorrect type" in {
+      SaveEffectRuling.fromEffect(Effect(eid, eid.combId, Condition.Generic("abc", false), Duration.Stance)) must beNull
+      SaveEffectRuling.fromEffect(Effect(eid, eid.combId, Condition.Generic("abc", false), Duration.SaveEndSpecial)) must beNull
+    }
+
+    "fromEffect return valid Ruling for good effect" in {
+      SaveEffectRuling.fromEffect(Effect(eid, eid.combId, Condition.Generic("abc", false), Duration.SaveEnd)) must_== SaveEffectRuling(eid, "abc")
+    }
+  }
+
+  "SaveEffectSpecialRuling" should {
+
+    val ses = SaveEffectSpecialRuling(eid, "bad -> worst")
+    val ses2 = SaveEffectSpecialRuling(eid, "bad -> even worst")
+    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(ses)
+
+    "Change is only valid on special save" in {
+      val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Changed("new effect"))
+      val saved2 = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Saved)
+      ses.isValidDecision(saved) must beTrue
+      ses.isValidDecision(saved2) must beFalse
+    }
+
+    "PendingRuling provides valid None on wrong operation" in {
+      val saved = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Saved)
+      pending.processDecision(saved) must_== None
+    }
+
+    "PendingRuling provides valid None on wrong operation" in {
+      val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Saved)
+      pending.processDecision(saved) must_== Some(List(CancelEffect(eid)))
+    }
+
+    "PendingRuling provides valid None on wrong operation" in {
+      val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Changed("new condition"))
+      pending.processDecision(saved) must_== Some(List(UpdateEffectCondition(eid, Effect.Condition.Generic("new condition", false))))
+    }
+
+    "fromEffect return null for bad incorrect type" in {
+      SaveEffectSpecialRuling.fromEffect(Effect(eid, eid.combId, Condition.Generic("abc", false), Duration.Stance)) must beNull
+    }
+
+    "fromEffect return valid Ruling for good effect" in {
+      SaveEffectSpecialRuling.fromEffect(Effect(eid, eid.combId, Condition.Generic("abc", false), Duration.SaveEndSpecial)) must_== SaveEffectSpecialRuling(eid, "abc")
     }
   }
 

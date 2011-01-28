@@ -38,4 +38,5 @@ object RulingDialog {
 class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling that need your decision") {
   this.iconImage_=(IconLibrary.MetalD20.getImage)
   addValuePanel(RulingDialog.SimpleSavePanelIdentity, new RadioButtonValuePanel("Saved?", List("Yes", "No")))
+  addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
 }
