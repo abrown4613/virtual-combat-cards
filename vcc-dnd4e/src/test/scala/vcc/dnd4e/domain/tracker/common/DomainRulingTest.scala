@@ -47,8 +47,8 @@ class DomainRulingTest extends SpecificationWithJUnit {
     }
 
     "Change is only valid on special save" in {
-      val saved = SaveEffectSpecialDecision(ses, Option("new effect"))
-      val saved2 = SaveEffectSpecialDecision(ses2, None)
+      val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Changed("new effect"))
+      val saved2 = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Saved)
       ses.isValidDecision(saved) must beTrue
       ses.isValidDecision(saved2) must beFalse
     }
@@ -69,7 +69,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
     "PendingRuling should provide update on failed and changed condition" in {
       val pending2: PendingRuling[List[TransactionalAction]] = new PendingRuling(ses2)
-      val saved = SaveEffectSpecialDecision(ses2, Some("new effect"))
+      val saved = SaveEffectSpecialDecision(ses2, SaveEffectSpecialDecision.Changed("new effect"))
       pending2.processDecision(saved) must_== Some(List(UpdateEffectCondition(eid, Effect.Condition.Generic("new effect", false))))
     }
   }
