@@ -34,30 +34,9 @@ object SaveEffectRuling {
 }
 
 /**
- * For effect that degenerate into worst things
- * @param eid EffectID of the effect to chance
- * @param condition Current condition. If  the format include arrows (->) or slash (/) this effect will be reprocessed
- * prior to display. This format is used to indicate de notion of progression.
- */
-case class SaveEffectSpecialRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
-  def decisionValidator(decision: Decision[_]): Boolean = decision match {
-    case SaveEffectSpecialDecision(q, _) => true
-    case _ => false
-  }
-
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
-    decision match {
-      case SaveEffectSpecialDecision(q, SaveEffectSpecialDecision.Saved) =>
-        List(CancelEffect(q.eid))
-      case SaveEffectSpecialDecision(q, SaveEffectSpecialDecision.Changed(newEffect)) =>
-        List(UpdateEffectCondition(q.eid, Effect.Condition.Generic(newEffect, false)))
-      case _ => Nil
-    }
-  }
-}
-
-/**
  * For effect normal effects that save ends
+ * @param eid Effect identifier
+ * @param condition Condition to save from.
  */
 case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
   def decisionValidator(decision: Decision[_]): Boolean = decision match {
@@ -81,52 +60,3 @@ case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling wit
 case class SaveEffectDecision(ruling: SaveEffectRuling, hasSaved: Boolean) extends Decision[SaveEffectRuling]
 
 
-object SaveEffectSpecialDecision {
-
-  sealed trait Result
-
-  case object Saved extends Result
-
-  case class Changed(newCondition: String) extends Result
-
-}
-
-/**
- * Decision for a SaveEffectSpecialRuling.
- * @param ruling Referred ruling
- * @param result Result can be one of Saved or Changed(n) where n is the new condition to be applied.
- */
-case class SaveEffectSpecialDecision(ruling: SaveEffectSpecialRuling, result: SaveEffectSpecialDecision.Result) extends Decision[SaveEffectSpecialRuling]
-
-//REGENERATE
-
-case class RegenerateByRuling(eid: EffectID, what: String) extends Ruling {
-  protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
-    case a: RegenerateByDecision => true
-    case _ => false
-  }
-}
-
-case class RegenerateByDecision(ruling: RegenerateByRuling, amount: Int) extends Decision[RegenerateByRuling]
-
-//ONGOING
-
-case class OngoingDamageRuling(eid: EffectID, what: String) extends Ruling {
-  protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
-    case a: OngoingDamageDecision => true
-    case _ => false
-  }
-}
-
-case class OngoingDamageDecision(ruling: OngoingDamageRuling, amount: Int) extends Decision[OngoingDamageRuling]
-
-// SUSTAIN EFFECT
-
-case class SustainEffectRuling(eid: EffectID, what: String) extends Ruling {
-  protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
-    case o: SustainEffectDecision => true
-    case _ => false
-  }
-}
-
-case class SustainEffectDecision(ruling: SustainEffectRuling, hasSaved: Boolean) extends Decision[SustainEffectRuling]
