@@ -28,6 +28,7 @@ object RulingSearchService {
 
   private def endRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
     case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) => (SaveEffectRuling.fromEffect(effect))
+    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) => (SaveEffectSpecialRuling.fromEffect(effect))
   }
 
   def searchEndRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {

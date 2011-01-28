@@ -23,7 +23,7 @@ import swing.Frame
 import vcc.controller.Ruling
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j.{Window, Trigger, UISpec4J, UISpecTestCase}
-import vcc.infra.prompter.{RadioButtonValuePanel, ValuePanel, PromptController, RulingPromptController}
+import vcc.infra.prompter.{RadioButtonValuePanel, PromptController, RulingPromptController}
 
 class RulingDialogTest extends UISpecTestCase {
 
@@ -40,6 +40,13 @@ class RulingDialogTest extends UISpecTestCase {
     openAndCancelDialog(mController).run()
     verify(mController).panelIdentity()
     verify(mController).decoratePanel(any[RadioButtonValuePanel])
+  }
+
+  def testHaveSaveSpecialPanel() {
+    when(mController.panelIdentity).thenReturn(SaveOrChangeValuePanel.Identity)
+    openAndCancelDialog(mController).run()
+    verify(mController).panelIdentity()
+    verify(mController).decoratePanel(any[SaveOrChangeValuePanel])
   }
 
   private def openAndCancelDialog(controller: PromptController): WindowInterceptor = {

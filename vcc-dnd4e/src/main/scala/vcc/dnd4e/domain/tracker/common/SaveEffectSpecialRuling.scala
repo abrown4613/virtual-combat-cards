@@ -19,6 +19,7 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
 import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
 
 /**
  * For effect that degenerate into worst things
@@ -43,6 +44,15 @@ case class SaveEffectSpecialRuling(eid: EffectID, condition: String) extends Rul
   }
 }
 
+object SaveEffectSpecialRuling {
+  def fromEffect(effect: Effect): SaveEffectSpecialRuling = {
+    effect.duration match {
+      case Duration.SaveEndSpecial =>
+        SaveEffectSpecialRuling(effect.effectId, effect.condition.description)
+      case _ => null
+    }
+  }
+}
 
 object SaveEffectSpecialDecision {
 
