@@ -19,8 +19,8 @@ package vcc.dnd4e.view.ruling
 
 import vcc.controller.{Decision, Ruling}
 import vcc.infra.prompter.ValuePanel.Return
-import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision, SaveEffectRuling}
 import vcc.infra.prompter.{RadioButtonValuePanel, ValuePanel, RulingPromptController, RulingTranslatorService}
+import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectDecision, SaveEffectRuling}
 
 /**
  * TranslatorService companion object
@@ -37,6 +37,7 @@ class TranslatorService extends RulingTranslatorService {
     ruling match {
     //TODO all the cases
       case r@SaveEffectRuling(eid, effect) => new SimpleSavePromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@SaveEffectSpecialRuling(_, _) => new SaveSpecialPromptController(r).asInstanceOf[RulingPromptController[R]]
       case leftover => throw new Exception("No translation for: " + leftover)
     }
   }
@@ -72,6 +73,6 @@ class SimpleSavePromptController(ruling: SaveEffectRuling) extends RulingPromptC
 
   def panelIdentity(): String = RulingDialog.SimpleSavePanelIdentity
 
-  def prompt(): String = "Save: " + ruling.text
+  def prompt(): String = "Save: " + ruling.condition
 }
 

@@ -34,6 +34,7 @@ object SaveOrChangeValuePanel {
 
   case class Changed(to: String) extends SaveResult
 
+  val Identity = "SaveSpecialPanel"
 }
 
 class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:push[]") with ValuePanel[SaveResult] {

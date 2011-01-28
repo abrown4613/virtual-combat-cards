@@ -20,7 +20,7 @@ package vcc.dnd4e.view.ruling
 import org.specs.SpecificationWithJUnit
 import vcc.controller.{Decision, Ruling}
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.SaveEffectRuling
+import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling}
 
 class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
   val ts = new TranslatorService()
@@ -35,6 +35,12 @@ class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
       val c = ts.promptForRuling(new SaveEffectRuling(null, "bad things"))
       c mustNot beNull
       c.panelIdentity must_== RulingDialog.SimpleSavePanelIdentity
+    }
+
+    "provide a controller for save special" in {
+      val c = ts.promptForRuling(new SaveEffectSpecialRuling(null, "bad things"))
+      c mustNot beNull
+      c.panelIdentity must_== SaveOrChangeValuePanel.Identity
     }
   }
 }
