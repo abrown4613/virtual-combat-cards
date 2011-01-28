@@ -22,6 +22,7 @@ import vcc.infra.prompter.ValuePanel.Return
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j._
 import assertion.Assertion
+import vcc.util.swing.SwingHelper
 
 
 /**
@@ -233,7 +234,7 @@ class MultiplePromptDialogTest extends UISpecTestCase {
     assertTrue("Dialog OK returns true, not:" + dialogReturn, dialogReturn == Some(true))
   }
 
-  def testAnswerCloseClearAndRedisplay() {
+  def testAnswerCloseClearAndRedisplayWithDisabledOK() {
     setAdapter(new MainFrameAdapter(questions))
     doWithDialog(getMainWindow.getButton("show").triggerClick) {
       window =>
@@ -242,12 +243,15 @@ class MultiplePromptDialogTest extends UISpecTestCase {
         window.getRadioButton("No").click()
         window.getButton("OK").triggerClick()
     }
-    questions(1).clear() // Make the answer open
+    SwingHelper.invokeInEventDispatchThread{
+      questions(1).clear() // Make the answer open
+    }
+    assertTrue("Cleared must be clear", questions(1).hasAnswer == false)
     doWithDialog(getMainWindow.getButton("show").triggerClick) {
       window =>
+        assertFalse(window.getButton("OK").isEnabled)
         assertTrue(window.getListBox.selectionEquals("Question 2")) // We cleared the second answer
         assertTrue(window.getTextBox("promptText").textEquals("Question 2"))
-        assertTrue(not(window.getButton("OK").isEnabled))
         window.getButton("Cancel").triggerClick()
     }
   }
