@@ -24,11 +24,13 @@ import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialDecision, SaveEffectSpe
 
 class SaveSpecialPromptController(ruling: SaveEffectSpecialRuling) extends RulingPromptController[SaveEffectSpecialRuling] {
 
-  private var result: Option[SaveOrChangeValuePanel.SaveResult] = None
+  import vcc.dnd4e.domain.tracker.common.SaveEffectSpecialDecision._
+
+  private var result: Option[SaveEffectSpecialDecision.Result] = None
 
   def extractDecision(): Decision[SaveEffectSpecialRuling] = result match {
-    case Some(SaveOrChangeValuePanel.Saved) => SaveEffectSpecialDecision(ruling, SaveEffectSpecialDecision.Saved)
-    case Some(SaveOrChangeValuePanel.Changed(c)) => SaveEffectSpecialDecision(ruling, SaveEffectSpecialDecision.Changed(c))
+    case Some(Saved) => SaveEffectSpecialDecision(ruling, SaveEffectSpecialDecision.Saved)
+    case Some(Changed(c)) => SaveEffectSpecialDecision(ruling, SaveEffectSpecialDecision.Changed(c))
     case None => null
   }
 
@@ -47,8 +49,7 @@ class SaveSpecialPromptController(ruling: SaveEffectSpecialRuling) extends Rulin
     val scPanel = panel.asInstanceOf[SaveOrChangeValuePanel]
     scPanel.setValue(result)
     result match {
-      case Some(SaveOrChangeValuePanel.Changed(v)) =>
-        scPanel.setNewCondition(v)
+      case Some(Changed(v)) => scPanel.setNewCondition(v)
       case _ => scPanel.setNewCondition(progressCondition(ruling.condition))
     }
 

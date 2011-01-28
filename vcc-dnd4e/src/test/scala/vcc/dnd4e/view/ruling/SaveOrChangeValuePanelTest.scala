@@ -22,6 +22,9 @@ import org.mockito.Mockito._
 import vcc.infra.prompter.{ValuePanel}
 
 class SaveOrChangeValuePanelTest extends UISpecTestCase {
+
+  import vcc.dnd4e.domain.tracker.common.SaveEffectSpecialDecision._
+
   UISpec4J.init()
 
   private val thePanelName = "SaveOrChangePanel"
@@ -49,7 +52,7 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   }
 
   def testSetValueSaved() {
-    thePanel.setValue(Some(SaveOrChangeValuePanel.Saved))
+    thePanel.setValue(Some(Saved))
     assertFalse(uiPanel.getTextBox("NewCondition").isEnabled)
     assertTrue(uiPanel.getRadioButton("Save").isSelected)
     assertFalse(uiPanel.getRadioButton("Change").isSelected)
@@ -57,7 +60,7 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   }
 
   def testSetValueChange() {
-    thePanel.setValue(Some(SaveOrChangeValuePanel.Changed("new condition")))
+    thePanel.setValue(Some(Changed("new condition")))
     assertTrue(uiPanel.getTextBox("NewCondition").isEnabled)
     assertFalse(uiPanel.getRadioButton("Save").isSelected)
     assertTrue(uiPanel.getRadioButton("Change").isSelected)
@@ -75,7 +78,13 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   def testClickOnSaveAndCallListener() {
     uiPanel.getRadioButton("Save").click
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled)
-    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(SaveOrChangeValuePanel.Saved)))
+    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Saved)))
+  }
+
+  def testClickOnSaveSetValueCorrectly() {
+    uiPanel.getRadioButton("Save").click
+    assertTrue(uiPanel.getButton("AcceptButton").isEnabled)
+    assert(thePanel.value == Some(Saved))
   }
 
   def testClickOnChangeEnableNewCondition() {
@@ -87,14 +96,21 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
     uiPanel.getRadioButton("Change").click
     uiPanel.getTextBox("NewCondition").setText("worst", true)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
-    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(SaveOrChangeValuePanel.Changed("worst"))))
+    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
+  }
+
+  def testSettingChangeTextSetsValue() {
+    uiPanel.getRadioButton("Change").click
+    uiPanel.getTextBox("NewCondition").setText("worst", false)
+    assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
+    assert(thePanel.value == Some(Changed("worst")))
   }
 
   def testSettingChangeTextWithoutEnterDoesNotCallsListener() {
     uiPanel.getRadioButton("Change").click
     uiPanel.getTextBox("NewCondition").setText("worst", false)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
-    verify(mListener, never).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(SaveOrChangeValuePanel.Changed("worst"))))
+    verify(mListener, never).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
   }
 
   def testSettingChangeTextAddHitAcceptCallsListener() {
@@ -102,13 +118,13 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
     uiPanel.getTextBox("NewCondition").setText("worst", false)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
     uiPanel.getButton("AcceptButton").click
-    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(SaveOrChangeValuePanel.Changed("worst"))))
+    verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
   }
 
   def testClickSaveThenAcceptCallsListenerTwice() {
     uiPanel.getRadioButton("Save").click
     uiPanel.getButton("AcceptButton").click
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
-    verify(mListener, times(2)).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(SaveOrChangeValuePanel.Saved)))
+    verify(mListener, times(2)).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Saved)))
   }
 }

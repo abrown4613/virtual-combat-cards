@@ -21,28 +21,23 @@ import vcc.infra.prompter.ValuePanel
 import vcc.util.swing.MigPanel
 import scala.swing._
 import scala.swing.event._
-import vcc.dnd4e.view.ruling.SaveOrChangeValuePanel.SaveResult
 import java.awt.event.{ActionEvent, ActionListener}
+import vcc.dnd4e.domain.tracker.common.SaveEffectSpecialDecision
 
 object SaveOrChangeValuePanel {
 
-  case class Value(value: Option[SaveResult]) extends ValuePanel.Return
-
-  sealed trait SaveResult
-
-  case object Saved extends SaveResult
-
-  case class Changed(to: String) extends SaveResult
+  case class Value(value: Option[SaveEffectSpecialDecision.Result]) extends ValuePanel.Return
 
   val Identity = "SaveSpecialPanel"
 }
 
-class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:push[]") with ValuePanel[SaveResult] {
+class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:push[]") with ValuePanel[SaveEffectSpecialDecision.Result] {
 
-  import SaveOrChangeValuePanel._
+  import SaveEffectSpecialDecision._
+  import vcc.dnd4e.view.ruling.SaveOrChangeValuePanel.{Value}
 
   private val saveButton = new RadioButton("Save")
-  private val changeButton = new RadioButton("Failed and changed effect to:")
+  private val changeButton = new RadioButton("Fail save and change effect to:")
   private val newConditionField = new TextField()
   private val acceptButton = new Button("Accept")
   private val buttonGroup = new ButtonGroup(saveButton, changeButton)
@@ -64,13 +59,13 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
     case ButtonClicked(`saveButton`) =>
       acceptButton.enabled = true
       newConditionField.enabled = false
-      notifyListener(Value(Some(Saved)))
+      notifyListener(Value(this.value))
     case ButtonClicked(`changeButton`) =>
       acceptButton.enabled = true
       newConditionField.enabled = true
+      newConditionField.requestFocus()
     case ButtonClicked(`acceptButton`) =>
-      if (saveButton.selected) notifyListener(Value(Some(Saved)))
-      else notifyListener(Value(Some(Changed(newConditionField.text))))
+      notifyListener(Value(this.value))
   }
 
   newConditionField.peer.addActionListener(new ActionListener() {
@@ -81,12 +76,16 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
 
 
   def adjustFocus() {
-
+    saveButton.requestFocus()
   }
 
-  def value(): Option[SaveResult] = None
+  def value(): Option[SaveEffectSpecialDecision.Result] = {
+    if (saveButton.selected) Some(Saved)
+    else if (changeButton.selected) Some(Changed(newConditionField.text))
+    else None
+  }
 
-  def setValue(value: Option[SaveResult]) {
+  def setValue(value: Option[SaveEffectSpecialDecision.Result]) {
     value match {
       case None =>
         newConditionField.enabled = false

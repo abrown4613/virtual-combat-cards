@@ -23,7 +23,8 @@ import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialDecision, SaveEffectSpe
 
 class SaveSpecialPromptControllerTest extends SpecificationWithJUnit with Mockito {
 
-  import SaveOrChangeValuePanel._
+  import vcc.dnd4e.view.ruling.SaveOrChangeValuePanel.Value
+  import SaveEffectSpecialDecision._
 
   val mPanel = mock[SaveOrChangeValuePanel]
 
