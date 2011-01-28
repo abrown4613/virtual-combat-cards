@@ -99,6 +99,7 @@ class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame
     val idx = questionList.listData.indexWhere(pc => !pc.hasAnswer)
     if (idx != -1) {
       questionList.selectIndices(idx)
+      okButton.enabled = false
     } else {
       okButton.enabled = true
     }
