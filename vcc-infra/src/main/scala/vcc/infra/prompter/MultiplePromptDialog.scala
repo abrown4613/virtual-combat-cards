@@ -28,15 +28,16 @@ import vcc.util.swing.{ModalFrame, MigPanel}
  * will be activated.
  * @param frame Controlling object
  * @param title Prompt title
+ * @param questionLabel Label to be place on top of the question in the internal panel
  */
-class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame, title) with MultiplePromptPanel.InputListener {
+class MultiplePromptDialog(frame: Frame, title: String, questionLabel: String) extends ModalFrame(frame, title) with MultiplePromptPanel.InputListener {
   // Indicate that OK has been clicked
   private var accepted = false
   private val questionList = new ListView[PromptController](Nil) {
     renderer = ListView.Renderer(_.prompt)
     selection.intervalMode = ListView.IntervalMode.Single
   }
-  private val questionPanel = new MultiplePromptPanel(this)
+  private val questionPanel = new MultiplePromptPanel(questionLabel, this)
   private val okButton = new Button(Action("OK") {
     dismissDialog(true)
   })
@@ -79,8 +80,9 @@ class MultiplePromptDialog(frame: Frame, title: String) extends ModalFrame(frame
    * Show dialog and wait for use inputs on each prompt provided.
    * @param toPrompt List of PromptController one for each prompt to be asked from the user
    */
-  def promptUser(toPrompt: List[PromptController]): Boolean = {
+  def promptUser(titleText: String, toPrompt: List[PromptController]): Boolean = {
     questionList.listData = toPrompt
+    peer.setTitle(titleText)
     nextUnanswered
     showWindow()
     this.accepted

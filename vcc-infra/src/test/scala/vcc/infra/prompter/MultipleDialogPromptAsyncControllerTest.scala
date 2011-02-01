@@ -19,7 +19,7 @@ package vcc.infra.prompter
 
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j._
-import swing.{Frame, FlowPanel}
+import swing.{Frame}
 import javax.swing.SwingUtilities
 import concurrent.SyncVar
 import junit.framework.Assert.{fail}
@@ -34,7 +34,7 @@ class MultipleDialogPromptAsyncControllerTest extends UISpecTestCase {
   val frame = new Frame()
   //val uiPanel = new Panel(panel.peer)
 
-  val dialog = new MultiplePromptDialog(frame, "Prompt") {
+  val dialog = new MultiplePromptDialog(frame, "Prompt", "Decision for:") {
     addValuePanel(
       yesNoPanelId,
       new RadioButtonValuePanel("Accept this term", List("Yes", "No")))
@@ -49,7 +49,7 @@ class MultipleDialogPromptAsyncControllerTest extends UISpecTestCase {
   def testAsynchronousCallOfDialogAndCancel() {
     var ret: Option[Boolean] = None
 
-    val barrier = onAnotherThereWaitOnBarrierAndDo(barrier => ret = Some(asyncController.promptUser(question)))
+    val barrier = onAnotherThereWaitOnBarrierAndDo(barrier => ret = Some(asyncController.promptUser("some prompt", question)))
 
     doWithDialog(triggerBarrier(barrier)) {
       window =>
@@ -62,7 +62,7 @@ class MultipleDialogPromptAsyncControllerTest extends UISpecTestCase {
     var ret: Option[Boolean] = None
 
     val barrier = onAnotherThereWaitOnBarrierAndDo(barrier => {
-      ret = Some(asyncController.promptUser(question))
+      ret = Some(asyncController.promptUser("another prompt", question))
     })
 
     doWithDialog(triggerBarrier(barrier)) {

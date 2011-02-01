@@ -29,12 +29,11 @@ class MultiplePromptPanelTest extends UISpecTestCase {
 
   val listener = mock(classOf[MultiplePromptPanel.InputListener])
   val thePanel = new RadioButtonValuePanel("Select Something?", List("Yes", "No"))
-  val panel = new MultiplePromptPanel(listener) {
+  val panel = new MultiplePromptPanel("Concerning:", listener) {
     addValuePanel("textQuestion", new TextFieldValuePanel("question", (x: String) => x.startsWith("a")))
     addValuePanel(targetPanel, thePanel)
   }
   val uiPanel = new Panel(panel.peer)
-
 
   val controller = mock(classOf[PromptController])
   when(controller.prompt).thenReturn("my prompt")
@@ -44,6 +43,7 @@ class MultiplePromptPanelTest extends UISpecTestCase {
     assertTrue(uiPanel.getTextBox("promptText").isEnabled)
     assertTrue(uiPanel.getButton("acceptButton").isVisible)
     assertTrue(not(uiPanel.getButton("acceptButton").isEnabled))
+    assertTrue(uiPanel.getTextBox("Concerning:").isVisible)
   }
 
   def testCallControllerSetPromptToReturnOfController() {

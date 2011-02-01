@@ -24,7 +24,6 @@ import org.uispec4j._
 import assertion.Assertion
 import vcc.util.swing.SwingHelper
 
-
 /**
  * MockQuestion
  */
@@ -75,7 +74,7 @@ class MultiplePromptDialogTest extends UISpecTestCase {
       WindowInterceptor.run(new Trigger() {
         def run() {
           new MainFrame {
-            val dialog = new MultiplePromptDialog(this, "Prompt") {
+            val dialog = new MultiplePromptDialog(this, "Prompt", "Decision for:") {
               addValuePanel(
                 yesNoPanelId,
                 new RadioButtonValuePanel("Accept this term", List("Yes", "No")))
@@ -91,7 +90,7 @@ class MultiplePromptDialogTest extends UISpecTestCase {
             }
 
             contents = new Button(Action("show") {
-              val r = dialog.promptUser(toPrompt)
+              val r = dialog.promptUser("some context", toPrompt)
               dialogReturn = Some(r)
             })
           }.visible = true
@@ -116,10 +115,10 @@ class MultiplePromptDialogTest extends UISpecTestCase {
     setAdapter(new MainFrameAdapter(questions))
     doWithDialog(getMainWindow.getButton("show").triggerClick) {
       window =>
-        assertTrue(window.titleEquals("Prompt"))
         assertTrue(window.getButton("Cancel").isEnabled)
         assertTrue(not(window.getButton("OK").isEnabled))
         assertTrue(window.getListBox.contains("Question 1", "Question 2", "Question 3"))
+        assertTrue(window.titleEquals("some context"))
         window.getButton("Cancel").triggerClick()
     }
   }

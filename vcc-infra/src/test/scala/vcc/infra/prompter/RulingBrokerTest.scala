@@ -52,24 +52,24 @@ class RulingBrokerTest extends SpecificationWithJUnit with Mockito {
     }
     "sent promper prompts to dialog controller" in {
       broker.promptRuling(promptContext, rulings)
-      there was one(mDialog).promptUser(List(mPrompt1, mPrompt2))
+      there was one(mDialog).promptUser(promptContext, List(mPrompt1, mPrompt2))
     }
 
     "ignore decision if dialog cancelled" in {
-      mDialog.promptUser(any) returns false
+      mDialog.promptUser(any, any) returns false
       broker.promptRuling(promptContext, rulings) must_== Nil
       there was no(mPrompt1).extractDecision()
       there was no(mPrompt2).extractDecision()
     }
 
     "extract decision from prompts if positive" in {
-      mDialog.promptUser(any) returns true
+      mDialog.promptUser(any, any) returns true
       broker.promptRuling(promptContext, rulings)
       there was one(mPrompt1).extractDecision()
       there was one(mPrompt2).extractDecision()
     }
     "sent decision back" in {
-      mDialog.promptUser(any) returns true
+      mDialog.promptUser(any, any) returns true
       broker.promptRuling(promptContext, rulings) must_== List(mDecision1, mDecision2)
     }
   }

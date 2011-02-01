@@ -33,7 +33,7 @@ class RulingBroker(dialogController: MultiplePromptDialogController, translator:
    */
   def promptRuling(promptContext: String, rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
     val prompts = rulings.map(r => translator.promptForRuling(r))
-    if (dialogController.promptUser(prompts)) {
+    if (dialogController.promptUser(promptContext, prompts)) {
       prompts.map(p => p.extractDecision)
     } else {
       Nil
