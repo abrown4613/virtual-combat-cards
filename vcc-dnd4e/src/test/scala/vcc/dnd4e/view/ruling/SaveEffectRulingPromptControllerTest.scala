@@ -19,12 +19,12 @@ package vcc.dnd4e.view.ruling
 
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
-import vcc.infra.prompter.RadioButtonValuePanel
 import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision, CombatantID, EffectID, SaveEffectRuling}
+import vcc.infra.prompter.{EnumerationValuePanel}
 
 class SaveEffectRulingPromptControllerTest extends SpecificationWithJUnit with Mockito {
 
-  val mPanel = mock[RadioButtonValuePanel]
+  val mPanel = mock[EnumerationValuePanel[SaveEffectDecision.type]]
 
   val ruling = SaveEffectRuling(EffectID(CombatantID("A"), 10), "bad things")
   "SimpleSavePromptController" should {
@@ -44,29 +44,29 @@ class SaveEffectRulingPromptControllerTest extends SpecificationWithJUnit with M
 
     "sending None as Return must not be accepted" in {
       controller.decoratePanel(mPanel)
-      controller.handleAccept(RadioButtonValuePanel.Return(None)) must beFalse
+      controller.handleAccept(EnumerationValuePanel.Value(None)) must beFalse
     }
 
     "decorate to yes on second time" in {
-      controller.handleAccept(RadioButtonValuePanel.Return(Some(0))) must beTrue
+      controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Saved))) must beTrue
       controller.decoratePanel(mPanel)
-      there was one(mPanel).setValue(Some(0))
+      there was one(mPanel).setValue(Some(SaveEffectDecision.Saved))
     }
 
     "decorate to No on second time" in {
-      controller.handleAccept(RadioButtonValuePanel.Return(Some(1))) must beTrue
+      controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Failed))) must beTrue
       controller.decoratePanel(mPanel)
-      there was one(mPanel).setValue(Some(1))
+      there was one(mPanel).setValue(Some(SaveEffectDecision.Failed))
     }
 
     "once value Yes return correct decision" in {
-      controller.handleAccept(RadioButtonValuePanel.Return(Some(0)))
-      controller.extractDecision() must_== SaveEffectDecision(ruling, true)
+      controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Saved)))
+      controller.extractDecision() must_== SaveEffectDecision(ruling, SaveEffectDecision.Saved)
     }
 
     "once value No return correct decision" in {
-      controller.handleAccept(RadioButtonValuePanel.Return(Some(1)))
-      controller.extractDecision() must_== SaveEffectDecision(ruling, false)
+      controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Failed)))
+      controller.extractDecision() must_== SaveEffectDecision(ruling, SaveEffectDecision.Failed)
     }
 
   }

@@ -23,7 +23,8 @@ import swing.Frame
 import vcc.controller.Ruling
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j.{Window, Trigger, UISpec4J, UISpecTestCase}
-import vcc.infra.prompter.{RadioButtonValuePanel, PromptController, RulingPromptController}
+import vcc.infra.prompter.{EnumerationValuePanel, PromptController, RulingPromptController}
+import vcc.dnd4e.domain.tracker.common.SaveEffectDecision
 
 class RulingDialogTest extends UISpecTestCase {
 
@@ -39,7 +40,7 @@ class RulingDialogTest extends UISpecTestCase {
     when(mController.panelIdentity).thenReturn(RulingDialog.SimpleSavePanelIdentity)
     openAndCancelDialog(mController).run()
     verify(mController).panelIdentity()
-    verify(mController).decoratePanel(any[RadioButtonValuePanel])
+    verify(mController).decoratePanel(any[EnumerationValuePanel[SaveEffectDecision.type]])
   }
 
   def testHaveSaveSpecialPanel() {
