@@ -46,7 +46,7 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
   changeButton.name = "Change"
   acceptButton.name = "AcceptButton"
 
-  add(new Label("Save against effect?"), "wrap")
+  add(new Label("Saving throw against effect?"), "wrap")
   add(saveButton, "wrap")
   add(changeButton, "wrap")
   add(newConditionField, "gap left 30, wrap, growx")

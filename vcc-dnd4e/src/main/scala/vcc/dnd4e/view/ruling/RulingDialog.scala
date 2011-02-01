@@ -38,6 +38,6 @@ object RulingDialog {
  */
 class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling Dialog", "Concerning:") {
   this.iconImage_=(IconLibrary.MetalD20.getImage)
-  addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saved?", SaveEffectDecision))
+  addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saving throw against effect:", SaveEffectDecision))
   addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
 }
