@@ -31,7 +31,7 @@ class RulingBroker(dialogController: MultiplePromptDialogController, translator:
    * Get Ruling convert to prompts and ask Dialog for user input
    * @param rulings Ruling that should be asked to the user
    */
-  def promptRuling(rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
+  def promptRuling(promptContext: String, rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
     val prompts = rulings.map(r => translator.promptForRuling(r))
     if (dialogController.promptUser(prompts)) {
       prompts.map(p => p.extractDecision)

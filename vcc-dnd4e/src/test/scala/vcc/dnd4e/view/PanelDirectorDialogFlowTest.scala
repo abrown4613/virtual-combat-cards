@@ -17,12 +17,18 @@
 //$Id$
 package vcc.dnd4e.view
 
+import helper.ActionTranslator
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
 import actors.Actor
 import vcc.controller.{Decision, Ruling, TrackerChangeObserver}
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
 import vcc.infra.prompter.{RulingBroker}
+import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.model.{CombatantEntity}
+import vcc.dnd4e.domain.tracker.common.Command.InitiativeAction
+import vcc.dnd4e.domain.tracker.common._
 
 /**
  * Test to make sure RulingBroker gets called when PanelDirector is provoked by the pd.provideDecisionsForRulings.
@@ -35,6 +41,17 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
   private val decision2 = mock[Decision[_ <: Ruling]]
   val rulings = List(ruling1, ruling2)
   val mDecisions = List(decision1, decision2)
+  val mAction = mock[TransactionalAction]
+  mAction.description returns "some action"
+
+  // TO test real actions
+  val combA = CombatantID("A")
+  val ioiA = InitiativeOrderID(combA, 0)
+  val mState = mock[CombatStateView]
+  val mCombA = mock[CombatantStateView]
+  mState.combatantViewFromID(combA) returns mCombA
+  val combADef = combatantDefinition(combA, "Goblin", "Shorty", CombatantType.Monster)
+  mCombA.definition returns combADef
 
   "PanelDirector" should {
     val mockRuleBroker = mock[RulingBroker]
@@ -43,18 +60,30 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
     val pd = new PanelDirector(mock[Actor], csm, mock[StatusBar], mockRuleBroker)
 
     "forward request to RulingBroker" in {
-      pd.provideDecisionsForRulings(rulings)
-      there was one(mockRuleBroker).promptRuling(rulings)
+      pd.provideDecisionsForRulings(mAction, rulings)
+      there was one(mockRuleBroker).promptRuling("some action", rulings)
     }
     "send reply back to requestor" in {
-      mockRuleBroker.promptRuling(rulings) returns mDecisions
-      pd.provideDecisionsForRulings(rulings) must_== mDecisions
+      mockRuleBroker.promptRuling("some action", rulings) returns mDecisions
+      pd.provideDecisionsForRulings(mAction, rulings) must_== mDecisions
     }
 
     "not forward empty list" in {
-      pd.provideDecisionsForRulings(Nil) must_== Nil
-      there was no(mockRuleBroker).promptRuling(Nil)
+      pd.provideDecisionsForRulings(mAction, Nil) must_== Nil
+      there was no(mockRuleBroker).promptRuling(any, any)
+    }
+
+    "provide correct message for the end round" in {
+      csm.getSnapshot() returns CombatStateWithChanges(CombatState(false, "", Nil, Map(), None, Map(combA -> mCombA)), new StateChange())
+      val action = InitiativeAction(ioiA, InitiativeTracker.action.EndRound)
+      val msg = ActionTranslator.fullActionMessage(mState, action)
+      mockRuleBroker.promptRuling(msg, rulings) returns mDecisions
+      pd.provideDecisionsForRulings(action, rulings)
+      there was one(mockRuleBroker).promptRuling(msg, rulings)
     }
   }
+
+  def combatantDefinition(comb: CombatantID, name: String, alias: String, ctype: CombatantType.Value) =
+    CombatantRosterDefinition(comb, alias, CombatantEntity(null, name, null, 0, ctype, null))
 
 }

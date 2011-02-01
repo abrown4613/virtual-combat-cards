@@ -116,7 +116,7 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
 
     "not ask CommandSource if there are no ruling" in {
       aProcessor.dispatch(new Transaction(), aSource, actionOnce)
-      there was no(aSource).provideDecisionsForRulings(any)
+      there was no(aSource).provideDecisionsForRulings(any, any)
     }
 
     "generate a list all pending rulings and ask commandSource" in {
@@ -124,13 +124,13 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
       firstRulingSearch.apply(actionOnce) returns List(pendingRuling1)
       secondRulingSearch.isDefinedAt(actionOnce) returns true
       secondRulingSearch.apply(actionOnce) returns List(pendingRuling2)
-      aSource.provideDecisionsForRulings(List(ruling1, ruling2)) returns List(answer1true, answer2true)
+      aSource.provideDecisionsForRulings(actionOnce, List(ruling1, ruling2)) returns List(answer1true, answer2true)
 
       aProcessor.dispatch(new Transaction(), aSource, actionOnce)
 
       there was one(firstRulingSearch).apply(actionOnce) then
         one(secondRulingSearch).apply(actionOnce) then
-        one(aSource).provideDecisionsForRulings(theRulings)
+        one(aSource).provideDecisionsForRulings(actionOnce, theRulings)
 
       aProcessor.allExecutedActions must_== List('DOIT)
     }
@@ -140,7 +140,7 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
       firstRulingSearch.apply(actionOnce) returns List(pendingRuling1)
       secondRulingSearch.isDefinedAt(actionOnce) returns true
       secondRulingSearch.apply(actionOnce) returns List(pendingRuling2)
-      aSource.provideDecisionsForRulings(List(ruling1, ruling2)) returns List(answer1true, answer2true)
+      aSource.provideDecisionsForRulings(actionOnce, List(ruling1, ruling2)) returns List(answer1true, answer2true)
       pendingRuling1.processDecision(answer1true) returns Some(List(DummyAction('TenTimes), DummyAction('Once)))
       pendingRuling2.processDecision(answer2true) returns Some(List(DummyAction('yes)))
 
@@ -153,7 +153,7 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
       val toFailAction = DummyAction('THROW)
       secondRulingSearch.isDefinedAt(actionOnce) returns true
       secondRulingSearch.apply(actionOnce) returns List(pendingRuling2)
-      aSource.provideDecisionsForRulings(List(ruling2)) returns List(answer2true)
+      aSource.provideDecisionsForRulings(actionOnce, List(ruling2)) returns List(answer2true)
       pendingRuling2.processDecision(answer2true) returns Some(List(toFailAction))
 
       aProcessor.dispatch(new Transaction(), aSource, actionOnce) must throwAn[IllegalStateException]
@@ -164,7 +164,7 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
       val repeatDecision = DummyAction('AGAIN)
       secondRulingSearch.isDefinedAt(actionOnce) returns true thenReturns false
       secondRulingSearch.apply(actionOnce) returns List(pendingRuling2)
-      aSource.provideDecisionsForRulings(List(ruling2)) returns List(answer2true)
+      aSource.provideDecisionsForRulings(actionOnce, List(ruling2)) returns List(answer2true)
       pendingRuling2.processDecision(answer2true) returns Some(List(DummyAction('One), repeatDecision))
       aProcessor.dispatch(new Transaction(), aSource, actionOnce)
 
@@ -201,37 +201,38 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
   }
 
   "TransactionalProcessor queryCommandSource" should {
+    val mAction = mock[TransactionalAction]
 
     "send rulings to source and return something on a valid answer" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer1true, answer2true)
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer1true, answer2true)
       ruling1.isValidDecision(answer1true) must beTrue
       ruling2.isValidDecision(answer2true) must beTrue
 
-      val ret = aProcessor.queryCommandSource(aSource, thePendingRuling)
+      val ret = aProcessor.queryCommandSource(mAction, aSource, thePendingRuling)
       ret mustNot beNull
-      there was one(aSource).provideDecisionsForRulings(theRulings)
+      there was one(aSource).provideDecisionsForRulings(mAction, theRulings)
     }
 
     "throw some MissingDecisionException when answer are in the wrong order" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer2true, answer1true)
-      aProcessor.queryCommandSource(aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling1))
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer2true, answer1true)
+      aProcessor.queryCommandSource(mAction, aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling1))
     }
 
     "throw some MissingDecisionException when not all have been answered" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer1true)
-      aProcessor.queryCommandSource(aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling2))
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer1true)
+      aProcessor.queryCommandSource(mAction, aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling2))
     }
 
     "throw some MissingDecisionException when last has not been answered" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer1true)
-      aProcessor.queryCommandSource(aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling2))
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer1true)
+      aProcessor.queryCommandSource(mAction, aSource, thePendingRuling) must throwA(new MissingDecisionException(ruling2))
     }
 
 
     "evoke the action generation for each question and return actions" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer1true, answer2true)
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer1true, answer2true)
 
-      val ret = aProcessor.queryCommandSource(aSource, thePendingRuling)
+      val ret = aProcessor.queryCommandSource(mAction, aSource, thePendingRuling)
       ret must_== Nil
 
       there was one(pendingRuling1).processDecision(answer1true) then
@@ -239,10 +240,10 @@ class TransactionalProcessorTest extends SpecificationWithJUnit with Mockito {
 
     }
     "append generated action in order into a single list" in {
-      aSource.provideDecisionsForRulings(theRulings) returns List(answer1true, answer2true)
+      aSource.provideDecisionsForRulings(mAction, theRulings) returns List(answer1true, answer2true)
       pendingRuling1.processDecision(answer1true) returns Some(List(new DummyAction('Ruled10)))
       pendingRuling2.processDecision(answer2true) returns Some(List(new DummyAction('RuledYup)))
-      val ret = aProcessor.queryCommandSource(aSource, thePendingRuling)
+      val ret = aProcessor.queryCommandSource(mAction, aSource, thePendingRuling)
 
       ret.size must_== 2
       ret contains (new DummyAction('Ruled10))

@@ -18,7 +18,7 @@
 
 package vcc.dnd4e.view
 
-import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
+import helper.{ActionTranslator, RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
@@ -170,12 +170,13 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   }
 
   /**
-   * Send a resquest to get user input on ruling.
+   * Send a request to get user input on ruling.
+   * @param context
    * @param rulings A List of Ruling that require some user Decision
    * @return A list of Decision in order according to the rulings
    */
-  def provideDecisionsForRulings(rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
+  def provideDecisionsForRulings(context: TransactionalAction, rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
     if (rulings.isEmpty) Nil
-    else rulingBroker.promptRuling(rulings)
+    else rulingBroker.promptRuling(ActionTranslator.fullActionMessage(csm.getSnapshot.state, context), rulings)
   }
 }
