@@ -24,18 +24,19 @@ import vcc.util.swing.SwingHelper
  * This trait is used to hide threading and other synchronization issues from calling function.
  */
 trait MultiplePromptDialogController {
-  def promptUser(toPrompt: List[PromptController]): Boolean
+  def promptUser(context: String, toPrompt: List[PromptController]): Boolean
 }
 
 /**
  * Provide a method to call a MultiplePromptDialog in the swing Event thread and return it synchronously.
+ * @param context Context message, will become dialog title.
  * @param dialog The dialog to be called to provide prompt.
  */
 class MultiplePromptDialogAsyncController(dialog: MultiplePromptDialog) extends MultiplePromptDialogController {
-  def promptUser(toPrompt: List[PromptController]): Boolean = {
+  def promptUser(context: String, toPrompt: List[PromptController]): Boolean = {
     val dialogReturn = new SyncVar[Boolean]
     SwingHelper.invokeInEventDispatchThread{
-      dialogReturn.set(dialog.promptUser(toPrompt))
+      dialogReturn.set(dialog.promptUser(context, toPrompt))
     }
     dialogReturn.get
   }

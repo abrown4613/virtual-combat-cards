@@ -19,7 +19,7 @@ package vcc.infra.prompter
 
 import javax.swing.BorderFactory
 import vcc.util.swing.{CardPanel, MigPanel}
-import swing.{Panel, ScrollPane, TextArea}
+import swing.{Label, Panel, ScrollPane, TextArea}
 import vcc.infra.prompter.ValuePanel.Return
 import java.awt.Color
 
@@ -77,7 +77,7 @@ object MultiplePromptPanel {
  * depending on the what the PromptController inform.
  * @param listener Mandatory parameter of some object to be notified when the user inputs a valid reply for the prompt.
  */
-class MultiplePromptPanel(listener: MultiplePromptPanel.InputListener) extends MigPanel("fill, ins 2") with ValuePanel.ChangeListener {
+class MultiplePromptPanel(promptLabelText: String, listener: MultiplePromptPanel.InputListener) extends MigPanel("fill, ins 2") with ValuePanel.ChangeListener {
 
   private var panelMap: Map[String, ValuePanel[_]] = Map()
 
@@ -85,6 +85,7 @@ class MultiplePromptPanel(listener: MultiplePromptPanel.InputListener) extends M
 
   //Initialization
   border = BorderFactory.createEtchedBorder()
+  private val promptLabel = new Label(promptLabelText)
   private val promptText = new TextArea()
   private val cardPanel = new CardPanel()
 
@@ -95,6 +96,7 @@ class MultiplePromptPanel(listener: MultiplePromptPanel.InputListener) extends M
   promptText.wordWrap = true
   promptText.lineWrap = true
 
+  add(promptLabel, "wrap")
   add(new ScrollPane(promptText), "h 50!, wrap, growx, growy")
   add(cardPanel, "growx, growy")
 

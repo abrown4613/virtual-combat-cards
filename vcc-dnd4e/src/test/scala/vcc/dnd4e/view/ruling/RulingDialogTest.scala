@@ -53,7 +53,7 @@ class RulingDialogTest extends UISpecTestCase {
   private def openAndCancelDialog(controller: PromptController): WindowInterceptor = {
     WindowInterceptor.init(new Trigger() {
       def run {
-        dialog.promptUser(List(controller))
+        dialog.promptUser("lorem", List(controller))
       }
     }).process(new WindowHandler() {
       def process(window: Window): Trigger = {

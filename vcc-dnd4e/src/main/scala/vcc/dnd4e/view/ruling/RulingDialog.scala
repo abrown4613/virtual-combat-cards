@@ -36,7 +36,7 @@ object RulingDialog {
 /**
  * Dialog that provides panels to handle all ruling from the Tracker.
  */
-class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling that need your decision") {
+class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling Dialog", "Concerning:") {
   this.iconImage_=(IconLibrary.MetalD20.getImage)
   addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saved?", SaveEffectDecision))
   addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
