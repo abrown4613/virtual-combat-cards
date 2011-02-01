@@ -19,7 +19,7 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
-import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
+import vcc.dnd4e.domain.tracker.common.Command.{CancelEffect}
 
 //SAVE
 
@@ -46,10 +46,15 @@ case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling wit
 
   def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
     decision match {
-      case SaveEffectDecision(q, true) => List(CancelEffect(q.eid))
+      case SaveEffectDecision(q, SaveEffectDecision.Saved) => List(CancelEffect(q.eid))
       case _ => Nil
     }
   }
+}
+
+object SaveEffectDecision extends Enumeration {
+  val Saved = Value("Saved")
+  val Failed = Value("Failed")
 }
 
 /**
@@ -57,6 +62,6 @@ case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling wit
  * @param ruling Referred ruling
  * @param hasSaved True indicate that the save has been done.
  */
-case class SaveEffectDecision(ruling: SaveEffectRuling, hasSaved: Boolean) extends Decision[SaveEffectRuling]
+case class SaveEffectDecision(ruling: SaveEffectRuling, result: SaveEffectDecision.Value) extends Decision[SaveEffectRuling]
 
 

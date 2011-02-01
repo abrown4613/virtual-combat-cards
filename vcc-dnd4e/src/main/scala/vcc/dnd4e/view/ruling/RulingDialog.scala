@@ -19,7 +19,8 @@ package vcc.dnd4e.view.ruling
 
 import swing.Frame
 import vcc.dnd4e.view.IconLibrary
-import vcc.infra.prompter.{RadioButtonValuePanel, MultiplePromptDialogAsyncController, MultiplePromptDialogController, MultiplePromptDialog}
+import vcc.infra.prompter._
+import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision}
 
 /**
  * RulingDialog companion object
@@ -37,6 +38,6 @@ object RulingDialog {
  */
 class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling that need your decision") {
   this.iconImage_=(IconLibrary.MetalD20.getImage)
-  addValuePanel(RulingDialog.SimpleSavePanelIdentity, new RadioButtonValuePanel("Saved?", List("Yes", "No")))
+  addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saved?", SaveEffectDecision))
   addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
 }

@@ -17,10 +17,9 @@
 //$Id$
 package vcc.dnd4e.view.ruling
 
-import vcc.controller.{Decision, Ruling}
-import vcc.infra.prompter.ValuePanel.Return
-import vcc.infra.prompter.{RadioButtonValuePanel, ValuePanel, RulingPromptController, RulingTranslatorService}
-import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectDecision, SaveEffectRuling}
+import vcc.controller.{Ruling}
+import vcc.infra.prompter.{RulingPromptController, RulingTranslatorService}
+import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling}
 
 /**
  * TranslatorService companion object
@@ -42,37 +41,3 @@ class TranslatorService extends RulingTranslatorService {
     }
   }
 }
-
-class SimpleSavePromptController(ruling: SaveEffectRuling) extends RulingPromptController[SaveEffectRuling] {
-  private var decision: SaveEffectDecision = null
-
-  def extractDecision(): Decision[SaveEffectRuling] = decision
-
-  def hasAnswer: Boolean = decision != null
-
-  def handleAccept(value: Return): Boolean = {
-    value match {
-      case RadioButtonValuePanel.Return(r) =>
-        decision = r match {
-          case Some(0) => SaveEffectDecision(ruling, true)
-          case Some(1) => SaveEffectDecision(ruling, false)
-          case _ => null
-        }
-        decision != null
-      case _ => false
-    }
-  }
-
-  def decoratePanel(panel: ValuePanel[_]) {
-    val radioPanel = panel.asInstanceOf[RadioButtonValuePanel]
-    decision match {
-      case SaveEffectDecision(_, state) => radioPanel.setValue(Option(if (state) 0 else 1))
-      case _ => panel.setValue(None)
-    }
-  }
-
-  def panelIdentity(): String = RulingDialog.SimpleSavePanelIdentity
-
-  def prompt(): String = "Save: " + ruling.condition
-}
-

@@ -34,30 +34,30 @@ class DomainRulingTest extends SpecificationWithJUnit {
     val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(se)
 
     "Saved is a valid answer" in {
-      val saved = SaveEffectDecision(se, true)
-      val saved2 = SaveEffectDecision(se2, true)
+      val saved = SaveEffectDecision(se, SaveEffectDecision.Failed)
+      val saved2 = SaveEffectDecision(se2, SaveEffectDecision.Saved)
       se.isValidDecision(saved) must beTrue
       se2.isValidDecision(saved2) must beTrue
     }
 
     "Failed save is only valid on normal save" in {
-      val saved = SaveEffectDecision(se, false)
-      val saved2 = SaveEffectDecision(se, false)
+      val saved = SaveEffectDecision(se, SaveEffectDecision.Failed)
+      val saved2 = SaveEffectDecision(se, SaveEffectDecision.Failed)
       se.isValidDecision(saved) must beTrue
       se2.isValidDecision(saved2) must beFalse
     }
 
     "PendingRuling should provide valid None on wrong operation" in {
-      val saved = SaveEffectDecision(se2, true)
+      val saved = SaveEffectDecision(se2, SaveEffectDecision.Saved)
       pending.processDecision(saved) must_== None
     }
     "PendingRuling should provide valid save on True" in {
-      val saved = SaveEffectDecision(se, true)
+      val saved = SaveEffectDecision(se, SaveEffectDecision.Saved)
       pending.processDecision(saved) must_== Some(List(CancelEffect(eid)))
     }
 
     "PendingRuling should provide no action on failed save" in {
-      val saved = SaveEffectDecision(se, false)
+      val saved = SaveEffectDecision(se, SaveEffectDecision.Failed)
       pending.processDecision(saved) must_== Some(Nil)
     }
 
