@@ -31,7 +31,7 @@ object RadioButtonValuePanel {
  * A RadioButton ValuePanel.
  */
 class RadioButtonValuePanel(label: String, options: List[String]) extends MigPanel("ins dialog, flowy") with ValuePanel[Int] {
-  private val optionLabel = new Label(label + ":")
+  private val optionLabel = new Label(label)
   private val buttons = options.map(x => new RadioButton(x))
   private val radios = new ButtonGroup(buttons: _*);
   private var selected = -1

@@ -49,7 +49,7 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
       win mustNot beNull
       val l = win.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList
       l.size must_== 1
-      l(0).asInstanceOf[JLabel].getText must_== "text:"
+      l(0).asInstanceOf[JLabel].getText must_== "text"
     }
 
     "add a check box for each item" in {
