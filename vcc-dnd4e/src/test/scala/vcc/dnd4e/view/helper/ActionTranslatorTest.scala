@@ -19,7 +19,7 @@ package vcc.dnd4e.view.helper
 
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.Command.{InitiativeAction, StartCombat}
+import vcc.dnd4e.domain.tracker.common.Command.{InternalInitiativeAction}
 import vcc.dnd4e.domain.tracker.common.InitiativeTracker._
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common._
@@ -51,19 +51,19 @@ class ActionTranslatorTest extends SpecificationWithJUnit with Mockito {
     }
 
     "tranlate StartRound with alias" in {
-      ActionTranslator.fullActionMessage(mState, InitiativeAction(ioiA, action.StartRound)) must_== "Start round of Goblin - Shorty [Aº]"
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, action.StartRound)) must_== "Start round of Goblin - Shorty [Aº]"
     }
 
     "tranlate StartRound without alias" in {
-      ActionTranslator.fullActionMessage(mState, InitiativeAction(ioiB, action.StartRound)) must_== "Start round of Goblin [Bº]"
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, action.StartRound)) must_== "Start round of Goblin [Bº]"
     }
 
     "tranlate EndRound with alias" in {
-      ActionTranslator.fullActionMessage(mState, InitiativeAction(ioiA, action.EndRound)) must_== "Start round of Goblin - Shorty [Aº]"
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, action.EndRound)) must_== "End round of Goblin - Shorty [Aº]"
     }
 
     "tranlate EndRound without alias" in {
-      ActionTranslator.fullActionMessage(mState, InitiativeAction(ioiB, action.EndRound)) must_== "Start round of Goblin [Bº]"
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, action.EndRound)) must_== "End round of Goblin [Bº]"
     }
   }
 

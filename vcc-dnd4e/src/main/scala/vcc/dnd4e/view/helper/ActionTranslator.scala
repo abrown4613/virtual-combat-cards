@@ -18,7 +18,7 @@
 package vcc.dnd4e.view.helper
 
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.domain.tracker.common.Command.InitiativeAction
+import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.dnd4e.domain.tracker.common.{InitiativeTracker, CombatStateView}
 
 object ActionTranslator {
@@ -26,12 +26,12 @@ object ActionTranslator {
 
   def fullActionMessage(state: CombatStateView, action: TransactionalAction): String = {
     action match {
-      case InitiativeAction(ioi, InitiativeTracker.action.StartRound) =>
+      case InternalInitiativeAction(ioi, InitiativeTracker.action.StartRound) =>
         val cmb = state.combatantViewFromID(ioi.combId)
         "Start round of " + cmb.definition.entity.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
-      case InitiativeAction(ioi, InitiativeTracker.action.EndRound) =>
+      case InternalInitiativeAction(ioi, InitiativeTracker.action.EndRound) =>
         val cmb = state.combatantViewFromID(ioi.combId)
-        "Start round of " + cmb.definition.entity.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
+        "End round of " + cmb.definition.entity.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
       case _ => action.description
     }
   }
