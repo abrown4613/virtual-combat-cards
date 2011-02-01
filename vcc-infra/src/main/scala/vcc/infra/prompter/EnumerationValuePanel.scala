@@ -31,7 +31,7 @@ object EnumerationValuePanel {
  * A RadioButton ValuePanel.
  */
 class EnumerationValuePanel[E <: Enumeration](label: String, options: E) extends MigPanel("ins dialog, flowy") with ValuePanel[E#Value] {
-  private val optionLabel = new Label(label + ":")
+  private val optionLabel = new Label(label)
   private val buttons = options.values.map(x => new RadioButton(x.toString)).toSeq
   private val radios = new ButtonGroup(buttons: _*);
   private var selected: Option[E#Value] = None
