@@ -17,6 +17,8 @@
 //$Id$
 package vcc.controller
 
+import message.TransactionalAction
+
 /**
  * A ruling is some aspect of the system that cannot be decided by the computer and need some form of human decisions.
  * It is used to get information from the user prior to executing actions. It is assumed that a Ruling will itself
@@ -113,9 +115,10 @@ trait CommandSource {
 
   /**
    * This method is used to query the CommandSource for ruling on issues that the tracker cannot resolve by itself.
+   * @param context What action is being executed when we do these queries
    * @param rulings Item that require ruling by the CommandSource, these can be seen as questions that need answers.
    * @return The return must include a single Decision for each Ruling in the order they were provided in the
    * {@code ruling} parameter. 
    */
-  def provideDecisionsForRulings(rulings: List[Ruling]): List[Decision[_ <: Ruling]]
+  def provideDecisionsForRulings(context: TransactionalAction, rulings: List[Ruling]): List[Decision[_ <: Ruling]]
 }

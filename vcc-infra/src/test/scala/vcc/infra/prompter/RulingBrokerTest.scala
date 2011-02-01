@@ -41,35 +41,36 @@ class RulingBrokerTest extends SpecificationWithJUnit with Mockito {
     mPrompt2.extractDecision returns mDecision2
     mTranslator.promptForRuling(ruling1) returns mPrompt1
     mTranslator.promptForRuling(ruling2) returns mPrompt2
+    val promptContext = "some action"
 
     val broker = new RulingBroker(mDialog, mTranslator)
 
     "translate Ruling to Prompts using tranlation service" in {
-      broker.promptRuling(rulings)
+      broker.promptRuling(promptContext, rulings)
       there was one(mTranslator).promptForRuling(ruling1) then
         one(mTranslator).promptForRuling(ruling2)
     }
     "sent promper prompts to dialog controller" in {
-      broker.promptRuling(rulings)
+      broker.promptRuling(promptContext, rulings)
       there was one(mDialog).promptUser(List(mPrompt1, mPrompt2))
     }
 
     "ignore decision if dialog cancelled" in {
       mDialog.promptUser(any) returns false
-      broker.promptRuling(rulings) must_== Nil
+      broker.promptRuling(promptContext, rulings) must_== Nil
       there was no(mPrompt1).extractDecision()
       there was no(mPrompt2).extractDecision()
     }
 
     "extract decision from prompts if positive" in {
       mDialog.promptUser(any) returns true
-      broker.promptRuling(rulings)
+      broker.promptRuling(promptContext, rulings)
       there was one(mPrompt1).extractDecision()
       there was one(mPrompt2).extractDecision()
     }
     "sent decision back" in {
       mDialog.promptUser(any) returns true
-      broker.promptRuling(rulings) must_== List(mDecision1, mDecision2)
+      broker.promptRuling(promptContext, rulings) must_== List(mDecision1, mDecision2)
     }
   }
 }

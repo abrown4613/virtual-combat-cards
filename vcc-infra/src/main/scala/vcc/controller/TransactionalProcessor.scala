@@ -124,9 +124,9 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
    * @param rulings List of issues that need ruling
    * @return List of TransactionalAction generated concatenating each Decision.generateRulingActions all the decisions.
    */
-  private[controller] def queryCommandSource(source: CommandSource, pending: List[PendingRuling[List[TransactionalAction]]]): List[TransactionalAction] = {
+  private[controller] def queryCommandSource(action: TransactionalAction, source: CommandSource, pending: List[PendingRuling[List[TransactionalAction]]]): List[TransactionalAction] = {
     val rulings = pending.map(pr => pr.ruling)
-    val decisions = source.provideDecisionsForRulings(rulings)
+    val decisions = source.provideDecisionsForRulings(action, rulings)
     val zipped = pending zip decisions
 
     //Less answers than questions
@@ -173,7 +173,7 @@ abstract class TransactionalProcessor[C](val context: C, aQueue: Queue[Transacti
           val msg = msgQueue.dequeue
           val rulings = rulingSearch.flatMap(search => if (search.isDefinedAt(msg)) search(msg) else Nil)
           if (!rulings.isEmpty)
-            queryCommandSource(source, rulings) ::: List(msg)
+            queryCommandSource(msg, source, rulings) ::: List(msg)
           else
             List(msg)
         }
