@@ -108,6 +108,33 @@ class DomainRulingTest extends SpecificationWithJUnit {
     }
   }
 
+  "SaveVersusDeathRuling" should {
+    val comb = CombatantID("G")
+    val sRuling = SaveVersusDeathRuling(comb)
+    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+
+    "Accept all types of SaveRuling" in {
+      sRuling.isValidDecision(SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.Failed)) must beTrue
+      sRuling.isValidDecision(SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.Saved)) must beTrue
+      sRuling.isValidDecision(SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.SaveAndHeal)) must beTrue
+    }
+
+    "PendingRuling should provide valid None on wrong operation" in {
+      val saved = SaveEffectDecision(null, SaveEffectDecision.Saved)
+      pending.processDecision(saved) must_== None
+    }
+
+    "PendingRuling should provide FailDeathSave action on failed save" in {
+      val saved = SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.Failed)
+      pending.processDecision(saved) must_== Some(List(Command.FailDeathSave(comb)))
+    }
+
+    "PendingRuling should provide FailDeathSave action on failed save" in {
+      val saved = SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.SaveAndHeal)
+      pending.processDecision(saved) must_== Some(List(Command.HealDamage(comb, 1)))
+    }
+  }
+
   private def testSet() = {
     val qna: List[Decision[_ <: Ruling]] = List(
       RegenerateByDecision(RegenerateByRuling(eid, "regenerate 5"), 5),
@@ -123,7 +150,5 @@ class DomainRulingTest extends SpecificationWithJUnit {
         ans.ruling.isValidDecision(ans) must beTrue
       }
   }
-
-
 }
 

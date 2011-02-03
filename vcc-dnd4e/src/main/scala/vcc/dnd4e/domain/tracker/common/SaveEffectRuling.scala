@@ -65,3 +65,25 @@ object SaveEffectDecision extends Enumeration {
 case class SaveEffectDecision(ruling: SaveEffectRuling, result: SaveEffectDecision.Value) extends Decision[SaveEffectRuling]
 
 
+case class SaveVersusDeathRuling(comb: CombatantID) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+  protected def decisionValidator(decision: Decision[_]): Boolean = decision match {
+    case e: SaveVersusDeathDecision => true
+    case _ => false
+  }
+
+  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+    decision match {
+      case SaveVersusDeathDecision(ruling, SaveVersusDeathDecision.Failed) => List(Command.FailDeathSave(ruling.comb))
+      case SaveVersusDeathDecision(ruling, SaveVersusDeathDecision.SaveAndHeal) => List(Command.HealDamage(ruling.comb, 1))
+      case _ => Nil
+    }
+  }
+}
+
+object SaveVersusDeathDecision extends Enumeration {
+  val Saved = Value("Saved")
+  val Failed = Value("Failed")
+  val SaveAndHeal = Value("Save and heal 1 hp")
+}
+
+case class SaveVersusDeathDecision(ruling: SaveVersusDeathRuling, result: SaveVersusDeathDecision.Value) extends Decision[SaveVersusDeathRuling]
