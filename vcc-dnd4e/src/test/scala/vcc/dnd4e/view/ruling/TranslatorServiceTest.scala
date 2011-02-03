@@ -20,7 +20,7 @@ package vcc.dnd4e.view.ruling
 import org.specs.SpecificationWithJUnit
 import vcc.controller.{Decision, Ruling}
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling}
+import vcc.dnd4e.domain.tracker.common.{CombatantID, SaveVersusDeathRuling, SaveEffectSpecialRuling, SaveEffectRuling}
 
 class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
   val ts = new TranslatorService()
@@ -32,15 +32,20 @@ class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
     }
 
     "provide a controller for simple save " in {
-      val c = ts.promptForRuling(new SaveEffectRuling(null, "bad things"))
+      val c = ts.promptForRuling(SaveEffectRuling(null, "bad things"))
       c mustNot beNull
       c.panelIdentity must_== RulingDialog.SimpleSavePanelIdentity
     }
 
     "provide a controller for save special" in {
-      val c = ts.promptForRuling(new SaveEffectSpecialRuling(null, "bad things"))
+      val c = ts.promptForRuling(SaveEffectSpecialRuling(null, "bad things"))
       c mustNot beNull
       c.panelIdentity must_== SaveOrChangeValuePanel.Identity
+    }
+    "provide a controller for save versus death" in {
+      val c = ts.promptForRuling(SaveVersusDeathRuling(CombatantID("A")))
+      c mustNot beNull
+      c.panelIdentity must_== RulingDialog.SaveVersusDeathPanelIdentity
     }
   }
 }

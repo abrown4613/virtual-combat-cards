@@ -61,13 +61,14 @@ class SaveEffectRulingPromptControllerTest extends SpecificationWithJUnit with M
 
     "once value Yes return correct decision" in {
       controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Saved)))
+      controller.hasAnswer must beTrue
       controller.extractDecision() must_== SaveEffectDecision(ruling, SaveEffectDecision.Saved)
     }
 
     "once value No return correct decision" in {
       controller.handleAccept(EnumerationValuePanel.Value(Some(SaveEffectDecision.Failed)))
+      controller.hasAnswer must beTrue
       controller.extractDecision() must_== SaveEffectDecision(ruling, SaveEffectDecision.Failed)
     }
-
   }
 }

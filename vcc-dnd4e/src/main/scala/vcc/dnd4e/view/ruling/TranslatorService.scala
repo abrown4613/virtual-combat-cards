@@ -19,7 +19,7 @@ package vcc.dnd4e.view.ruling
 
 import vcc.controller.{Ruling}
 import vcc.infra.prompter.{RulingPromptController, RulingTranslatorService}
-import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling}
+import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling, SaveVersusDeathRuling}
 
 /**
  * TranslatorService companion object
@@ -37,6 +37,7 @@ class TranslatorService extends RulingTranslatorService {
     //TODO all the cases
       case r@SaveEffectRuling(eid, effect) => new SimpleSavePromptController(r).asInstanceOf[RulingPromptController[R]]
       case r@SaveEffectSpecialRuling(_, _) => new SaveSpecialPromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@SaveVersusDeathRuling(_) => new SaveVersusDeathPromptController(r).asInstanceOf[RulingPromptController[R]]
       case leftover => throw new Exception("No translation for: " + leftover)
     }
   }
