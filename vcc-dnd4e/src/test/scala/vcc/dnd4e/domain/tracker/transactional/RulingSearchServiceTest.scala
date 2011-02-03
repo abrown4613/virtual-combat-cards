@@ -37,6 +37,14 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
 
   val mState = mock[CombatState]
 
+  //Mock combatant health
+  val mockComb = mock[CombatantStateView]
+  val mockHealth = mock[HealthTracker]
+  mockComb.healthTracker returns mockHealth
+  mockHealth.status returns HealthTracker.Status.Ok
+  mState.allEffects returns Nil
+  mState.combatantViewFromID(combA) returns mockComb
+
   "searchEndRound" should {
     "scan all effects" in {
       mState.allEffects returns effects
@@ -50,12 +58,17 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
       ruling must_== List(SaveEffectRuling.fromEffect(effects(1)))
     }
 
-    "return the effect that a save will end specail form the combatant ending the round" in {
+    "return the effect that a save will end special form the combatant ending the round" in {
       mState.allEffects returns saveSpecialEffects
       var ruling = searchEndRound(mState, combA).map(_.ruling)
       ruling must_== List(SaveEffectSpecialRuling.fromEffect(saveSpecialEffects(1)))
     }
 
+    "return save versus death if the combatant is dying" in {
+      mockHealth.status returns HealthTracker.Status.Dying
+      var ruling = searchEndRound(mState, combA).map(_.ruling)
+      ruling must_== List(SaveVersusDeathRuling(combA))
+    }
   }
 
   private def makeEffects(comb: CombatantID, durations: Duration*) = {
