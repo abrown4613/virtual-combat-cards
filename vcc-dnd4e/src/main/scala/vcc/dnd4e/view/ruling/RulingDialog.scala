@@ -20,7 +20,7 @@ package vcc.dnd4e.view.ruling
 import swing.Frame
 import vcc.dnd4e.view.IconLibrary
 import vcc.infra.prompter._
-import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision}
+import vcc.dnd4e.domain.tracker.common.{SaveVersusDeathDecision, SaveEffectDecision}
 
 /**
  * RulingDialog companion object
@@ -31,6 +31,7 @@ object RulingDialog {
   }
 
   val SimpleSavePanelIdentity = "SimpleSavePanel"
+  val SaveVersusDeathPanelIdentity = "SaveVsDeathPanel"
 }
 
 /**
@@ -40,4 +41,5 @@ class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling Dia
   this.iconImage_=(IconLibrary.MetalD20.getImage)
   addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saving throw against effect:", SaveEffectDecision))
   addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
+  addValuePanel(RulingDialog.SaveVersusDeathPanelIdentity, new EnumerationValuePanel("Saving throw against death:", SaveVersusDeathDecision))
 }
