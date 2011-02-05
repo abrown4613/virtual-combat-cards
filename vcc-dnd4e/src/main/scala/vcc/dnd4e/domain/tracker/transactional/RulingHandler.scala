@@ -27,8 +27,12 @@ object RulingSearchService {
   type R = Ruling with RulingDecisionHandler[List[TransactionalAction]]
 
   private def endRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
-    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) => (SaveEffectRuling.fromEffect(effect))
-    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) => (SaveEffectSpecialRuling.fromEffect(effect))
+    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) =>
+      (SaveEffectRuling.fromEffect(effect))
+    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) =>
+      (SaveEffectSpecialRuling.fromEffect(effect))
+    case effect@Effect(eid, _, condition, Duration.RoundBound(InitiativeOrderID(`who`, _), Duration.Limit.EndOfTurnSustain)) =>
+      (SustainEffectRuling(eid, condition.description + (" (on " + eid.combId.id + ")")))
   }
 
   private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {

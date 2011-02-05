@@ -62,5 +62,10 @@ class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
       c.panelIdentity must_== OngoingPromptControllerDelegate.panelId
     }
 
+    "provide a controller for sustain effect" in {
+      val c = ts.promptForRuling(SustainEffectRuling(eid, "nasty zone"))
+      c mustNot beNull
+      c.panelIdentity must_== RulingDialog.SustainEffectPanelIdentity
+    }
   }
 }
