@@ -82,6 +82,13 @@ class TextFieldValuePanelTest extends UISpecTestCase {
     verify(listener, never).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
   }
 
+  def testSetTextDirectlyShouldNotIndicateChange {
+    setAdapter(makeAdapter)
+    panel.setInputValue("10")
+    assertTrue(getMainWindow.getTextBox("editField").textEquals("10"))
+    verify(listener, never).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
+  }
+
   def testKeepAcceptButtonDisabledOnBadInput {
     setAdapter(makeAdapter)
     val ef = getMainWindow.getTextBox("editField")

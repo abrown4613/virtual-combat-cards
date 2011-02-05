@@ -38,10 +38,10 @@ object TextFieldValuePanel {
 class TextFieldValuePanel(question: String, validator: String => Boolean) extends MigPanel("ins dialog,  fill", "[]", "[][]push[]") with ValuePanel[String] {
 
   private val warning = new Color(255, 228, 196)
-  private val editField = new TextField
+  protected val editField = new TextField
   editField.name = "editField"
   private val questionLabel = new Label(question)
-  private val acceptButton = new Button("Accept")
+  protected val acceptButton = new Button("Accept")
   acceptButton.name = "acceptButton"
   acceptButton.enabled = false
 
@@ -82,5 +82,13 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
 
   def adjustFocus() {
     editField.requestFocus()
+  }
+
+  /**
+   * Set the value of the input field
+   * @param text Value to be placed
+   */
+  def setInputValue(text: String) {
+    editField.text = text
   }
 }
