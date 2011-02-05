@@ -76,7 +76,7 @@ object RegeneratePromptControllerDelegate extends DamageHealPromptControllerDele
  */
 class DamageHealPromptController[R <: Ruling](ruling: R, delegate: DamageHealPromptControllerDelegate[R]) extends RulingPromptController[R] {
 
-  private var result = delegate.startValue(ruling)
+  private var result: Option[Int] = None
 
   def extractDecision(): Decision[R] = if (result.isDefined) delegate.buildDecision(ruling, result.get) else null
 
@@ -94,7 +94,9 @@ class DamageHealPromptController[R <: Ruling](ruling: R, delegate: DamageHealPro
 
   def decoratePanel(panel: ValuePanel[_]) = {
     val dhPanel = panel.asInstanceOf[DamageHealValuePanel]
-    dhPanel.setValue(result.map(x => x.toString))
+    val default = delegate.startValue(ruling)
+    if (default.isDefined) dhPanel.setInputValue(default.get.toString)
+    if (result.isDefined) dhPanel.setValue(result.map(x => x.toString))
   }
 
   def panelIdentity(): String = delegate.panelId
