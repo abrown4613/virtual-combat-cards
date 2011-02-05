@@ -135,10 +135,53 @@ class DomainRulingTest extends SpecificationWithJUnit {
     }
   }
 
+  "OngoingRuling" should {
+    val sRuling = OngoingDamageRuling(eid, "ongoing 5 fire", 5)
+    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+    val decision = OngoingDamageDecision(sRuling, 10)
+
+    "accept valid decision" in {
+      sRuling.isValidDecision(decision) must beTrue
+    }
+
+    "reject other decision" in {
+      sRuling.isValidDecision(OngoingDamageDecision(null, 5)) must beFalse
+    }
+
+    "skip zero result action" in {
+      pending.processDecision(OngoingDamageDecision(sRuling, 0)) must_== Some(List())
+    }
+
+    "convert non zero result to damage action" in {
+      pending.processDecision(OngoingDamageDecision(sRuling, 5)) must_== Some(List(Command.ApplyDamage(eid.combId, 5)))
+    }
+  }
+
+  "RegenerateByRuling" should {
+    val sRuling = RegenerateByRuling(eid, "regenarate 5 while bloodied", 5)
+    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+
+    "accept valid decision" in {
+      sRuling.isValidDecision(RegenerateByDecision(sRuling, 0)) must beTrue
+    }
+
+    "reject other decision" in {
+      sRuling.isValidDecision(RegenerateByDecision(null, 5)) must beFalse
+    }
+
+    "skip zero result action" in {
+      pending.processDecision(RegenerateByDecision(sRuling, 0)) must_== Some(List())
+    }
+
+    "convert non zero result to damage action" in {
+      pending.processDecision(RegenerateByDecision(sRuling, 15)) must_== Some(List(Command.HealDamage(eid.combId, 15)))
+    }
+  }
+
   private def testSet() = {
     val qna: List[Decision[_ <: Ruling]] = List(
-      RegenerateByDecision(RegenerateByRuling(eid, "regenerate 5"), 5),
-      OngoingDamageDecision(OngoingDamageRuling(eid, "ongoing 5"), 5),
+      RegenerateByDecision(RegenerateByRuling(eid, "regenerate 5", 5), 5),
+      OngoingDamageDecision(OngoingDamageRuling(eid, "ongoing 5", 5), 5),
       SustainEffectDecision(SustainEffectRuling(eid, "what to sustain"), true)
     )
     qna
