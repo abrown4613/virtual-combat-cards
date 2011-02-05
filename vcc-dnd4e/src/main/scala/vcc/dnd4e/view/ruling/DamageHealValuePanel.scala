@@ -39,9 +39,8 @@ class DamageHealValuePanel(question: String) extends TextFieldValuePanel(questio
    */
   private def insertButton() {
     val ml = peer.getLayout.asInstanceOf[MigLayout]
-    val ab = peer.getComponent(peer.getComponentCount - 1)
-    val oldConst = ml.getComponentConstraints(ab)
-    ml.setComponentConstraints(ab, oldConst + ", split 2")
+    val oldConst = ml.getComponentConstraints(acceptButton.peer)
+    ml.setComponentConstraints(acceptButton.peer, oldConst + ", split 2")
     peer.add(zeroButton.peer, oldConst)
   }
 }

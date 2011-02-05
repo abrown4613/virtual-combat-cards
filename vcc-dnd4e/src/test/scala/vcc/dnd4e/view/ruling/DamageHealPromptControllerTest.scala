@@ -43,8 +43,9 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
   "a DamageHealPromptController" should {
 
     "call defaultGenerator" in {
+      controller.decoratePanel(mPanel)
       there was one(mDelegate).startValue(mRuling)
-      controller.hasAnswer must beTrue
+      controller.hasAnswer must beFalse
     }
 
     "provide correct panelId" in {
@@ -57,7 +58,8 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
 
     "decorate to default on first" in {
       controller.decoratePanel(mPanel)
-      there was one(mPanel).setValue(Some("7"))
+      there was one(mPanel).setInputValue("7")
+      there was no(mPanel).setValue(any)
     }
 
     "sending None as Return must not be accepted" in {
@@ -77,9 +79,9 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
       there was one(mPanel).setValue(Some("0"))
     }
 
-    "extract default value immediately" in {
-      controller.extractDecision() must_== mDecision
-      there was one(mDelegate).buildDecision(mRuling, 7)
+    "extract default value will generate null" in {
+      controller.extractDecision() must beNull
+      there was no(mDelegate).buildDecision(mRuling, 7)
     }
 
     "no decision if internal value is None" in {
