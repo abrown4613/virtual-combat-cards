@@ -42,4 +42,6 @@ class RulingDialog(frame: Frame) extends MultiplePromptDialog(frame, "Ruling Dia
   addValuePanel(RulingDialog.SimpleSavePanelIdentity, new EnumerationValuePanel("Saving throw against effect:", SaveEffectDecision))
   addValuePanel(SaveOrChangeValuePanel.Identity, new SaveOrChangeValuePanel())
   addValuePanel(RulingDialog.SaveVersusDeathPanelIdentity, new EnumerationValuePanel("Saving throw against death:", SaveVersusDeathDecision))
+  addValuePanel(OngoingPromptControllerDelegate.panelId, new DamageHealValuePanel("Amount of ongoing damage to apply:"))
+  addValuePanel(RegeneratePromptControllerDelegate.panelId, new DamageHealValuePanel("Amount of damage to regenerate:"))
 }

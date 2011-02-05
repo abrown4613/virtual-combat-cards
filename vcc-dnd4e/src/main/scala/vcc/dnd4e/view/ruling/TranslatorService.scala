@@ -19,7 +19,7 @@ package vcc.dnd4e.view.ruling
 
 import vcc.controller.{Ruling}
 import vcc.infra.prompter.{RulingPromptController, RulingTranslatorService}
-import vcc.dnd4e.domain.tracker.common.{SaveEffectSpecialRuling, SaveEffectRuling, SaveVersusDeathRuling}
+import vcc.dnd4e.domain.tracker.common._
 
 /**
  * TranslatorService companion object
@@ -35,9 +35,16 @@ class TranslatorService extends RulingTranslatorService {
   def promptForRuling[R <: Ruling](ruling: Ruling): RulingPromptController[R] = {
     ruling match {
     //TODO all the cases
-      case r@SaveEffectRuling(eid, effect) => new SimpleSavePromptController(r).asInstanceOf[RulingPromptController[R]]
-      case r@SaveEffectSpecialRuling(_, _) => new SaveSpecialPromptController(r).asInstanceOf[RulingPromptController[R]]
-      case r@SaveVersusDeathRuling(_) => new SaveVersusDeathPromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@SaveEffectRuling(eid, effect) =>
+        new SimpleSavePromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@SaveEffectSpecialRuling(_, _) =>
+        new SaveSpecialPromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@SaveVersusDeathRuling(_) =>
+        new SaveVersusDeathPromptController(r).asInstanceOf[RulingPromptController[R]]
+      case r@OngoingDamageRuling(_, _, _) =>
+        new DamageHealPromptController[OngoingDamageRuling](r, OngoingPromptControllerDelegate).asInstanceOf[RulingPromptController[R]]
+      case r@RegenerateByRuling(_, _, _) =>
+        new DamageHealPromptController[RegenerateByRuling](r, RegeneratePromptControllerDelegate).asInstanceOf[RulingPromptController[R]]
       case leftover => throw new Exception("No translation for: " + leftover)
     }
   }
