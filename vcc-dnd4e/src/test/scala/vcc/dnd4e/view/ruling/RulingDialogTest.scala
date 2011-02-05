@@ -24,7 +24,7 @@ import vcc.controller.Ruling
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j.{Window, Trigger, UISpec4J, UISpecTestCase}
 import vcc.infra.prompter.{EnumerationValuePanel, PromptController, RulingPromptController}
-import vcc.dnd4e.domain.tracker.common.{SaveVersusDeathDecision, SaveEffectDecision}
+import vcc.dnd4e.domain.tracker.common.{SustainEffectDecision, SaveVersusDeathDecision, SaveEffectDecision}
 
 class RulingDialogTest extends UISpecTestCase {
 
@@ -70,6 +70,14 @@ class RulingDialogTest extends UISpecTestCase {
     verify(mController).panelIdentity()
     verify(mController).decoratePanel(any[DamageHealValuePanel])
   }
+
+  def testHaveSustainEffectPanel() {
+    when(mController.panelIdentity).thenReturn(RulingDialog.SustainEffectPanelIdentity)
+    openAndCancelDialog(mController).run()
+    verify(mController).panelIdentity()
+    verify(mController).decoratePanel(any[EnumerationValuePanel[SustainEffectDecision.type]])
+  }
+
 
   private def openAndCancelDialog(controller: PromptController): WindowInterceptor = {
     WindowInterceptor.init(new Trigger() {

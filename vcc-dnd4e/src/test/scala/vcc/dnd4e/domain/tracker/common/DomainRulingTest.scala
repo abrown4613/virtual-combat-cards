@@ -18,7 +18,7 @@
 package vcc.dnd4e.domain.tracker.common
 
 import org.specs.SpecificationWithJUnit
-import vcc.controller.{PendingRuling, Ruling, Decision}
+import vcc.controller.{PendingRuling}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
 import vcc.dnd4e.domain.tracker.common.Effect.Condition
@@ -178,20 +178,31 @@ class DomainRulingTest extends SpecificationWithJUnit {
     }
   }
 
-  private def testSet() = {
-    val qna: List[Decision[_ <: Ruling]] = List(
-      RegenerateByDecision(RegenerateByRuling(eid, "regenerate 5", 5), 5),
-      OngoingDamageDecision(OngoingDamageRuling(eid, "ongoing 5", 5), 5),
-      SustainEffectDecision(SustainEffectRuling(eid, "what to sustain"), true)
-    )
-    qna
-  }
 
-  testSet.foreach{
-    ans =>
-      ("match " + (ans.ruling.getClass.getSimpleName) + " to " + (ans.getClass.getSimpleName)) in {
-        ans.ruling.isValidDecision(ans) must beTrue
-      }
+  "SustainEffectRuling" should {
+    val comb = CombatantID("G")
+    val sRuling = SustainEffectRuling(eid, "some nasty zone")
+    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+
+    "Accept all types of SaveRuling" in {
+      sRuling.isValidDecision(SustainEffectDecision(sRuling, SustainEffectDecision.Sustain)) must beTrue
+      sRuling.isValidDecision(SustainEffectDecision(sRuling, SustainEffectDecision.Cancel)) must beTrue
+    }
+
+    "PendingRuling should provide valid None on wrong operation" in {
+      val saved = SaveEffectDecision(null, SaveEffectDecision.Saved)
+      pending.processDecision(saved) must_== None
+    }
+
+    "PendingRuling should provide FailDeathSave action on failed save" in {
+      val saved = SustainEffectDecision(sRuling, SustainEffectDecision.Cancel)
+      pending.processDecision(saved) must_== Some(Nil)
+    }
+
+    "PendingRuling should provide FailDeathSave action on failed save" in {
+      val saved = SustainEffectDecision(sRuling, SustainEffectDecision.Sustain)
+      pending.processDecision(saved) must_== Some(List(Command.SustainEffect(eid)))
+    }
   }
 }
 
