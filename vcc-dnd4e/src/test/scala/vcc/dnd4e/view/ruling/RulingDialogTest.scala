@@ -57,6 +57,20 @@ class RulingDialogTest extends UISpecTestCase {
     verify(mController).decoratePanel(any[EnumerationValuePanel[SaveVersusDeathDecision.type]])
   }
 
+  def testHaveOngoingDamagePanel() {
+    when(mController.panelIdentity).thenReturn(OngoingPromptControllerDelegate.panelId)
+    openAndCancelDialog(mController).run()
+    verify(mController).panelIdentity()
+    verify(mController).decoratePanel(any[DamageHealValuePanel])
+  }
+
+  def testHaveRegenerateDamagePanel() {
+    when(mController.panelIdentity).thenReturn(RegeneratePromptControllerDelegate.panelId)
+    openAndCancelDialog(mController).run()
+    verify(mController).panelIdentity()
+    verify(mController).decoratePanel(any[DamageHealValuePanel])
+  }
+
   private def openAndCancelDialog(controller: PromptController): WindowInterceptor = {
     WindowInterceptor.init(new Trigger() {
       def run {

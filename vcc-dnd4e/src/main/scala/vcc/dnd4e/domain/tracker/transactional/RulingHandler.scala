@@ -31,6 +31,13 @@ object RulingSearchService {
     case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) => (SaveEffectSpecialRuling.fromEffect(effect))
   }
 
+  private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
+      (OngoingDamageRuling(eid, full, hint))
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
+      (RegenerateByRuling(eid, full, hint))
+  }
+
   def searchEndRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
     val whoMatcher = endRoundMatcher(who)
     val deathCheck: List[PendingRuling[List[TransactionalAction]]] = {
@@ -42,7 +49,11 @@ object RulingSearchService {
     context.allEffects.flatMap(whoMatcher.lift(_)).map(new PendingRuling(_)).toList ::: deathCheck
   }
 
-  def searchStartRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = Nil
+  def searchStartRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
+    val whoMatcher = startRoundMatcher(who)
+    val (regen, rest) = context.allEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerateByRuling])
+    (regen ::: rest).map(new PendingRuling(_))
+  }
 
 }
 

@@ -71,7 +71,44 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
     }
   }
 
+  "search startRound" should {
+
+    val ongoing = makeEffectWithDesc(combA, ("ongoing 5 fire", Duration.SaveEnd)) ::: makeEffectWithDesc(combB, ("ongoing 5 fire", Duration.SaveEnd))
+    val regenerate = makeEffectWithDesc(combA, ("regenerate 5", Duration.SaveEnd)) ::: makeEffectWithDesc(combB, ("regenerate 5", Duration.SaveEnd))
+
+    "scan all effects" in {
+      mState.allEffects returns ongoing
+      searchEndRound(mState, combA)
+      there was one(mState).allEffects()
+    }
+
+    "find ongoing damage ruling" in {
+      mState.allEffects returns ongoing
+      var ruling = searchStartRound(mState, combA).map(_.ruling)
+      ruling must_== List(OngoingDamageRuling(EffectID(combA, 0), "ongoing 5 fire", 5))
+    }
+
+    "find regenerate damage ruling" in {
+      mState.allEffects returns regenerate
+      var ruling = searchStartRound(mState, combA).map(_.ruling)
+      ruling must_== List(RegenerateByRuling(EffectID(combA, 0), "regenerate 5", 5))
+    }
+
+    "find regenerate before ongoing independent of order" in {
+      mState.allEffects returns (ongoing ::: regenerate)
+      var ruling = searchStartRound(mState, combA).map(_.ruling)
+      ruling must_== List(
+        RegenerateByRuling(EffectID(combA, 0), "regenerate 5", 5),
+        OngoingDamageRuling(EffectID(combA, 0), "ongoing 5 fire", 5))
+    }
+  }
+
   private def makeEffects(comb: CombatantID, durations: Duration*) = {
     durations.zipWithIndex.map(p => Effect(EffectID(comb, p._2), comb, Effect.Condition.Generic("Effect " + p._2, false), p._1)).toList
   }
+
+  private def makeEffectWithDesc(comb: CombatantID, effectDuration: (String, Duration)*) = {
+    effectDuration.zipWithIndex.map(p => Effect(EffectID(comb, p._2), comb, Effect.Condition.Generic(p._1._1, false), p._1._2)).toList
+  }
+
 }

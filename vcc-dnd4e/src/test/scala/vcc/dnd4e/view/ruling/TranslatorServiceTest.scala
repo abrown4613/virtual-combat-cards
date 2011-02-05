@@ -20,9 +20,10 @@ package vcc.dnd4e.view.ruling
 import org.specs.SpecificationWithJUnit
 import vcc.controller.{Decision, Ruling}
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{CombatantID, SaveVersusDeathRuling, SaveEffectSpecialRuling, SaveEffectRuling}
+import vcc.dnd4e.domain.tracker.common._
 
 class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
+  val eid = EffectID(CombatantID("A"), 0)
   val ts = new TranslatorService()
   "TranslatorService" should {
     "throw exception when it cannot translate" in {
@@ -42,10 +43,24 @@ class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
       c mustNot beNull
       c.panelIdentity must_== SaveOrChangeValuePanel.Identity
     }
+
     "provide a controller for save versus death" in {
       val c = ts.promptForRuling(SaveVersusDeathRuling(CombatantID("A")))
       c mustNot beNull
       c.panelIdentity must_== RulingDialog.SaveVersusDeathPanelIdentity
     }
+
+    "provide a controller for ongoing damage" in {
+      val c = ts.promptForRuling(RegenerateByRuling(eid, "regenerate 6", 6))
+      c mustNot beNull
+      c.panelIdentity must_== RegeneratePromptControllerDelegate.panelId
+    }
+
+    "provide a controller for regenerations" in {
+      val c = ts.promptForRuling(OngoingDamageRuling(eid, "regenerate 6", 6))
+      c mustNot beNull
+      c.panelIdentity must_== OngoingPromptControllerDelegate.panelId
+    }
+
   }
 }
