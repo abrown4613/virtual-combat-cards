@@ -17,16 +17,33 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.common
 
-import vcc.controller.{Ruling, Decision}
+import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
+import vcc.controller.message.TransactionalAction
 
-//ONGOING
-
-case class OngoingDamageRuling(eid: EffectID, what: String) extends Ruling {
+/**
+ * Should ongoing damage be applied?
+ * @param eid Effect causing the ongoing damage
+ * @param description Text of the ongoing effect
+ * @param hintValue Initial value
+ */
+case class OngoingDamageRuling(eid: EffectID, description: String, hintValue: Int) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
   protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
     case a: OngoingDamageDecision => true
     case _ => false
   }
+
+  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+    decision match {
+      case OngoingDamageDecision(r, value) if (value > 0) => List(Command.ApplyDamage(r.eid.combId, value))
+      case _ => Nil
+    }
+  }
 }
 
+/**
+ * Amount of ongoing damage to apply
+ * @param ruling Refers to ruling
+ * @param amount Amount of damage to apply
+ */
 case class OngoingDamageDecision(ruling: OngoingDamageRuling, amount: Int) extends Decision[OngoingDamageRuling]
 
