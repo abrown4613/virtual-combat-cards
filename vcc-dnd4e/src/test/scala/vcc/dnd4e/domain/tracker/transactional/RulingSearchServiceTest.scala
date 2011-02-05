@@ -27,6 +27,7 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
 
   val combA = CombatantID("A")
   val combB = CombatantID("B")
+  val ioiA = InitiativeOrderID(combA, 0)
 
   //val simpleSaveEnd = Effect()
 
@@ -68,6 +69,14 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
       mockHealth.status returns HealthTracker.Status.Dying
       var ruling = searchEndRound(mState, combA).map(_.ruling)
       ruling must_== List(SaveVersusDeathRuling(combA))
+    }
+
+    "return sustain effect in all combatants" in {
+      val sustainable = Duration.RoundBound(ioiA, Duration.Limit.EndOfTurnSustain)
+      mState.allEffects returns (makeEffects(combA, sustainable, Duration.EndOfEncounter) :::
+        makeEffects(combB, Duration.EndOfEncounter, sustainable))
+      var ruling = searchEndRound(mState, combA).map(_.ruling)
+      ruling must_== List(SustainEffectRuling(EffectID(combA, 0), "Effect 0 (on A)"), SustainEffectRuling(EffectID(combB, 1), "Effect 1 (on B)"))
     }
   }
 

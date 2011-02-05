@@ -34,7 +34,6 @@ object TranslatorService {
 class TranslatorService extends RulingTranslatorService {
   def promptForRuling[R <: Ruling](ruling: Ruling): RulingPromptController[R] = {
     ruling match {
-    //TODO all the cases
       case r@SaveEffectRuling(eid, effect) =>
         new SimpleSavePromptController(r).asInstanceOf[RulingPromptController[R]]
       case r@SaveEffectSpecialRuling(_, _) =>
@@ -45,6 +44,8 @@ class TranslatorService extends RulingTranslatorService {
         new DamageHealPromptController[OngoingDamageRuling](r, OngoingPromptControllerDelegate).asInstanceOf[RulingPromptController[R]]
       case r@RegenerateByRuling(_, _, _) =>
         new DamageHealPromptController[RegenerateByRuling](r, RegeneratePromptControllerDelegate).asInstanceOf[RulingPromptController[R]]
+      case r@SustainEffectRuling(_, _) =>
+        new SustainEffectPromptController(r).asInstanceOf[RulingPromptController[R]]
       case leftover => throw new Exception("No translation for: " + leftover)
     }
   }
