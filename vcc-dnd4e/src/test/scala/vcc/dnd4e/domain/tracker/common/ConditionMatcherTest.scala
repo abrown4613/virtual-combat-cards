@@ -50,6 +50,7 @@ class ConditionMatcherTest extends SpecificationWithJUnit {
       ("regenerate 5 while bloodied", ("regenerate 5 while bloodied", 5)),
       ("regenerate 5 while bloodied and +2 defense", ("regenerate 5 while bloodied", 5)),
       ("+2 defense and regenerate 5 while bloodied", ("regenerate 5 while bloodied", 5)),
+      ("+2 defense regenerate 5 while bloodied", ("regenerate 5 while bloodied", 5)),
       ("slowed and weakened", null),
       ("ongoing 4 fire", null)
     )
@@ -65,6 +66,7 @@ class ConditionMatcherTest extends SpecificationWithJUnit {
       ("ongoing 4 fire", ("ongoing 4 fire", 4)),
       ("ongoing 4 fire and immobilized", ("ongoing 4 fire", 4)),
       ("slowed and ongoing 4", ("ongoing 4", 4)),
+      ("slowed ongoing 4", ("ongoing 4", 4)),
       ("ONgoing 10 (1d20) and spooked", ("ONgoing 10 (1d20)", 10)),
       ("regenerate 2", null),
       ("regen 2", null),
