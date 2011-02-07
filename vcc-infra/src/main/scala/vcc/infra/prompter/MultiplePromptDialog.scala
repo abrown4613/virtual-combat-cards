@@ -19,7 +19,7 @@ package vcc.infra.prompter
 
 import scala.swing._
 import java.lang.String
-import vcc.util.swing.{ModalFrame, MigPanel}
+import vcc.util.swing.{SwingHelper, ModalFrame, MigPanel}
 
 /**
  * This is a dialog window that houses a set of ValuePanel in it. You can send a series of questions/prompts via
@@ -42,6 +42,7 @@ class MultiplePromptDialog(frame: Frame, title: String, questionLabel: String) e
     dismissDialog(true)
   })
   okButton.enabled = false
+  peer.getRootPane.setDefaultButton(okButton.peer)
 
   contents = new MigPanel("fill, ins dialog", "[500]", "[100, grow 25][grow 75]10[grow 0, shrink 0]") {
     add(new ScrollPane(questionList), "wrap, h 40:60, growy, growx")
@@ -83,7 +84,9 @@ class MultiplePromptDialog(frame: Frame, title: String, questionLabel: String) e
   def promptUser(titleText: String, toPrompt: List[PromptController]): Boolean = {
     questionList.listData = toPrompt
     peer.setTitle(titleText)
-    nextUnanswered
+    SwingHelper.invokeLater{
+      nextUnanswered
+    }
     showWindow()
     this.accepted
   }
@@ -104,6 +107,7 @@ class MultiplePromptDialog(frame: Frame, title: String, questionLabel: String) e
       okButton.enabled = false
     } else {
       okButton.enabled = true
+      okButton.requestFocus()
     }
   }
 
