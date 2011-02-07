@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,24 +21,64 @@ package vcc.dnd4e.view
 import vcc.util.swing.MigPanel
 import vcc.dnd4e.BootStrap
 import scala.swing._
+import javax.swing.{Timer}
+import java.awt.event.{ActionEvent, ActionListener}
+import java.awt.Font
 
-class StatusBar() extends MigPanel("ins 1,fillx") {
-  private val versionLabel= new Label("Version: "+BootStrap.version.versionString)
-  private val tipLabel = new Label("Welcome to Virtual Combat Cards") 
-  tipLabel.xAlignment= Alignment.Left
+class StatusBar() extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
 
-  border=javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.LOWERED)
- 
-  private val sep=new Component { override lazy val peer= new javax.swing.JSeparator(javax.swing.SwingConstants.VERTICAL)}
+  // Simple class for separator
+  private class StatusBarSeparator() extends Component {
+    override lazy val peer = new javax.swing.JSeparator(javax.swing.SwingConstants.VERTICAL)
+  }
+
+  private val separatorLayout = "growy, w 3!, gp 0, growx 0"
+  private val versionLabel = new Label("Version: " + BootStrap.version.versionString)
+  private val baseFont = new Font(versionLabel.font.getFamily(), Font.PLAIN, versionLabel.font.getSize)
+
+  versionLabel.font = baseFont
+  versionLabel.tooltip = "Version of Virtual Combat Cards"
+
+  private val tipLabel = new Label("Welcome to Virtual Combat Cards")
+  tipLabel.xAlignment = Alignment.Left
+  tipLabel.font = baseFont
+
+  private val memoryLabel = new Label("Memory")
+  memoryLabel.font = baseFont
+  memoryLabel.tooltip = "Memory used by Virtual Combat Cards"
+  border = javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.LOWERED)
+
   add(versionLabel, "align left")
-  add(sep, "growy")
-  add(tipLabel,"growx,align left")
- 
+  add(new StatusBarSeparator, separatorLayout)
+  add(tipLabel, "align left, growx 100")
+  add(new StatusBarSeparator, separatorLayout)
+  add(memoryLabel, "w 100!, gp 0, growx 0")
+  startUsageTimer()
+
   /**
    * Set the text in the tip area
    * @param str Text to be set
    */
-  def setTipText(str:String) {
-    tipLabel.text=str
+  def setTipText(str: String) {
+    tipLabel.text = str
   }
+
+  //Start the menu bar update for memory usage
+  private def startUsageTimer() {
+    val timer = new Timer(15 * 1000, new ActionListener() {
+      def actionPerformed(e: ActionEvent) {
+        updateUsage()
+      }
+    })
+    timer.start
+    updateUsage
+  }
+
+  private def updateUsage() {
+    def inMB(v: Long) = (v / (1024 * 1024)).formatted("%dM")
+    val free = Runtime.getRuntime.freeMemory
+    val total = Runtime.getRuntime.totalMemory
+    memoryLabel.text = inMB(total - free) + " of " + inMB(total)
+  }
+
 }
