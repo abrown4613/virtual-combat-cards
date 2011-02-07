@@ -28,7 +28,7 @@ object ConditionMatcher {
    * Returns the first Regenerate condition in the condition text.
    */
   object FirstRegenerate {
-    private val regenRE = """(?i)(regen\w*\s+(\d+).*)(?:and)?""".r
+    private val regenRE = """(?i).*(regen\w*\s+(\d+).*)""".r
 
     @tailrec
     private def findSubCondition(l: List[String]): Option[(String, Int)] = {
@@ -51,7 +51,7 @@ object ConditionMatcher {
    * Returns the first Ongoing sub condition in the condition text.
    */
   object FirstOngoing {
-    private val ongoingRE = ("""(?i)(ongoing\s+(\d+).*)(?:and)?""".r)
+    private val ongoingRE = ("""(?i).*(ongoing\s+(\d+).*)""".r)
 
     @tailrec
     private def findSubCondition(l: List[String]): Option[(String, Int)] = {
