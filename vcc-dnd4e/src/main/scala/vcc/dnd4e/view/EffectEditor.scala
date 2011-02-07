@@ -62,6 +62,7 @@ trait EffectSubPanelComboOption {
 }
 
 object EffectEditor {
+
   case class StateMemento(spIdx: Int, spMemento: Any, durIdx: Int, benef: Boolean)
 
   private val durations = List(
@@ -76,19 +77,19 @@ object EffectEditor {
     new StaticDurationComboEntry("Other", Duration.Other),
     new BoundDurationComboEntry("End of target's next turn", Duration.Limit.EndOfNextTurn, false),
     new BoundDurationComboEntry("Start of target's next turn", Duration.Limit.StartOfNextTurn, false)
-    )
+  )
 
-  val dictionary:AutoCompleteDictionary = {
+  val dictionary: AutoCompleteDictionary = {
     val logger = LoggerFactory.getLogger("startup")
     val resource = this.getClass.getResource("/vcc/dnd4e/view/autocomplete.dict")
-    if(resource != null) {
-      try  {
-        AutoCompleteDictionary.fromStream(resource.openStream(), (term,msg) => {
-          logger.warn("AutoComplete[{}]: {}",term, msg)
+    if (resource != null) {
+      try {
+        AutoCompleteDictionary.fromStream(resource.openStream(), (term, msg) => {
+          logger.warn("AutoComplete[{}]: {}", term, msg)
         })
       } catch {
         case e =>
-          logger.warn("Failed to open resource: /vcc/dnd4e/view/autocomplete.dict",e)
+          logger.warn("Failed to open resource: /vcc/dnd4e/view/autocomplete.dict", e)
           new AutoCompleteDictionary(Nil)
       }
     } else {
@@ -114,13 +115,23 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     val panelName = "Any"
     private val descField = new TextField() with AutoCompleteTextComponent
     descField.enableAutoComplete(EffectEditor.dictionary)
+    descField.tooltip = "Enter condition text. Hit ENTER to accept the suggested completion."
     add(descField, "growx, h 22!")
     visible = false
+
     def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {
       Effect.Condition.Generic(descField.text, benefCheckbox.selected)
     }
 
     def saveMemento(): Any = (descField.text, benefCheckbox.selected)
+
+    listenTo(descField)
+    reactions += {
+      case event.FocusGained(`descField`, _, _) =>
+        parent.setStatusBarMessage(descField.tooltip)
+      case event.FocusLost(`descField`, _, _) =>
+        parent.setStatusBarMessage("")
+    }
 
     def restoreMemento(memento: Any) {
       memento match {
@@ -167,7 +178,9 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     font = smallFont
   }
 
-  private val addButton = new Button("Add") {enabled = false}
+  private val addButton = new Button("Add") {
+    enabled = false
+  }
   private val clearButton = new Button("Clear")
   private val benefCheckbox = new CheckBox("Beneficial") {
     tooltip = "Check if the effect is beneficial for the target"
@@ -189,7 +202,9 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   listenTo(addButton, clearButton)
   reactions += {
     case event.SelectionChanged(this.typeCombo) =>
-      for (p <- subPanels) {p.visible = p == typeCombo.selection.item}
+      for (p <- subPanels) {
+        p.visible = p == typeCombo.selection.item
+      }
     case event.SelectionChanged(this.durationCombo) =>
       checkAddButton()
     case event.ButtonClicked(this.addButton) =>
@@ -215,7 +230,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
       typeCombo.selection.item.saveMemento(),
       durationCombo.selection.index,
       benefCheckbox.selected
-      )
+    )
   }
 
   def clearPanel() {
