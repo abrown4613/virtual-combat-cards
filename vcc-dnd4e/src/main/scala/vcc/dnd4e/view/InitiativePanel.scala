@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,18 @@ package vcc.dnd4e.view
 import scala.swing._
 import scala.swing.event._
 import vcc.dnd4e.domain.tracker.common._
-import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState}
+import vcc.dnd4e.domain.tracker.snapshot.StateChange
 import vcc.util.swing._
 
 class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hidemode 3", "[20%,fill][40%,fill][40%,fill]", "")
-        with CombatStateObserver with ContextObserver with ScalaDockableComponent with KeystrokeContainer
-{
+with CombatStateObserver with ContextObserver with ScalaDockableComponent with KeystrokeContainer {
   private val startRound_btn = new Button("Start turn")
-  startRound_btn.tooltip = ("Start round of the first combatant")
+  startRound_btn.tooltip = ("Start round of the first combatant (shortcut Alt-S)")
 
   private val endRound_btn = new Button("End turn")
-  endRound_btn.tooltip = ("End round of the first combatant")
+  endRound_btn.tooltip = ("End round of the first combatant (shortcut Alt-E)")
 
   private val moveUp_btn = new Button("Move up & Start turn")
   private val delay_btn = new Button("Delay")
@@ -126,7 +124,9 @@ class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hid
 
       //Get possible combatant to move before
       val before: Seq[InitiativeOrderID] = if (comb.isInOrder)
-        combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map {c => c.orderId}
+        combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map{
+          c => c.orderId
+        }
       else
         Seq()
       candidateBefore.contents = before

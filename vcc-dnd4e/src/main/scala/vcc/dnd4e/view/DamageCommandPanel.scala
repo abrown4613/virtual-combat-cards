@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,15 @@ package vcc.dnd4e.view
 
 import swing._
 import swing.event._
-import javax.swing.BorderFactory
-import vcc.util.swing.{MigPanel, KeystrokeBinder, ClickButtonAction, KeystrokeContainer}
+import vcc.util.swing.{MigPanel, ClickButtonAction, KeystrokeContainer}
 import vcc.util.swing.KeystrokeBinder
 import vcc.infra.docking._
 
 import vcc.dnd4e.domain.tracker.common.Command._
-import vcc.dnd4e.domain.tracker.common.{CombatantID, CombatantStateView}
 
 class DamageCommandPanel(val director: PanelDirector)
-        extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
-                with ContextObserver with ScalaDockableComponent with SimpleCombatStateObserver
-{
+  extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
+  with ContextObserver with ScalaDockableComponent with SimpleCombatStateObserver {
   val dockID = DockID("damage")
 
   val dockTitle = "Health Change"
@@ -48,13 +45,13 @@ class DamageCommandPanel(val director: PanelDirector)
   damage.background = badColor
 
   private val damage_btn = new Button("Damage")
-  damage_btn.tooltip = "Apply damage to selected combatant"
+  damage_btn.tooltip = "Apply damage to selected combatant (shortcut Alt-D)"
 
   private val heal_btn = new Button("Heal")
-  heal_btn.tooltip = "Heal selected combatant"
+  heal_btn.tooltip = "Heal selected combatant (shortcut Alt-H)"
 
   private val temp_btn = new Button("Set Temporary")
-  temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value"
+  temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value (shortcut Alt-T)"
 
   private val death_btn = new Button("Fail Death Save")
   private val undie_btn = new Button("\"undie\"")
@@ -78,7 +75,11 @@ class DamageCommandPanel(val director: PanelDirector)
 
   reactions += {
     case ValueChanged(this.damage) =>
-      damageEquation = try {helper.DamageParser.parseString(damage.text)} catch {case _ => null}
+      damageEquation = try {
+        helper.DamageParser.parseString(damage.text)
+      } catch {
+        case _ => null
+      }
       enableDamageControls(damageEquation != null)
     case FocusGained(this.damage, other, temporary) =>
       director.setStatusBarMessage("Enter equation with: + - * / and parenthesis and variable: 's' for surge value ; 'b' for bloody value")
@@ -97,7 +98,7 @@ class DamageCommandPanel(val director: PanelDirector)
       val cinfo = Map(
         "b" -> tgt.health.base.totalHP / 2,
         "s" -> tgt.health.base.totalHP / 4
-        )
+      )
       val value = damageEquation.apply(cinfo)
       if (value >= 0)
         button match {
@@ -128,4 +129,3 @@ class DamageCommandPanel(val director: PanelDirector)
     KeystrokeBinder.bindKeystrokeAction(temp_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt T", new ClickButtonAction("health.settemphp", temp_btn))
   }
 }
-

@@ -29,8 +29,7 @@ import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
 import vcc.infra.datastore.naming.EntityID
 
 class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
-        with CombatStateObserver with ContextObserver with ScalaDockableComponent
-{
+with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private val memory = scala.collection.mutable.Map.empty[EntityID, List[EffectEditor.StateMemento]]
   private var lastActiveKey: EntityID = null
   private var _changing: Boolean = false
@@ -50,10 +49,10 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
 
   private val efpl = if (
     java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 700 &&
-            BootStrap.getPropertyAsInt("vcc.view.efp.max", 3) > 2
+      BootStrap.getPropertyAsInt("vcc.view.efp.max", 3) > 2
   ) {
-      List(new EffectEditor(this), new EffectEditor(this), new EffectEditor(this))
-    } else {
+    List(new EffectEditor(this), new EffectEditor(this), new EffectEditor(this))
+  } else {
     List(new EffectEditor(this), new EffectEditor(this))
   }
 
@@ -72,9 +71,9 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
     case event.SelectionChanged(`activeCombo`) =>
       if (!_changing) {
         director.setActiveCombatant(Some(activeCombo.selection.item.unifiedId))
-        if(activeCombo.selection.item.unifiedId.combId == otherId) {
+        if (activeCombo.selection.item.unifiedId.combId == otherId) {
           // This is used to reset target for Terrain
-          for (efp <- efpl) efp.setContext(Some(activeCombo.selection.item),false)
+          for (efp <- efpl) efp.setContext(Some(activeCombo.selection.item), false)
         }
       }
       switchActive(activeCombo.selection.item.definition.entity.eid)
@@ -88,6 +87,13 @@ class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemod
       setActiveComboSelection(active)
       for (efp <- efpl) efp.setSequence(state.elements.map(c => c.combId))
     }
+  }
+
+  /**
+   * This is used by internal editor to set the status message on the VCC status bar.
+   */
+  private[view] def setStatusBarMessage(s: String) {
+    director.setStatusBarMessage(s)
   }
 
   private def setActiveComboSelection(who: Option[UnifiedCombatantID]) {
