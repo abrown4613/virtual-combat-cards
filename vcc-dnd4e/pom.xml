@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-dnd4e</artifactId>
-    <version>1.5.0</version>
+    <version>1.5.1-SNAPSHOT</version>
     <description>Main DND4E Module</description>
     <organization>
         <name>exnebula.org</name>
