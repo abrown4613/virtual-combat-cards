@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.model
 
 import scala.xml._
 import vcc.infra.datastore.naming._
 import vcc.util.XMLHelper._
 import vcc.dnd4e.domain.tracker.common.CombatantID
+import java.io.{FileInputStream, File, InputStream}
 
+/**
+ * Represents a party member, with an EntityID and options alias and ID
+ * @param id Optional combatant id, null if not present
+ * @param alias Optional combatant alias, null if not present
+ * @param eid Combatant EntityID this is mandatory.
+ */
 case class PartyMember(id: CombatantID, alias: String, eid: EntityID) {
   def toXML() = (<combatant eid={eid.uri.toString} alias={alias} id={if (id != null) id.id else null}/>)
 }
@@ -33,7 +39,7 @@ case class PartyMember(id: CombatantID, alias: String, eid: EntityID) {
 object PartyFile {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  def parseEntry(node: Node): PartyMember = {
+  private def parseEntry(node: Node): PartyMember = {
     val eidUri = nodeSeq2String(node \ "@eid")
     val id = nodeSeq2String(node \ "@id", null)
     val alias = nodeSeq2String(node \ "@alias", null)
@@ -42,7 +48,7 @@ object PartyFile {
     PartyMember(if (id != null) CombatantID(id.toUpperCase) else null, alias, eid)
   }
 
-  def loadFromXML(node: Node): (List[PartyMember], Boolean) = {
+  private def loadFromXML(node: Node): (List[PartyMember], Boolean) = {
     var x: List[PartyMember] = Nil
     var ok = true
     val ver = {
@@ -70,15 +76,26 @@ object PartyFile {
 
   /**
    * Load a PEML party and return a list of PartyMembers
-   *
+   * @param file To load
    * @return A pair with the loadable PartyMember and a OK flag. If ok = false, there
    * was some error processing the file. In out is (Nil,false) the file is invalid.
    * (Nil,true) means the file is empty. And some element and false means that not all
    * element in the file were read
    */
-  def loadFromFile(file: java.io.File): (List[PartyMember], Boolean) = {
+  @deprecated("Use loadFromStream version")
+  def loadFromFile(file: File): (List[PartyMember], Boolean) = loadFromStream(new FileInputStream(file))
+
+  /**
+   * Load a PEML party and return a list of PartyMembers
+   * @param Stream InputStream containing the XML for the PartyFile
+   * @return A pair with the loadable PartyMember and a OK flag. If ok = false, there
+   * was some error processing the file. In out is (Nil,false) the file is invalid.
+   * (Nil,true) means the file is empty. And some element and false means that not all
+   * element in the file were read
+   */
+  def loadFromStream(stream: InputStream): (List[PartyMember], Boolean) = {
     try {
-      var node = scala.xml.XML.loadFile(file)
+      val node = XML.load(stream)
       loadFromXML(node)
     } catch {
       case e =>
@@ -87,7 +104,12 @@ object PartyFile {
     }
   }
 
-  def saveToFile(file: java.io.File, entries: Seq[PartyMember]) {
+  /**
+   * Saves a sequence for PartyMembers to a XML file.
+   * @param file The file to be saved
+   * @param entries Entries to save
+   */
+  def saveToFile(file: File, entries: Seq[PartyMember]) {
     val doc = (<party version='1.0'>
       {entries.map(_.toXML)}
     </party>)
