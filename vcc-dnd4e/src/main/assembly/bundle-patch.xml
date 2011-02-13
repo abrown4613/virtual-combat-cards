@@ -15,6 +15,7 @@
             <scope>runtime</scope>
             <includes>
                 <include>vcc-dnd4e*</include>
+                <include>vcc-infra*</include>
             </includes>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
