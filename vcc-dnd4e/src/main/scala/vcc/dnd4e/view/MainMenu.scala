@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,9 +52,9 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
 
   private val fileMenu = new Menu("File");
   fileMenu.contents += new MenuItem(Action("Load Party ...") {
-    var file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.partyFilter)
+    val file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
-      PartyLoader.loadToBattle(director, Component.wrap(parent.peer.getRootPane), file.get)
+      PartyLoader.getInstance(director, Component.wrap(parent.peer.getRootPane)).loadToBattle(file.get)
     }
   })
   fileMenu.contents += new Separator()
@@ -70,12 +70,14 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     def apply(): Unit = {
       director requestControllerOperation vcc.controller.message.Undo()
     }
+
     accelerator = Some(KeyStroke.getKeyStroke('Z'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new MenuItem(new Action("Redo") {
     def apply(): Unit = {
       director requestControllerOperation vcc.controller.message.Redo()
     }
+
     accelerator = Some(KeyStroke.getKeyStroke('Y'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new Separator
@@ -97,9 +99,15 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   dockMenu.contents += dockRestoreMenu
   dockMenu.contents += dockFocusMenu
   dockMenu.contents += new Separator
-  dockMenu.contents += new MenuItem(Action("Restore Default Layout") {docker.restoreDefaultLayout()})
-  dockMenu.contents += new MenuItem(Action("Save Layout") {docker.storeLayoutToFile(Component.wrap(parent.peer.getRootPane))})
-  dockMenu.contents += new MenuItem(Action("Load Layout") {docker.restoreLayoutFromFile(Component.wrap(parent.peer.getRootPane))})
+  dockMenu.contents += new MenuItem(Action("Restore Default Layout") {
+    docker.restoreDefaultLayout()
+  })
+  dockMenu.contents += new MenuItem(Action("Save Layout") {
+    docker.storeLayoutToFile(Component.wrap(parent.peer.getRootPane))
+  })
+  dockMenu.contents += new MenuItem(Action("Load Layout") {
+    docker.restoreLayoutFromFile(Component.wrap(parent.peer.getRootPane))
+  })
 
   def addToDockRestoreMenu(item: MenuItem) {
     dockRestoreMenu.contents += item
@@ -136,10 +144,10 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     Dialog.showMessage(
       Component.wrap(parent.peer.getRootPane),
       "This is Virtual Combant Cards version: " + vcc.dnd4e.BootStrap.version.versionString +
-              "\nDesigned at: www.exnebula.org",
+        "\nDesigned at: www.exnebula.org",
       "About Virtual Combat Cards",
       Dialog.Message.Info, IconLibrary.MetalD20
-      )
+    )
   })
 
   contents += fileMenu

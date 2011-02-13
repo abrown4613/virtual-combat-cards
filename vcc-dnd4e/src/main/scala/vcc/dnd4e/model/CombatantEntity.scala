@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@ import vcc.dnd4e.domain.tracker.common.{CharacterHealthDefinition, MonsterHealth
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
 import vcc.domain.dndi.CaptureTemplateEngine
-import vcc.infra.xtemplate.{MapDataSource, TemplateDataSource}
-
-case class CombatantEntityID(ceid: Int)
+import vcc.infra.xtemplate.{MapDataSource}
 
 case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
   override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
@@ -33,12 +31,12 @@ case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinit
 object CombatantEntity {
 
   /**
-   * Build a valid comabant form a CompendiumEntity
+   * Build a valid combatant form a CompendiumEntity
    */
   def fromCompendiumCombatantEntity(comp: CompendiumCombatantEntity): CombatantEntity = {
     val healthDef: HealthDefinition = comp match {
       case monster: MonsterEntity => MonsterHealthDefinition(monster.hp.value, monster.hp.value / 4, (monster.level.value + 9) / 10)
-      case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value, comp.hp.value / 4, 15) //TODO (add surege count)
+      case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value, comp.hp.value / 4, 15)
       case s => throw new Exception("Unexpected Entity type: " + s)
     }
     val statBlock = if (comp.statblock.isDefined) {
@@ -46,41 +44,8 @@ object CombatantEntity {
     } else {
       val template = CaptureTemplateEngine.fetchClassTemplate(comp.classID.shortClassName)
       val dse = comp.asDataStoreEntity
-      template.render(new MapDataSource(dse.data,Map(),Map())).toString
+      template.render(new MapDataSource(dse.data, Map(), Map())).toString
     }
     CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
   }
-}
-
-/**
- * This object provide as symbolic link between EntityID and the 
- * CombatantEntity. It is used as an adapter between the compendium objects
- * and the tracks. 
- */
-object CombatantRepository {
-  private var nextID = 1
-
-  private val ents = scala.collection.mutable.Map.empty[CombatantEntityID, CombatantEntity]
-
-  /**
-   * Return the entity defined by the ceid parameter
-   * @param ceid CombantantEntityID local to this repository
-   * @return A CombatantEntity or null 
-   */
-  def getEntity(ceid: CombatantEntityID): CombatantEntity = if (ents.isDefinedAt(ceid)) ents(ceid) else null
-
-  /**
-   * Return the entity defined by the ceid parameter
-   * @param ce CombantantEntity to be stored, no critic is done on existing objects
-   * @return The new object CombatantEntityID
-   */
-  def registerEntity(ce: CombatantEntity): CombatantEntityID = {
-    synchronized {
-      val neid = CombatantEntityID(nextID)
-      nextID = nextID + 1
-      ents += (neid -> ce)
-      neid
-    }
-  }
-
 }
