@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ import vcc.dnd4e.view.helper.PartyLoader
 import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 import annotation.tailrec
+import java.io.FileInputStream
 
 /**
  * Helper methods for XP operations.
@@ -56,6 +57,7 @@ object ExperienceCalculator {
 }
 
 class PartyEditor(director: PanelDirector) extends Frame {
+
   class PartyTableEntry(val eid: EntityID, val name: String, var alias: String, var id: String, var qty: Int, val xp: Int) extends Ordered[PartyTableEntry] {
     def toIndividual(): Iterable[PartyTableEntry] = (if (qty == 1) Seq(this)
     else (1 to qty).map(e => new PartyTableEntry(eid, name, alias, id, 1, xp)))
@@ -72,14 +74,18 @@ class PartyEditor(director: PanelDirector) extends Frame {
       ("Alias/Mini", classOf[String]),
       ("Qty", classOf[java.lang.Integer]),
       ("XP", classOf[java.lang.Integer])
-      )
+    )
     val setter: PartialFunction[(Int, PartyTableEntry, Any), Unit] = {
       case (0, entry, value) if (entry.qty == 1) =>
         entry.id = value.toString
         if (entry.id == "") entry.id = null
       case (2, entry, value) => entry.alias = value.toString
       case (3, entry, value) if (entry.id == null) =>
-        val v = try {value.toString.toInt} catch {case _ => 1}
+        val v = try {
+          value.toString.toInt
+        } catch {
+          case _ => 1
+        }
         if (v > 0) {
           entry.qty = v
           fireQuantityChange()
@@ -176,10 +182,16 @@ class PartyEditor(director: PanelDirector) extends Frame {
     val mb = new MenuBar()
     val fmenu = new Menu("File")
     mb.contents += fmenu
-    fmenu.contents += new MenuItem(Action("Save ...") {doSave()})
-    fmenu.contents += new MenuItem(Action("Load ...") {doLoad()})
+    fmenu.contents += new MenuItem(Action("Save ...") {
+      doSave()
+    })
+    fmenu.contents += new MenuItem(Action("Load ...") {
+      doLoad()
+    })
     fmenu.contents += new Separator()
-    fmenu.contents += new MenuItem(Action("Add to combat") {doAddToCombat()})
+    fmenu.contents += new MenuItem(Action("Add to combat") {
+      doAddToCombat()
+    })
     mb
   }
 
@@ -207,7 +219,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
     val file = FileChooserHelper.chooseOpenFile(table.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
       val es = Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).get
-      val combs = PartyLoader.validatePartyLoadAndWarn(menuBar, PartyFile.loadFromFile(file.get))
+      val combs = PartyLoader.getInstance(null, menuBar).validatePartyLoadAndWarn(PartyFile.loadFromStream(new FileInputStream(file.get)))
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data
         val pe = entitySummaryToPartyEntry(es.getEntitySummary(pm.eid))
@@ -225,7 +237,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
   }
 
   private def doAddToCombat() {
-    PartyLoader.loadToBattle(director, this.menuBar, expandEntries(partyTableModel.content).map(_.toPartyMember))
+    PartyLoader.getInstance(director, this.menuBar).loadToBattle(expandEntries(partyTableModel.content).map(_.toPartyMember))
   }
 
   private def expandEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = ol.flatMap(x => x.toIndividual())
@@ -258,5 +270,4 @@ class PartyEditor(director: PanelDirector) extends Frame {
     val level = ExperienceCalculator.encounterLevel(partySizeCombo.selection.item, xp)
     totalXPLabel.text = "Total XP: " + xp + " Level: " + level
   }
-
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,82 +15,141 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view.helper
 
 import vcc.dnd4e.model.{PartyFile, PartyMember}
-import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity}
-import vcc.dnd4e.domain.tracker.common.Command.{AddCombatants}
-import vcc.dnd4e.domain.compendium.{Compendium, CompendiumRepository}
+import vcc.dnd4e.domain.tracker.common.Command.AddCombatants
+import vcc.dnd4e.domain.compendium.CompendiumRepository
 import vcc.model.Registry
 import vcc.infra.datastore.naming._
-import vcc.dnd4e.model.{CombatantEntityID, CombatantEntity, CombatantRepository}
+import vcc.dnd4e.model.CombatantEntity
 
 import scala.swing.{Dialog, Component}
 import vcc.dnd4e.view.PanelDirector
 import vcc.dnd4e.domain.tracker.common.CombatantRosterDefinition
+import java.io.{FileInputStream, File}
 
+/**
+ * Companion object to the PartyLoader.
+ */
 object PartyLoader {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
-  def loadToBattle(director: PanelDirector, owner: Component, file: java.io.File) {
-    val res = PartyFile.loadFromFile(file)
-    logger.debug("Loaded party: " + res)
-    val lst = validatePartyLoadAndWarn(owner, res)
-    if (!lst.isEmpty) loadToBattle(director, owner, lst)
+  /**
+   * Provides an instance of a PartyLoader backed by some UI components
+   * @param director PanelDirector to receive the load actions
+   * @param owner Component that will own the Dialog popups.
+   * @return A PartyLoader
+   */
+  def getInstance(director: PanelDirector, owner: Component): PartyLoader = {
+    val esid = Registry.get[DataStoreURI]("Compendium").get
+    val es = Registry.get[CompendiumRepository](esid).get
+
+    val loader = new PartyLoader(es, new ViewPeer {
+      def showError(title: String, message: String) {
+        Dialog.showMessage(owner, message, title, Dialog.Message.Error, null)
+      }
+
+      def addCombatants(combatants: List[CombatantRosterDefinition]) {
+        logger.debug("Sending request to tracker: {}", AddCombatants(combatants))
+        director requestAction AddCombatants(combatants)
+      }
+
+      def confirm(title: String, message: String): Boolean = {
+        Dialog.showConfirmation(owner, message, title, Dialog.Options.YesNo) == Dialog.Result.Yes
+      }
+    })
+    loader
   }
 
-  def validatePartyLoadAndWarn(owner: Component, pair: (Seq[PartyMember], Boolean)): Seq[PartyMember] = {
+  trait ViewPeer {
+    def confirm(title: String, message: String): Boolean
+
+    def addCombatants(combatants: List[CombatantRosterDefinition])
+
+    def showError(title: String, message: String)
+  }
+
+}
+
+/**
+ * PartyLoader helper that handles loading and validation party files.
+ */
+class PartyLoader private[helper](es: CompendiumRepository, peer: PartyLoader.ViewPeer) {
+
+  /**
+   * Parse an Party File, validates and load to the battle.
+   * @param file Party file
+   */
+  def loadToBattle(file: File) {
+    val res = PartyFile.loadFromStream(new FileInputStream(file))
+    val lst = validatePartyLoadAndWarn(res)
+    if (!lst.isEmpty) loadToBattle(lst)
+  }
+
+  /**
+   * Provides visual translation to error in loading the Party File.
+   * @param pair The result of PartyFile.loadFromStream
+   * @return The party list on a normal load. If partial load is triggered, and user confirms load, the salvaged entries.
+   */
+  def validatePartyLoadAndWarn(pair: (Seq[PartyMember], Boolean)): Seq[PartyMember] = {
     pair match {
       case (Nil, false) =>
-        Dialog.showMessage(owner, "File is not a valid Party File. Check vcc.log for details.", "Invalid Party File", Dialog.Message.Error, null)
+        peer.showError("Invalid Party File", "File is not a valid Party File. Check vcc.log for details.")
         Nil
       case (Nil, true) =>
-        Dialog.showMessage(owner, "The party files contains no entries.", "Empty Party File", Dialog.Message.Error, null)
+        peer.showError("Empty Party File", "The party files contains no entries.")
         Nil
       case (lst, false) =>
-        if (Dialog.showConfirmation(owner, "Not all entries in the party file could be processed.\nDo you wish to proceed with only the valid entries?", "Invalid Entries in Party File", Dialog.Options.YesNo) == Dialog.Result.Yes)
+        if (peer.confirm("Invalid Entries in Party File", "Not all entries in the party file could be processed.\nDo you wish to proceed with only the valid entries?"))
           lst
         else
           Nil
       case (lst, true) =>
         lst
     }
-
   }
 
-  def loadToBattle(director: PanelDirector, owner: Component, members: Seq[PartyMember]) {
-    val esid = Registry.get[DataStoreURI]("Compendium").get
-    val es = Registry.get[CompendiumRepository](esid).get
-    val idMap = scala.collection.mutable.Map.empty[EntityID, CombatantEntityID]
+  /**
+   * Load combatants form a PartyFile to the battle.
+   * @param members Party member to try to load.
+   */
+  def loadToBattle(members: Seq[PartyMember]) {
+    val cd = resolveEntries(members)
+    if (!cd.isEmpty) peer.addCombatants(cd)
+  }
 
-    val cds: Seq[CombatantRosterDefinition] = (for (pm <- members) yield {
-      if (!idMap.isDefinedAt(pm.eid)) {
-        val cent = es.load(pm.eid, true).asInstanceOf[CompendiumCombatantEntity]
-        if (cent == null) {
-          logger.error("PartyLoader: failed to load entity {}", pm.eid)
-          null.asInstanceOf[CombatantRosterDefinition]
-        } else {
-          val ent = CombatantEntity.fromCompendiumCombatantEntity(cent)
-          val ceid = CombatantRepository.registerEntity(ent)
-          if (ent != null) idMap += (pm.eid -> ceid)
+  /**
+   * Maps EntityID to the CombatantRosterDefinition by loading from the CompendiumRepository.
+   * @param members Party members to the loaded.
+   * @return Party members successfully resolved. If not all are found, they user is prompted for an option to
+   * abort the load.
+   */
+  private[helper] def resolveEntries(members: Seq[PartyMember]): List[CombatantRosterDefinition] = {
+    //First load an map all entities to definitions
+    val cem = scala.collection.mutable.Map.empty[EntityID, CombatantEntity]
+    for (member <- members) {
+      if (!cem.isDefinedAt(member.eid)) {
+        val ent = es.load(member.eid, true)
+        if (ent != null) {
+          cem += (member.eid -> CombatantEntity.fromCompendiumCombatantEntity(ent))
         }
       }
-      if (idMap.isDefinedAt(pm.eid)) {
-        val ceid = idMap(pm.eid)
-        val ent = CombatantRepository.getEntity(ceid)
-        CombatantRosterDefinition(pm.id, pm.alias, ent)
-      } else
-        null
-    })
+    }
+
+    val cds: Seq[CombatantRosterDefinition] = for (pm <- members) yield {
+      if (cem.isDefinedAt(pm.eid)) {
+        CombatantRosterDefinition(pm.id, pm.alias, cem(pm.eid))
+      } else null
+    }
 
     val filtered = cds.filter(x => x != null)
     if (filtered.length == cds.length ||
-            Dialog.showConfirmation(owner, "Not all combatants in the party where found in the compendium.\nDo you wish to load the ones that were found?", "Missing Combatants", Dialog.Options.YesNo) == Dialog.Result.Yes
+      peer.confirm("Missing Combatants",
+        "Not all combatants in the party where found in the compendium.\nDo you wish to load the ones that were found?")
     ) {
-      logger.debug("Sending request to tracker: {}", AddCombatants(filtered.toList))
-      director requestAction AddCombatants(filtered.toList)
-    }
+      filtered.toList
+    } else
+      Nil
   }
-
 }
