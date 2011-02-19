@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@ trait CombatStateSnapshotHelper[S] {
   val ita0m = InitiativeTracker(ioa0, 2, 0, InitiativeTracker.state.Acting)
   val itb = InitiativeTracker(iob, 1, 0, InitiativeTracker.state.Waiting)
 
-  val baseHealth = HealthTracker(10, 0, 0, 4, null)
-  val modHealth = HealthTracker(12, 0, 0, 4, null)
+  val baseHealth = HealthTracker(10, 0, 0, null)
+  val modHealth = HealthTracker(12, 0, 0, null)
 
   def processChanges(builder: SnapshotBuilder[S], changes: ChangeNotification*): S = {
     builder.beginChanges()

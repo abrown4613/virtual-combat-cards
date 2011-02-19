@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,8 @@ import vcc.dnd4e.model.common.CombatantType
 /**
  * Health base definition for the combatant
  * @param totalHP The total Hitpoints
- * @param surgeValue Surge value normally 1/4 of HP
- * @param healingSurges Number os surges
  */
-abstract class HealthDefinition(val totalHP: Int, val surgeValue: Int, val healingSurges: Int) {
+abstract class HealthDefinition(val totalHP: Int) {
   val lowerBound: Int
   val hasTemporaryHP: Boolean
 
@@ -37,10 +35,8 @@ abstract class HealthDefinition(val totalHP: Int, val surgeValue: Int, val heali
 /**
  * Character health Definition, with means that this char will die at -bloodied, or has three strikes
  * @param totalHP The total Hitpoints
- * @param surgeValue Surge value normally 1/4 of HP
- * @param healingSurges Number os surges
  */
-case class CharacterHealthDefinition(override val totalHP: Int, override val surgeValue: Int, override val healingSurges: Int) extends HealthDefinition(totalHP, surgeValue, healingSurges) {
+case class CharacterHealthDefinition(override val totalHP: Int) extends HealthDefinition(totalHP) {
   val lowerBound = -totalHP / 2
   val hasTemporaryHP = true
   val ctype = CombatantType.Character
@@ -56,15 +52,13 @@ case class CharacterHealthDefinition(override val totalHP: Int, override val sur
 /**
  * Monster health Definition, with means that this dies at 0 no strikes
  * @param totalHP The total Hitpoints
- * @param surgeValue Surge value normally 1/4 of HP
- * @param healingSurges Number os surges
  */
-case class MonsterHealthDefinition(override val totalHP: Int, override val surgeValue: Int, override val healingSurges: Int) extends CharacterHealthDefinition(totalHP, surgeValue, healingSurges) {
+case class MonsterHealthDefinition(override val totalHP: Int) extends CharacterHealthDefinition(totalHP) {
   override val lowerBound = 0
   override val ctype = CombatantType.Monster
 }
 
-case class MinionHealthDefinition() extends HealthDefinition(1, 0, 0) {
+case class MinionHealthDefinition() extends HealthDefinition(1) {
   val lowerBound = 0
   val ctype = CombatantType.Minion
   override val hasTemporaryHP = false
@@ -77,9 +71,10 @@ case class MinionHealthDefinition() extends HealthDefinition(1, 0, 0) {
 }
 
 /**
- * HeatlthTracker master object
+ * HealthTracker master object
  */
 object HealthTracker {
+
   object Status extends Enumeration {
     val Ok = Value("Ok")
     val Bloody = Value("Bloody")
@@ -92,7 +87,7 @@ object HealthTracker {
    * @param hdef Base health definition
    */
   def createTracker(hdef: HealthDefinition): HealthTracker = {
-    HealthTracker(hdef.totalHP, 0, 0, hdef.healingSurges, hdef)
+    HealthTracker(hdef.totalHP, 0, 0, hdef)
   }
 
   /**
@@ -102,8 +97,8 @@ object HealthTracker {
   @deprecated("Should create from base object")
   def createTracker(ctype: CombatantType.Value, hp: Int): HealthTracker = {
     ctype match {
-      case CombatantType.Character => createTracker(CharacterHealthDefinition(hp, hp / 4, 4))
-      case CombatantType.Monster => createTracker(MonsterHealthDefinition(hp, hp / 4, 4))
+      case CombatantType.Character => createTracker(CharacterHealthDefinition(hp))
+      case CombatantType.Monster => createTracker(MonsterHealthDefinition(hp))
       case CombatantType.Minion => createTracker(MinionHealthDefinition())
     }
   }
@@ -117,7 +112,7 @@ object HealthTracker {
  * @param deathStrikes Current failed death saves
  * @param surges Sure
  */
-case class HealthTrackerDelta(damage: Int, temporaryHP: Int, deathStrikes: Int, spentSurges: Int)
+case class HealthTrackerDelta(damage: Int, temporaryHP: Int, deathStrikes: Int)
 
 /**
  * Since character are the most complex, this class implements their logic,
@@ -125,10 +120,9 @@ case class HealthTrackerDelta(damage: Int, temporaryHP: Int, deathStrikes: Int, 
  * @param currentHP Current hp
  * @param temporaryHP Temp HP
  * @param deathStrikes Current failed death saves
- * @param surges Sure
  * @param bas
  */
-case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, surges: Int, base: HealthDefinition) extends CombatantAspect {
+case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, base: HealthDefinition) extends CombatantAspect {
   private def boundedChange(amnt: Int): Int = {
     val n = currentHP + amnt;
     if (n < base.lowerBound) base.lowerBound
@@ -139,9 +133,9 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, su
   def applyDamage(amnt: Int) = {
     if (amnt > temporaryHP) {
       val nchp = boundedChange(-amnt + temporaryHP)
-      HealthTracker(nchp, 0, if (nchp == base.lowerBound) 3 else deathStrikes, surges, base)
+      HealthTracker(nchp, 0, if (nchp == base.lowerBound) 3 else deathStrikes, base)
     } else {
-      HealthTracker(currentHP, temporaryHP - amnt, deathStrikes, surges, base)
+      HealthTracker(currentHP, temporaryHP - amnt, deathStrikes, base)
     }
   }
 
@@ -150,23 +144,23 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, su
    */
   def heal(amnt: Int) = {
     if (status != HealthTracker.Status.Dead)
-      HealthTracker(boundedChange(if (currentHP < 0) amnt - currentHP else amnt), temporaryHP, deathStrikes, surges, base)
+      HealthTracker(boundedChange(if (currentHP < 0) amnt - currentHP else amnt), temporaryHP, deathStrikes, base)
     else
       this
   }
 
   def setTemporaryHitPoints(amnt: Int, force: Boolean) = {
     if (base.hasTemporaryHP) {
-      if (force) HealthTracker(currentHP, amnt, deathStrikes, surges, base)
+      if (force) HealthTracker(currentHP, amnt, deathStrikes, base)
       else if (amnt > temporaryHP)
-        HealthTracker(currentHP, amnt, deathStrikes, surges, base)
+        HealthTracker(currentHP, amnt, deathStrikes, base)
       else this
     } else this
   }
 
   def failDeathSave(): HealthTracker = {
     if (this.status == HealthTracker.Status.Dying)
-      HealthTracker(currentHP, temporaryHP, deathStrikes + 1, surges, base)
+      HealthTracker(currentHP, temporaryHP, deathStrikes + 1, base)
     else this
   }
 
@@ -174,24 +168,24 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, su
 
   def rest(extended: Boolean): HealthTracker = {
     if (status != HealthTracker.Status.Dead) {
-      if (extended) HealthTracker(base.totalHP, 0, 0, 1, base)
-      else HealthTracker(currentHP, 0, 0, 1, base)
+      if (extended) HealthTracker(base.totalHP, 0, 0, base)
+      else HealthTracker(currentHP, 0, 0, base)
     } else
       this
   }
 
   def raiseFromDead(): HealthTracker = {
     if (status == HealthTracker.Status.Dead) {
-      HealthTracker(0, temporaryHP, 0, surges, base)
+      HealthTracker(0, temporaryHP, 0, base)
     } else this
   }
 
   def getDelta(): HealthTrackerDelta = {
-    HealthTrackerDelta(this.base.totalHP - this.currentHP, this.temporaryHP, this.deathStrikes, this.base.healingSurges - this.surges)
+    HealthTrackerDelta(this.base.totalHP - this.currentHP, this.temporaryHP, this.deathStrikes)
   }
 
   def applyDelta(delta: HealthTrackerDelta): HealthTracker = {
-    HealthTracker(this.currentHP - delta.damage, delta.temporaryHP, delta.deathStrikes, this.surges - delta.spentSurges, this.base)
+    HealthTracker(this.currentHP - delta.damage, delta.temporaryHP, delta.deathStrikes, this.base)
   }
 
   def replaceHealthDefinition(hd: HealthDefinition): HealthTracker = {

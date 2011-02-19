@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,9 +38,9 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   val combA = CombatantID("A")
   val combB = CombatantID("1")
 
-  val combEnt = CombatantEntity(null, "Bond", CharacterHealthDefinition(40, 10, 6), 4, CombatantType.Character, null)
-  val combEnt2 = CombatantEntity(null, "Bond", CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Character, null)
-  val combMonster = CombatantEntity(null, "Bond", CharacterHealthDefinition(50, 12, 6), 4, CombatantType.Monster, null)
+  val combEnt = CombatantEntity(null, "Bond", CharacterHealthDefinition(40), 4, CombatantType.Character, null)
+  val combEnt2 = CombatantEntity(null, "Bond", CharacterHealthDefinition(50), 4, CombatantType.Character, null)
+  val combMonster = CombatantEntity(null, "Bond", CharacterHealthDefinition(50), 4, CombatantType.Monster, null)
 
   val blankRoster = beforeContext {
     aRoster = new CombatantRoster()
@@ -72,7 +72,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       aRoster.addCombatant(CombatantID(Symbol("10").name), "alias", combEnt)(new Transaction())
 
       there was one(mockIDGenerator).contains(Symbol("10")) then
-              one(mockIDGenerator).removeFromPool(Symbol("10"))
+        one(mockIDGenerator).removeFromPool(Symbol("10"))
     }
 
     "return ID to pool when an add is undone" in {
@@ -151,7 +151,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       aRoster.addCombatant(null, "alias2", combEnt)(trans)
       trans.commit(changeLog)
       val nc = getChangeRosterMap(changeLog.changes).keys.toList
-      (nc filterNot(rc contains)).length must_== 1
+      (nc filterNot (rc contains)).length must_== 1
     }
   }
 
@@ -175,12 +175,12 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       } afterCommit {
         changes =>
           getChangeRosterMap(changes) must beEmpty
-          changes must contain(CombatantChange(combId, HealthTracker(40, 0, 0, 6, combEnt2.healthDef)))
+          changes must contain(CombatantChange(combId, HealthTracker(40, 0, 0, combEnt2.healthDef)))
           changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias 2", combEnt2)))
       } afterUndo {
         changes =>
           getChangeRosterMap(changes) must beEmpty
-          changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, 6, combEnt.healthDef)))
+          changes must contain(CombatantChange(combId, HealthTracker(30, 0, 0, combEnt.healthDef)))
           changes must contain(CombatantChange(combId, CombatantRosterDefinition(combId, "alias", combEnt)))
       } afterRedoAsInCommit ()
     }

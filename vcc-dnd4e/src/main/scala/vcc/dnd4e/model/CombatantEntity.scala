@@ -35,8 +35,8 @@ object CombatantEntity {
    */
   def fromCompendiumCombatantEntity(comp: CompendiumCombatantEntity): CombatantEntity = {
     val healthDef: HealthDefinition = comp match {
-      case monster: MonsterEntity => MonsterHealthDefinition(monster.hp.value, monster.hp.value / 4, (monster.level.value + 9) / 10)
-      case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value, comp.hp.value / 4, 15)
+      case monster: MonsterEntity => MonsterHealthDefinition(monster.hp.value)
+      case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value)
       case s => throw new Exception("Unexpected Entity type: " + s)
     }
     val statBlock = if (comp.statblock.isDefined) {
