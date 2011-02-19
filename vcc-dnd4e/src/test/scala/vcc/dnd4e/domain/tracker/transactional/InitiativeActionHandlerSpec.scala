@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,9 +34,10 @@ import vcc.dnd4e.domain.tracker.common.InitiativeTracker.{action, state}
 class InitiativeActionHandlerTest extends JUnit4(InitiativeActionHandlerSpec)
 
 object InitiativeActionHandlerSpec extends Specification with Mockito {
+
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends AbstractCombatController(rules, state, queue)
-                  with InitiativeActionHandler
+    extends AbstractCombatController(rules, state, queue)
+    with InitiativeActionHandler
 
   val combA = CombatantID("A")
   val combB = CombatantID("B")
@@ -86,7 +87,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       }
 
       there was one(sQueue).+=(InternalInitiativeAction(ioa, InitiativeTracker.action.Ready)) then
-              one(sQueue).+=(InternalInitiativeAction(ioa, InitiativeTracker.action.EndRound))
+        one(sQueue).+=(InternalInitiativeAction(ioa, InitiativeTracker.action.EndRound))
     }
 
     "convert remainder if in order" in {
@@ -113,7 +114,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
     "throw exception if initiativeOrder is no present" in {
       mOrder.isDefinedAt(ioa) returns false
       aController.dispatch(new Transaction(), mSource, InitiativeAction(ioa, InitiativeTracker.action.StartRound)) must
-              throwA[UnhandledActionException]
+        throwA[UnhandledActionException]
     }
   }
 
@@ -200,7 +201,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.EndRound)) must throwAn[IllegalActionException]
 
       there was one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
-              one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
+        one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
 
     }
 
@@ -216,7 +217,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.Delay)) must throwAn[IllegalActionException]
 
       there was one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
-              one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
+        one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
     }
 
     "auto advance next guy if he is dead and delaying" in {
@@ -231,8 +232,8 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.EndRound)) must throwAn[IllegalActionException]
 
       there was one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound)) then
-              one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
-              one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
+        one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
+        one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
     }
 
     "auto advance end next guy if he is dead and readied" in {
@@ -247,7 +248,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.EndRound)) must throwAn[IllegalActionException]
 
       there was one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.StartRound)) then
-              one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
+        one(sQueue).+=(InternalInitiativeAction(iob, InitiativeTracker.action.EndRound))
     }
   }
 
@@ -309,7 +310,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       there was one(mOrder).updateInitiativeTrackerFor(ioc, updatedIT)(trans)
       there was one(mRules).canInitiativeOrderPerform(rState, ioc, action.MoveUp)
       there was one(mOrder).moveBefore(ioc, ioa)(trans) then
-              one(mOrder).setRobinHead(ioc)(trans)
+        one(mOrder).setRobinHead(ioc)(trans)
     }
   }
 
@@ -339,7 +340,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       aController.dispatch(trans, mSource, InternalInitiativeAction(ioc, action.Ready))
 
       there was one(mRules).canInitiativeOrderPerform(rState, ioc, action.Ready) then
-              one(mOrder).updateInitiativeTrackerFor(ioc, updatedIT)(trans)
+        one(mOrder).updateInitiativeTrackerFor(ioc, updatedIT)(trans)
     }
 
     "end round and rotate when Readying" in {
@@ -430,7 +431,7 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
       //Since first is moving, advance to next then move
       there was one(mOrder).robinHeadInitiativeTracker()
       there was one(mOrder).rotate()(trans) then
-              one(mOrder).moveBefore(ioa, iob)(trans)
+        one(mOrder).moveBefore(ioa, iob)(trans)
     }
   }
 
@@ -441,13 +442,13 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
   def mockNextAsDead(combId: CombatantID) {
     val mockNext = mock[Combatant]
-    mockNext.health returns HealthTracker(0, 0, 3, 0, MinionHealthDefinition())
+    mockNext.health returns HealthTracker(0, 0, 3, MinionHealthDefinition())
     mRoster.combatant(combId) returns mockNext
   }
 
   def mockNextAsNotDead(combId: CombatantID): Combatant = {
     val mockNext = mock[Combatant]
-    mockNext.health returns HealthTracker(1, 0, 0, 0, MinionHealthDefinition())
+    mockNext.health returns HealthTracker(1, 0, 0, MinionHealthDefinition())
     mRoster.combatant(combId) returns mockNext
     mockNext
   }

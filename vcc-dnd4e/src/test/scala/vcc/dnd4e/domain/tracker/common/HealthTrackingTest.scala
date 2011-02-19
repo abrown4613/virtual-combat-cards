@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,36 +22,36 @@ import vcc.dnd4e.model.common.CombatantType
 
 class HealthTrackingTest extends TestCase {
   def checkCharacterDefinitionStatus {
-    val hd = CharacterHealthDefinition(21, 4, 5)
+    val hd = CharacterHealthDefinition(21)
 
-    assert(hd.status(HealthTracker(21, 0, 0, 4, hd)) == HealthTracker.Status.Ok)
-    assert(hd.status(HealthTracker(11, 0, 0, 4, hd)) == HealthTracker.Status.Ok)
-    assert(hd.status(HealthTracker(10, 0, 0, 4, hd)) == HealthTracker.Status.Bloody)
-    assert(hd.status(HealthTracker(0, 0, 0, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 0, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 1, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 2, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, 4, hd)) == HealthTracker.Status.Dead)
-    assert(hd.status(HealthTracker(10, 0, 3, 4, hd)) == HealthTracker.Status.Dead)
+    assert(hd.status(HealthTracker(21, 0, 0, hd)) == HealthTracker.Status.Ok)
+    assert(hd.status(HealthTracker(11, 0, 0, hd)) == HealthTracker.Status.Ok)
+    assert(hd.status(HealthTracker(10, 0, 0, hd)) == HealthTracker.Status.Bloody)
+    assert(hd.status(HealthTracker(0, 0, 0, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 0, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 1, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 2, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == HealthTracker.Status.Dead)
+    assert(hd.status(HealthTracker(10, 0, 3, hd)) == HealthTracker.Status.Dead)
   }
 
   def checkMonsterDefinitionStatus {
-    val hd = MonsterHealthDefinition(21, 4, 5)
+    val hd = MonsterHealthDefinition(21)
 
-    assert(hd.status(HealthTracker(21, 0, 0, 4, hd)) == HealthTracker.Status.Ok)
-    assert(hd.status(HealthTracker(11, 0, 0, 4, hd)) == HealthTracker.Status.Ok)
-    assert(hd.status(HealthTracker(10, 0, 0, 4, hd)) == HealthTracker.Status.Bloody)
-    assert(hd.status(HealthTracker(0, 0, 0, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 0, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, 4, hd)) == HealthTracker.Status.Dead)
+    assert(hd.status(HealthTracker(21, 0, 0, hd)) == HealthTracker.Status.Ok)
+    assert(hd.status(HealthTracker(11, 0, 0, hd)) == HealthTracker.Status.Ok)
+    assert(hd.status(HealthTracker(10, 0, 0, hd)) == HealthTracker.Status.Bloody)
+    assert(hd.status(HealthTracker(0, 0, 0, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 0, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == HealthTracker.Status.Dead)
   }
 
   def checkMinionDefinitionStatus {
     val hd = MinionHealthDefinition()
 
-    assert(hd.status(HealthTracker(1, 0, 0, 4, hd)) == HealthTracker.Status.Ok)
-    assert(hd.status(HealthTracker(0, 0, 0, 4, hd)) == HealthTracker.Status.Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, 4, hd)) == HealthTracker.Status.Dead)
+    assert(hd.status(HealthTracker(1, 0, 0, hd)) == HealthTracker.Status.Ok)
+    assert(hd.status(HealthTracker(0, 0, 0, hd)) == HealthTracker.Status.Dying)
+    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == HealthTracker.Status.Dead)
   }
 
 
@@ -313,12 +313,12 @@ class HealthTrackingTest extends TestCase {
   def testDeltaApply() {
     val pc = HealthTracker.createTracker(CombatantType.Character, 20)
 
-    val pc_mode = HealthTracker(pc.currentHP - 5, 5, 1, pc.surges - 1, pc.base)
+    val pc_mode = HealthTracker(pc.currentHP - 5, 4, 1, pc.base)
 
     val delta = pc_mode.getDelta()
 
     assert(delta != null)
-    assert(delta == HealthTrackerDelta(5, 5, 1, 1))
+    assert(delta == HealthTrackerDelta(5, 4, 1))
 
     val pc_mode2 = pc.applyDelta(delta)
 
@@ -327,7 +327,7 @@ class HealthTrackingTest extends TestCase {
     val pc30 = HealthTracker.createTracker(CombatantType.Character, 30)
     val pc30_mode = pc_mode.replaceHealthDefinition(pc30.base)
 
-    assert(pc30_mode == HealthTracker(pc30.currentHP - 5, 5, 1, pc30.surges - 1, pc30.base))
+    assert(pc30_mode == HealthTracker(pc30.currentHP - 5, 4, 1, pc30.base))
   }
 
 }
