@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,9 @@
 //$Id$
 package vcc.infra.util
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class ReorderListBuilderTest extends JUnit4(ReorderListBuilderSpec)
-
-object ReorderListBuilderSpec extends Specification {
+class ReorderListBuilderTest extends SpecificationWithJUnit {
   var theList: ReorderedListBuilder[Int, UIInt] = null
 
   object comparator extends ReorderedListBuilderCompare[UIInt] {
