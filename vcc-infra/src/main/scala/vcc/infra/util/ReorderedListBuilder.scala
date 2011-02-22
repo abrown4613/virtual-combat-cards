@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  */
 //$Id$
 package vcc.infra.util
-
 
 /**
  * Provides a way to determine if two elements are larger than each other.
@@ -89,10 +88,10 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
   private var _baseList: ListLink = null
   private var _last: ListLink = null
   private var _reorder: List[(K, K)] = Nil
+  sanitize()
 
   //Build list and sanitize input parameters and build list
-  {
-
+  private def sanitize() {
     var p: ListLink = null
     for (e <- initList) {
       val ne = new ListLink(e, null, null, null)
@@ -112,7 +111,6 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
       if (!_baseList.contains(p._2)) throw new NoSuchElementException("Element" + p._2 + " not found in base list")
     }
     _reorder = initReorder
-
   }
 
 
@@ -126,7 +124,6 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
       val ne = new ListLink(e, null, null, null)
       var p = _baseList
       var last: ListLink = null
-      var todo = true
       while (p != null && comparator.isBefore(p.elem, e)) {
         last = p
         p = p.next
@@ -211,6 +208,9 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
     ret
   }
 
+  /**
+   * Get list of reorder commands.
+   */
   def reorders(): List[(K, K)] = _reorder
 
   /**
