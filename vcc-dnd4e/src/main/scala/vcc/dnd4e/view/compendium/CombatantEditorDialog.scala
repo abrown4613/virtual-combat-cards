@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,34 +67,40 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
 
   private val fs: List[(String, Field[_])] = List(
     ("Name", combatant.name)) :::
-          (combatant match {
-            case monster: MonsterEntity => List(
-              ("Level", monster.level),
-              ("Role", monster.role),
-              ("XP", monster.xp)
-              )
-            case char: CharacterEntity => List(
-              ("Level", char.level),
-              ("Race", char.race),
-              ("Class", char.charClass)
-              )
-          }) :::
-          List(
-            ("Initiative", combatant.initiative),
-            ("Hit Points", combatant.hp),
-            ("AC", combatant.ac),
-            ("Fortitude", combatant.fortitude),
-            ("Reflex", combatant.reflex),
-            ("Will", combatant.will)) :::
-          (combatant match {
-            case char: CharacterEntity => List(
-              ("Insight", char.insight),
-              ("Perception", char.perception),
-              ("Senses", char.senses)
-              )
-            case _ => Nil
-          }) :::
-          List(("Comment", combatant.comment))
+    (combatant match {
+      case trap: TrapEntity => List(
+        ("Level", trap.level),
+        ("Type", trap.trapClass),
+        ("Role", trap.role),
+        ("XP", trap.xp)
+      )
+      case monster: MonsterEntity => List(
+        ("Level", monster.level),
+        ("Role", monster.role),
+        ("XP", monster.xp)
+      )
+      case char: CharacterEntity => List(
+        ("Level", char.level),
+        ("Race", char.race),
+        ("Class", char.charClass)
+      )
+    }) :::
+    List(
+      ("Initiative", combatant.initiative),
+      ("Hit Points", combatant.hp),
+      ("AC", combatant.ac),
+      ("Fortitude", combatant.fortitude),
+      ("Reflex", combatant.reflex),
+      ("Will", combatant.will)) :::
+    (combatant match {
+      case char: CharacterEntity => List(
+        ("Insight", char.insight),
+        ("Perception", char.perception),
+        ("Senses", char.senses)
+      )
+      case _ => Nil
+    }) :::
+    List(("Comment", combatant.comment))
 
   fs.foreach(t => new FormTextField(t._1, t._2, form))
 
@@ -102,7 +108,7 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
       val template = CaptureTemplateEngine.fetchClassTemplate(combatant.classID.shortClassName)
-      statBlock.text = template.render(new MapDataSource(form.extractMap,Map(),Map())).toString
+      statBlock.text = template.render(new MapDataSource(form.extractMap, Map(), Map())).toString
       statBlock.sync()
     }
   }
@@ -122,5 +128,4 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
     add(saveButton, "span 3,split 3")
     add(closeButton)
   }
-
 }

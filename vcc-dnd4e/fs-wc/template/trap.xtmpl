@@ -2,7 +2,9 @@
 <html xmlns:t="http://org.exnebula/xtemplate/1.0">
     <t:define macro="section">
         <t:ifdefined id="header">
-            <span class="trapblocktitle"> <t:data id="header"/> </span>
+            <span class="trapblocktitle">
+                <t:data id="header"/>
+            </span>
             <t:inline id="text"/>
         </t:ifdefined>
     </t:define>
@@ -15,13 +17,18 @@
                 <t:data id="base:name"/>
                 <span class="type">
                     <t:data id="base:type"/>
+                    <t:data id="base:class"/>
                     <t:data id="base:role"/>
                 </span>
             </h1>
             <t:foreach ingroup="sections">
                 <t:include macro="section"/>
             </t:foreach>
-            <t:ifdefined id="text:comment"><p><t:data id="text:comment" /></p></t:ifdefined>
+            <t:ifdefined id="text:comment">
+                <p>
+                    <t:data id="text:comment"/>
+                </p>
+            </t:ifdefined>
         </div>
     </body>
 </html>
