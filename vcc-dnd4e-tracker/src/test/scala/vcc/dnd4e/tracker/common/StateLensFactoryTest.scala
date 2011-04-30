@@ -21,9 +21,6 @@ import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.scalaz.Lens
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.domain.tracker.common.{CombatantRosterDefinition, HealthTracker, CombatantID}
-import vcc.dnd4e.model.CombatantEntity
 
 class StateLensFactoryTest extends SpecificationWithJUnit with Mockito with DemoCompendium {
   val lf = mock[StateLensFactory]

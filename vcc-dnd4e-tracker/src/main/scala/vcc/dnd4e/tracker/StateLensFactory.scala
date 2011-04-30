@@ -19,7 +19,7 @@ package vcc.dnd4e.tracker
 
 import common.{Combatant, CombatState}
 import vcc.scalaz.Lens
-import vcc.dnd4e.domain.tracker.common.{CombatantID, HealthTracker}
+import vcc.dnd4e.tracker.common.{CombatantID, HealthTracker}
 
 trait LensFactory[S]
 
@@ -41,5 +41,6 @@ object StateLensFactory extends StateLensFactory {
     c => c.health,
     (c, h) => c.copy(health = h)
   )
+
   protected val combatantMapLens: Lens[CombatState, Map[CombatantID, Combatant]] = Lens(s => s.roster, (state, r) => state.copy(roster = r))
 }

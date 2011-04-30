@@ -17,10 +17,7 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.model.CombatantEntity
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.domain.tracker.common._
 
 /**
  * This trait defined a set of CombatEntity to be used in testing.
@@ -34,7 +31,7 @@ trait DemoCompendium {
       name = name,
       healthDef = ctype match {
         case CombatantType.Monster => MonsterHealthDefinition(hp)
-        case CombatantType.Minion => MinionHealthDefinition()
+        case CombatantType.Minion => MinionHealthDefinition
         case CombatantType.Character => CharacterHealthDefinition(hp)
       },
       initiative = init,
