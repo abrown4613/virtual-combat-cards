@@ -17,25 +17,10 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-/**
- *
- */
-case class Combatant(cid: CombatantID, alias: String, comment: String, entity: CombatantEntity, health: HealthTracker, effects: EffectList)
+object CombatantType extends Enumeration {
+  val Minion = Value("Minion")
+  val Character = Value("Character")
+  val Monster = Value("Monster")
 
-/**
- *  Defines the major CombatantRoster data for a tracker.transactional.Combatant, it is also used for views.
- */
-case class CombatantRosterDefinition(cid: CombatantID, alias: String, entity: CombatantEntity) extends CombatantAspect
-
-object Combatant {
-  def apply(definition: CombatantRosterDefinition): Combatant = {
-    Combatant(
-      cid = definition.cid,
-      alias = definition.alias,
-      entity = definition.entity,
-      health = HealthTracker.createTracker(definition.entity.healthDef),
-      effects = EffectList(definition.cid, Nil),
-      comment = ""
-    )
-  }
+  def isCharacter(combatantType: this.Value) = (combatantType == Character)
 }

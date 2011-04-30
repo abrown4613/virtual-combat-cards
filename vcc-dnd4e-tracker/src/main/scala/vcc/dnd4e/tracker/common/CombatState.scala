@@ -17,8 +17,6 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.domain.tracker.common.CombatantID
-
 case class CombatState(roster: Map[CombatantID, Combatant], order: InitiativeOrder) {
   def endCombat(): CombatState = {
     this.copy(order = order.endCombat())

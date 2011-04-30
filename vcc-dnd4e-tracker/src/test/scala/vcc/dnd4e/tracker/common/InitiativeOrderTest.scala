@@ -18,7 +18,6 @@
 package vcc.dnd4e.tracker.common
 
 import org.specs.SpecificationWithJUnit
-import vcc.dnd4e.domain.tracker.common.{InitiativeTracker, InitiativeDefinition}
 
 class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID {
 

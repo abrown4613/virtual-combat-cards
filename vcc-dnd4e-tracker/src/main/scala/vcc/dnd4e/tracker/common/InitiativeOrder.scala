@@ -17,7 +17,6 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.domain.tracker.common._
 import vcc.infra.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
 import vcc.util.DiceBag
 

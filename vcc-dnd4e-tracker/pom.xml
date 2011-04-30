@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>org.exnebula</groupId>
-            <artifactId>vcc-dnd4e</artifactId>
+            <artifactId>vcc-infra</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
