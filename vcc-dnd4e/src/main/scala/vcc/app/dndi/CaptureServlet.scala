@@ -29,12 +29,12 @@ class CaptureServlet extends HttpServlet {
     response.setContentType("text/html");
     response.setStatus(HttpServletResponse.SC_OK);
 
-    logger.debug("Request: "+request)
+    logger.debug("Request: " + request)
     val hasQuery = request.getParameter("has")
-    if(hasQuery == null) {
+    if (hasQuery == null) {
       response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
     } else {
-      response.getWriter().print(if(hasQuery=="reply-text") "true" else "false")
+      response.getWriter().print(if (hasQuery == "reply-text") "true" else "false")
     }
   }
 
@@ -79,12 +79,32 @@ class CaptureServlet extends HttpServlet {
       case "plugin-text" => pluginReply(result, response)
       case _ => humanReply(result, response)
     }
+
+    // Add lag to be nice on eventual automation
+    Thread.sleep(delayInterval())
+
     result match {
       case Some(Right(dObject)) =>
         logger.info("Captured '{}': {}", dObject.clazz, dObject("base:name").get)
         logger.debug("Catured {} is: {}", dObject.clazz, dObject)
       case _ =>
         logger.warn("Capture failed.")
+    }
+  }
+
+  private object MatchInt {
+    def unapply(s: String): Option[Int] = try {
+      Some(s.toInt)
+    } catch {
+      case _ => None
+    }
+  }
+
+  private def delayInterval(): Long = {
+    System.getProperty("vcc.dndi.delay") match {
+      case MatchInt(r) => 1000 + scala.util.Random.nextInt(r)
+      case null => 0
+      case s => 1000
     }
   }
 }
