@@ -22,7 +22,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateTest extends JUnit4(CombatStateSpec)
@@ -58,7 +58,7 @@ object CombatStateSpec extends Specification with Mockito {
       comb must notBeNull
       comb.isInstanceOf[Combatant] must beTrue
       there was one(mRoster).isDefinedAt(combA) then
-              one(mRoster).combatant(combA)
+        one(mRoster).combatant(combA)
     }
 
     "match CombatantID to None when not present" in {
@@ -86,7 +86,7 @@ object CombatStateSpec extends Specification with Mockito {
       comb must notBeNull
       comb.isInstanceOf[Combatant] must beTrue
       there was one(mRoster).isDefinedAt(combA) then
-              one(mRoster).combatant(combA)
+        one(mRoster).combatant(combA)
     }
 
     "match EffectID to None when not present" in {
@@ -115,7 +115,7 @@ object CombatStateSpec extends Specification with Mockito {
       it must notBeNull
       it.isInstanceOf[InitiativeTracker] must beTrue
       there was one(mOrder).isDefinedAt(ioa) then
-              one(mOrder).initiativeTrackerFor(ioa)
+        one(mOrder).initiativeTrackerFor(ioa)
     }
 
     "match InitiativeOrderID to None when an InitiativeTracker is not present" in {

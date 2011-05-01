@@ -22,10 +22,10 @@ import scala.swing.event._
 import vcc.util.swing._
 
 import scala.util.Sorting
-import vcc.dnd4e.domain.tracker.common.{InitiativeDefinition}
 import vcc.dnd4e.view.helper.{InitiativeRollEditor, InitiativeRoll}
 import vcc.util.{ListHelper, DiceBag}
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatant, PanelDirector}
+import vcc.dnd4e.tracker.common.InitiativeDefinition
 
 class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalPromptDialog[(Boolean, List[InitiativeDefinition])](window, "Roll Initiative") {
   private val table = new RowProjectionTable[InitiativeDialogEntry] with CustomRenderedRowProjectionTable[InitiativeDialogEntry] {
@@ -46,7 +46,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
   })
   private val rollAndStartButton = new Button(Action("Roll and Start Combat") {
     val ir = getResult()
-    setDialogResultAndClose(Some((!ir.isEmpty, ir)))  //Only start if there are initiative
+    setDialogResultAndClose(Some((!ir.isEmpty, ir))) //Only start if there are initiative
   })
 
   private val groupCheckbox = new Button(Action("Group similar") {

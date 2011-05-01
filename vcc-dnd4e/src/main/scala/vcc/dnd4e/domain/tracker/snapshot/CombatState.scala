@@ -18,25 +18,26 @@
 package vcc.dnd4e.domain.tracker.snapshot
 
 import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common.{InitiativeTracker, InitiativeOrderID, CombatantID}
 
 /**
  * A snapshot of a CombatState, this is limit version of the transactional state.
  */
 case class CombatState(
-        isCombatStarted: Boolean,
-        combatComment: String,
-        private val order: List[InitiativeOrderID],
-        initiatives: Map[InitiativeOrderID, InitiativeTracker],
-        nextUp: Option[InitiativeOrderID],
-        roster: Map[CombatantID, CombatantStateView]) extends CombatStateView {
+                        isCombatStarted: Boolean,
+                        combatComment: String,
+                        private val order: List[InitiativeOrderID],
+                        initiatives: Map[InitiativeOrderID, InitiativeTracker],
+                        nextUp: Option[InitiativeOrderID],
+                        roster: Map[CombatantID, CombatantStateView]) extends CombatStateView {
   def initiativeTrackerFromID(orderId: InitiativeOrderID): InitiativeTracker = initiatives(orderId)
 
-  def getInitiativeOrder(): List[InitiativeOrderID] = order
+  def getInitiativeOrder: List[InitiativeOrderID] = order
 
   def combatantViewFromID(id: CombatantID): CombatantStateView = roster(id)
 
   def allCombatantIDs: List[CombatantID] = roster.keys.toList
 
-  def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList filterNot (order.map(_.combId) contains) ): _*)
+  def combatantsNotInOrder(): Set[CombatantID] = Set((roster.keys.toList filterNot (order.map(_.combId) contains)): _*)
 
 }

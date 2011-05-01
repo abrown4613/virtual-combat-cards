@@ -22,6 +22,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])

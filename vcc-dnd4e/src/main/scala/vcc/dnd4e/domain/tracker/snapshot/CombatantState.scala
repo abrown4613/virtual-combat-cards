@@ -17,7 +17,9 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.common.EffectList
+import vcc.dnd4e.domain.tracker.common.CombatantStateView
 
 case class CombatantState(definition: CombatantRosterDefinition,
                           healthTracker: HealthTracker,

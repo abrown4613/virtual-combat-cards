@@ -20,6 +20,7 @@ package vcc.dnd4e.domain.tracker.common
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
 import vcc.dnd4e.domain.tracker.common.Command.{CancelEffect}
+import vcc.dnd4e.tracker.common.{Duration, Effect, CombatantID, EffectID}
 
 //SAVE
 

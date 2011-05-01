@@ -18,7 +18,7 @@
 package vcc.dnd4e.view.helper
 
 import vcc.dnd4e.domain.tracker.snapshot.CombatState
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
 
 trait InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID]
@@ -36,7 +36,7 @@ object SortedIDReserverViewBuilder extends ReserveViewBuilder {
 
 object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
-    combatState.getInitiativeOrder()
+    combatState.getInitiativeOrder
   }
 }
 
@@ -45,7 +45,7 @@ object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
  */
 object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
   def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
-    val order = combatState.getInitiativeOrder()
+    val order = combatState.getInitiativeOrder
     val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
     order.drop(idx) ++ order.take(idx)
   }

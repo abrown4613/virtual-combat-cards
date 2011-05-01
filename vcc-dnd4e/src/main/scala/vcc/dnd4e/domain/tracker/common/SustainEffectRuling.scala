@@ -19,6 +19,7 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Decision, Ruling}
 import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.tracker.common.EffectID
 
 /**
  * Ruling for the sustain of a given effect.

@@ -20,6 +20,8 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.dnd4e.domain.tracker.common.Command.InternalInitiativeAction
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, PendingRuling}
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.domain.tracker.common._
 
 object RulingSearchService {
@@ -66,7 +68,7 @@ trait RulingHandler {
 
   import InitiativeTracker.action._
 
-  addRulingSearch{
+  addRulingSearch {
     case InternalInitiativeAction(who, EndRound) => RulingSearchService.searchEndRound(context, who.combId)
     case InternalInitiativeAction(who, StartRound) => RulingSearchService.searchStartRound(context, who.combId)
   }

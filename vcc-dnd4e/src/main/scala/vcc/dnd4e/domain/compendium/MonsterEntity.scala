@@ -18,12 +18,13 @@
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.datastore.naming._
-import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common.CombatantType
 
 class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
+
   import CombatantEntityFields._
+
   val classID = Compendium.monsterClassID
 
   def combatantType = if (hp == 1) CombatantType.Minion else CombatantType.Monster
@@ -47,6 +48,7 @@ object MonsterEntity {
 case class MonsterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, xp: Int, role: String, minion: Boolean) extends EntitySummary(eid, classid)
 
 object MonsterSummary {
+
   import CombatantEntityFields._
 
   private object template extends FieldSet(null) {

@@ -42,8 +42,12 @@ object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with 
     "call reserve builder with CombatantID that are not in order" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[CombatState]) answers {cs => cs.asInstanceOf[CombatState].getInitiativeOrder()}
-      mReserve.buildReserve(any[CombatState]) answers {cs => cs.asInstanceOf[CombatState].combatantsNotInOrder().toSeq}
+      mOrderBuilder.buildOrder(any[CombatState]) answers {
+        cs => cs.asInstanceOf[CombatState].getInitiativeOrder
+      }
+      mReserve.buildReserve(any[CombatState]) answers {
+        cs => cs.asInstanceOf[CombatState].combatantsNotInOrder().toSeq
+      }
 
       UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       there was one(mReserve).buildReserve(cs)

@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.common
 
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common._
 
 class CombatStateRules {
 

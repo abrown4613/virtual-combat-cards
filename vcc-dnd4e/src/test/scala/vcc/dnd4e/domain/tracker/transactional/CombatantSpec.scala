@@ -20,11 +20,10 @@ package vcc.dnd4e.domain.tracker.transactional
 
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.domain.tracker.common._
-import vcc.dnd4e.model.CombatantEntity
+import vcc.dnd4e.tracker.common._
 import vcc.infra.test.{TransactionalSpecification}
 import org.specs.{Specification}
+import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatantTest extends JUnit4(CombatantSpec)

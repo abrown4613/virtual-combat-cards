@@ -18,7 +18,7 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.TableModelRowProjection
-import vcc.dnd4e.domain.tracker.common.{Effect, Condition}
+import vcc.dnd4e.tracker.common.{Effect}
 import vcc.dnd4e.domain.tracker.common.Command.UpdateEffectCondition
 import vcc.dnd4e.view.PanelDirector
 

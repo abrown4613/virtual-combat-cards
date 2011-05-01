@@ -21,6 +21,7 @@ package vcc.dnd4e.domain.tracker.snapshot
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
@@ -41,7 +42,7 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
         InitiativeOrderChange(List(ita0)))
 
       snap.initiativeTrackerFromID(ioa0) must_== ita0
-      snap.getInitiativeOrder() must_== List(ioa0)
+      snap.getInitiativeOrder must_== List(ioa0)
     }
 
     "ignore an InitiativeTracker not in InitiativeOrderChange" in {
@@ -50,7 +51,7 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
       val snap = processChanges(aBuilder, InitiativeTrackerChange(ita0))
       snap.initiativeTrackerFromID(ioa0) must throwAn[NoSuchElementException]
       snap.initiativeTrackerFromID(iob) must_== itb
-      snap.getInitiativeOrder() must_== List(iob)
+      snap.getInitiativeOrder must_== List(iob)
     }
 
     "handle InitiativeOrderChangeFirst then InitiativeOrderChange" in {
@@ -58,7 +59,7 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
       val snap = processChanges(aBuilder, InitiativeOrderFirstChange(ioa0), InitiativeOrderChange(List(itb, ita0)))
       snap.initiativeTrackerFromID(ioa0) must_== ita0
       snap.initiativeTrackerFromID(iob) must_== itb
-      snap.getInitiativeOrder() must_== List(iob, ioa0)
+      snap.getInitiativeOrder must_== List(iob, ioa0)
       snap.nextUp must_== Some(ioa0)
     }
 
@@ -67,7 +68,7 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
       val snap = processChanges(aBuilder, InitiativeTrackerChange(ita0m))
 
       snap.initiativeTrackerFromID(ioa0) must_== ita0m
-      snap.getInitiativeOrder() must_== List(ioa0)
+      snap.getInitiativeOrder must_== List(ioa0)
     }
 
     "remove an InitiativeTracker on an InitiativeOrderChange" in {
@@ -76,7 +77,7 @@ object CombatStateSnapshotBuilderSpec extends Specification with CombatStateSnap
       val snap = processChanges(aBuilder, InitiativeOrderChange(List(itb)))
 
       snap.initiativeTrackerFromID(ioa0) must throwA[NoSuchElementException]
-      snap.getInitiativeOrder() must_== List(iob)
+      snap.getInitiativeOrder must_== List(iob)
     }
 
     "store combatants on a RosterChange" in {

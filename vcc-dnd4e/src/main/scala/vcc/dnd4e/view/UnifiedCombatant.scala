@@ -17,8 +17,10 @@
 //$Id$
 package vcc.dnd4e.view
 
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.domain.tracker.common.{InitiativeOrderID, CombatantStateView, CombatantID, InitiativeTracker}
+import vcc.dnd4e.tracker.common.CombatantType
+import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatantID, InitiativeTracker}
+import vcc.dnd4e.domain.tracker.common.CombatantStateView
+
 
 /**
  * This identifier is used to search for UnifiedCombatant.

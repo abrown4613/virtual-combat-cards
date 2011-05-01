@@ -24,10 +24,10 @@ import vcc.infra.docking._
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange}
 import tabular._
 import vcc.dnd4e.domain.tracker.common.Command.AddEffect
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 
 class SequenceTable(director: PanelDirector) extends ScrollPane
-        with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
+with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
   //Init
   val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer()
@@ -83,8 +83,8 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
     if (StateChange.hasAnySequenceChange(changes.changes) ||
-            !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
-            !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
+      !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
+      !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
     ) {
       updateContent()
       //On a sequence change
@@ -93,7 +93,9 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
         if (newfirst != source) director.setActiveCombatant(newfirst)
       }
       if (changes.changes.contains(StateChange.combat.OrderFirst)) {
-        SwingHelper.invokeLater {director.setActiveCombatant(state.orderFirstId)}
+        SwingHelper.invokeLater {
+          director.setActiveCombatant(state.orderFirstId)
+        }
       }
     }
   }
@@ -110,11 +112,13 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     table.labelFormatter.updateNextUp(state.orderFirst)
     //Adjust selection
     if (!ncontent.isEmpty) {
-      val idx: Int = { // -1 means not found
+      val idx: Int = {
+        // -1 means not found
         val obj = if (target.isDefined) ncontent.find(x => x.matches(target.get)) else None
         if (obj.isDefined) ncontent.indexOf(obj.get) else -1
       }
-      if (idx == -1) { //Select first as active and second, if present as target
+      if (idx == -1) {
+        //Select first as active and second, if present as target
         val defaultRow = if (ncontent.length > 1) 1 else 0
         table.selection.rows += defaultRow
 

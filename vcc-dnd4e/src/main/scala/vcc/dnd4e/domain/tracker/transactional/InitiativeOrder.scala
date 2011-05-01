@@ -20,7 +20,8 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.util.DiceBag
 import vcc.infra.util.{ArrayRoundRobin, ReorderedListBuilderCompare, ReorderedListBuilder}
 import vcc.controller.transaction.{UndoableWithCallback, Undoable, Transaction}
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.{InitiativeTrackerChange, InitiativeOrderChange, InitiativeOrderFirstChange}
 
 /**
  * InitiativeOrder keeps the information about acting Combatants.
@@ -146,7 +147,7 @@ class InitiativeOrder {
 
     val toRemove = initOrder.value.filter(e => e.combId == comb)
     initOrder.value = initOrder.value filterNot (toRemove contains)
-    toRemove.foreach{
+    toRemove.foreach {
       o => updateInitiativeTrackerFor(o, null)
     }
     trackers.value = trackers.value -- toRemove
@@ -216,7 +217,7 @@ class InitiativeOrder {
    */
   def syncOrderToRoster(combatants: List[CombatantID])(implicit trans: Transaction) {
     val missing = getIDsInOrder().map(id => id.combId).toSet -- combatants
-    missing.foreach{
+    missing.foreach {
       id => removeCombatant(id)
     }
   }

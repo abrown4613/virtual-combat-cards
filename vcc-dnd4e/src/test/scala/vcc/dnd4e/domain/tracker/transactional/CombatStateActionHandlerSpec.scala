@@ -25,11 +25,10 @@ import vcc.controller.transaction.Transaction
 import vcc.controller.{IllegalActionException, CommandSource}
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.model.CombatantEntity
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 import vcc.controller.message.TransactionalAction
 import collection.mutable.Queue
-import vcc.dnd4e.model.common.CombatantType
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateActionHandlerTest extends JUnit4(CombatStateActionHandlerSpec)
@@ -93,7 +92,7 @@ object CombatStateActionHandlerSpec extends Specification with Mockito {
   }
 
   "aCombatController handling a AddComabatant" should {
-    val entity = CombatantEntity(EntityID.fromName("Dummy"), "Goblin", MinionHealthDefinition(), 4, CombatantType.Monster, null)
+    val entity = CombatantEntity(EntityID.fromName("Dummy"), "Goblin", MinionHealthDefinition, 4, CombatantType.Monster, null)
     val combA = CombatantID("A")
     val combB = CombatantID("B")
 

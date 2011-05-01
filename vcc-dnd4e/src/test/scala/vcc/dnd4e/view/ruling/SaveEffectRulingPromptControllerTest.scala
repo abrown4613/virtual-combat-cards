@@ -19,8 +19,9 @@ package vcc.dnd4e.view.ruling
 
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision, CombatantID, EffectID, SaveEffectRuling}
+import vcc.dnd4e.domain.tracker.common.{SaveEffectDecision, SaveEffectRuling}
 import vcc.infra.prompter.{EnumerationValuePanel}
+import vcc.dnd4e.tracker.common.{CombatantID, EffectID}
 
 class SaveEffectRulingPromptControllerTest extends SpecificationWithJUnit with Mockito {
 

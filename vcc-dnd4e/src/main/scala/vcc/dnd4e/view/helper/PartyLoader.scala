@@ -22,12 +22,13 @@ import vcc.dnd4e.domain.tracker.common.Command.AddCombatants
 import vcc.dnd4e.domain.compendium.CompendiumRepository
 import vcc.model.Registry
 import vcc.infra.datastore.naming._
-import vcc.dnd4e.model.CombatantEntity
+import vcc.dnd4e.model.CombatantEntityBuilder
 
 import scala.swing.{Dialog, Component}
 import vcc.dnd4e.view.PanelDirector
-import vcc.dnd4e.domain.tracker.common.CombatantRosterDefinition
+import vcc.dnd4e.tracker.common.CombatantRosterDefinition
 import java.io.{FileInputStream, File}
+import vcc.dnd4e.tracker.common.CombatantEntity
 
 /**
  * Companion object to the PartyLoader.
@@ -132,7 +133,7 @@ class PartyLoader private[helper](es: CompendiumRepository, peer: PartyLoader.Vi
       if (!cem.isDefinedAt(member.eid)) {
         val ent = es.load(member.eid, true)
         if (ent != null) {
-          cem += (member.eid -> CombatantEntity.fromCompendiumCombatantEntity(ent))
+          cem += (member.eid -> CombatantEntityBuilder.fromCompendiumCombatantEntity(ent))
         }
       }
     }

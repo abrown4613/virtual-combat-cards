@@ -19,7 +19,7 @@
 package vcc.dnd4e.view
 
 import helper.{ReserveViewBuilder, InitiativeOrderViewBuilder}
-import vcc.dnd4e.domain.tracker.common.{CombatantID, InitiativeOrderID}
+import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
 import vcc.dnd4e.domain.tracker.snapshot.CombatState
 
 /**

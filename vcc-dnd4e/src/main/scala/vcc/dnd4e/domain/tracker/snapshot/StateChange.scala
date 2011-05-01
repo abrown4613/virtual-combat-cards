@@ -17,7 +17,8 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.CombatantComment
 
 /**
  * Changes on the state to the combatant and combat state
@@ -94,6 +95,6 @@ class StateChange {
 
   def changes(): Set[StateChange.combat.Value] = _combat
 
-  override def toString(): String = "CombatStateChanges(" + _combat + "," + _combatant + ")"
+  override def toString: String = "CombatStateChanges(" + _combat + "," + _combatant + ")"
 
 }

@@ -20,11 +20,10 @@ package vcc.dnd4e.view.helper
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
 import vcc.dnd4e.domain.tracker.common.Command.{InternalInitiativeAction}
-import vcc.dnd4e.domain.tracker.common.InitiativeTracker._
+import vcc.dnd4e.tracker.common.InitiativeTracker._
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common._
-import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common._
 
 class ActionTranslatorTest extends SpecificationWithJUnit with Mockito {
 

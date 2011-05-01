@@ -18,12 +18,12 @@
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.datastore.naming._
-import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dnd4e.model.common.CombatantType
 
 class TrapEntity(eid: EntityID) extends MonsterEntity(eid) {
+
   import CombatantEntityFields._
+
   override val classID = Compendium.trapClassID
 
   val trapClass = new StringField(this, "base:class", RequiredString)
@@ -42,6 +42,7 @@ object TrapEntity {
 case class TrapSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, xp: Int, role: String, hazard: Boolean) extends EntitySummary(eid, classid)
 
 object TrapSummary {
+
   import CombatantEntityFields._
 
   private object template extends FieldSet(null) {

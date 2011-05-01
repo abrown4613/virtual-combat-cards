@@ -18,14 +18,18 @@
 package vcc.dnd4e.domain.tracker.transactional
 
 import vcc.controller.transaction.{Transaction, Undoable}
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.{CombatantComment, CombatantChange, CombatantStateView}
 
 class Combatant(initDefinition: CombatantRosterDefinition) extends CombatantStateView {
   private val _definition: Undoable[CombatantRosterDefinition] = new Undoable[CombatantRosterDefinition](initDefinition, x => CombatantChange(_definition.value.cid, x.value))
   private val _health = new Undoable[HealthTracker](HealthTracker.createTracker(definition.entity.healthDef), (uv) => CombatantChange(definition.cid, uv.value))
-  private val _comment = new Undoable[String]("", uv => {CombatantChange(definition.cid, CombatantComment(uv.value))})
-  private val _effects = new Undoable[EffectList](EffectList(definition.cid, Nil), uv => {CombatantChange(definition.cid, uv.value)})
+  private val _comment = new Undoable[String]("", uv => {
+    CombatantChange(definition.cid, CombatantComment(uv.value))
+  })
+  private val _effects = new Undoable[EffectList](EffectList(definition.cid, Nil), uv => {
+    CombatantChange(definition.cid, uv.value)
+  })
 
   def health = _health.value
 

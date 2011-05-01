@@ -19,8 +19,9 @@ package vcc.dnd4e.view.ruling
 
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{CombatantID, SaveVersusDeathRuling, SaveVersusDeathDecision}
+import vcc.dnd4e.domain.tracker.common.{SaveVersusDeathRuling, SaveVersusDeathDecision}
 import vcc.infra.prompter.EnumerationValuePanel
+import vcc.dnd4e.tracker.common.CombatantID
 
 class SaveVersusDeathPromptControllerTest extends SpecificationWithJUnit with Mockito {
 

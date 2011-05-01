@@ -22,10 +22,9 @@ import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
 import vcc.model.IDGenerator
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.model.CombatantEntity
 import vcc.infra.test.{TransactionalSpecification, TransactionChangeLogger}
 import vcc.controller.transaction.{ChangeNotification, Transaction}
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])

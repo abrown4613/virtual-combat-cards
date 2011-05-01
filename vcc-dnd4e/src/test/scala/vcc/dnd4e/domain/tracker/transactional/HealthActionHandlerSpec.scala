@@ -22,13 +22,14 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 
-import vcc.dnd4e.domain.tracker.common._
-import Command._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.Command._
 import collection.mutable.Queue
 import vcc.controller.message.TransactionalAction
 import org.specs.mock.Mockito
 import vcc.controller.transaction.Transaction
 import vcc.controller.{UnhandledActionException, CommandSource}
+import vcc.dnd4e.domain.tracker.common.CombatStateRules
 
 @RunWith(classOf[JUnitSuiteRunner])
 class HealthActionHandlerTest extends JUnit4(HealthActionHandlerSpec)
@@ -54,9 +55,10 @@ trait MockCombatContextSpecification extends Specification with Mockito {
 }
 
 object HealthActionHandlerSpec extends MockCombatContextSpecification {
+
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends AbstractCombatController(rules, state, queue)
-                  with HealthActionHandler
+    extends AbstractCombatController(rules, state, queue)
+    with HealthActionHandler
 
   var trans: Transaction = null
 

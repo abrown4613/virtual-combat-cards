@@ -21,7 +21,8 @@ import org.specs.SpecificationWithJUnit
 import vcc.controller.{PendingRuling}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
-import vcc.dnd4e.domain.tracker.common.Effect.Condition
+import vcc.dnd4e.tracker.common._
+import Effect.Condition
 
 class DomainRulingTest extends SpecificationWithJUnit {
   private val eid = EffectID(CombatantID("A"), 1)

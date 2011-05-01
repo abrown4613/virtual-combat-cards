@@ -21,8 +21,8 @@ import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{MonsterEntity, CompendiumRepository}
-import vcc.dnd4e.model.{CombatantEntity, PartyMember}
-import vcc.dnd4e.domain.tracker.common.{CombatantID, CombatantRosterDefinition}
+import vcc.dnd4e.model.{CombatantEntityBuilder, PartyMember}
+import vcc.dnd4e.tracker.common.{CombatantID, CombatantRosterDefinition}
 
 class PartyLoaderTest extends SpecificationWithJUnit with Mockito {
 
@@ -78,8 +78,8 @@ class PartyLoaderTest extends SpecificationWithJUnit with Mockito {
     es.load(entId1, true) returns monster1
     es.load(entId2, true) returns monster2
     es.load(entId3, true) returns null
-    val ce1 = CombatantEntity.fromCompendiumCombatantEntity(monster1)
-    val ce2 = CombatantEntity.fromCompendiumCombatantEntity(monster2)
+    val ce1 = CombatantEntityBuilder.fromCompendiumCombatantEntity(monster1)
+    val ce2 = CombatantEntityBuilder.fromCompendiumCombatantEntity(monster2)
 
     "cleanly load found entries" in {
       loader.resolveEntries(members.tail) must_== List(

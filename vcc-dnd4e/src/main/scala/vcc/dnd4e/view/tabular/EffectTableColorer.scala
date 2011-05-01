@@ -18,9 +18,10 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.ProjectionTableLabelFormatter
-import vcc.dnd4e.domain.tracker.common.{Duration, Effect}
+import vcc.dnd4e.tracker.common.{Duration, Effect}
 
 object EffectTableColorer extends ProjectionTableLabelFormatter[Effect] {
+
   import java.awt.Color
 
   private val attention = (Color.ORANGE, Color.BLACK)
