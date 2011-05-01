@@ -19,7 +19,8 @@ package vcc.dnd4e.view.helper
 
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command._
-import vcc.dnd4e.domain.tracker.common.{InitiativeTracker, CombatStateView}
+import vcc.dnd4e.domain.tracker.common.{CombatStateView}
+import vcc.dnd4e.tracker.common.InitiativeTracker
 
 object ActionTranslator {
   private def formatIfNotNull(s: String, fmt: String) = if (s != null) s.formatted(fmt) else ""

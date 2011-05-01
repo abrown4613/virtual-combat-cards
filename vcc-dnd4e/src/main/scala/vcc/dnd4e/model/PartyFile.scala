@@ -20,7 +20,7 @@ package vcc.dnd4e.model
 import scala.xml._
 import vcc.infra.datastore.naming._
 import vcc.util.XMLHelper._
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.tracker.common.CombatantID
 import java.io.{FileInputStream, File, InputStream}
 
 /**

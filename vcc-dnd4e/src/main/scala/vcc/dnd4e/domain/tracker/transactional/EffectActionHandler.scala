@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
 
 trait EffectActionHandler {

@@ -19,6 +19,7 @@ package vcc.dnd4e.domain.tracker.snapshot
 
 import vcc.controller.SnapshotBuilder
 import vcc.controller.transaction.ChangeNotification
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 /**
@@ -89,7 +90,7 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] with Snaps
   }
 
   def endChanges() {
-    initiatives --= (initiatives.keys.toList filterNot(order contains))
+    initiatives --= (initiatives.keys.toList filterNot (order contains))
     if (toBeFirst.isDefined) {
       val who = toBeFirst.get
       if (who != null && !initiatives.isDefinedAt(who)) throw new NoSuchElementException("InitiativeOrder does not include: " + who)

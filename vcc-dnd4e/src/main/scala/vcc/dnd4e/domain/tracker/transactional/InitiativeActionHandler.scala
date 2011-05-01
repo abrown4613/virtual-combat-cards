@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
 import InitiativeTracker.{action}
 import vcc.controller.IllegalActionException
@@ -62,7 +62,7 @@ trait InitiativeActionHandler {
 
       // Check if we need to advance dead if we rotated
       if ((action == InitiativeTracker.action.EndRound || action == InitiativeTracker.action.Delay)
-              && (firstIT.orderID != context.order.robinHeadInitiativeTracker.orderID)) {
+        && (firstIT.orderID != context.order.robinHeadInitiativeTracker.orderID)) {
         val nextIT = context.order.robinHeadInitiativeTracker()
         val health = context.roster.combatant(nextIT.orderID.combId).health
         if (health.status == HealthTracker.Status.Dead) {

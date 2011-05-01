@@ -20,7 +20,8 @@ package vcc.dnd4e.view.ruling
 import org.specs.SpecificationWithJUnit
 import vcc.infra.prompter.EnumerationValuePanel
 import org.specs.mock.Mockito
-import vcc.dnd4e.domain.tracker.common.{SustainEffectRuling, EffectID, CombatantID, SustainEffectDecision}
+import vcc.dnd4e.domain.tracker.common.{SustainEffectRuling, SustainEffectDecision}
+import vcc.dnd4e.tracker.common.{EffectID, CombatantID}
 
 class SustainEffectPromptControllerTest extends SpecificationWithJUnit with Mockito {
 

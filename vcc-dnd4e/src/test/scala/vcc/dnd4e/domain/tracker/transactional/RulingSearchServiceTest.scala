@@ -18,6 +18,7 @@
 package vcc.dnd4e.domain.tracker.transactional
 
 import org.specs.SpecificationWithJUnit
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatContextSpecification {

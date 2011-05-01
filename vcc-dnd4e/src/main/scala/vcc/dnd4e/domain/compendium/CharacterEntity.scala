@@ -18,12 +18,13 @@
 package vcc.dnd4e.domain.compendium
 
 import vcc.infra.datastore.naming._
-import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common.CombatantType
 
 class CharacterEntity(eid: EntityID) extends CombatantEntity(eid) {
+
   import CombatantEntityFields._
+
   val combatantType = CombatantType.Character
   val classID = Compendium.characterClassID
   val charClass = new StringField(this, "base:class", RequiredString)
@@ -42,6 +43,7 @@ object CharacterEntity {
 case class CharacterSummary(override val eid: EntityID, override val classid: EntityClassID, name: String, level: Int, cclass: String, race: String) extends EntitySummary(eid, classid)
 
 object CharacterSummary {
+
   import CombatantEntityFields._
 
   private object template extends FieldSet(null) {

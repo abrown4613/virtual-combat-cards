@@ -22,6 +22,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 import vcc.controller.transaction.ChangeNotification
 
@@ -29,7 +30,7 @@ import vcc.controller.transaction.ChangeNotification
 class CombatChangeAndStateSnapshotBuilderTest extends JUnit4(CombatChangeAndStateSnapshotBuilderSpec)
 
 object CombatChangeAndStateSnapshotBuilderSpec extends Specification
-        with Mockito with CombatStateSnapshotHelper[CombatStateWithChanges] {
+with Mockito with CombatStateSnapshotHelper[CombatStateWithChanges] {
   var aBuilder: CombatChangeAndStateSnapshotBuilder = null
   var mCSBuilder: CombatStateSnapshotBuilder = null
 
@@ -42,8 +43,8 @@ object CombatChangeAndStateSnapshotBuilderSpec extends Specification
     "forward changes cycle" in {
       processChanges(aBuilder, InitiativeOrderChange(List(ita0)))
       there was one(mCSBuilder).beginChanges() then
-              one(mCSBuilder).processChange(InitiativeOrderChange(List(ita0))) then
-              one(mCSBuilder).endChanges()
+        one(mCSBuilder).processChange(InitiativeOrderChange(List(ita0))) then
+        one(mCSBuilder).endChanges()
     }
 
     "request a valid snapshot" in {

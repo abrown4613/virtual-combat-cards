@@ -17,7 +17,8 @@
 //$Id4
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatStateView}
 
 /**
  * CombatState provides an aggregate of the CombatantRoster, InitiativeOrder, and CombatMetaData. It also provides

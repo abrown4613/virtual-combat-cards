@@ -20,15 +20,13 @@ package vcc.dnd4e.view
 import scala.swing._
 import vcc.util.swing._
 
-import vcc.dnd4e.domain.tracker.common.{Effect}
+import vcc.dnd4e.tracker.common.{Effect}
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{CombatState, StateChange}
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.domain.tracker.snapshot.{StateChange}
 
 class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel("fill,ins 2")
-        with ContextObserver with ScalaDockableComponent with CombatStateObserver
-{
+with ContextObserver with ScalaDockableComponent with CombatStateObserver {
   private val sustainButton = new Button("Sustain")
   sustainButton.enabled = false
 

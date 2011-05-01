@@ -18,6 +18,7 @@
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.tracker.common._
 
 /**
  * This object contains all TransactionalActions for the transactional tracker.
@@ -32,7 +33,7 @@ object Command {
   case class EndCombat() extends TransactionalActionWithMessage("End combat")
 
   case class AddCombatants(combatants: List[CombatantRosterDefinition])
-          extends TransactionalActionWithMessage("Add combatants: " + combatants)
+    extends TransactionalActionWithMessage("Add combatants: " + combatants)
 
   /**
    * Clear roster of combatants
@@ -45,7 +46,7 @@ object Command {
    * @param initDefinitions Initiative definition for each combatant
    */
   case class SetInitiative(initDefinitions: List[InitiativeDefinition])
-          extends TransactionalActionWithMessage("Set initiative: " + initDefinitions)
+    extends TransactionalActionWithMessage("Set initiative: " + initDefinitions)
 
   /**
    * Set the combat level comment
@@ -55,24 +56,24 @@ object Command {
 
   // Initiative Actions
   case class InitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
-          extends TransactionalActionWithMessage(who + "executed " + action)
+    extends TransactionalActionWithMessage(who + "executed " + action)
 
   case class MoveBefore(who: InitiativeOrderID, before: InitiativeOrderID)
-          extends TransactionalActionWithMessage(who + " moving before " + before + " in the sequence")
+    extends TransactionalActionWithMessage(who + " moving before " + before + " in the sequence")
 
   case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
-          extends TransactionalActionWithMessage(who + " executed initiative action " + action)
+    extends TransactionalActionWithMessage(who + " executed initiative action " + action)
 
   // Effect Actions
   case class AddEffect(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration)
-          extends TransactionalActionWithMessage("Add effect: " + condition + " to " + target)
+    extends TransactionalActionWithMessage("Add effect: " + condition + " to " + target)
 
   case class CancelEffect(effectId: EffectID) extends TransactionalActionWithMessage("Cancel effect " + effectId)
 
   case class SustainEffect(effectId: EffectID) extends TransactionalActionWithMessage("Sustain effect " + effectId)
 
   case class UpdateEffectCondition(effectId: EffectID, condition: Condition)
-          extends TransactionalActionWithMessage("Update effect " + effectId + " to " + condition)
+    extends TransactionalActionWithMessage("Update effect " + effectId + " to " + condition)
 
   // Rest Effect
   case class ApplyRest(extended: Boolean) extends TransactionalActionWithMessage(if (extended) "Extended rest" else "Short rest")

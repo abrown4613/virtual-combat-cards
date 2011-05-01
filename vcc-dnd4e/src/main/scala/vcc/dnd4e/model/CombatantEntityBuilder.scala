@@ -17,18 +17,13 @@
 //$Id$
 package vcc.dnd4e.model
 
-import common.CombatantType
-import vcc.dnd4e.domain.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition}
-import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
 import vcc.domain.dndi.CaptureTemplateEngine
 import vcc.infra.xtemplate.{MapDataSource}
+import vcc.dnd4e.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition, CombatantEntity}
 
-case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
-  override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
-}
-
-object CombatantEntity {
+//TODO: Migrate to service in compendium interface
+object CombatantEntityBuilder {
 
   /**
    * Build a valid combatant form a CompendiumEntity

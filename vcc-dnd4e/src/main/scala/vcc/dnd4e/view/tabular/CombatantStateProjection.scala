@@ -18,7 +18,7 @@
 
 package vcc.dnd4e.view.tabular
 
-import vcc.dnd4e.domain.tracker.common.HealthTracker
+import vcc.dnd4e.tracker.common.HealthTracker
 import vcc.dnd4e.view.UnifiedCombatant
 
 object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[UnifiedCombatant] {
@@ -29,7 +29,8 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
     ("Status", classOf[String]),
     ("T#/R", classOf[String]),
     ("Sequence", classOf[String])
-    );
+  );
+
   def apply(col: Int, comb: UnifiedCombatant): java.lang.Object = {
     col match {
       case 0 => if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id

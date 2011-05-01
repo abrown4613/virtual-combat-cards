@@ -18,10 +18,11 @@
 package vcc.dnd4e.domain.tracker.transactional
 
 import vcc.model.IDGenerator
-import vcc.dnd4e.model.CombatantEntity
 import vcc.controller.transaction.{UndoableWithCallback, Transaction, Undoable}
-import vcc.dnd4e.domain.tracker.common.{CombatantRosterDefinition, RosterChange, CombatantID}
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common.{CombatantRosterDefinition}
+import vcc.dnd4e.tracker.common.CombatantType
+import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantID}
+import vcc.dnd4e.domain.tracker.common.RosterChange
 
 /**
  * Contains a transactional view of all the combatants currently in the combat.
@@ -34,8 +35,10 @@ class CombatantRoster(idGenerator: IDGenerator) {
    */
   private val _roster = new Undoable[Map[CombatantID, Combatant]](
     Map.empty[CombatantID, Combatant],
-    uv => {RosterChange(Map(uv.value.map(me => me._1 -> me._2.aspectSet()).toSeq: _*))}
-    ) with UndoableWithCallback[Map[CombatantID, Combatant]] {
+    uv => {
+      RosterChange(Map(uv.value.map(me => me._1 -> me._2.aspectSet()).toSeq: _*))
+    }
+  ) with UndoableWithCallback[Map[CombatantID, Combatant]] {
 
     // Find IDs that are gone and return them to ID Generator
     def restoreCallback(valueToRestore: Map[CombatantID, Combatant]) {

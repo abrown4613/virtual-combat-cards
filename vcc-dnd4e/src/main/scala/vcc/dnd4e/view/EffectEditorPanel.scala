@@ -20,13 +20,12 @@ package vcc.dnd4e.view
 import scala.swing._
 import vcc.util.swing._
 import vcc.dnd4e.domain.tracker.common.Command.AddEffect
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
 import vcc.dnd4e.BootStrap
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.model.CombatantEntity
 import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
 import vcc.infra.datastore.naming.EntityID
+import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
 
 class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
 with CombatStateObserver with ContextObserver with ScalaDockableComponent {
@@ -37,7 +36,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
 
-  val terrainDefinition = CombatantEntity(EntityID.fromName("terrain"), "Terrain or Other", MinionHealthDefinition(), 0, CombatantType.Minion, null)
+  val terrainDefinition = CombatantEntity(EntityID.fromName("terrain"), "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
 
   private val otherId = CombatantID("?")
   private val otherCombatant = new UnifiedCombatant(otherId, null, CombatantState(CombatantRosterDefinition(otherId, null, terrainDefinition), null, null, null))

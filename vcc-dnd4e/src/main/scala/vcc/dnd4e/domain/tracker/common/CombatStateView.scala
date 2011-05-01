@@ -17,8 +17,10 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.common
 
+import vcc.dnd4e.tracker.common._
+
 /**
- * Provides access to immutable informations on Combatant
+ * Provides access to immutable information on Combatant
  */
 trait CombatantStateView {
   def healthTracker: HealthTracker
@@ -52,5 +54,5 @@ trait CombatStateView {
    * Returns a sequence of all effect in the combat
    * @return Sequence of all effect in all combatants
    */
-  def allEffects():Seq[Effect] = allCombatantIDs.map(id => combatantViewFromID(id).effects).flatMap(elist => elist.effects)
+  def allEffects(): Seq[Effect] = allCombatantIDs.map(id => combatantViewFromID(id).effects).flatMap(elist => elist.effects)
 }

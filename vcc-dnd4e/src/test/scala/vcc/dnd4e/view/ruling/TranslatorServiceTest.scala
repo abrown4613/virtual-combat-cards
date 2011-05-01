@@ -20,6 +20,7 @@ package vcc.dnd4e.view.ruling
 import org.specs.SpecificationWithJUnit
 import vcc.controller.{Decision, Ruling}
 import org.specs.mock.Mockito
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {

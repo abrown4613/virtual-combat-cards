@@ -20,7 +20,7 @@ package vcc.dnd4e.model
 import org.specs.SpecificationWithJUnit
 import org.specs.mock.Mockito
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.tracker.common.CombatantID
 import java.io._
 
 class PartyFileTest extends SpecificationWithJUnit with Mockito {
@@ -104,6 +104,6 @@ class PartyFileTest extends SpecificationWithJUnit with Mockito {
       sb.append("\n")
     }
     sb.append("</party>\n")
-    string2Stream(sb.toString)
+    string2Stream(sb.toString())
   }
 }

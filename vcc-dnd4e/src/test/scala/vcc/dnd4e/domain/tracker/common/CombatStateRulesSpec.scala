@@ -21,8 +21,7 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
-import vcc.dnd4e.model.CombatantEntity
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common._
 
 @RunWith(classOf[JUnitSuiteRunner])
 class CombatStateRulesTest extends JUnit4(CombatStateRulesSpec)
@@ -53,7 +52,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
 
   "CombatStateRules.areAllCombatantInOrderDead" ->- (baseMockups) should {
     "return true if all are dead" in {
-      val minion = HealthTracker.createTracker(MinionHealthDefinition())
+      val minion = HealthTracker.createTracker(MinionHealthDefinition)
       val deadMinion = minion.applyDamage(10)
 
       deadMinion.status must_== HealthTracker.Status.Dead
@@ -68,7 +67,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
     }
 
     "return false if at least one is non dead" in {
-      val minion = HealthTracker.createTracker(MinionHealthDefinition())
+      val minion = HealthTracker.createTracker(MinionHealthDefinition)
       val deadMinion = minion.applyDamage(10)
 
       deadMinion.status must_== HealthTracker.Status.Dead
@@ -180,7 +179,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
 
       rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
       there was one(state).isCombatStarted then
-              atLeastOne(state).nextUp
+        atLeastOne(state).nextUp
     }
 
     "defer to InitiativeTracker with the correct first InitiativeTracker set" in {

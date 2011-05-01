@@ -17,18 +17,18 @@
 //$Id$
 package vcc.dnd4e.view.dialog
 
-import vcc.dnd4e.domain.tracker.common.CombatantID
 import vcc.dnd4e.view.helper.InitiativeRoll
 import vcc.util.swing.{ProjectionTableLabelFormatter, TableModelRowProjection}
 import javax.swing.{SwingConstants, JLabel}
 import java.awt.Color
+import vcc.dnd4e.tracker.common.CombatantID
 
 
 class InitiativeDialogEntry(val ids: Set[CombatantID], val name: String, var init: Int, var roll: InitiativeRoll, var skip: Boolean) {
   override def toString(): String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + "," + (if (skip) "skip" else "roll") + ")"
 
   def isSimilar(that: InitiativeDialogEntry): Boolean = (this.name == that.name) &&
-          (this.init == that.init) && (this.roll == that.roll) && (this.skip == that.skip)
+    (this.init == that.init) && (this.roll == that.roll) && (this.skip == that.skip)
 
   def merge(that: InitiativeDialogEntry): InitiativeDialogEntry =
     new InitiativeDialogEntry(this.ids ++ that.ids, this.name, this.init, this.roll, this.skip)

@@ -19,6 +19,7 @@ package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
 import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.tracker.common.EffectID
 
 /**
  * Ask how much damage should be healed.

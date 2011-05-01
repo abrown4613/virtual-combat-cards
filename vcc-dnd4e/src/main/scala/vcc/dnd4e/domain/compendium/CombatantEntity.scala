@@ -20,7 +20,7 @@ package vcc.dnd4e.domain.compendium
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dnd4e.model.common.CombatantType
+import vcc.dnd4e.tracker.common.CombatantType
 
 case class EntityClassID(uri: java.net.URI) {
   def shortClassName() = uri.getSchemeSpecificPart()
@@ -29,14 +29,21 @@ case class EntityClassID(uri: java.net.URI) {
 abstract class EntitySummary(val eid: EntityID, val classid: EntityClassID)
 
 object CombatantEntityFields {
+
   object RequiredString extends DefaultStringFieldValidator(Mandatory())
+
   object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(), IntegerGreaterThan(0))
+
   object RequiredInt extends DefaultIntFieldValidator(Mandatory())
+
   object AnyInt extends DefaultIntFieldValidator()
+
   object AnyString extends DefaultStringFieldValidator()
+
 }
 
 abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
+
   import CombatantEntityFields._
 
   val classID: EntityClassID
@@ -56,7 +63,7 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
   val statblock = new StringField(this, "text:statblock", AnyString)
   val comment = new StringField(this, "text:comment", AnyString)
 
-  override def asDataStoreEntity: DataStoreEntity = {
+  override def asDataStoreEntity(): DataStoreEntity = {
     val es = super.asDataStoreEntity
     DataStoreEntity(es.eid, es.data + ("classid" -> classID.uri.toString))
   }

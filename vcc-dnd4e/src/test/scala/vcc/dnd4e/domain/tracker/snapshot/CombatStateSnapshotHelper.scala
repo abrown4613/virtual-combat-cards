@@ -17,9 +17,10 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import vcc.controller.transaction.ChangeNotification
 import vcc.controller.SnapshotBuilder
+import vcc.dnd4e.domain.tracker.common.CombatantComment
 
 trait CombatStateSnapshotHelper[S] {
   // Data

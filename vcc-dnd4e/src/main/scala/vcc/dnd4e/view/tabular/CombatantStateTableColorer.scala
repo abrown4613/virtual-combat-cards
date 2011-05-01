@@ -19,8 +19,8 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
-import vcc.dnd4e.domain.tracker.common.HealthTracker.Status._
-import vcc.dnd4e.domain.tracker.common.InitiativeTracker.state._
+import vcc.dnd4e.tracker.common.HealthTracker.Status._
+import vcc.dnd4e.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
 import java.awt.Color
 import javax.swing.SwingConstants
@@ -53,7 +53,8 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private val monsterCallout = (new Color(152, 32, 32), Color.WHITE)
   private val charCallout = (new Color(77, 140, 59), Color.WHITE)
   private val charBackground = (new Color(240, 255, 236), Color.BLACK)
-  private val monsterBackground = normal //(new Color(255,248,220),Color.BLACK)
+  private val monsterBackground = normal
+  //(new Color(255,248,220),Color.BLACK)
 
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: UnifiedCombatant): Unit = {
     var is = if (cmb.initiative != null) cmb.initiative.state else null

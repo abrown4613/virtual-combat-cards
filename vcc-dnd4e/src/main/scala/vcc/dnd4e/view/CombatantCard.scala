@@ -21,7 +21,6 @@ import scala.swing._
 import vcc.util.swing._
 import helper.CombatantStatBlockCache
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.common.CombatantID
 
 class CombatantCard(diretor: PanelDirector, isTarget: Boolean) extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {

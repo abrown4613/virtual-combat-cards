@@ -25,9 +25,8 @@ import vcc.controller.{Decision, Ruling, TrackerChangeObserver}
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
 import vcc.infra.prompter.{RulingBroker}
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.model.common.CombatantType
-import vcc.dnd4e.model.{CombatantEntity}
 import vcc.dnd4e.domain.tracker.common.Command.InitiativeAction
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
 /**

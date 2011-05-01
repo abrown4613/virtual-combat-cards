@@ -24,7 +24,7 @@ import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.controller.message.TransactionalAction
 import collection.mutable.Queue
 import org.specs.mock.Mockito
-import org.mockito.Matchers._
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 import Command._
 import vcc.controller.transaction.Transaction
@@ -34,9 +34,10 @@ import vcc.controller.{UnhandledActionException, CommandSource}
 class EffectActionHandlerTest extends JUnit4(EffectActionHandlerSpec)
 
 object EffectActionHandlerSpec extends Specification with Mockito {
+
   class PartialCombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
-          extends AbstractCombatController(rules, state, queue)
-                  with EffectActionHandler
+    extends AbstractCombatController(rules, state, queue)
+    with EffectActionHandler
 
   var mOrder: InitiativeOrder = null
   var mRoster: CombatantRoster = null

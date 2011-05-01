@@ -19,7 +19,7 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import vcc.util.swing._
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import org.slf4j.LoggerFactory
 
 /**

@@ -19,7 +19,7 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import scala.swing.event._
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.infra.docking._
 import vcc.dnd4e.domain.tracker.snapshot.StateChange
@@ -124,7 +124,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
 
       //Get possible combatant to move before
       val before: Seq[InitiativeOrderID] = if (comb.isInOrder)
-        combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map{
+        combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map {
           c => c.orderId
         }
       else

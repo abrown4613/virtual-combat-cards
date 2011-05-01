@@ -18,12 +18,7 @@
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.transaction.ChangeNotification
-import vcc.dnd4e.model.CombatantEntity
-
-/**
- * Some part of the Combatant information
- */
-trait CombatantAspect
+import vcc.dnd4e.tracker.common._
 
 /**
  * This is a simple wrapper for a text, to allow us to identify the String as the comment on the combatant.
@@ -33,7 +28,7 @@ case class CombatantComment(text: String) extends CombatantAspect
 /**
  *  Defines the major CombatantRoster data for a tracker.transactional.Combatant, it is also used for views.
  */
-case class CombatantRosterDefinition(cid: CombatantID, alias: String, entity: CombatantEntity) extends CombatantAspect
+case class CombatantRosterDefinitionOld(cid: CombatantID, alias: String, entity: CombatantEntity) extends CombatantAspect
 
 //Change Notifications
 abstract sealed class CombatStateChange extends ChangeNotification
@@ -58,7 +53,7 @@ case class InitiativeTrackerChange(initTracker: InitiativeTracker) extends Comba
  * @param order New order, Nil indicates that we are no longer tracking order
  */
 case class InitiativeOrderChange(order: List[InitiativeTracker]) extends CombatStateChange {
-  override def toString(): String = "InitiativeOrderChange(" + order.map(x => x.orderID.toLabelString).mkString(", ") + ")"
+  override def toString: String = "InitiativeOrderChange(" + order.map(x => x.orderID.toLabelString).mkString(", ") + ")"
 }
 
 /**

@@ -27,7 +27,7 @@ import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.{PartyMember, PartyFile}
 import vcc.model.Registry
 import vcc.dnd4e.view.helper.PartyLoader
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 import annotation.tailrec
 import java.io.FileInputStream

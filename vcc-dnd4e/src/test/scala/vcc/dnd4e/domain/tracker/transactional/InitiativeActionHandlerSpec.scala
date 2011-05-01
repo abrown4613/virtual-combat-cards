@@ -22,13 +22,14 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.dnd4e.domain.tracker.common.Command._
-import vcc.dnd4e.domain.tracker.common._
+import vcc.dnd4e.tracker.common._
 import collection.mutable.Queue
 import org.specs.mock.Mockito
 import vcc.controller.transaction.Transaction
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{IllegalActionException, UnhandledActionException, CommandSource}
-import vcc.dnd4e.domain.tracker.common.InitiativeTracker.{action, state}
+import vcc.dnd4e.tracker.common.InitiativeTracker.{action, state}
+import vcc.dnd4e.domain.tracker.common.CombatStateRules
 
 @RunWith(classOf[JUnitSuiteRunner])
 class InitiativeActionHandlerTest extends JUnit4(InitiativeActionHandlerSpec)
@@ -442,13 +443,13 @@ object InitiativeActionHandlerSpec extends Specification with Mockito {
 
   def mockNextAsDead(combId: CombatantID) {
     val mockNext = mock[Combatant]
-    mockNext.health returns HealthTracker(0, 0, 3, MinionHealthDefinition())
+    mockNext.health returns HealthTracker(0, 0, 3, MinionHealthDefinition)
     mRoster.combatant(combId) returns mockNext
   }
 
   def mockNextAsNotDead(combId: CombatantID): Combatant = {
     val mockNext = mock[Combatant]
-    mockNext.health returns HealthTracker(1, 0, 0, MinionHealthDefinition())
+    mockNext.health returns HealthTracker(1, 0, 0, MinionHealthDefinition)
     mRoster.combatant(combId) returns mockNext
     mockNext
   }

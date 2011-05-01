@@ -20,7 +20,7 @@ package vcc.dnd4e.view.dialog
 import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import vcc.dnd4e.domain.tracker.common.CombatantID
+import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.view.helper.InitiativeRoll
 
 @RunWith(classOf[JUnitSuiteRunner])
