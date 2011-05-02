@@ -45,7 +45,7 @@ case class ChangeNotificationPromise(cn: ChangeNotifier) extends ChangeNotificat
  * This is the parametric type UndoMemento, which is used to store previous states of Undoable 
  * objects.
  */
-case class UndoMemento[T](val obj: Undoable[T], val value: T) {
+case class UndoMemento[T](obj: Undoable[T], value: T) {
 
   /**
    * Restore from mementos
@@ -66,7 +66,7 @@ case class UndoMemento[T](val obj: Undoable[T], val value: T) {
    */
   def changeNotification: Option[ChangeNotification] = {
     if (obj.createChange != null) {
-      val change = obj.createChange(obj)
+      val change = obj.createChange(obj, value)
       if (change == null) None else Some(change)
     }
     else None
@@ -77,7 +77,12 @@ case class UndoMemento[T](val obj: Undoable[T], val value: T) {
  * This is transcation controlled field. It will store mementos of changes to it in a 
  * transactions. This allows changes to be undone or redone.
  */
-class Undoable[T](initValue: T, val createChange: Undoable[T] => ChangeNotification) {
+class Undoable[T](initValue: T, val createChange: (Undoable[T], T) => ChangeNotification) {
+
+  def this(initValue: T, createChange: Undoable[T] => ChangeNotification) = this (initValue, (u: Undoable[T], v: T) => createChange(u))
+
+  def this(initValue: T) = this (initValue, null.asInstanceOf[(Undoable[T], T) => ChangeNotification])
+
   private var _value: T = initValue
 
   def value: T = this._value

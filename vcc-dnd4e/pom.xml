@@ -33,12 +33,12 @@
         <dependency>
             <groupId>org.exnebula</groupId>
             <artifactId>vcc-infra</artifactId>
-            <version>1.5.0</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.exnebula</groupId>
             <artifactId>vcc-dnd4e-tracker</artifactId>
-            <version>1.6.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

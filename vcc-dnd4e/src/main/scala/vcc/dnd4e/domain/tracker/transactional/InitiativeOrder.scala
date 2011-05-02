@@ -37,10 +37,10 @@ class InitiativeOrder {
     }
   }
 
-  private val initBaseOrder = new Undoable[List[InitiativeResult]](Nil, null)
-  private val trackers = new Undoable(Map.empty[InitiativeOrderID, Undoable[InitiativeTracker]], null)
+  private val initBaseOrder = new Undoable[List[InitiativeResult]](Nil)
+  private val trackers = new Undoable(Map.empty[InitiativeOrderID, Undoable[InitiativeTracker]])
   private val robin = new ArrayRoundRobin[InitiativeOrderID](null, Nil)
-  private val reorders = new Undoable[List[(InitiativeOrderID, InitiativeOrderID)]](Nil, null)
+  private val reorders = new Undoable[List[(InitiativeOrderID, InitiativeOrderID)]](Nil)
 
   //This is a Hack to handle Undo/Redo/Undo/Redo, since the robinHead restore may come before the order update
   private var robinHeadToReturn: InitiativeOrderID = null
