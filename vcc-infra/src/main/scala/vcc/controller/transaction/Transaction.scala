@@ -42,16 +42,18 @@ class TransactionClosedException() extends Exception
  * not allow that operations. e.g. Cancel a cancelled operation, or redo a committed transact
  */
 class InvalidTransactionOperationException(from: Transaction.state.Value, to: Transaction.state.Value) extends Exception {
-  override def getMessage(): String = "Illegal Transaction operation: Cant go from " + from + " to " + to
+  override def getMessage: String = "Illegal Transaction operation: Cant go from " + from + " to " + to
 }
 
 object Transaction {
+
   object state extends Enumeration {
     val Active = Value("Active")
     val Committed = Value("Committed")
     val Cancelled = Value("Cancelled")
     val Undone = Value("Undone")
   }
+
 }
 
 /**
@@ -62,6 +64,7 @@ object Transaction {
  * trait.
  */
 class Transaction {
+
   import Transaction.state._
 
   private var _state = Active
@@ -84,8 +87,8 @@ class Transaction {
    */
   protected def swapMementos() {
     // Save current values for a redo and restore values
-    var current = _parts map (x => x.redoMemento)
-    for (x <- _parts) x.undo
+    val current = _parts map (x => x.redoMemento())
+    for (x <- _parts) x.undo()
     _parts = current
   }
 
@@ -97,7 +100,7 @@ class Transaction {
       throw new InvalidTransactionOperationException(_state, Cancelled)
     _state = Cancelled
     for (um <- _parts) {
-      um.undo
+      um.undo()
     }
   }
 
@@ -108,7 +111,7 @@ class Transaction {
   def redo(tcp: TransactionChangePublisher) {
     if (_state != Undone)
       throw new InvalidTransactionOperationException(_state, Committed)
-    swapMementos
+    swapMementos()
     _state = Committed
     if (tcp != null) publishChange(tcp)
   }
@@ -121,7 +124,7 @@ class Transaction {
   def undo(tcp: TransactionChangePublisher) {
     if (_state != Committed)
       throw new InvalidTransactionOperationException(_state, Undone)
-    swapMementos
+    swapMementos()
     _state = Undone
     if (tcp != null) publishChange(tcp)
   }
@@ -143,15 +146,20 @@ class Transaction {
    * @param tcp Object that will publish changes
    */
   protected def publishChange(tcp: TransactionChangePublisher) {
-    val changes = scala.collection.mutable.Set.empty[ChangeNotification]
+    val changes = scala.collection.mutable.ListBuffer.empty[ChangeNotification]
     for (x <- _parts) {
       val change = x.changeNotification
-      if (change.isDefined) changes += change.get
+      if (!change.isEmpty) {
+        change.foreach {
+          c =>
+            if (!changes.contains(c)) changes += c
+        }
+      }
     }
 
     // Expand promises
-    var exp_changes = changes.map({
-      case ChangeNotificationPromise(cn) => cn.createNotification
+    val exp_changes = changes.map({
+      case ChangeNotificationPromise(cn) => cn.createNotification()
       case x => x
     }).toSeq
     tcp.publishChange(exp_changes)

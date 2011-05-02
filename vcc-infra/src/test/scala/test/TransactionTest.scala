@@ -88,7 +88,7 @@ class TransactionTest extends TestCase {
 
   def testChangePublisherWithOldValue() {
     val u1 = new Undoable[Int](10, (u, x) => {
-      Beep(Symbol("a" + x.toString), u.value)
+      List(Beep(Symbol("a" + x.toString), u.value))
     })
     val bp = new BeepOut
     implicit val trans = new Transaction
@@ -100,6 +100,24 @@ class TransactionTest extends TestCase {
     assert(!trans.isEmpty)
     assert(bp.changes.size == 1)
     assert(bp.changes.contains(Beep('a10, 20)))
+  }
+
+  def testChangePublisherWithOldValueTwice() {
+    val u1 = new Undoable[Int](10, (u, x) => {
+      List(
+        Beep(Symbol("a" + x.toString), u.value),
+        Beep(Symbol("b" + x.toString), u.value))
+    })
+    val bp = new BeepOut
+    implicit val trans = new Transaction
+
+    u1.value = 15
+    assert(u1.value == 15)
+    u1.value = 20
+    trans.commit(bp)
+    assert(!trans.isEmpty)
+    assert(bp.changes.size == 2)
+    assert(bp.changes == List(Beep('a10, 20), Beep('b10, 20)), "found " + bp.changes)
   }
 
   /**
@@ -338,13 +356,13 @@ class TransactionTest extends TestCase {
    * tracked but not observed.
    */
   def testUndoWithNullChangeNotification() {
-    val uv = new Undoable[Int](10, x => if (x.value < 0) null else Beep('A, x.value))
+    val uv = new Undoable[Int](10, (x, v) => if (x.value < 0) Nil else List(Beep('A, x.value)))
     val memo = new UndoMemento(uv, -1)
     memo.undo()
-    assert(memo.changeNotification == None, "Got a " + memo.changeNotification)
+    assert(memo.changeNotification == Nil, "Got a " + memo.changeNotification)
 
     val memo2 = new UndoMemento(uv, 10)
     memo2.undo()
-    assert(memo2.changeNotification == Some(Beep('A, 10)), "Got a " + memo2.changeNotification)
+    assert(memo2.changeNotification == List(Beep('A, 10)), "Got a " + memo2.changeNotification)
   }
 }

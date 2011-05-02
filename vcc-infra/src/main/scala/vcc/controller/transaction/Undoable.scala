@@ -64,12 +64,11 @@ case class UndoMemento[T](obj: Undoable[T], value: T) {
    * @return None if the re is not createChange function or that function returned null. Some[ChangeNotification]
    * otherwise.
    */
-  def changeNotification: Option[ChangeNotification] = {
+  def changeNotification: List[ChangeNotification] = {
     if (obj.createChange != null) {
-      val change = obj.createChange(obj, value)
-      if (change == null) None else Some(change)
+      obj.createChange(obj, value)
     }
-    else None
+    else Nil
   }
 }
 
@@ -77,11 +76,11 @@ case class UndoMemento[T](obj: Undoable[T], value: T) {
  * This is transcation controlled field. It will store mementos of changes to it in a 
  * transactions. This allows changes to be undone or redone.
  */
-class Undoable[T](initValue: T, val createChange: (Undoable[T], T) => ChangeNotification) {
+class Undoable[T](initValue: T, val createChange: (Undoable[T], T) => List[ChangeNotification]) {
 
-  def this(initValue: T, createChange: Undoable[T] => ChangeNotification) = this (initValue, (u: Undoable[T], v: T) => createChange(u))
+  def this(initValue: T, createChange: Undoable[T] => ChangeNotification) = this (initValue, (u: Undoable[T], v: T) => List(createChange(u)))
 
-  def this(initValue: T) = this (initValue, null.asInstanceOf[(Undoable[T], T) => ChangeNotification])
+  def this(initValue: T) = this (initValue, null.asInstanceOf[(Undoable[T], T) => List[ChangeNotification]])
 
   private var _value: T = initValue
 
