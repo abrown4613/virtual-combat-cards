@@ -38,8 +38,7 @@ class TransactionTest extends TestCase {
    * Do several transactions, change one entry once, change another twice
    * receive notifications from only one of each undoable, more important only called once
    */
-  def testRegularTransaction {
-    var nu1 = 0
+  def testRegularTransaction() {
     var touched = Set.empty[Undoable[_]]
     val u1 = new Undoable[Int](10, (x => {
       if (touched.contains(x))
@@ -49,7 +48,7 @@ class TransactionTest extends TestCase {
       Beep('nu1, x.value)
     }))
     val u2 = new Undoable[String]("test", (x => Beep('nu2, x.value)))
-    val u3 = new Undoable[Int](30, null)
+    val u3 = new Undoable[Int](30)
     val bp = new BeepOut
     implicit val trans = new Transaction
 
@@ -78,7 +77,7 @@ class TransactionTest extends TestCase {
     }
     // Cant cancel committed transaction
     try {
-      trans.cancel
+      trans.cancel()
       assert(false, "Cant cancel commited transaction")
     } catch {
       case e: InvalidTransactionOperationException => assert(true)
@@ -87,14 +86,29 @@ class TransactionTest extends TestCase {
     0
   }
 
+  def testChangePublisherWithOldValue() {
+    val u1 = new Undoable[Int](10, (u, x) => {
+      Beep(Symbol("a" + x.toString), u.value)
+    })
+    val bp = new BeepOut
+    implicit val trans = new Transaction
+
+    u1.value = 15
+    assert(u1.value == 15)
+    u1.value = 20
+    trans.commit(bp)
+    assert(!trans.isEmpty)
+    assert(bp.changes.size == 1)
+    assert(bp.changes.contains(Beep('a10, 20)))
+  }
+
   /**
    * Story: Cancel transaction after updating
    */
-  def testCancelTransaction {
-    var nu1 = 0
+  def testCancelTransaction() {
     val u1 = new Undoable[Int](10, (x => Beep('nu1, x.value)))
     val u2 = new Undoable[String]("test", (x => Beep('nu2, x.value)))
-    val u3 = new Undoable[Int](30, null)
+    val u3 = new Undoable[Int](30)
     val bp = new BeepOut
     implicit val trans = new Transaction
 
@@ -123,13 +137,13 @@ class TransactionTest extends TestCase {
 
     // Should not be able to cancel a cancelled transactions
     try {
-      trans.cancel
+      trans.cancel()
       assert(false, "Must cancel cancelled transaction")
     } catch {
       case e: InvalidTransactionOperationException => assert(true)
       case s => assert(false, "Unexpected transaction" + s)
     }
-    // Cant cancel commited transaction
+    // Cant cancel committed transaction
     try {
       trans.commit(null)
       assert(false, "Cant commit cancelled transaction")
@@ -160,7 +174,7 @@ class TransactionTest extends TestCase {
   /**
    * Story: Test undo and then redoing a transactions then undo and redo
    */
-  def testUndoThenRedo {
+  def testUndoThenRedo() {
     val u1 = new Undoable[Int](10, (x => Beep('nu1, x.value)))
     val u2 = new Undoable[Int](10, (x => Beep('nu2, x.value)))
     val bp = new BeepOut
@@ -198,7 +212,7 @@ class TransactionTest extends TestCase {
     }
 
     trans.undo(bp)
-    // Cant undo undone commited transaction
+    // Cant undo undone committed transaction
     try {
       trans.undo(null)
       assert(false, "Cant undo undone transaction")
@@ -260,9 +274,8 @@ class TransactionTest extends TestCase {
    * Some object may want to notify changes to the entire object, not to parts, this is
    * to test the changes of parts of an object that have to become one change
    */
-  def testNotificationPromise {
-    var nu1 = 0
-    var cn = new ChangeNotifier {
+  def testNotificationPromise() {
+    val cn = new ChangeNotifier {
       val u1 = new Undoable[Int](10, (x => ChangeNotificationPromise(this)))
       val u2 = new Undoable[Int](10, (x => ChangeNotificationPromise(this)))
 
@@ -288,7 +301,7 @@ class TransactionTest extends TestCase {
   /**
    * Story: If nothing happens in a transaction then it must be empty
    */
-  def testEmptyTransaction {
+  def testEmptyTransaction() {
     val trans = new Transaction
 
     assert(!trans.isEmpty)
@@ -303,7 +316,7 @@ class TransactionTest extends TestCase {
   def testUndoWithCallback() {
     var restoredValue = -1
     var valueBeforeRestore = -1
-    val uwcb = new Undoable[Int](10, null) with UndoableWithCallback[Int] {
+    val uwcb = new Undoable[Int](10) with UndoableWithCallback[Int] {
       def restoreCallback(old: Int) {
         valueBeforeRestore = this.value
         restoredValue = old
