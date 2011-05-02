@@ -41,7 +41,7 @@ object TrackerSpec extends Specification with Mockito {
 
   case class MyChange(msg: String) extends ChangeNotification
 
-  tracker.start
+  tracker.start()
 
   "Tracker" should {
 
@@ -75,7 +75,7 @@ object TrackerSpec extends Specification with Mockito {
           val t = a.asInstanceOf[Array[Any]](0).asInstanceOf[Transaction]
           //Need to mock a simple UndoMemento
           val um = mock[UndoMemento[Int]]
-          um.changeNotification returns None
+          um.changeNotification returns Nil
           t.addMemento(um)
       }
 

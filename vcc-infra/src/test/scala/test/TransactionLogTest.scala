@@ -98,7 +98,7 @@ class TransactionLogTest extends TestCase {
   /**
    * Test saving a transaction and making sure that notification go out on save, rollback and rollforward.
    */
-  def testStoreAndRollbackThenRollFoward() {
+  def testStoreAndRollbackThenRollForward() {
     val tlog = new TransactionLog[MyTrans]()
     implicit val trans = new Transaction()
     val v = new Undoable[Int](10, (x => Beep('nu1, x.value)))
@@ -209,6 +209,5 @@ class TransactionLogTest extends TestCase {
     assert(tlog.length == 0)
     assert(tlog.futureActions == Nil)
     assert(tlog.pastActions == Nil)
-
   }
 }
