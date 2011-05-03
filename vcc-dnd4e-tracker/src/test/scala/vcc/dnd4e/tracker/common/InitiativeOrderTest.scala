@@ -90,47 +90,48 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
   }
 
   "a loaded InitativeOrder" ->- (loadedOrder) should {
+
     "set to first on combat start" in {
       val nOrder = order.startCombat()
       nOrder.nextUp must_== Some(ioC0)
     }
     "rotate do next" in {
-      val nOrder = order.startCombat.rotate
+      val nOrder = order.startCombat().rotate()
       nOrder.nextUp must_== Some(order.order(1))
     }
 
     "rotate to first once we have rotated through the entire order" in {
-      var nOrder = order.startCombat
+      var nOrder = order.startCombat()
       for (x <- 1 to order.order.length - 1) {
         nOrder = nOrder.rotate()
         nOrder.nextUp must_== Some(order.order(x))
       }
-      nOrder = nOrder.rotate
+      nOrder = nOrder.rotate()
       nOrder.nextUp must_== Some(order.order.head)
     }
 
     "not change when updating order" in {
-      val nOrder = order.startCombat.setInitiative(InitiativeDefinition(combE, 15, List(20)))
+      val nOrder = order.startCombat().setInitiative(InitiativeDefinition(combE, 15, List(20)))
       nOrder.order.head must_== ioE0
-      nOrder.nextUp must_== order.startCombat.nextUp
+      nOrder.nextUp must_== order.startCombat().nextUp
     }
 
     "remove all result and initiative information after endCombat is called" in {
-      val sOrder = order.startCombat().rotate
-      val nOrder = sOrder.endCombat
+      val sOrder = order.startCombat().rotate()
+      val nOrder = sOrder.endCombat()
       nOrder must_== InitiativeOrder.empty
     }
     "moveBefore throws exception if combat not start" in {
       order.moveBefore(ioA0, ioC0) must throwA(new IllegalStateException("Can't move if combat not started"))
     }
     "moveBefore stores a change and updates other if valid" in {
-      val nOrder = order.startCombat.moveBefore(ioB0, ioC0)
+      val nOrder = order.startCombat().moveBefore(ioB0, ioC0)
       nOrder.order must_== List(ioB0, ioC0, ioA0, ioA1, ioD0)
       nOrder.reorderList must_== List((ioB0, ioC0))
     }
 
     "remove combat throws exception if combat started" in {
-      order.startCombat.removeCombatant(combA) must throwA(new IllegalStateException("Can't remove after combat start"))
+      order.startCombat().removeCombatant(combA) must throwA(new IllegalStateException("Can't remove after combat start"))
     }
 
     "removes a single entry from the combat?" in {
@@ -139,10 +140,11 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
       nOrder.tracker mustNot contain(ioA1)
       nOrder.order mustNot contain(ioA0)
       nOrder.order mustNot contain(ioA1)
+      nOrder.baseList.exists((x: InitiativeResult) => x.uniqueId.combId == combA) must beFalse
     }
 
     "have true isValid if each IOI has it's tracker" in {
-      order.isValid() must beTrue
+      order.isValid must beTrue
     }
 
     "not be valid if IT tracker is missing for some IOI" in {
@@ -158,6 +160,30 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
       order.copy(tracker = order.tracker.updated(ioE0, InitiativeTracker(ioE0, 0, 20, InitiativeTracker.state.Waiting))).isValid must beFalse
     }
 
+    "update tracker if present in the order" in {
+      val ta = InitiativeTracker(ioA0, 1, 10, InitiativeTracker.state.Acting)
+      val nOrder = order.updateTracker(ta)
+      nOrder.tracker(ioA0) must_== ta
+    }
+
+    "throw exception when updating tracker not present" in {
+      val ta = InitiativeTracker(ioE0, 1, 10, InitiativeTracker.state.Acting)
+      order.updateTracker(ta) must throwA[NoSuchElementException]
+    }
+
+    "throw IllegalStateException if request nextUp while not in combat" in {
+      order.setNextUp(ioE0) must throwA[IllegalStateException]
+    }
+
+    "throw NoSuchElementException if request nextUp is not in order" in {
+      order.startCombat().setNextUp(ioE0) must throwA[NoSuchElementException]
+    }
+
+    "set new head if request setNextUp to a valid target" in {
+      order.startCombat().nextUp must_== Some(ioC0)
+      val nOrder = order.startCombat().setNextUp(ioD0)
+      nOrder.nextUp must_== Some(ioD0)
+    }
   }
 
 }
