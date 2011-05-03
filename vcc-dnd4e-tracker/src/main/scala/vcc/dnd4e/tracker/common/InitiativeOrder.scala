@@ -26,8 +26,15 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
                                            order: List[InitiativeOrderID],
                                            nextUp: Option[InitiativeOrderID]) {
 
-  def endCombat() = InitiativeOrder.empty
+  /**
+   * Clear all order information.
+   */
+  def endCombat() = InitiativeOrder.empty()
 
+  /**
+   * This changes the behaviour of the InitiativeOrder  to define the first in the order and to keep it during changes.
+   * Will do nothing on further calls.
+   */
   def startCombat() = {
     if (order.isEmpty)
       throw new IllegalStateException("No combatant has initiative")
@@ -36,6 +43,9 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
     )
   }
 
+  /**
+   * Rotate robin head to next position in order.
+   */
   def rotate(): InitiativeOrder = {
     if (!nextUp.isDefined)
       throw new IllegalStateException("Rotate not allowed before start of combat")
@@ -76,7 +86,8 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
     if (nextUp.isDefined) throw new IllegalStateException("Can't remove after combat start")
     this.copy(
       tracker = tracker.filterKeys(k => k.combId != comb),
-      order = order.filter(k => k.combId != comb)
+      order = order.filter(k => k.combId != comb),
+      baseList = baseList.filter(k => k.uniqueId.combId != comb)
     )
   }
 
@@ -97,6 +108,31 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
   }
 
   /**
+   * Changes an InitiativeTracker in the current tracker list. If the tracker does not exist will throw and exceptions.
+   * @param it InitiativeTracker to be updated.
+   * @return InitiativeOrder with new tracker value
+   * @throw NoSuchElement if the order does not have a tracker identified by it.orderId
+   */
+  def updateTracker(it: InitiativeTracker): InitiativeOrder = {
+    if (!tracker.isDefinedAt(it.orderID))
+      throw new NoSuchElementException("Tracker for '" + it.orderID + "' is not defined")
+    this.copy(tracker = tracker.updated(it.orderID, it))
+  }
+
+  /**
+   * Set the robin head, this will advance to a new head in the Robin. Used for MoveUp actions.
+   * @param orderId The InitiativeOrderID that should be the new head of the Robin
+   * @throw IllegalStateException if combat is not started or NoSuchElementException if orderId is not part of
+   */
+  def setNextUp(orderId: InitiativeOrderID): InitiativeOrder = {
+    if (!nextUp.isDefined) throw new IllegalStateException("Combat not started")
+    if (!order.contains(orderId)) throw new NoSuchElementException("Not in order " + orderId)
+    else {
+      this.copy(nextUp = Some(orderId))
+    }
+  }
+
+  /**
    * Check the validity and cross references between internal data structures. An order is valid it the following is
    * true:
    * <ul>
@@ -106,7 +142,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
    * <li>All InitiativeTracker in tracker have an element in the order
    * </ul>
    */
-  def isValid(): Boolean = {
+  def isValid: Boolean = {
     (this.order.toSet == this.tracker.keys.toSet) &&
       (if (nextUp.isDefined) order.contains(nextUp.get) else true) &&
       (!reorderList.exists(p => !order.contains(p._1) || !order.contains(p._2)))

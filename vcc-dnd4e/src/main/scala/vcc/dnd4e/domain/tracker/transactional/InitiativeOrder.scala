@@ -17,11 +17,10 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.util.DiceBag
-import vcc.infra.util.{ArrayRoundRobin, ReorderedListBuilderCompare, ReorderedListBuilder}
-import vcc.controller.transaction.{UndoableWithCallback, Undoable, Transaction}
+import vcc.dnd4e.tracker.common.{InitiativeOrder => ImmutableInitiativeOrder}
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.{InitiativeTrackerChange, InitiativeOrderChange, InitiativeOrderFirstChange}
+import vcc.controller.transaction.{ChangeNotification, Undoable, Transaction}
 
 /**
  * InitiativeOrder keeps the information about acting Combatants.
@@ -30,44 +29,23 @@ import vcc.dnd4e.domain.tracker.common.{InitiativeTrackerChange, InitiativeOrder
  */
 class InitiativeOrder {
 
-  private object initiativeResultComparator extends ReorderedListBuilderCompare[InitiativeResult] {
-    def isBefore(a: InitiativeResult, b: InitiativeResult): Boolean = {
-      if (a.compare(b) == 0) DiceBag.flipCoin()
-      else a > b
-    }
-  }
-
-  private val initBaseOrder = new Undoable[List[InitiativeResult]](Nil)
-  private val trackers = new Undoable(Map.empty[InitiativeOrderID, Undoable[InitiativeTracker]])
-  private val robin = new ArrayRoundRobin[InitiativeOrderID](null, Nil)
-  private val reorders = new Undoable[List[(InitiativeOrderID, InitiativeOrderID)]](Nil)
-
-  //This is a Hack to handle Undo/Redo/Undo/Redo, since the robinHead restore may come before the order update
-  private var robinHeadToReturn: InitiativeOrderID = null
-
-  private val robinHead = new Undoable[InitiativeOrderID](null, x => InitiativeOrderFirstChange(x.value)) with
-    UndoableWithCallback[InitiativeOrderID] {
-    def restoreCallback(oldValue: InitiativeOrderID) {
-      if (oldValue != null) {
-        try {
-          robin.advanceTo(oldValue)
-        } catch {
-          case _ => robinHeadToReturn = oldValue
-        }
-      }
-    }
-  }
-
-  private val initOrder = new Undoable[List[InitiativeOrderID]](Nil,
-    x => InitiativeOrderChange(x.value.map(oid => trackers.value(oid).value))) with UndoableWithCallback[List[InitiativeOrderID]] {
-    def restoreCallback(oldList: List[InitiativeOrderID]) {
-      robin.setRobin(if (oldList.isEmpty) null else robinHead.value, oldList)
-      if (robinHeadToReturn != null) {
-        robin.advanceTo(robinHeadToReturn)
-        robinHeadToReturn = null
-      }
-    }
-  }
+  private val _order = new Undoable[ImmutableInitiativeOrder](ImmutableInitiativeOrder.empty(), (u, v) => {
+    val changes: List[ChangeNotification] =
+      (if (v.nextUp != u.value.nextUp)
+        List(InitiativeOrderFirstChange(if (u.value.nextUp.isDefined) u.value.nextUp.get else null))
+      else Nil) :::
+        (if (v.order != u.value.order) List(InitiativeOrderChange(u.value.order.map(u.value.tracker(_)))) else Nil) :::
+        (if (v.tracker != u.value.tracker) {
+          var c: List[ChangeNotification] = Nil
+          u.value.tracker.foreach(p =>
+            if ((v.tracker.isDefinedAt(p._1) && v.tracker(p._1) != p._2))
+              c = InitiativeTrackerChange(p._2) :: c
+          )
+          c.reverse
+        } else Nil) :::
+        Nil
+    changes
+  })
 
   /**
    * Return the InitiativeTracker for InitiativeOrderID
@@ -75,7 +53,7 @@ class InitiativeOrder {
    * @throw NoSuchElementException If the entry can be found
    */
   def initiativeTrackerFor(ioid: InitiativeOrderID): InitiativeTracker = {
-    if (trackers.value.isDefinedAt(ioid)) trackers.value(ioid).value
+    if (_order.value.tracker.isDefinedAt(ioid)) _order.value.tracker(ioid)
     else throw new NoSuchElementException("InitiativeTracker for " + ioid + " not found")
   }
 
@@ -84,33 +62,32 @@ class InitiativeOrder {
    * @param ioid InitiativeOrderID that point to the InitiativeTracker
    * @return True if ioid  points to a InitiativeTracker
    */
-  def isDefinedAt(ioid: InitiativeOrderID) = trackers.value.isDefinedAt(ioid)
+  def isDefinedAt(ioid: InitiativeOrderID) = _order.value.tracker.isDefinedAt(ioid)
 
   /**
    * Returns the InitiativeTracker for the head InitiativeOrderID.
    */
   def robinHeadInitiativeTracker(): InitiativeTracker =
-    if (robinHead.value != null) initiativeTrackerFor(robinHead.value)
+    if (_order.value.nextUp.isDefined) initiativeTrackerFor(_order.value.nextUp.get)
     else throw new NoSuchElementException("There is no head for the order yet")
 
 
   /**
    * Updates a initiative tracker for a given InitiativeOrderId.
    * @param ioid InitiativeOrder order it
-   * @param newValue The new initaitive tracker
+   * @param newValue The new initiative tracker
    * @throw NoSuchElementException if there is no such tracker
    */
   def updateInitiativeTrackerFor(ioid: InitiativeOrderID, newValue: InitiativeTracker)(implicit trans: Transaction) {
-    trackers.value(ioid).value = newValue
+    if (ioid != newValue.orderID) throw new IllegalArgumentException("InitiativeTracker orderId does not match parameter orderID")
+    _order.value = _order.value.updateTracker(newValue)
   }
 
   /**
    *  Move head of the round robin one position down
    */
   def rotate()(implicit trans: Transaction) {
-    if (robinHead.value == null) throw new IllegalStateException("Have not issued startCombat()")
-    robin.advance()
-    robinHead.value = robin.headOption.get
+    _order.value = _order.value.rotate()
   }
 
   /**
@@ -118,9 +95,7 @@ class InitiativeOrder {
    * Will do nothing on further calls.
    */
   def startCombat()(implicit trans: Transaction) {
-    if (robinHead.value == null) {
-      robinHead.value = initOrder.value(0)
-    }
+    _order.value = _order.value.startCombat()
   }
 
   /**
@@ -130,12 +105,7 @@ class InitiativeOrder {
    * @param whom Whom to place it before in the order
    */
   def moveBefore(who: InitiativeOrderID, whom: InitiativeOrderID)(implicit trans: Transaction) {
-    if (robinHead.value == null) throw new IllegalStateException("Not in combat")
-    val ioBuilder = new ReorderedListBuilder(initBaseOrder.value, reorders.value, initiativeResultComparator)
-    ioBuilder.addReorder(who, whom)
-    initOrder.value = ioBuilder.reorderedList()
-    robin.setRobin(robinHead.value, initOrder.value)
-    reorders.value = ioBuilder.reorders()
+    _order.value = _order.value.moveBefore(who, whom)
   }
 
   /**
@@ -143,16 +113,7 @@ class InitiativeOrder {
    * @param comb The combatant to remove from the order
    */
   def removeCombatant(comb: CombatantID)(implicit trans: Transaction) {
-    if (robinHead.value != null) throw new IllegalStateException("Can't remove after combat start")
-
-    val toRemove = initOrder.value.filter(e => e.combId == comb)
-    initOrder.value = initOrder.value filterNot (toRemove contains)
-    toRemove.foreach {
-      o => updateInitiativeTrackerFor(o, null)
-    }
-    trackers.value = trackers.value -- toRemove
-    initBaseOrder.value = initBaseOrder.value.filter(e => e.uniqueId.combId != comb)
-    robin.setRobin(null, Nil)
+    _order.value = _order.value.removeCombatant(comb)
   }
 
   /**
@@ -160,22 +121,7 @@ class InitiativeOrder {
    * the order and also add the base InitiativeTracker
    */
   def setInitiative(iDef: InitiativeDefinition)(implicit trans: Transaction) {
-    val initRes = iDef.toResult()
-    var itMap = trackers.value
-    val ioBuilder = new ReorderedListBuilder(initBaseOrder.value, reorders.value, initiativeResultComparator)
-    for (res <- initRes) {
-      val it = new Undoable[InitiativeTracker](InitiativeTracker.initialTracker(res.uniqueId, res.result),
-        u => if (u.value != null) InitiativeTrackerChange(u.value) else null)
-      itMap = itMap + (res.uniqueId -> it)
-      ioBuilder.addEntry(res)
-    }
-
-    //Need to make sure we preserve dice rolls for next call
-    val bl = ioBuilder.baseList()
-    initBaseOrder.value = (bl.length to 1 by -1).toList.zip(bl).map(p => p._2.setTieBreak(p._1))
-    initOrder.value = ioBuilder.reorderedList()
-    trackers.value = itMap
-    robin.setRobin(robinHead.value, initOrder.value)
+    _order.value = _order.value.setInitiative(iDef)
   }
 
   /**
@@ -183,11 +129,7 @@ class InitiativeOrder {
    * since the order is undone.
    */
   def clearOrder()(implicit trans: Transaction) {
-    initOrder.value = Nil
-    if (robinHead.value != null) robinHead.value = null
-    trackers.value = Map()
-    initBaseOrder.value = Nil
-    reorders.value = Nil
+    _order.value = ImmutableInitiativeOrder.empty()
   }
 
   /**
@@ -195,28 +137,26 @@ class InitiativeOrder {
    * @param orderId The InitiativeOrderID that should be the new head of the Robin
    */
   def setRobinHead(orderId: InitiativeOrderID)(implicit trans: Transaction) {
-    if (robinHead.value == null) throw new IllegalStateException("Combat not started")
-    robin.advanceTo(orderId)
-    robinHead.value = robin.headOption.get
+    _order.value = _order.value.setNextUp(orderId)
   }
 
   /**
    * Returns the IDs in the Order
    */
-  def getIDsInOrder(): List[InitiativeOrderID] = initOrder.value
+  def getIDsInOrder: List[InitiativeOrderID] = _order.value.order
 
   /**
    * Check if the combatant is in the Initiative Order.
    * @param cmb The Combatant to search in the order.
    */
-  def isInOrder(cmb: CombatantID): Boolean = initOrder.value.exists(x => x.combId == cmb)
+  def isInOrder(cmb: CombatantID): Boolean = _order.value.order.exists(x => x.combId == cmb)
 
   /**
    * Will eliminate all Trackers that are  not in list of ID. Must not be in combat.
    * @param combatants List of combatant to be kept
    */
   def syncOrderToRoster(combatants: List[CombatantID])(implicit trans: Transaction) {
-    val missing = getIDsInOrder().map(id => id.combId).toSet -- combatants
+    val missing = getIDsInOrder.map(id => id.combId).toSet -- combatants
     missing.foreach {
       id => removeCombatant(id)
     }
