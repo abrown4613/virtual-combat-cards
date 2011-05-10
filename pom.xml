@@ -22,7 +22,7 @@
             <id>exnebula</id>
             <uniqueVersion>true</uniqueVersion>
             <name>ExNebula.org</name>
-            <url>scp://petra.exnebula.org/var/repo</url>
+            <url>scp://petra.exnebula.org:222/var/repo</url>
         </repository>
     </distributionManagement>
 
@@ -132,6 +132,8 @@
                             <scalaVersion>${scala.version}</scalaVersion>
                             <jvmArgs>
                                 <jvmArg>-Xmx512m</jvmArg>
+                                <jvmArg>-Xms64m</jvmArg>
+                                <jvmArg>-Xss4m</jvmArg>
                             </jvmArgs>
                             <args>
                                 <arg>-target:jvm-1.5</arg>

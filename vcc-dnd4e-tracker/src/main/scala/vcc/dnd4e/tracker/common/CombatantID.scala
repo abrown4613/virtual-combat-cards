@@ -22,12 +22,45 @@ import vcc.infra.util.UniquelyIdentified
 /**
  * CombatantID defines a unique combatant in the Roster.
  */
-case class CombatantID(id: String) {
+trait CombatantID {
+  val id: String
   /**
    * Helper method to simplify interaction with the IDGenerator
+   * TODO Remove this method
    */
+  @deprecated("To be removed")
   def toSymbol(): Symbol = Symbol(id)
+
+  override def toString(): String = "CombatantID(" + id + ")"
+
+  def asNumber: Option[Int]
 }
+
+object CombatantID extends UniquenessCache[String, CombatantID] {
+
+  private class StringCombatantID(val id: String) extends CombatantID {
+    def asNumber: Option[Int] = None
+  }
+
+  private class IntCombatantID(num: Int) extends CombatantID {
+    val id: String = num.toString
+
+    val asNumber = Some(num)
+  }
+
+  private val numberRE = """([0-9]+)""".r
+
+  protected def valueFromKey(id: String): CombatantID = {
+    id.trim match {
+      case numberRE(i) => new IntCombatantID(i.toInt)
+      case s => new StringCombatantID(s)
+    }
+  }
+
+  protected def keyFromValue(sym: CombatantID): Option[String] = Some(sym.id)
+
+}
+
 
 /**
  * Unique identifier for an entry in the InitiativeOrder.
@@ -88,4 +121,55 @@ case class InitiativeResult(override val uniqueId: InitiativeOrderID, bonus: Int
    * @return A new InitiativeResult object
    */
   def setTieBreak(tb: Int): InitiativeResult = this.copy(tieBreaker = tb)
+}
+
+/**
+ * Copied from scala.Symbol
+ *  This is private so it won't appear in the library API, but
+ * abstracted to offer some hope of reusability.  */
+private[tracker] abstract class UniquenessCache[K, V >: Null] {
+
+  import java.lang.ref.WeakReference
+  import java.util.WeakHashMap
+  import java.util.concurrent.locks.ReentrantReadWriteLock
+
+  private val rwl = new ReentrantReadWriteLock()
+  private val rlock = rwl.readLock
+  private val wlock = rwl.writeLock
+  private val map = new WeakHashMap[K, WeakReference[V]]
+
+  protected def valueFromKey(k: K): V
+
+  protected def keyFromValue(v: V): Option[K]
+
+  def apply(name: K): V = {
+    def cached(): V = {
+      rlock.lock
+      try {
+        val reference = map get name
+        if (reference == null) null
+        else reference.get // will be null if we were gc-ed
+      }
+      finally rlock.unlock
+    }
+    def updateCache(): V = {
+      wlock.lock
+      try {
+        val res = cached()
+        if (res != null) res
+        else {
+          val sym = valueFromKey(name)
+          map.put(name, new WeakReference(sym))
+          sym
+        }
+      }
+      finally wlock.unlock
+    }
+
+    val res = cached()
+    if (res == null) updateCache()
+    else res
+  }
+
+  def unapply(other: V): Option[K] = keyFromValue(other)
 }
