@@ -148,7 +148,7 @@ object CombatStateSpec extends Specification with Mockito {
     val ioA = InitiativeOrderID(CombatantID("A"), 0)
     val ioB = InitiativeOrderID(CombatantID("B"), 0)
     mRoster.allCombatantIDs returns List(combA, CombatantID("B"))
-    mOrder.getIDsInOrder() returns List(ioA, ioB)
+    mOrder.getIDsInOrder returns List(ioA, ioB)
     mOrder.initiativeTrackerFor(ioA) returns InitiativeTracker.initialTracker(ioA, 0)
     mOrder.initiativeTrackerFor(ioB) returns InitiativeTracker.initialTracker(ioB, 0)
     mMeta.comment returns "Fiat lux!"
@@ -165,7 +165,7 @@ object CombatStateSpec extends Specification with Mockito {
     val ioa = InitiativeOrderID(CombatantID("A"), 0)
     val iob = InitiativeOrderID(CombatantID("B"), 0)
 
-    "gets all CombatantStateView from all defined ID" in {
+    "gets all CombatanttateView from all defined ID" in {
       for (id <- List(cidA, cidB)) {
         val cv = aCombatState.combatantViewFromID(id)
         cv must notBeNull
