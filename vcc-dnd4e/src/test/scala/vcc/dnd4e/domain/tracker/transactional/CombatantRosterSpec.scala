@@ -21,7 +21,6 @@ import org.specs.Specification
 import org.junit.runner.RunWith
 import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import org.specs.mock.Mockito
-import vcc.model.IDGenerator
 import vcc.infra.test.{TransactionalSpecification, TransactionChangeLogger}
 import vcc.controller.transaction.{ChangeNotification, Transaction}
 import vcc.dnd4e.tracker.common._
@@ -32,7 +31,6 @@ class CombatantRosterTest extends JUnit4(CombatantRosterSpec)
 
 object CombatantRosterSpec extends Specification with TransactionalSpecification with Mockito {
   var aRoster: CombatantRoster = null
-  var mockIDGenerator: IDGenerator = null
 
   val combA = CombatantID("A")
   val combB = CombatantID("1")
@@ -46,8 +44,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   }
 
   val blankRosterWithMock = beforeContext {
-    mockIDGenerator = spy(new IDGenerator(1, 10))
-    aRoster = new CombatantRoster(mockIDGenerator)
+    aRoster = new CombatantRoster()
   }
 
   shareVariables() // TO allow transactional to run better
@@ -57,48 +54,6 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
       aRoster.addCombatant(null, "alias", combEnt)(new Transaction())
 
       aRoster.combatant(CombatantID("1")) must notBeNull
-      there was one(mockIDGenerator).first()
-    }
-
-    "check IDGenerator for provided ID but done remove if it's not in generator" in {
-      aRoster.addCombatant(CombatantID(Symbol("A").name), "alias", combEnt)(new Transaction())
-
-      there was one(mockIDGenerator).contains(Symbol("A"))
-      there was no(mockIDGenerator).removeFromPool(Symbol("A"))
-    }
-
-    "remove ID from generator if provided and is contained in generator" in {
-      aRoster.addCombatant(CombatantID(Symbol("10").name), "alias", combEnt)(new Transaction())
-
-      there was one(mockIDGenerator).contains(Symbol("10")) then
-        one(mockIDGenerator).removeFromPool(Symbol("10"))
-    }
-
-    "return ID to pool when an add is undone" in {
-      val trans = new Transaction()
-      val changeLog = new TransactionChangeLogger()
-
-      aRoster.addCombatant(null, "alias", combEnt)(trans)
-      aRoster.addCombatant(CombatantID("A"), "alias", combEnt)(trans)
-      trans.commit(changeLog)
-      trans.undo(changeLog)
-
-      there was one(mockIDGenerator).returnToPool(Symbol("1"))
-      there was one(mockIDGenerator).returnToPool(Symbol("A")) // This was not generated return any
-    }
-
-    "remove ID to pool when an add is redone" in {
-      val trans = new Transaction()
-      val changeLog = new TransactionChangeLogger()
-
-      aRoster.addCombatant(null, "alias", combEnt)(trans)
-      aRoster.addCombatant(CombatantID("A"), "alias", combEnt)(trans)
-      trans.commit(changeLog)
-      trans.undo(changeLog)
-      trans.redo(changeLog)
-
-      there was one(mockIDGenerator).removeFromPool(Symbol("1"))
-      there was no(mockIDGenerator).removeFromPool(Symbol("A")) // Return should not take something not in pool
     }
   }
 
@@ -186,8 +141,7 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
   }
 
   "a fully loaded Roster" ->- (beforeContext {
-    mockIDGenerator = spy(new IDGenerator(1, 50))
-    aRoster = new CombatantRoster(mockIDGenerator)
+    aRoster = new CombatantRoster()
     runAndCommit {
       trans =>
         aRoster.addCombatant(combA, null, combEnt)(trans)
@@ -203,19 +157,16 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
           val cr = getChangeRosterMap(changes)
           cr must beDefinedAt(combA)
           cr mustNot beDefinedAt(combB)
-          there was one(mockIDGenerator).returnToPool(combB.toSymbol)
       } afterUndo {
         changes =>
           val cr = getChangeRosterMap(changes)
           cr must beDefinedAt(combA)
           cr must beDefinedAt(combB)
-          there was one(mockIDGenerator).removeFromPool(Symbol("1"))
       } afterRedo {
         changes =>
           val cr = getChangeRosterMap(changes)
           cr must beDefinedAt(combA)
           cr mustNot beDefinedAt(combB)
-          there was two(mockIDGenerator).returnToPool(combB.toSymbol)
       }
     }
 
@@ -227,21 +178,16 @@ object CombatantRosterSpec extends Specification with TransactionalSpecification
           val cr = getChangeRosterMap(changes)
           cr mustNot beDefinedAt(combA)
           cr mustNot beDefinedAt(combB)
-          there was one(mockIDGenerator).returnToPool(combA.toSymbol)
-          there was one(mockIDGenerator).returnToPool(combB.toSymbol)
       } afterUndo {
         changes =>
           val cr = getChangeRosterMap(changes)
           cr must beDefinedAt(combA)
           cr must beDefinedAt(combB)
-          there was one(mockIDGenerator).removeFromPool(Symbol("1"))
       } afterRedo {
         changes =>
           val cr = getChangeRosterMap(changes)
           cr mustNot beDefinedAt(combA)
           cr mustNot beDefinedAt(combB)
-          there was two(mockIDGenerator).returnToPool(combA.toSymbol)
-          there was two(mockIDGenerator).returnToPool(combB.toSymbol)
       }
     }
   }
