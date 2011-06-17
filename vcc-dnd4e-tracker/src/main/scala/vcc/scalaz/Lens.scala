@@ -24,8 +24,19 @@ case class Lens[S, T](get: S => T, set: (S, T) => S) {
 
   def mod(s: S, f: T => T): S = set(s, f(get(s)))
 
+  /**
+   * Modify lens if value changed. This is a helper method used to update the lens only if the value has after
+   * applying change function.
+   * @param s State to be changes
+   * @param f Change function
+   * @return New state if f(get(s)) != get(s), old value otherwise
+   */
+  def modIfChanged(s: S, f: T => T) = {
+    val nv = f(get(s))
+    if (nv != get(s)) set(s, nv)
+    else s
+  }
 }
-
 
 object Lens {
 
