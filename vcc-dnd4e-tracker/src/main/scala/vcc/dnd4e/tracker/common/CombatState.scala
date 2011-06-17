@@ -17,12 +17,67 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-case class CombatState(roster: Map[CombatantID, Combatant], order: InitiativeOrder) {
+case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {
   def endCombat(): CombatState = {
     this.copy(order = order.endCombat())
   }
+
+  def isCombatStarted = order.nextUp.isDefined
+
+  val rules = CombatState.Rules
 }
 
+
 object CombatState {
-  def empty = CombatState(Map(), InitiativeOrder.empty)
+
+  object Rules {
+    /**
+     * Inform if all the Combatants with and InitiativeOrderID are not dead.
+     */
+    def areAllCombatantInOrderDead(combatState: CombatState): Boolean = {
+      !combatState.order.order.exists(x => combatState.roster.entries(x.combId).health.status != HealthTracker.Status.Dead)
+    }
+
+    def canCombatantRollInitiative(combatState: CombatState, combID: CombatantID): Boolean = {
+      if (combatState.isCombatStarted) {
+        !combatState.order.order.exists(ioi => ioi.combId == combID)
+      } else true
+    }
+
+    def hasActingCombatant(combatState: CombatState): Boolean = {
+      combatState.order.order.length > 0
+    }
+
+    /**
+     * Can moveBefore if who is not acting and is different than whom
+     * @param state The current combatState
+     * @param who Who will move
+     * @param whom In front of whom who will move
+     */
+    def canMoveBefore(combatState: CombatState, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
+      (who != whom) && combatState.isCombatStarted && combatState.order.tracker(who).state != InitiativeTracker.state.Acting
+    }
+
+    /**
+     * Determines in a given action can be applied to an InitiativeTracker. Not that this does not cover compound
+     * operations like the Delay which internally is broken into Start and Delay.
+     */
+    def canInitiativeOrderPerform(combatState: CombatState, io: InitiativeOrderID, action: InitiativeTracker.action.Value): Boolean = {
+      if (!combatState.isCombatStarted || !combatState.order.nextUp.isDefined) false
+      else {
+        val first = combatState.order.tracker(combatState.order.nextUp.get)
+        val test = combatState.order.tracker(io)
+        test.canTransform(first, action)
+      }
+    }
+
+    def areAllied(combatState: CombatState, combA: CombatantID, combB: CombatantID): Boolean = {
+      val a = combatState.roster.entries(combA).definition.entity.ctype
+      val b = combatState.roster.entries(combB).definition.entity.ctype
+      (a == CombatantType.Character && b == CombatantType.Character) || (a != CombatantType.Character && b != CombatantType.Character)
+    }
+
+  }
+
+  def empty = CombatState(Roster(Combatant.RosterFactory, Map()), InitiativeOrder.empty(), None)
 }

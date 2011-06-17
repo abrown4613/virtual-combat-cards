@@ -20,7 +20,14 @@ package vcc.dnd4e.tracker.common
 /**
  *
  */
-case class Combatant(cid: CombatantID, alias: String, comment: String, entity: CombatantEntity, health: HealthTracker, effects: EffectList)
+case class Combatant(definition: CombatantRosterDefinition, comment: String, health: HealthTracker, effects: EffectList) {
+  def updateDefinition(newDef: CombatantRosterDefinition): Combatant = {
+    this.copy(
+      definition = newDef,
+      health = this.health.replaceHealthDefinition(newDef.entity.healthDef)
+    )
+  }
+}
 
 /**
  *  Defines the major CombatantRoster data for a tracker.transactional.Combatant, it is also used for views.
@@ -30,12 +37,20 @@ case class CombatantRosterDefinition(cid: CombatantID, alias: String, entity: Co
 object Combatant {
   def apply(definition: CombatantRosterDefinition): Combatant = {
     Combatant(
-      cid = definition.cid,
-      alias = definition.alias,
-      entity = definition.entity,
+      definition = definition,
       health = HealthTracker.createTracker(definition.entity.healthDef),
       effects = EffectList(definition.cid, Nil),
       comment = ""
     )
   }
+
+  case object RosterFactory extends RosterCombatantFactory[Combatant] {
+
+    def replaceDefinition(combatant: Combatant, newDefinition: CombatantRosterDefinition): Combatant = {
+      combatant.updateDefinition(newDefinition)
+    }
+
+    def createCombatant(definition: CombatantRosterDefinition): Combatant = apply(definition)
+  }
+
 }
