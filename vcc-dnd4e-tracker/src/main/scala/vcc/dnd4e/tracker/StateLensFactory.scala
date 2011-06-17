@@ -17,22 +17,38 @@
 //$Id$
 package vcc.dnd4e.tracker
 
-import common.{Combatant, CombatState}
+import common._
 import vcc.scalaz.Lens
-import vcc.dnd4e.tracker.common.{CombatantID, HealthTracker}
 
 trait LensFactory[S]
 
 trait StateLensFactory extends LensFactory[CombatState] {
+  val rosterLens: Lens[CombatState, Roster[Combatant]]
+  val orderLens: Lens[CombatState, InitiativeOrder]
   protected val combatantHealthLens: Lens[Combatant, HealthTracker]
-  protected val combatantMapLens: Lens[CombatState, Map[CombatantID, Combatant]]
+  protected val combatantEffectLens: Lens[Combatant, EffectList]
+  protected val combatantCommentLens: Lens[Combatant, String]
+  protected val combatantMapLens: Lens[Roster[Combatant], Map[CombatantID, Combatant]]
+  protected val initiativeTrackerMapLens: Lens[InitiativeOrder, Map[InitiativeOrderID, InitiativeTracker]]
 
   def combatantHealth(cid: CombatantID): Lens[CombatState, HealthTracker] = {
-    combatantMapLens.at(cid) compose combatantHealthLens
+    rosterLens compose combatantMapLens.at(cid) compose combatantHealthLens
+  }
+
+  def combatantComment(cid: CombatantID): Lens[CombatState, String] = {
+    rosterLens compose combatantMapLens.at(cid) compose combatantCommentLens
+  }
+
+  def combatantEffectList(cid: CombatantID): Lens[CombatState, EffectList] = {
+    rosterLens compose combatantMapLens.at(cid) compose combatantEffectLens
   }
 
   def combatant(cid: CombatantID): Lens[CombatState, Combatant] = {
-    combatantMapLens.at(cid)
+    rosterLens compose combatantMapLens.at(cid)
+  }
+
+  def initiativeTrackerLens(ioi: InitiativeOrderID) = {
+    orderLens compose initiativeTrackerMapLens.at(ioi)
   }
 }
 
@@ -42,5 +58,33 @@ object StateLensFactory extends StateLensFactory {
     (c, h) => c.copy(health = h)
   )
 
-  protected val combatantMapLens: Lens[CombatState, Map[CombatantID, Combatant]] = Lens(s => s.roster, (state, r) => state.copy(roster = r))
+  protected val combatantMapLens: Lens[Roster[Combatant], Map[CombatantID, Combatant]] = Lens(
+    r => r.entries,
+    (r, ne) => r.copy(entries = ne)
+  )
+
+  val rosterLens: Lens[CombatState, Roster[Combatant]] = Lens(
+    s => s.roster,
+    (s, r) => s.copy(roster = r)
+  )
+
+  val orderLens: Lens[CombatState, InitiativeOrder] = Lens(
+    s => s.order,
+    (s, o) => s.copy(order = o)
+  )
+
+  protected val combatantCommentLens = Lens[Combatant, String](
+    c => c.comment,
+    (c, newComment) => c.copy(comment = newComment)
+  )
+
+  protected val combatantEffectLens = Lens[Combatant, EffectList](
+    c => c.effects,
+    (c, el) => c.copy(effects = el)
+  )
+
+  protected val initiativeTrackerMapLens: Lens[InitiativeOrder, Map[InitiativeOrderID, InitiativeTracker]] = Lens(
+    o => o.tracker,
+    (o, ts) => o.copy(tracker = ts)
+  )
 }
