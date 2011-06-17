@@ -147,6 +147,12 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
       (if (nextUp.isDefined) order.contains(nextUp.get) else true) &&
       (!reorderList.exists(p => !order.contains(p._1) || !order.contains(p._2)))
   }
+
+  /**
+   * Returns if a given CombatantID is in the initiative order. That is, it has at least one InitiativeOrderID in the
+   * order.
+   */
+  def isInSequence(combId: CombatantID): Boolean = order.exists(x => x.combId == combId)
 }
 
 object InitiativeOrder {
