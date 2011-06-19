@@ -71,7 +71,8 @@ object PartyFile {
       else logger.error("Failed to load party, either is not a party")
       ok = false
     }
-    (x.reverse, ok)
+    val (withId, noId) = x.reverse.partition(pm => pm.id != null)
+    (withId ++ noId, ok)
   }
 
   /**
