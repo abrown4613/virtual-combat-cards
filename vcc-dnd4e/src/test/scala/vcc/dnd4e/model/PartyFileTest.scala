@@ -80,6 +80,22 @@ class PartyFileTest extends SpecificationWithJUnit with Mockito {
       PartyFile.loadFromStream(is) must_== (List(PartyMember(null, null, entId1)), false)
     }
 
+    "return members with id first independent of location in file" in {
+      //This is necessary to preserve ID.
+      val is = makePartyFile(
+        "<combatant eid='" + entId2.asStorageString + "' alias='some other name'/>",
+        "<combatant eid='" + entId1.asStorageString + "' id='1' />",
+        "<combatant eid='" + entId2.asStorageString + "' alias='some'/>",
+        "<combatant eid='" + entId1.asStorageString + "' id='2' />")
+      PartyFile.loadFromStream(is) must_== (List(
+        PartyMember(CombatantID("1"), null, entId1),
+        PartyMember(CombatantID("2"), null, entId1),
+        PartyMember(null, "some other name", entId2),
+        PartyMember(null, "some", entId2)
+      ), true)
+    }
+
+
     "load what it saves" in {
       val file = File.createTempFile("test", "xml")
       val partyList = List(
