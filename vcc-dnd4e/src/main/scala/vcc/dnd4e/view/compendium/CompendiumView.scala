@@ -19,7 +19,6 @@
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
-import scala.swing.event._
 import vcc.util.swing.{MigPanel, SwingHelper}
 
 import vcc.dnd4e.domain.compendium._
@@ -36,7 +35,7 @@ object CompendiumView extends Frame {
 
   val newEntryAction = Action("New Entry ...") {
     val diag = new NewCombatantDialog(window)
-    var result = diag.promptUser()
+    val result = diag.promptUser()
     if (result.isDefined)
       doEditEntry(result.get)
   }
@@ -48,21 +47,27 @@ object CompendiumView extends Frame {
     }
   }
 
-
   entListPanel.doubleClickAction = editAction
 
-  contents = new MigPanel("fill") {
-    add(entListPanel, "span 3,wrap")
-    add(new Button(newEntryAction), "split 5")
+  contents = new MigPanel("fill, ins dialog") {
+    add(entListPanel, "span 5, wrap, growx")
+    add(new Button(newEntryAction), "")
     add(new Button(editAction))
     add(new Button(Action("Delete") {
       if (entListPanel.currentSelection.isDefined) {
         Compendium.activeRepository.delete(entListPanel.currentSelection.get.eid)
       }
     }), "")
+    add(new Button(Action("Copy") {
+      if (entListPanel.currentSelection.isDefined) {
+        val ent = Compendium.activeRepository.load(entListPanel.currentSelection.get.eid, false)
+        val newCopy = ent.copyEntity()
+        Compendium.activeRepository.store(newCopy)
+      }
+    }), "")
     add(new Button(Action("Close") {
       CompendiumView.visible = false
-    }), "skip 1")
+    }), "tag right, gap 0")
   }
 
 

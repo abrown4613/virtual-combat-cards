@@ -34,6 +34,7 @@ class CharacterEntity(eid: EntityID) extends CombatantEntity(eid) {
   val insight = new IntField(this, "skill:insight", AnyInt)
   val senses = new StringField(this, "base:senses", AnyString)
 
+  protected def createInstance(eid: EntityID): CombatantEntity = new CharacterEntity(eid)
 }
 
 object CharacterEntity {

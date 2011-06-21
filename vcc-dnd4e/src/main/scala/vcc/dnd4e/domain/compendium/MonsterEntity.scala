@@ -32,6 +32,8 @@ class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
   val role = new StringField(this, "base:role", RequiredString)
   val level = new IntField(this, "base:level", RequiredIntGreaterZero)
   val xp = new IntField(this, "base:xp", RequiredInt)
+
+  protected def createInstance(eid: EntityID) = new MonsterEntity(eid)
 }
 
 object MonsterEntity {

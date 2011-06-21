@@ -67,6 +67,15 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
     val es = super.asDataStoreEntity
     DataStoreEntity(es.eid, es.data + ("classid" -> classID.uri.toString))
   }
+
+  protected def createInstance(eid: EntityID): CombatantEntity
+
+  def copyEntity(): CombatantEntity = {
+    val original = this.asDataStoreEntity
+    val ent = createInstance(EntityID.generateRandom())
+    ent.loadFromMap(original.data.updated(name.id, name.value + " [copy]"))
+    ent
+  }
 }
 
 /**
