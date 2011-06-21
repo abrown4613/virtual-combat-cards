@@ -27,6 +27,8 @@ class TrapEntity(eid: EntityID) extends MonsterEntity(eid) {
   override val classID = Compendium.trapClassID
 
   val trapClass = new StringField(this, "base:class", RequiredString)
+
+  override protected def createInstance(eid: EntityID) = new TrapEntity(eid)
 }
 
 object TrapEntity {

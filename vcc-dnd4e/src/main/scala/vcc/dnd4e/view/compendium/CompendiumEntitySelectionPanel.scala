@@ -33,7 +33,7 @@ object MonsterSummaryProjection extends TableModelRowProjection[MonsterSummary] 
     ("Type", classOf[String]),
     ("Level", classOf[java.lang.Integer]),
     ("XP", classOf[java.lang.Integer])
-    )
+  )
   val setter: PartialFunction[(Int, MonsterSummary, Any), Unit] = null
 
   def apply(col: Int, obj: MonsterSummary): java.lang.Object = {
@@ -54,7 +54,7 @@ object TrapSummaryProjection extends TableModelRowProjection[TrapSummary] {
     ("Type", classOf[String]),
     ("Level", classOf[java.lang.Integer]),
     ("XP", classOf[java.lang.Integer])
-    )
+  )
   val setter: PartialFunction[(Int, TrapSummary, Any), Unit] = null
 
   def apply(col: Int, obj: TrapSummary): java.lang.Object = {
@@ -74,7 +74,7 @@ object CharacterSummaryProjection extends TableModelRowProjection[CharacterSumma
     ("Class", classOf[String]),
     ("Race", classOf[String]),
     ("Level", classOf[Int])
-    )
+  )
   val setter: PartialFunction[(Int, CharacterSummary, Any), Unit] = null
 
   def apply(col: Int, obj: CharacterSummary): java.lang.Object = {
@@ -92,9 +92,9 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
   private val trapButton = new RadioButton("Trap")
-  private val minLevelCombo = new ComboBox((1 to 40).toSeq)
+  private val minLevelCombo = new ComboBox[Int]((1 to 40).toSeq)
   minLevelCombo.selection.item = 1
-  private val maxLevelCombo = new ComboBox((1 to 40).toSeq)
+  private val maxLevelCombo = new ComboBox[Int]((1 to 40).toSeq)
   maxLevelCombo.selection.item = 40
   private val buttonGroup = new ButtonGroup(monsterButton, characterButton, trapButton)
   private val monsterTableModel = new ProjectionTableModel(MonsterSummaryProjection)
@@ -134,7 +134,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
 
   val mouseAdapter = new MouseAdapter() {
     override def mouseClicked(e: MouseEvent) {
-      if (e.getClickCount() % 2 == 0 && doubleClickAction != null) doubleClickAction()
+      if (e.getClickCount % 2 == 0 && doubleClickAction != null) doubleClickAction()
     }
   }
   monsterTable.peer.addMouseListener(mouseAdapter)
@@ -168,7 +168,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
       refreshList()
   }
 
-  def currentSelection(): Option[EntitySummary] = {
+  def currentSelection: Option[EntitySummary] = {
     val activeTable = {
       if (monsterButton.selected) monsterTable
       else if (characterButton.selected) characterTable
