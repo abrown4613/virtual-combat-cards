@@ -59,10 +59,10 @@ object ExperienceCalculator {
 class PartyEditor(director: PanelDirector) extends Frame {
 
   class PartyTableEntry(val eid: EntityID, val name: String, var alias: String, var id: String, var qty: Int, val xp: Int) extends Ordered[PartyTableEntry] {
-    def toIndividual(): Iterable[PartyTableEntry] = (if (qty == 1) Seq(this)
+    def toIndividual: Iterable[PartyTableEntry] = (if (qty == 1) Seq(this)
     else (1 to qty).map(e => new PartyTableEntry(eid, name, alias, id, 1, xp)))
 
-    def toPartyMember(): PartyMember = PartyMember(if (id != null) CombatantID(id) else null, alias, eid)
+    def toPartyMember: PartyMember = PartyMember(if (id != null) CombatantID(id) else null, alias, eid)
 
     def compare(that: PartyTableEntry) = this.name.compare(that.name)
   }
@@ -120,7 +120,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
 
   private val compendiumEntries = new CompendiumEntitySelectionPanel
   private val totalXPLabel = new Label()
-  private val partySizeCombo = new ComboBox((1 to 10).toSeq)
+  private val partySizeCombo = new ComboBox[Int]((1 to 10).toSeq)
   partySizeCombo.selection.item = 5
   recalculateXP(Nil)
 
@@ -142,6 +142,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
     }
   })
 
+  addButton.tooltip = "Double clicking on entries from the right table will also add to party."
   compendiumEntries.doubleClickAction = addButton.action
 
   private val removeButton = new Button(Action(" << Remove") {
@@ -210,7 +211,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
   private def doSave() {
     val file = FileChooserHelper.chooseSaveFile(table.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
-      val pml = expandEntries(partyTableModel.content).map(_.toPartyMember())
+      val pml = expandEntries(partyTableModel.content).map(_.toPartyMember)
       PartyFile.saveToFile(file.get, pml)
     }
   }
@@ -237,10 +238,12 @@ class PartyEditor(director: PanelDirector) extends Frame {
   }
 
   private def doAddToCombat() {
-    PartyLoader.getInstance(director, this.menuBar).loadToBattle(expandEntries(partyTableModel.content).map(_.toPartyMember))
+    //Need to add the ones with ID first
+    val toAdd = expandEntries(partyTableModel.content).map(_.toPartyMember).partition(pm => pm.id != null)
+    PartyLoader.getInstance(director, this.menuBar).loadToBattle(toAdd._1 ++ toAdd._2)
   }
 
-  private def expandEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = ol.flatMap(x => x.toIndividual())
+  private def expandEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = ol.flatMap(x => x.toIndividual)
 
   private def compressEntries(ol: Seq[PartyTableEntry]): Seq[PartyTableEntry] = {
     val ul = if (!collapseCheckBox.selected) {
