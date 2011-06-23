@@ -17,6 +17,9 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
+import vcc.dnd4e.tracker.transition.CombatTransition
+import vcc.dnd4e.tracker.StateLensFactory
+
 case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {
   def endCombat(): CombatState = {
     this.copy(order = order.endCombat())
@@ -24,13 +27,19 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
 
   def isCombatStarted = order.nextUp.isDefined
 
-  val rules = CombatState.Rules
-}
+  val rules = CombatState.rules
 
+  def transitionWith(trans: List[CombatTransition]): CombatState = {
+    trans.foldLeft(this)((s, x) => x.transition(StateLensFactory, s))
+  }
+
+}
 
 object CombatState {
 
-  object Rules {
+  val rules = new Rules()
+
+  class Rules() {
     /**
      * Inform if all the Combatants with and InitiativeOrderID are not dead.
      */
