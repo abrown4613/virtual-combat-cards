@@ -121,9 +121,9 @@ object SomePowerDefinition {
       case _ => null
     }
     if (pdef == null) {
-//      //TODO: Implement simplified fail-over.
-//      println("Parts: " + PowerHeaderParts.unapply(parts))
-//      throw new Exception("Processing of power header failed, content: " + parts)
+      //      //TODO: Implement simplified fail-over.
+      //      println("Parts: " + PowerHeaderParts.unapply(parts))
+      //      throw new Exception("Processing of power header failed, content: " + parts)
       None
     } else {
       Some(pdef)
@@ -346,7 +346,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     //Should need this, but just to be safe
     if (!aurasAsTraits.isEmpty) {
       powersActionMap = powersActionMap +
-              (ActionType.Trait -> (powersActionMap.getOrElse(ActionType.Trait, Nil) ::: aurasAsTraits))
+        (ActionType.Trait -> (powersActionMap.getOrElse(ActionType.Trait, Nil) ::: aurasAsTraits))
     }
     new Monster(id,
       CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
@@ -361,14 +361,6 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         if (ret.startsWith(":")) ret = ret.tail
         result.update("description", ret.trim)
         stream.advance()
-      case Block("P#", commentPart :: Nil) =>
-        val comment: String = commentPart match {
-          case Text(text) => text
-          case Emphasis(text) => text
-          case _ => null // Dont care much for this
-        }
-        if (comment != null) result.update("comment", comment)
-        stream.advance()
       case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
         val trimmedList = trimParts(parts)
         val pairs: List[(String, String)] = try {
@@ -379,6 +371,14 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         }
         val normalizedParts = pairs.map(p => p._1.toLowerCase() -> p._2)
         result ++= normalizedParts
+        stream.advance()
+      case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
+        val comment: String = commentPart match {
+          case Text(text) => text
+          case Emphasis(text) => text
+          case _ => null // Dont care much for this
+        }
+        if (comment != null) result.update("comment", comment)
         stream.advance()
       case blk =>
         throw new UnexpectedBlockElementException("Expected P blocks in the trailing stat block, found:", blk)

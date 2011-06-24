@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package vcc.domain.dndi 
+package vcc.domain.dndi
 
 import org.specs.Specification
 import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
+import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.domain.dndi.Parser._
 import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 import xml.Node
@@ -34,8 +34,8 @@ object MonsterReaderSpec extends Specification {
   val reader = new MonsterReader(0)
 
   final val sampleDesc = StyledText(List(
-    TextBlock("P","flavor",TextSegment("Something happens.")),
-    TextBlock("P","flavorIndent",TextSegment.makeItalic("Secondary"))))
+    TextBlock("P", "flavor", TextSegment("Something happens.")),
+    TextBlock("P", "flavorIndent", TextSegment.makeItalic("Secondary"))))
 
   // Returns a block stream with already advanced.
   def getBlockStream(xml: Node): TokenStream[BlockElement] = {
@@ -53,8 +53,8 @@ object MonsterReaderSpec extends Specification {
   "MonsterReader.processTailBlock" should {
     "read description" in {
       val stream = new TokenStream[BlockElement](List(
-        Block("P#flavor",List(Key("Description"),Text(": black and mean."), Break(), Text("Razor sharp")))
-        ))
+        Block("P#flavor", List(Key("Description"), Text(": black and mean."), Break(), Text("Razor sharp")))
+      ))
       stream.advance()
       val map = reader.processTailBlock(stream)
 
@@ -64,7 +64,16 @@ object MonsterReaderSpec extends Specification {
 
     "read trailing comment" in {
       // <p>Published in <a href="http://www.wizards.com/dnd/Product.aspx?x=dnd/products/dndacc/253840000" target="_new">Monster Manual 3</a>, page(s) 72.</p>
-      val stream = new TokenStream[BlockElement](List(Block("P#",List(Text("Published in Monster Manual 3 , page(s) 72.")))))
+      val stream = new TokenStream[BlockElement](List(Block("P#", List(Text("Published in Monster Manual 3 , page(s) 72.")))))
+      stream.advance()
+      val map = reader.processTailBlock(stream)
+      map must haveKey("comment")
+      map("comment") must_== "Published in Monster Manual 3 , page(s) 72."
+    }
+
+    "read trailing comment" in {
+      // <p>Published in <a class="publishedIn" href="http://www.wizards.com/dnd/Product.aspx?x=dnd/products/dndacc/253840000" target="_new">Monster Manual 3</a>, page(s) 72.</p>
+      val stream = new TokenStream[BlockElement](List(Block("P#publishedIn", List(Text("Published in Monster Manual 3 , page(s) 72.")))))
       stream.advance()
       val map = reader.processTailBlock(stream)
       map must haveKey("comment")
@@ -73,7 +82,7 @@ object MonsterReaderSpec extends Specification {
 
     "read trailing comment in italic" in {
       // <p>Published in <a href="http://www.wizards.com/dnd/Product.aspx?x=dnd/products/dndacc/253840000" target="_new">Monster Manual 3</a>, page(s) 72.</p>
-      val stream = new TokenStream[BlockElement](List(Block("P#",List(Emphasis("Published in Dungeon Magazine 155.")))))
+      val stream = new TokenStream[BlockElement](List(Block("P#", List(Emphasis("Published in Dungeon Magazine 155.")))))
       stream.advance()
       val map = reader.processTailBlock(stream)
       map must haveKey("comment")
@@ -81,7 +90,7 @@ object MonsterReaderSpec extends Specification {
     }
     "standalone MM<3 Equipment line" in {
       //<P class="flavor alt"><B>Equipment</B>: <A href="bla" target="_new">chainmail</A> , <A href="bla" target="_new">crossbow bolt</A>  x10, <A href="bla" target="_new">hand crossbow</A> , <A href="bla" target="_new">light shield</A> , <A href="bla" target="_new">spear</A> .</P>
-      val stream = new TokenStream[BlockElement](List(Block("P#flavor alt",List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))))
+      val stream = new TokenStream[BlockElement](List(Block("P#flavor alt", List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))))
       stream.advance()
       val map = reader.processTailBlock(stream)
       map must haveKey("equipment")
@@ -90,15 +99,15 @@ object MonsterReaderSpec extends Specification {
 
     "read equipment and alignment in MM3 format" in {
       //<P class="flavor"><B>Alignment</B> chaotic evil      <B> Languages</B> Common<BR/><B>Equipment</B>: <A href="bla" target="_new">club</A> , <A href="bla" target="_new">javelin</A>  x3, <A href="bla" target="_new">light shield</A> .</P>
-      val stream = new TokenStream[BlockElement](List(Block("P#flavor",List(Key("Alignment"), Text(" chaotic evil      "), Key(" Languages"), Text(" Common"), Break(), Key("Equipment"), Text(": club , javelin  x3, light shield .")))))
+      val stream = new TokenStream[BlockElement](List(Block("P#flavor", List(Key("Alignment"), Text(" chaotic evil      "), Key(" Languages"), Text(" Common"), Break(), Key("Equipment"), Text(": club , javelin  x3, light shield .")))))
       stream.advance()
       val map = reader.processTailBlock(stream)
       val expects = Map(
         "alignment" -> "chaotic evil",
         "languages" -> "Common",
         "equipment" -> "club , javelin  x3, light shield ."
-        )
-      for((k,v)<- expects) {
+      )
+      for ((k, v) <- expects) {
         map must haveKey(k)
         map(k) must_== v
       }
@@ -115,7 +124,7 @@ object MonsterReaderSpec extends Specification {
         "str" -> "19 (+10)",
         "con" -> "20 (+11)",
         "cha" -> "17 (+9)")
-      for((k,v)<- expects) {
+      for ((k, v) <- expects) {
         map must haveKey(k)
         map(k) must_== v
       }
@@ -124,7 +133,7 @@ object MonsterReaderSpec extends Specification {
 
   "MonsterReader.processHeader" should {
     "simplify minion role" in {
-      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Minion Controller"), ("xp","XP 25")))))
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Minion Controller"), ("xp", "XP 25")))))
       ts.advance()
       val fields = reader.processHeader(ts)
 
@@ -133,16 +142,16 @@ object MonsterReaderSpec extends Specification {
         "xp" -> "25", "role" -> "Controller")
     }
     "provide No Role for old minion format" in {
-      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Minion"), ("xp","XP 25")))))
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Minion"), ("xp", "XP 25")))))
       ts.advance()
       val fields = reader.processHeader(ts)
-      
+
       fields must_== Map(
         "name" -> "Pest", "type" -> "dude", "level" -> "1",
         "xp" -> "25", "role" -> "No Role")
     }
     "leave other roles unchanged" in {
-      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster",List(("name","Pest"), ("type","dude"), ("level","Level 1 Elite Brute (Leader)"), ("xp","XP 25")))))
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Elite Brute (Leader)"), ("xp", "XP 25")))))
       ts.advance()
       val fields = reader.processHeader(ts)
 
@@ -164,7 +173,7 @@ object MonsterReaderSpec extends Specification {
         Key("Speed"), Text("  8, climb 8  "), Break(),
         Key("Action Points"), Text("2")))
 
-      val stream = new TokenStream[BlockElement](List(stb,EndOfPower)) //EndOfPower is uset to simplify testing, not in real life
+      val stream = new TokenStream[BlockElement](List(stb, EndOfPower)) //EndOfPower is uset to simplify testing, not in real life
       stream.advance()
       val (isMM3, map, auras) = reader.processMainStatBlock(stream)
       //This is a dummy call to make user processMainStatBlock advances
@@ -268,7 +277,11 @@ object MonsterReaderSpec extends Specification {
     val mr = new MonsterReader(0)
 
     "read aura with keyword" in {
-      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B> 1</P>)
+      val ts = getBlockStream(<P class="flavor alt">
+        <IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B>
+        (Poison)
+        <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B>
+        1</P>)
       val power = mr.processPower(ActionType.Trait, ts)
       power must notBeNull
 
@@ -278,7 +291,9 @@ object MonsterReaderSpec extends Specification {
     }
 
     "read power without keyword" in {
-      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>)
+      val ts = getBlockStream(<P class="flavor alt">
+        <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
+      </P>)
       val power = mr.processPower(ActionType.Minor, ts)
       power must notBeNull
 
@@ -288,7 +303,9 @@ object MonsterReaderSpec extends Specification {
     }
 
     "failed broken power" in {
-      val ts = getBlockStream(<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Bad</B> <B>Power</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B></P>)
+      val ts = getBlockStream(<P class="flavor alt">
+        <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Bad</B> <B>Power</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
+      </P>)
       mr.processPower(ActionType.Minor, ts) must throwAn[UnexpectedBlockElementException]
     }
 
@@ -342,7 +359,7 @@ object MonsterReaderSpec extends Specification {
 
       val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER",Nil)
+      ts.head must_== Block("ENDPOWER", Nil)
       ts.advance() must beTrue
       ts.head must_== blk
     }
@@ -351,7 +368,7 @@ object MonsterReaderSpec extends Specification {
       val blk = Block("P#flavor alt", List(Key("Str"), Text("12 (+5)"), Key("Dex"), Text("14 (+6)"), Key("Wis"), Text("19 (+8)"), Break(), Key("Con"), Text("17 (+7)"), Key("Int"), Text("19 (+8)"), Key("Cha"), Text("16 (+7)")))
       val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
-      ts.head must_== Block("ENDPOWER",Nil)
+      ts.head must_== Block("ENDPOWER", Nil)
       ts.advance() must beTrue
       ts.head must_== blk
     }
@@ -376,7 +393,11 @@ object MonsterReaderSpec extends Specification {
       ts.head must_== blk
     }
     "return normal 'flavor alt' when not power end" in {
-      val phl = (<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG><B>Mace</B> (standard, at-will) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG><B>Arcane, Weapon</B></P>)
+      val phl = (<P class="flavor alt">
+        <IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG> <B>Mace</B>
+        (standard, at-will)
+        <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Arcane, Weapon</B>
+      </P>)
       val blk = Parser.parseBlockElement(phl, true)
       val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
@@ -384,8 +405,8 @@ object MonsterReaderSpec extends Specification {
     }
 
     "consume any NonBlock" in {
-      val blk = Block("P#",List(Text("Hello.")))
-      val ts = new TokenStream[BlockElement](List(NonBlock(List(Break())),blk), new MonsterBlockStreamRewrite())
+      val blk = Block("P#", List(Text("Hello.")))
+      val ts = new TokenStream[BlockElement](List(NonBlock(List(Break())), blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
       ts.head must_== blk
     }
@@ -486,7 +507,7 @@ object MonsterReaderSpec extends Specification {
     }
   }
 
-  def generateMeleePower(name:String):List[BlockElement] = {
+  def generateMeleePower(name: String): List[BlockElement] = {
     val header = Block("P#flavor alt", List(Icon(IconType.Melee), Text(" "), Key(name), Text(" "), Icon(IconType.Separator), Text(" "), Key("Encounter")))
     val blk = Block("P#flavor", List(Text("Something happens.")))
     List(header, blk)
