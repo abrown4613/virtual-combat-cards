@@ -75,14 +75,14 @@
                             <goal>replace</goal>
                         </goals>
                         <configuration>
-                            <file>src/main/resources/version.xml</file>
+                            <file>${build.sourceDirectory}/../resources/version.xml</file>
                             <replacements>
                                 <replacement>
                                     <token>VERSION</token>
                                     <value>${project.version}</value>
                                 </replacement>
                             </replacements>
-                            <outputFile>target/classes/vcc/version.xml</outputFile>
+                            <outputFile>${build.outputDirectory}/vcc/version.xml</outputFile>
                         </configuration>
 
                     </execution>
