@@ -22,12 +22,15 @@ import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common.{EffectTransformation, CombatState, InitiativeTracker, InitiativeOrderID}
 
 /*
-  Place holder, not for real use.
+ * Place holder, not for real use.
  */
 private object InitiativeTransition
 
+/**
+ * Applies effect transformation to all EffectList in the CombatState.
+ */
 private[transition] case class EffectListTransformStep(elt: EffectTransformation) extends CombatTransition {
-  //FIXME Test for this
+
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     val combIds = iState.roster.entries.keys
     combIds.foldLeft(iState)((st, cid) => {
@@ -36,56 +39,63 @@ private[transition] case class EffectListTransformStep(elt: EffectTransformation
   }
 }
 
+/**
+ * Handle Delay action on all effects for all combatants.
+ */
 private[transition] case class DelayEffectListTransformStep(ioi: InitiativeOrderID) extends CombatTransition {
-  //FIXME Test for this, implement delay differed
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    /*
-        for (comb <- context.roster.allCombatantIDs.map(id => context.roster.combatant(id))) {
-          comb.effects = comb.effects.transformAndFilter(
-            EffectTransformation.processDelay(rules.areAllied(context, acting.combId, comb.definition.cid), acting))
-        }
-    */
-
     val combIds = iState.roster.entries.keys
     combIds.foldLeft(iState)((st, cid) => {
-      lf.combatantEffectList(cid).modIfChanged(st, _.transformAndFilter(EffectTransformation.processDelay(false, ioi)))
+      val ally = iState.rules.areAllied(iState, ioi.combId, cid)
+      lf.combatantEffectList(cid).modIfChanged(st, _.transformAndFilter(EffectTransformation.processDelay(ally, ioi)))
     })
   }
 }
 
+/**
+ * Simple Robin Rotation
+ */
 private[transition] case object RotateRobinStep extends CombatTransition {
-  //FIXME Test for this
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = lf.orderLens.mod(iState, order => order.rotate())
 }
 
+/**
+ * Set the robin to a new head (no checks are done)
+ */
 private[transition] case class SetRobinStep(ioi: InitiativeOrderID) extends CombatTransition {
-  //FIXME Test for this
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = lf.orderLens.mod(iState, order => order.setNextUp(ioi))
 }
 
+/**
+ * Compact notation to move a combatant before the first one on the list. Should be called
+ * internally.
+ */
 private[transition] case class MoveBeforeFirstStep(ioi: InitiativeOrderID) extends CombatTransition {
-  //FIXME Test for this
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     lf.orderLens.mod(iState, order => order.moveBefore(ioi, order.nextUp.get))
   }
 }
 
+/**
+ * Move before internal transaction
+ */
 private[transition] case class MoveBeforeOtherStep(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatTransition {
-  //FIXME Test for this
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     lf.orderLens.mod(iState, order => order.moveBefore(who, whom))
   }
 }
 
+/**
+ * This step will update a InitiativeTracker to it's new state. Notice that it does validate if the action is valid.
+ */
 private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderID, action: InitiativeTracker.action.Value) extends CombatTransition {
-  //FIXME test this
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     val ol = lf.orderLens
     val order = ol.get(iState)
     val firstIT = order.tracker(order.nextUp.get)
     val actingLens = lf.initiativeTrackerLens(who)
     if (!iState.rules.canInitiativeOrderPerform(iState, who, action))
-      throw new IllegalActionException(who + " can not perform " + action + " current state: " + iState.order.tracker(who) + " first is: " + iState.order.tracker(iState.order.nextUp.get))
+      throw new IllegalActionException(who + " can not perform " + action + " current state: " + order.tracker(who) + " first is: " + order.tracker(order.nextUp.get))
 
     actingLens.mod(iState, it => it.transform(firstIT, action))
   }
