@@ -36,19 +36,13 @@ case class RssItem(guid: String, title: String, link: String, description: Strin
   import RssItem._
 
   def toXML = {
-    val parts = Seq(<title>
-      {title}
-    </title>, <link>
-      {link}
-    </link>, <description>
-      {description}
-    </description>, <guid>
-      {guid}
-    </guid>)
+    val parts = Seq(
+      <title>{title}</title>,
+      <link>{link}</link>,
+      <description>{description}</description>,
+      <guid>{guid}</guid>)
 
-    <item>
-      {lineBreak}{parts.flatMap(x => Seq(tabStop, x, lineBreak))}
-    </item>
+    <item>{lineBreak}{parts.flatMap(x => Seq(tabStop, x, lineBreak))}</item>
   }
 }
 
