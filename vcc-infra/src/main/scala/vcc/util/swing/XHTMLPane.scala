@@ -22,11 +22,14 @@ import scala.swing._
 import org.w3c.dom._
 import javax.xml.parsers._
 
-import org.xhtmlrenderer.simple.{XHTMLPanel, FSScrollPane}
-
-import java.io.{StringReader}
+import java.io.StringReader
 import org.xml.sax.InputSource
 import javax.swing.ScrollPaneConstants
+import org.xhtmlrenderer.extend.UserAgentCallback
+import org.xhtmlrenderer.simple.{XHTMLPanel, FSScrollPane}
+import collection.JavaConversions
+import java.util.List
+import org.xhtmlrenderer.swing.{LinkListener, FSMouseListener}
 
 object XHTMLPane {
   private val logger = org.slf4j.LoggerFactory.getLogger("fs-agent")
@@ -38,7 +41,7 @@ object XHTMLPane {
 
   if (blankDocument == null || errorDocument == null) {
     logger.error("XHTMLPane initialization failed to create default documents")
-    exit
+    exit(2)
   }
 
   /**
@@ -61,25 +64,68 @@ object XHTMLPane {
   }
 }
 
-class XHTMLPane extends Component {
+/**
+ * Create XHTMLPane using a custom UserAgentCallback.
+ * @param uac Agent callback to use.
+ */
+class XHTMLPane(uac: UserAgentCallback) extends Component {
   override lazy val peer = new FSScrollPane()
 
-  private val xpanel = new XHTMLPanel(XHTMLPaneAgent.getInstance)
+  /**
+   * Create XHTMLPane with default XHTMLPaneAgent agent callback
+   */
+  def this() = this (XHTMLPaneAgent.getInstance())
 
-  peer.setViewportView(xpanel)
+
+  private val xPanel = new XHTMLPanel(uac)
+
+  peer.setViewportView(xPanel)
   peer.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
   peer.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
 
-  xpanel.getSharedContext().getTextRenderer.setSmoothingThreshold(0)
+  xPanel.getSharedContext.getTextRenderer.setSmoothingThreshold(0)
 
+  /**
+   * Remove all the event MouseTrackerListeners from this pane.
+   */
+  def removeAllMouseTrackerListeners() {
+    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[List[FSMouseListener]])
+    for (l <- ml) {
+      xPanel.removeMouseTrackingListener(l)
+    }
+  }
+
+  /**
+   * Remove only the LinkListener from the list, this keeps hover and pointer behaviour change.
+   */
+  def removeLinkListener() {
+    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[List[FSMouseListener]])
+    for (l <- ml) {
+      if (l.isInstanceOf[LinkListener])
+        xPanel.removeMouseTrackingListener(l)
+    }
+  }
+
+  def addMouseTrackingListener(listener: FSMouseListener) {
+    xPanel.addMouseTrackingListener(listener)
+  }
+
+  /**
+   * Set XML document.
+   * @param str String version of the XML document.
+   */
   def setDocumentFromText(str: String) {
     val doc = if (str == "" || str == null) XHTMLPane.blankDocument
     else XHTMLPane.parsePanelDocument(str)
-    if (doc != null) xpanel.setDocument(doc)
-    else xpanel.setDocument(XHTMLPane.errorDocument)
+    if (doc != null) xPanel.setDocument(doc)
+    else xPanel.setDocument(XHTMLPane.errorDocument)
   }
 
+  /**
+   * Set document of pane
+   * @param doc DOM version of the document
+   */
   def setDocument(doc: Document) {
-    xpanel.setDocument(doc)
+    xPanel.setDocument(doc)
   }
 }

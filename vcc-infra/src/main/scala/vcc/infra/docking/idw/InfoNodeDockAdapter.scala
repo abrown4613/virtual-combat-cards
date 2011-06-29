@@ -33,6 +33,8 @@ abstract class InfoNodeDockAdapter extends DockingFrameworkAdapter[View] {
   }
 
   protected def registerDockable(ddef: DockableComponent, dockable: View) {
+    dockable.getWindowProperties.setCloseEnabled(false)
+    dockable.getWindowProperties.setUndockEnabled(false)
     vm.addView(ddef.dockID.name, dockable)
   }
 
