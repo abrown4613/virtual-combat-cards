@@ -25,6 +25,10 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
     this.copy(order = order.endCombat())
   }
 
+  def startCombat(): CombatState = {
+    copy(order = order.startCombat())
+  }
+
   def isCombatStarted = order.nextUp.isDefined
 
   val rules = CombatState.rules
