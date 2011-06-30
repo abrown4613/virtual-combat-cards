@@ -17,13 +17,6 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
-/**
- * Some part of the Combatant information
- */
-//TODO Move to proper file
-trait CombatantAspect
-
-
 object InitiativeTracker {
   def initialTracker(orderID: InitiativeOrderID, roll: Int): InitiativeTracker = InitiativeTracker(orderID, 0, roll, state.Waiting)
 
