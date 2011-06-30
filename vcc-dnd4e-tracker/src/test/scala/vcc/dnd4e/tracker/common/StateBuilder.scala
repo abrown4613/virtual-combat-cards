@@ -57,6 +57,22 @@ class StateBuilder(private var state: CombatState) {
     this
   }
 
+  def modifyHealth(cid: CombatantID, change: HealthTracker => HealthTracker): StateBuilder = {
+    state = lf.combatantHealth(cid).mod(state, change)
+    this
+  }
+
+  /**
+   * Sets initiative, bonus will be picked from definition.
+   * @param cid ID of combatant to set
+   * @param rolls Set of rolls to initiative
+   */
+  def setInitiative(cid: CombatantID, rolls: Int*): StateBuilder = {
+    val init = lf.combatant(cid).get(state).definition.entity.initiative
+    state = lf.orderLens.mod(state, o => o.setInitiative(InitiativeDefinition(cid, init, rolls.toList)))
+    this
+  }
+
   def done = state
 }
 
