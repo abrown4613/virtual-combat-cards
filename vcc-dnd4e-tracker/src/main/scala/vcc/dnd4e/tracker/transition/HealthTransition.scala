@@ -20,6 +20,9 @@ package vcc.dnd4e.tracker.transition
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.dnd4e.tracker.common.{CombatState, HealthTracker, CombatantID}
 
+/**
+ * Base health modification transition.
+ */
 abstract class HealthTransition(target: CombatantID) extends CombatTransition {
   /**
    * Override this one
@@ -31,22 +34,56 @@ abstract class HealthTransition(target: CombatantID) extends CombatTransition {
   }
 }
 
+/**
+ * Applies damage to a combatant and ends combat if all combatants in the initiative order are dead.
+ * @param target Target of damage
+ * @param amount How many hit points to take away.
+ */
 case class DamageTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
+
+  override def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+    val nState = super.transition(lf, iState)
+    val hl = lf.combatantHealth(target)
+    if (hl.get(nState).status() == HealthTracker.Status.Dead && nState.rules.areAllCombatantInOrderDead(nState)) {
+      nState.endCombat()
+    } else {
+      nState
+    }
+  }
+
   protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.applyDamage(amount)
 }
 
+/**
+ * Heal a combatant .
+ * @param target Target of healing
+ * @param amount How many hit points to restore.
+ */
 case class HealTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
   protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.heal(amount)
 }
 
+/**
+ * Set combatant temporary hit points.
+ * @param target Target to get temporary hit points.
+ * @param amount How many points to set.
+ */
 case class SetTemporaryHPTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
   protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.setTemporaryHitPoints(amount, false)
 }
 
+/**
+ * Tick on of the character failed death saving throws.
+ * @param target Target that failed check
+ */
 case class FailDeathSaveTransition(target: CombatantID) extends HealthTransition(target) {
   protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.failDeathSave()
 }
 
+/**
+ * Bring target back from dead (to 0 HP and dying).
+ * @param target Target to restore
+ */
 case class RevertDeathTransition(target: CombatantID) extends HealthTransition(target) {
   protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.raiseFromDead()
 }
