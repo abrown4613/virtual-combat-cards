@@ -20,13 +20,12 @@ package vcc.dnd4e.tracker.transition
 import org.specs2.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import vcc.dnd4e.tracker.StateLensFactory
-import vcc.dnd4e.tracker.common.{CombatantID, HealthTracker, CombatState}
-import vcc.scalaz.Lens
-import org.specs2.matcher.{Expectable, Matcher}
+import vcc.dnd4e.tracker.common._
 
-class HealthTransitionTest extends SpecificationWithJUnit {
+class HealthTransitionTest extends SpecificationWithJUnit with SampleStateData {
   def is = {
     "DamageTransition" ^ test(Damage()) ^
+      "DamageTransition should shutdown combat" ! Damage().testLastLivingDeath ^
       "HealTransition" ^ test(Heal()) ^
       "SetTemporaryHPTransition" ^ test(SetTemp()) ^
       "FailDeathSaveTransition" ^ test(DeathSave()) ^
@@ -40,34 +39,43 @@ class HealthTransitionTest extends SpecificationWithJUnit {
       endp
 
   trait HealthSetup extends Mockito {
-    protected val combFound = CombatantID("A")
-    protected val combNotFound = CombatantID("NOT")
-    protected val mState = mock[CombatState]
-    protected val mNewState = mock[CombatState]
     protected val mHealth = mock[HealthTracker]
     protected val mHealth2 = mock[HealthTracker]
-    protected val mLF = mock[StateLensFactory]
-    protected val mHL = mock[Lens[CombatState, HealthTracker]]
 
-    mLF.combatantHealth(combFound) returns mHL
-    mLF.combatantHealth(combNotFound) throws new NoSuchElementException("Combatant not Found")
-    mHL.modIfChanged(be_==(mState), FuncCall(mHealth, mHealth2)) returns mNewState
+    protected val stateBuilder = StateBuilder.emptyState().
+      addCombatant(Some(combA), null, entityPc1).
+      addCombatant(None, null, entityMonster).
+      addCombatant(None, null, entityMonster).
+      setInitiative(combA, 10).
+      setInitiative(comb1, 12)
 
-    //Overide this method to create behavior under test
+
+    //Override this method to create behavior under test
     def createTransition(comb: CombatantID): HealthTransition
 
-    def caseCombatantNotFound() = createTransition(combNotFound).transition(mLF, mState) must throwA[NoSuchElementException]
+    def caseCombatantNotFound() = createTransition(combB).transition(StateLensFactory, stateBuilder.done) must throwA[NoSuchElementException]
 
     def updateHealth() = {
-      (createTransition(combFound).transition(mLF, mState) must_== mNewState) and
-        (there was one(mHL).modIfChanged(beEqualTo(mState), FuncCall(mHealth, mHealth2)))
+      val state = stateBuilder.modifyHealth(combA, x => mHealth).done
+      val nState = createTransition(combA).transition(StateLensFactory, state)
+      val hl = StateLensFactory.combatantHealth(combA)
+      (hl.get(nState) must_== mHealth2) and (state.roster.combatantDiff(nState.roster) must_== Set(CombatantDiff(combA, mHealth, mHealth2)))
     }
   }
 
   case class Damage() extends HealthSetup {
     def createTransition(comb: CombatantID): HealthTransition = {
       mHealth.applyDamage(10) returns mHealth2
+      mHealth2.status() returns HealthTracker.Status.Ok
       DamageTransition(comb, 10)
+    }
+
+    def testLastLivingDeath = {
+      val state = stateBuilder.modifyHealth(comb1, ht => ht.applyDamage(1000)).done
+      val trans = DamageTransition(combA, 1000)
+      val nState = trans.transition(StateLensFactory, state.startCombat())
+
+      (nState.isCombatStarted must beFalse)
     }
   }
 
@@ -99,12 +107,8 @@ class HealthTransitionTest extends SpecificationWithJUnit {
     }
   }
 
-
-  case class FuncCall[A, B](in: A, out: B) extends Matcher[Function1[A, B]] {
-    def apply[S <: Function1[A, B]](t: Expectable[S]) = {
-      val calculated = t.value(in)
-      result(calculated == out, t.description + " evaluates to " + calculated, t.description + " does not evaluates to " + calculated, t)
-    }
+  def functionCall[A, B](in: A, out: B) = be_==(out) ^^ {
+    (f: Function1[A, B]) => f(in)
   }
 
 }
