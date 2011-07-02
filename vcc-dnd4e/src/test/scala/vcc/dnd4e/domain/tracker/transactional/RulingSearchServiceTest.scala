@@ -17,9 +17,30 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import org.specs.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
+import org.specs.{Specification, SpecificationWithJUnit}
+import org.specs.mock.Mockito
+import vcc.controller.CommandSource
+
+trait MockCombatContextSpecification extends Specification with Mockito {
+  var mOrder: InitiativeOrder = null
+  var mRoster: CombatantRoster = null
+  var mMeta: CombatMetaData = null
+  var mRule: CombatStateRules = null
+  var mSource: CommandSource = null
+  var rState: CombatState = null
+  var aController: AbstractCombatController = null
+
+  def setupMockContext() {
+    mOrder = mock[InitiativeOrder]
+    mRoster = mock[CombatantRoster]
+    mMeta = mock[CombatMetaData]
+    mRule = mock[CombatStateRules]
+    mSource = mock[CommandSource]
+    rState = new CombatState(mOrder, mRoster, mMeta)
+  }
+}
 
 class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatContextSpecification {
 
