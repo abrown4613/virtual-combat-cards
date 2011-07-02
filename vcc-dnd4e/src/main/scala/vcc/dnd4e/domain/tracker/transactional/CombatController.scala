@@ -22,6 +22,7 @@ import scala.collection.mutable.Queue
 import vcc.dnd4e.domain.tracker.common.{CombatStateChange, CombatStateRules}
 import vcc.controller.transaction.ChangeNotification
 import vcc.controller.message.{TrackerChanged, TransactionalAction}
+import vcc.dnd4e.tracker.dispatcher.MigrationHandler
 
 /**
  * This Mixin implement the <code>publish</code> method required for a AbstractTrackerController, it will
@@ -35,7 +36,6 @@ trait TrackerControllerValidatingPublisher {
     assert(c.length == changes.length)
     TrackerChanged(c.toList.toList)
   }
-
 }
 
 /**
@@ -50,10 +50,7 @@ abstract class AbstractCombatController(val rules: CombatStateRules, state: Comb
  */
 class CombatController(rules: CombatStateRules, state: CombatState, queue: Queue[TransactionalAction])
   extends AbstractCombatController(rules, state, queue)
-  with CombatStateActionHandler
-  with InitiativeActionHandler
-  with EffectActionHandler
-  with HealthActionHandler
-  with RulingHandler {
+  with MigrationHandler {
+  //with RulingHandler {
   def this(rules: CombatStateRules, state: CombatState) = this (rules, state, new Queue[TransactionalAction]())
 }

@@ -20,11 +20,19 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatStateView}
 
+import vcc.dnd4e.tracker.common.{CombatState => ImmutableCombatState}
+import vcc.controller.transaction.Undoable
+import vcc.dnd4e.tracker.dispatcher.CombatStateChangePublisher
+
 /**
  * CombatState provides an aggregate of the CombatantRoster, InitiativeOrder, and CombatMetaData. It also provides
  * some helper extractors for the tracker logic.
  */
 class CombatState(val order: InitiativeOrder, val roster: CombatantRoster, val metaData: CombatMetaData) extends CombatStateView {
+
+  //FIXME This is a piggy back to get things rolling
+
+  val iState = new Undoable[ImmutableCombatState](ImmutableCombatState.empty, (us, old) => CombatStateChangePublisher.publish(old, us.value))
 
   /**
    *  Default constructor that creates all the necessary objects.
