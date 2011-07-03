@@ -59,7 +59,7 @@ object BootStrap extends StartupRoutine {
           logger.debug("Create compendium requested, import sample? " + importSampleCompendium)
         }
       }
-      Configuration.load(ConfigurationFinder.locateFile)
+      Configuration.load(ConfigurationFinder.locateFile())
       Configuration
     }
     callStartupStep(srw, "Logging") {
@@ -87,7 +87,7 @@ object BootStrap extends StartupRoutine {
             logger.error("Failed to create compendium {}", Configuration.compendiumStoreID.value)
             false
           } else {
-            val sampleFile = new File(UpdateManager.getInstallDirectory, "sample-comp.zip")
+            val sampleFile = new File(UpdateManager.getInstallDirectory(), "sample-comp.zip")
             if (importSampleCompendium) {
               logger.info("Importing sample compendium from {} if it exists.", sampleFile)
               if (sampleFile.exists) {
@@ -115,9 +115,9 @@ object BootStrap extends StartupRoutine {
           logger.error("Failed compendium load", e)
           val ret = JOptionPane.showConfirmDialog(srw.ownerWindow,
             "Failed to open Compendium. This may be due to missing files or directory. You may have accidentally\n" +
-                    "removed the compendium directory. Virtual Combat Cards can create an empty Compendium folder.\n" +
-                    "Selecting yes will recreate a blank compendium, or no to cancel this run (you will see another error message)." +
-                    "\n\nCreate new empty compendium directory?",
+              "removed the compendium directory. Virtual Combat Cards can create an empty Compendium folder.\n" +
+              "Selecting yes will recreate a blank compendium, or no to cancel this run (you will see another error message)." +
+              "\n\nCreate new empty compendium directory?",
             "Failed to open Compendium",
             JOptionPane.YES_NO_OPTION)
           if (ret == 0) {
@@ -147,10 +147,10 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "Core Tracker") {
       import vcc.controller.Tracker
-      import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatState}
+      import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatContext}
       import vcc.dnd4e.domain.tracker.common.CombatStateRules
 
-      val t = Tracker.initialize(new CombatController(new CombatStateRules(), new CombatState(null)))
+      Tracker.initialize(new CombatController(new CombatStateRules(), new CombatContext()))
 
       //Make sure it got registered
       Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]

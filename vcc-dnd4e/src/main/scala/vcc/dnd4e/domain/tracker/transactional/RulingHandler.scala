@@ -44,10 +44,10 @@ object RulingSearchService {
       (RegenerateByRuling(eid, full, hint))
   }
 
-  def searchEndRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
+  def searchEndRound(context: CombatContext, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
     val whoMatcher = endRoundMatcher(who)
     val deathCheck: List[PendingRuling[List[TransactionalAction]]] = {
-      if (context.combatantViewFromID(who).healthTracker.status == HealthTracker.Status.Dying)
+      if (context.combatantFromID(who).health.status == HealthTracker.Status.Dying)
         List(new PendingRuling(SaveVersusDeathRuling(who)))
       else
         Nil
@@ -55,7 +55,7 @@ object RulingSearchService {
     context.allEffects.flatMap(whoMatcher.lift(_)).map(new PendingRuling(_)).toList ::: deathCheck
   }
 
-  def searchStartRound(context: CombatState, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
+  def searchStartRound(context: CombatContext, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
     val whoMatcher = startRoundMatcher(who)
     val (regen, rest) = context.allEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerateByRuling])
     (regen ::: rest).map(new PendingRuling(_))

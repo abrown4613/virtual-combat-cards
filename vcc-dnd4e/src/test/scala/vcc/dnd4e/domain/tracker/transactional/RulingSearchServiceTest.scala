@@ -24,21 +24,13 @@ import org.specs.mock.Mockito
 import vcc.controller.CommandSource
 
 trait MockCombatContextSpecification extends Specification with Mockito {
-  var mOrder: InitiativeOrder = null
-  var mRoster: CombatantRoster = null
-  var mMeta: CombatMetaData = null
-  var mRule: CombatStateRules = null
   var mSource: CommandSource = null
-  var rState: CombatState = null
+  var rState: CombatContext = null
   var aController: AbstractCombatController = null
 
   def setupMockContext() {
-    mOrder = mock[InitiativeOrder]
-    mRoster = mock[CombatantRoster]
-    mMeta = mock[CombatMetaData]
-    mRule = mock[CombatStateRules]
     mSource = mock[CommandSource]
-    rState = new CombatState(mOrder, mRoster, mMeta)
+    rState = new CombatContext()
   }
 }
 
@@ -58,21 +50,21 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
 
   import RulingSearchService._
 
-  val mState = mock[CombatState]
+  val mState = mock[CombatContext]
 
   //Mock combatant health
-  val mockComb = mock[CombatantStateView]
+  val mockComb = mock[Combatant]
   val mockHealth = mock[HealthTracker]
-  mockComb.healthTracker returns mockHealth
+  mockComb.health returns mockHealth
   mockHealth.status returns HealthTracker.Status.Ok
   mState.allEffects returns Nil
-  mState.combatantViewFromID(combA) returns mockComb
+  mState.combatantFromID(combA) returns mockComb
 
   "searchEndRound" should {
     "scan all effects" in {
       mState.allEffects returns effects
       searchEndRound(mState, combA)
-      there was one(mState).allEffects()
+      there was one(mState).allEffects
     }
 
     "return the effect that a save will end form the combatant ending the round" in {
@@ -110,7 +102,7 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
     "scan all effects" in {
       mState.allEffects returns ongoing
       searchEndRound(mState, combA)
-      there was one(mState).allEffects()
+      there was one(mState).allEffects
     }
 
     "find ongoing damage ruling" in {
