@@ -27,26 +27,7 @@ package vcc.tracker
  * generate sequences of messages depending on the state of the tracker. It is the reponsability of the caller to ensure
  * that the correct state is provided on each call to the function.
  */
-trait CommandStream[A, S] {
-
-  /**
-   * Indicate whether or not the stream has some command for a given state.
-   * @param s State to check against, notices that different states may yield different result for the same stream.
-   * @return true if you can safely request a command from this stream, false if the stream has not commands for the
-   * given state.
-   */
-  def hasNext(s: S): Boolean
-
-  /**
-   * Get next command, based on a given state. Client should always call hasNext with the give state
-   * @param s State to get the command for
-   * @return Pair of value and next Stream to use on next call, user should always use the returned stream since it may
-   * be different form the original one.
-   * @throw NoSuchElementException If the at the supplied state the stream has no command, it will throw this exceptions.
-   * Messages vary according to implementation.
-   */
-  @throws(classOf[NoSuchElementException])
-  def next(s: S): (A, CommandStream[A, S])
+trait CommandStream[S, A] {
 
   /**
    * Create a composed stream, the current stream is the first one, once it provides no commands the next stream will be
@@ -54,25 +35,33 @@ trait CommandStream[A, S] {
    * @param that Stream to check if current stream yields not result.
    * @return Composed stream
    */
-  def followedBy(that: CommandStream[A, S]) = ChainedCommandStream(this, that)
+  def followedBy(that: CommandStream[S, A]) = ChainedCommandStream(this, that)
+
+  /**
+   * Get next command, based on a given state, if there is a command for the state Some will be returned, None indicates
+   * that the Stream has no command for the give state.
+   * @param s State to get the command for
+   * @return Option of pair of value and next Stream to use on next call, user should always use the returned stream since it may
+   * be different form the original one.
+   */
+  def get(s: S): Option[(A, CommandStream[S, A])]
 }
 
 /**
  * This is a wrapper to generates commands based on the a Seq. State is ignored for all method calls.
  * @param elem Sequence of elements this stream will return in order
  */
-case class SeqCommandStream[A, S](elem: Seq[A]) extends CommandStream[A, S] {
+case class SeqCommandStream[S, A](elem: Seq[A]) extends CommandStream[S, A] {
+
   /**
    * This implementation will return the next available element in the Seq, and a new Stream with the remainder of the
    * elements of the Seq
-   * @see vcc.tracker.CommandStream#next
+   * @see vcc.tracker.CommandStream#get
    */
-  def next(s: S): (A, CommandStream[A, S]) = (elem.head, SeqCommandStream(elem.tail))
-
-  /**
-   * @see vcc.tracker.CommandStream#hasNext
-   */
-  def hasNext(s: S): Boolean = !elem.isEmpty
+  def get(s: S): Option[(A, CommandStream[S, A])] = {
+    if (!elem.isEmpty) Some((elem.head, SeqCommandStream[S, A](elem.tail)))
+    else None
+  }
 }
 
 /**
@@ -80,36 +69,25 @@ case class SeqCommandStream[A, S](elem: Seq[A]) extends CommandStream[A, S] {
  * the supplied state.
  * @param pf Partial function mapping a given state to commands
  */
-class PartialFunctionCommandStream[A, S](pf: PartialFunction[S, A]) extends CommandStream[A, S] {
+class PartialFunctionCommandStream[S, A](pf: PartialFunction[S, A]) extends CommandStream[S, A] {
 
   /**
    * Returns the result of the application the state to the objects pf variable. If the function is note defined at
    * that state an exception is thrown.
-   * @see vcc.tracker.CommandStream#next
+   * @see vcc.tracker.CommandStream#get
    */
-  def next(s: S): (A, CommandStream[A, S]) = {
-    if (pf.isDefinedAt(s)) (pf.apply(s), this)
-    else throw new NoSuchElementException("CommandStream not defined at " + s)
-  }
-
-  /**
-   * True if the partial function is defined at this state.
-   * @see vcc.tracker.CommandStream#hasNext
-   */
-  def hasNext(s: S): Boolean = pf.isDefinedAt(s)
+  def get(s: S): Option[(A, CommandStream[S, A])] = pf.lift(s).map(x => (x, this))
 }
 
 /**
- *
+ * This construct links two CommandStreams to as a stream.
  */
-case class ChainedCommandStream[A, S](first: CommandStream[A, S], second: CommandStream[A, S]) extends CommandStream[A, S] {
+case class ChainedCommandStream[S, A](first: CommandStream[S, A], second: CommandStream[S, A]) extends CommandStream[S, A] {
 
-  def next(s: S): (A, CommandStream[A, S]) = if (first.hasNext(s)) {
-    val (v, a) = first.next(s)
-    (v, ChainedCommandStream(a, second))
-  } else {
-    second.next(s)
-  }
-
-  def hasNext(s: S): Boolean = first.hasNext(s) || second.hasNext(s)
+  /**
+   * Returns the result of the first stream if there is a command defined for the specified state, if there are no
+   * commands use the second stream.
+   * @see vcc.tracker.CommandStream#get
+   */
+  override def get(s: S) = first.get(s).map(p => (p._1, ChainedCommandStream(p._2, second))).orElse(second.get(s))
 }
