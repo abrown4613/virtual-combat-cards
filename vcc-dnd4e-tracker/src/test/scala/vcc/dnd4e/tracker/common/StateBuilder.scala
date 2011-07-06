@@ -47,18 +47,35 @@ trait SampleStateData {
 class StateBuilder(private var state: CombatState) {
   val lf = StateLensFactory
 
+  /**
+   * Add combatant to the combat
+   */
   def addCombatant(cid: Option[CombatantID], alias: String, entity: CombatantEntity): StateBuilder = {
     state = lf.rosterLens.mod(state, _.addCombatant(cid, alias, entity))
     this
   }
 
+  /**
+   * Modify effect list
+   */
   def modifyEffectList(cid: CombatantID, change: EffectList => EffectList): StateBuilder = {
     state = lf.combatantEffectList(cid).mod(state, change)
     this
   }
 
+  /**
+   * Modify health tracker
+   */
   def modifyHealth(cid: CombatantID, change: HealthTracker => HealthTracker): StateBuilder = {
     state = lf.combatantHealth(cid).mod(state, change)
+    this
+  }
+
+  /**
+   * Modify initiative tracker
+   */
+  def modifyInitiative(ioi: InitiativeOrderID, change: InitiativeTracker => InitiativeTracker): StateBuilder = {
+    state = lf.initiativeTrackerLens(ioi).mod(state, change)
     this
   }
 
@@ -73,9 +90,22 @@ class StateBuilder(private var state: CombatState) {
     this
   }
 
+  /**
+   * StartCombat
+   */
+  def startCombat(): StateBuilder = {
+    state = state.startCombat()
+    this
+  }
+
   def done = state
 }
 
 object StateBuilder {
   def emptyState() = new StateBuilder(CombatState.empty)
+
+  /**
+   * Simple transformation to kill a combatant
+   */
+  def kill: HealthTracker => HealthTracker = ht => ht.applyDamage(ht.base.totalHP * 2)
 }
