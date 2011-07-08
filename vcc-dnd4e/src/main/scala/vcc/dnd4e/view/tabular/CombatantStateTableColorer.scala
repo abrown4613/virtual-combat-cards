@@ -26,7 +26,7 @@ import java.awt.Color
 import javax.swing.SwingConstants
 
 class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCombatant] {
-  private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 7000) 14 else 12
+  private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize.getHeight > 7000) 14 else 12
   private val cellFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, fontSize)
   private val cellFontBold = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, fontSize)
 
@@ -39,7 +39,7 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private var nextUp: Option[UnifiedCombatantID] = None
 
   def updateNextUp(next: Option[UnifiedCombatant]) {
-    nextUp = if (next.isDefined) Some(next.get.unifiedId) else None
+    nextUp = if (next.isDefined) Some(next.get.unifiedId()) else None
   }
 
   // Pair[Color,Color]  where (background,foreground)
@@ -49,16 +49,13 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private val bloody = (new Color(220, 20, 60), Color.WHITE)
   private val ready = (Color.ORANGE, Color.BLACK)
   private val normal = (Color.WHITE, Color.BLACK)
-  private val selected = (Color.BLUE, Color.WHITE)
   private val monsterCallout = (new Color(152, 32, 32), Color.WHITE)
   private val charCallout = (new Color(77, 140, 59), Color.WHITE)
   private val charBackground = (new Color(240, 255, 236), Color.BLACK)
-  private val monsterBackground = normal
-  //(new Color(255,248,220),Color.BLACK)
 
-  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, cmb: UnifiedCombatant): Unit = {
+  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, isDropLocation: Boolean, cmb: UnifiedCombatant) {
     var is = if (cmb.initiative != null) cmb.initiative.state else null
-    var hs = cmb.health.status
+    var hs = cmb.health.status()
     val normalBack = if (cmb.isCharacter) charBackground else normal
     label.setFont(if (cmb.matches(acting)) cellFontBold else cellFont)
 
@@ -66,7 +63,7 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
     else label.setIcon(null)
 
     label.setHorizontalAlignment(if (col == 1) SwingConstants.LEFT else SwingConstants.CENTER)
-    setColorPair(label, col match {
+    val color: Pair[Color, Color] = col match {
       case 0 => if (cmb.isCharacter) charCallout else monsterCallout
       case 3 =>
         hs match {
@@ -82,7 +79,12 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
       case _ if (hs == Dead) => grayed
       case _ if (is == null) => grayed
       case _ => normalBack
-    })
+    }
+    if (isDropLocation) {
+      setColorPair(label, (color._1.brighter(), color._2.brighter()))
+    } else {
+      setColorPair(label, color)
+    }
   }
 
 }
