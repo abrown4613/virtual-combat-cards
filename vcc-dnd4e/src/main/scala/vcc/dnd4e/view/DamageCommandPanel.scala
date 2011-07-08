@@ -17,6 +17,8 @@
 //$Id$
 package vcc.dnd4e.view
 
+import dnd.UnifiedCombatantActionTransfer
+import helper.DamageParser
 import swing._
 import swing.event._
 import vcc.util.swing.{MigPanel, ClickButtonAction, KeystrokeContainer}
@@ -24,6 +26,7 @@ import vcc.util.swing.KeystrokeBinder
 import vcc.infra.docking._
 
 import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
 
 class DamageCommandPanel(val director: PanelDirector)
   extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
@@ -45,7 +48,34 @@ class DamageCommandPanel(val director: PanelDirector)
   damage.background = badColor
 
   private val damage_btn = new Button("Damage")
-  damage_btn.tooltip = "Apply damage to selected combatant (shortcut Alt-D)"
+
+  class DamageFormula(term: DamageParser.Term) {
+    def evaluate(uc: UnifiedCombatant): Int = {
+      val cinfo = Map(
+        "b" -> uc.health.base.totalHP / 2,
+        "s" -> uc.health.base.totalHP / 4
+      )
+      val value = term.apply(cinfo)
+      value
+    }
+  }
+
+  val dc = new DragAndDropController(IconLibrary.MiniWand)
+  dc.enableDragToCopy(DragAndDropSource.fromButton(damage_btn, () => {
+    val formula = new DamageFormula(damageEquation)
+
+    UnifiedCombatantActionTransfer("Damage " + damage.text, {
+      case uci => {
+        val tgt = combatState.combatantOption(Some(uci)).get
+        val value = formula.evaluate(tgt)
+        if (value >= 0)
+          director requestAction ApplyDamage(uci.combId, value)
+        true
+      }
+    }).toTransferable
+  }))
+
+  damage_btn.tooltip = "Apply damage to selected combatant (shortcut Alt-D), drag to table to apply damage"
 
   private val heal_btn = new Button("Heal")
   heal_btn.tooltip = "Heal selected combatant (shortcut Alt-H)"
@@ -59,7 +89,7 @@ class DamageCommandPanel(val director: PanelDirector)
   private val controls = List(damage, damage_btn, heal_btn, temp_btn, death_btn, undie_btn)
   private val damageRelButton = List(damage_btn, heal_btn, temp_btn)
 
-  private var damageEquation: helper.DamageParser.Term = null
+  private var damageEquation: DamageParser.Term = null
 
   add(new Label("Hit Points:"))
   add(damage, "wrap")
@@ -76,10 +106,11 @@ class DamageCommandPanel(val director: PanelDirector)
   reactions += {
     case ValueChanged(this.damage) =>
       damageEquation = try {
-        helper.DamageParser.parseString(damage.text)
+        DamageParser.parseString(damage.text).asInstanceOf[DamageParser.Term]
       } catch {
         case _ => null
       }
+      println(damageEquation)
       enableDamageControls(damageEquation != null)
     case FocusGained(this.damage, other, temporary) =>
       director.setStatusBarMessage("Enter equation with: + - * / and parenthesis and variable: 's' for surge value ; 'b' for bloody value")
@@ -95,11 +126,8 @@ class DamageCommandPanel(val director: PanelDirector)
 
     case ButtonClicked(button) if (damageEquation != null) => {
       val tgt = combatState.combatantOption(target).get
-      val cinfo = Map(
-        "b" -> tgt.health.base.totalHP / 2,
-        "s" -> tgt.health.base.totalHP / 4
-      )
-      val value = damageEquation.apply(cinfo)
+      val formula = new DamageFormula(damageEquation)
+      val value = formula.evaluate(tgt)
       if (value >= 0)
         button match {
           case this.damage_btn => director requestAction ApplyDamage(target.get.combId, value)
@@ -117,7 +145,8 @@ class DamageCommandPanel(val director: PanelDirector)
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (isTarget) {
       target = nctx
-      controls map (x => x.enabled = target != None)
+      controls map (x => x.enabled = (target != None))
+      enableDamageControls(damageEquation != null)
     }
   }
 

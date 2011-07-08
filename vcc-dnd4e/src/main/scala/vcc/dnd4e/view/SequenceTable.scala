@@ -17,6 +17,7 @@
 //$Id$
 package vcc.dnd4e.view
 
+import dnd.UnifiedCombatantActionTransfer
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
@@ -25,6 +26,7 @@ import vcc.dnd4e.domain.tracker.snapshot.{StateChange}
 import tabular._
 import vcc.dnd4e.domain.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
+import vcc.util.swing.dnd.{CellDrop, TableCellDropTransferHandler}
 
 class SequenceTable(director: PanelDirector) extends ScrollPane
 with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
@@ -41,7 +43,6 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
     setColumnWidth(4, 50)
     setColumnWidth(5, 70)
     peer.setRowHeight(24)
-
   }
 
   private var source: Option[UnifiedCombatantID] = None
@@ -69,15 +70,31 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
 
   reactions += {
     case TableRowsSelected(t, rng, false) if (!_changingState) =>
-      var l = table.selection.rows.toSeq
+      val l = table.selection.rows.toSeq
       if (!l.isEmpty) {
-        var c = table.content(l(0))
-        director.setTargetCombatant(Some(c.unifiedId))
+        val c = table.content(l(0))
+        director.setTargetCombatant(Some(c.unifiedId()))
       }
     case FocusGained(this.table, other, temp) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
     case FocusLost(this.table, other, temp) =>
       director.setStatusBarMessage("")
+  }
+
+  //Enable drag and drop
+  protected object CombatantAtCellDrop {
+    def unapply(d: CellDrop): Option[(UnifiedCombatantID, AnyRef)] = {
+      Some(table.content(d.row).unifiedId(), d.data)
+    }
+  }
+
+  val cellDrop = new TableCellDropTransferHandler()
+
+  cellDrop.decorateTable(table)
+  cellDrop.interestedIn(UnifiedCombatantActionTransfer.UnifiedCombatantDataFlavor) {
+    case CombatantAtCellDrop(uci@UnifiedCombatantID(cid, ioi), UnifiedCombatantActionTransfer(_, pf)) if (pf.isDefinedAt(uci)) =>
+      pf.apply(uci)
+      true
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
@@ -89,8 +106,8 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
       updateContent()
       //On a sequence change
       if (StateChange.hasSequenceChange(changes.changes)) {
-        val newfirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
-        if (newfirst != source) director.setActiveCombatant(newfirst)
+        val newFirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
+        if (newFirst != source) director.setActiveCombatant(newFirst)
       }
       if (changes.changes.contains(StateChange.combat.OrderFirst)) {
         SwingHelper.invokeLater {
