@@ -41,4 +41,6 @@ object IconLibrary {
   val MicroArrowGrey = loadIcon("/vcc/dnd4e/images/mi_arrow_grey.png")
 
   val MicroBlank = loadIcon("/vcc/dnd4e/images/mi_blank.png")
+
+  val MiniWand = loadIcon("/vcc/dnd4e/images/icon_wand.gif")
 }
