@@ -25,7 +25,7 @@ import vcc.dnd4e.tracker.common.CombatantID
 
 
 class InitiativeDialogEntry(val ids: Set[CombatantID], val name: String, var init: Int, var roll: InitiativeRoll, var skip: Boolean) {
-  override def toString(): String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + "," + (if (skip) "skip" else "roll") + ")"
+  override def toString: String = "IDEntry(" + ids + "," + name + "," + init + "," + roll + "," + (if (skip) "skip" else "roll") + ")"
 
   def isSimilar(that: InitiativeDialogEntry): Boolean = (this.name == that.name) &&
     (this.init == that.init) && (this.roll == that.roll) && (this.skip == that.skip)
@@ -67,7 +67,7 @@ class InitiativeDialogEntryFormatter extends ProjectionTableLabelFormatter[Initi
   final private val skipped = (Color.LIGHT_GRAY, Color.GRAY)
   final private val normal = (Color.WHITE, Color.BLACK)
 
-  def render(label: JLabel, column: Int, isSelected: Boolean, entry: InitiativeDialogEntry) {
+  def render(label: JLabel, column: Int, isSelected: Boolean, isDropTarget: Boolean, entry: InitiativeDialogEntry) {
     label.setHorizontalAlignment(if (column == 1) SwingConstants.LEFT else SwingConstants.CENTER)
     if (isSelected) setColorPair(label, getColorPair(label))
     else if (entry.skip) setColorPair(label, skipped)

@@ -33,7 +33,7 @@ object EffectTableColorer extends ProjectionTableLabelFormatter[Effect] {
     label.setForeground(colors._2)
   }
 
-  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, effect: Effect) {
+  def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, isDropTarget: Boolean, effect: Effect) {
     val needAttention = effect.sustainable || effect.duration == Duration.SaveEndSpecial
 
     setColor(label, col match {

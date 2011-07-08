@@ -23,7 +23,7 @@ import javax.swing.{JLabel, JComponent}
 abstract class RowProjectionTable[T] extends EnhancedTable {
   protected var rowProjection: ProjectionTableModel[T] = null
 
-  def projection_=(rp: ProjectionTableModel[T]) = {
+  def projection_=(rp: ProjectionTableModel[T]) {
     rowProjection = rp
     peer.setModel(rp)
   }
@@ -32,7 +32,9 @@ abstract class RowProjectionTable[T] extends EnhancedTable {
 
   def content = rowProjection.content
 
-  def content_=(content: Seq[T]) = {rowProjection.content = content}
+  def content_=(content: Seq[T]) {
+    rowProjection.content = content
+  }
 }
 
 trait ProjectionTableLabelFormatter[T] {
@@ -42,7 +44,7 @@ trait ProjectionTableLabelFormatter[T] {
    * @param component Component to be colored
    * @param cp A pair of colors meaning (Background,Foreground)
    */
-  protected def setColorPair(component: JComponent, cp: Pair[Color, Color]): Unit = {
+  protected def setColorPair(component: JComponent, cp: Pair[Color, Color]) {
     component.setBackground(cp._1)
     component.setForeground(cp._2)
   }
@@ -51,22 +53,30 @@ trait ProjectionTableLabelFormatter[T] {
    * Helper method to get the component's color
    * @return A pair of colors meaning (Background,Foreground)
    */
-  protected def getColorPair(component: JComponent): Pair[Color, Color] = (component.getBackground(), component.getForeground())
+  protected def getColorPair(component: JComponent): Pair[Color, Color] = (component.getBackground, component.getForeground)
 
-  def render(label: javax.swing.JLabel, column: Int, isSelected: Boolean, entry: T)
+  def render(label: javax.swing.JLabel, column: Int, isSelected: Boolean, isDropTarget: Boolean, entry: T)
 }
 
 trait CustomRenderedRowProjectionTable[T] extends RowProjectionTable[T] {
   val labelFormatter: ProjectionTableLabelFormatter[T]
 
+  @inline protected def isDropLocation(row: Int, column: Int): Boolean = {
+    val dropLocation = this.peer.getDropLocation
+    (dropLocation != null
+      && !dropLocation.isInsertRow && !dropLocation.isInsertColumn
+      && dropLocation.getRow == row && dropLocation.getColumn == column)
+  }
+
   override def rendererComponentFix(isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
-    var comp = super.rendererComponentFix(isSelected, hasFocus, row, column)
+
+    val comp = super.rendererComponentFix(isSelected, hasFocus, row, column)
     if (comp.isInstanceOf[JLabel] && row < this.content.size) {
       labelFormatter.render(
         comp.asInstanceOf[javax.swing.JLabel],
-        column, isSelected,
+        column, isSelected, isDropLocation(row, column),
         this.content(row)
-        )
+      )
     }
     comp
   }
