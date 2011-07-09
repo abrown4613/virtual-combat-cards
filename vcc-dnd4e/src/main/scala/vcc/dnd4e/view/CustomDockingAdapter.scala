@@ -58,10 +58,11 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
           new SplitWindow(false, 0.57f,
             vm.getView("tgt-effects"),
             vm.getView("tgt-notes")
-            )))))
+          )))))
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-block"))
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-effects"))
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-notes"))
+    root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("project-news"))
   }
 
   //Helper functions to handle layout
@@ -89,7 +90,7 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
   def storeLayoutToFile(owner: scala.swing.Component) {
     val file = getDockLayoutFile()
     if (!file.exists ||
-            Dialog.showConfirmation(owner, "A layout file already exists, overwrite?", "Overwrite layout file?", Dialog.Options.YesNo) == Dialog.Result.Yes
+      Dialog.showConfirmation(owner, "A layout file already exists, overwrite?", "Overwrite layout file?", Dialog.Options.YesNo) == Dialog.Result.Yes
     ) {
       try {
         storeLayout(new java.io.FileOutputStream(file))

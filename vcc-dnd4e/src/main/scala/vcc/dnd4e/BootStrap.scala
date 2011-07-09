@@ -37,7 +37,14 @@ object BootStrap extends StartupRoutine {
     case _ => default
   }
 
-  val version = UpdateManager.Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml"))
+  /**
+   * Return current version that is being used, can be faked by setting System property. vcc.fake.version
+   */
+  val version = {
+    val fakeVersion = UpdateManager.Version.fromString(System.getProperty("vcc.fake.version"))
+    if (fakeVersion != null) fakeVersion
+    else UpdateManager.Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml"))
+  }
 
   def start(srw: StartupReportWindow): scala.swing.Frame = {
     var createCompendium = false
@@ -87,7 +94,7 @@ object BootStrap extends StartupRoutine {
             logger.error("Failed to create compendium {}", Configuration.compendiumStoreID.value)
             false
           } else {
-            val sampleFile = new File(UpdateManager.getInstallDirectory(), "sample-comp.zip")
+            val sampleFile = new File(UpdateManager.getInstallDirectory, "sample-comp.zip")
             if (importSampleCompendium) {
               logger.info("Importing sample compendium from {} if it exists.", sampleFile)
               if (sampleFile.exists) {
