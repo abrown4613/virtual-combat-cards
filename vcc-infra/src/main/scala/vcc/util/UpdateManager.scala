@@ -20,10 +20,11 @@ package vcc.util
 import java.net.URL
 import org.xml.sax.InputSource
 import scala.xml.XML
-import java.io.{InputStream, File}
 import scala.swing.Frame
 import swing.{MultiPanel, SwingHelper}
 import java.awt.Image
+import java.io.{InputStream, File}
+import vcc.infra.util.RemoteFile
 
 /**
  * Utility functions to help with update manager
@@ -65,15 +66,16 @@ object UpdateManager {
 
     /**
      * Load a version from a string
+     * @return Version if format is correct, null otherwise
      */
     def fromString(str: String): Version = {
       str match {
-        case fullVersion(major, minor, patch, qualif) =>
-          val mqualif = if (qualif != null) qualif.substring(1) else null
-          Version(major.toInt, minor.toInt, patch.toInt, mqualif)
-        case partialVersion(major, minor, qualif) =>
-          val mqualif = if (qualif != null) qualif.substring(1) else null
-          Version(major.toInt, minor.toInt, 0, mqualif)
+        case fullVersion(major, minor, patch, qualifier) =>
+          val modQualifier = if (qualifier != null) qualifier.substring(1) else null
+          Version(major.toInt, minor.toInt, patch.toInt, modQualifier)
+        case partialVersion(major, minor, qualifier) =>
+          val modQualifier = if (qualifier != null) qualifier.substring(1) else null
+          Version(major.toInt, minor.toInt, 0, modQualifier)
         case _ => null
       }
     }
@@ -127,7 +129,7 @@ object UpdateManager {
           if (download != null) new URL(download) else null,
           md5,
           if (info != null) new URL(info) else null
-          )
+        )
     }.filter(r => r != null)
     assert(releases != null)
     releases
@@ -144,36 +146,42 @@ object UpdateManager {
   }
 
   /**
-   * Fetch available version then allow user to download choosen versiona 
+   * @return ( possible release, hasMore ) hasMore indicates that some newer versions where skipped because of full
+   * upgrade policy.
+   */
+  protected def scanForVersions(currentVersion: Version, is: InputStream): (List[(Symbol, Release)], Boolean) = {
+    val releases = checkAvailableVersions(new InputSource(is))
+
+    val possible = releases.filter(r => {
+      r.version > currentVersion
+    }).map({
+      rel =>
+        if (rel.version.isEligibleUpgradeFromVersion(currentVersion)) {
+          if (rel.version.extra != null) ('RC, rel)
+          else if (rel.version.isPatch(currentVersion)) ('PATCH, rel)
+          else ('UPGRADE, rel)
+        } else {
+          ('NOTALLOWED, rel)
+        }
+    }).toList
+    (possible.filter(x => x._1 != 'NOTALLOWED), possible.exists(x => x._1 == 'NOTALLOWED))
+  }
+
+
+  private def getRemoteFile(url: URL) = new RemoteFile(new File(getInstallDirectory, "vcc.release"), url)
+
+  /**
+   * Fetch available version then allow user to download chosen version
    * and leave the version ready to update on next launch.
-   * @param url URL to fecth available versions
+   * @param url URL to fetch available versions
+   * @param currentVersion Version VCC is running
+   * @param dialogIcon Icon for the dialog frame
+   * @param age Maximum age of local cached version of release file (0 to fetch)
    * @return Success or failure
    */
-  def runUpgradeProcess(url: URL, currentVersion: Version, dialogIcon: Image) {
+  def runUpgradeProcess(url: URL, currentVersion: Version, dialogIcon: Image, age: Long) {
 
     import vcc.util.swing.multipanel.ReleaseSelectPanel
-
-    /**
-     * @return ( possible release, hasMore ) hasMore indicates that some newer versions where skipped because of full
-     * upgrade policy.
-     */
-    def scanForVersions(afile: File): (List[(Symbol, Release)], Boolean) = {
-      val rels = checkAvailableVersions(new InputSource(new java.io.FileInputStream(afile)))
-
-      afile.delete()
-
-      val possible = rels.filter(r => {r.version > currentVersion }).map({
-        rel =>
-          if (rel.version.isEligibleUpgradeFromVersion(currentVersion)) {
-            if (rel.version.extra != null) ('RC, rel)
-            else if (rel.version.isPatch(currentVersion)) ('PATCH, rel)
-            else ('UPGRADE, rel)
-          } else {
-            ('NOTALLOWED, rel)
-          }
-      }).toList
-      (possible.filter(x => x._1 != 'NOTALLOWED), possible.exists(x => x._1 == 'NOTALLOWED))
-    }
 
     def checkFileMD5Sum(file: File, md5sum: String): Boolean = {
       val chkSum = PackageUtil.fileMD5Sum(file)
@@ -188,9 +196,11 @@ object UpdateManager {
 
     umd.showMessage(false, "Checking for a new version...")
 
-    val afile = umd.downloadFile(url, File.createTempFile("vcc", ".xml"))
-    if (afile != null) {
-      val (releases, hasMore) = scanForVersions(afile)
+    val releaseFile = getRemoteFile(url)
+
+    val is = releaseFile.fetchIfOlder(age)
+    if (is != null) {
+      val (releases, hasMore) = scanForVersions(currentVersion, is)
       if (releases.length > 0) {
         val releaseOpt = umd.customPanel(new ReleaseSelectPanel(releases, hasMore))
 
@@ -226,8 +236,24 @@ object UpdateManager {
   /**
    * Returns a File which points to the directory in which VCC Binary installation is
    * located.
-   * @returm File The VCC install directory
+   * @return File The VCC install directory
    */
-  def getInstallDirectory(): File = new File(System.getProperty("vcc.install", System.getProperty("user.dir", ".")))
+  def getInstallDirectory: File = new File(System.getProperty("vcc.install", System.getProperty("user.dir", ".")))
 
+  /**
+   * Simple check routine to verify if there are upgrades to a version.
+   * @param url Release file URL
+   * @param currentVersion Current version of VCC
+   * @param age Maximum age of the local cached file
+   * @return True if there are upgrades available
+   */
+  def checkForUpgrade(url: URL, currentVersion: Version, age: Long): Boolean = {
+    val releaseFile = getRemoteFile(url)
+
+    val is = releaseFile.fetchIfOlder(age)
+    if (is != null) {
+      val (releases, _) = scanForVersions(currentVersion, is)
+      !releases.isEmpty
+    } else false
+  }
 }

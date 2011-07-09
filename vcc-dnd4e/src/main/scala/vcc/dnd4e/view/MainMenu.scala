@@ -27,7 +27,7 @@ import vcc.util.UpdateManager
 import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
-import vcc.dnd4e.{ConfigurationDialog, BootStrap}
+import vcc.dnd4e.{Configuration, ConfigurationDialog, BootStrap}
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties
@@ -132,9 +132,9 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   helpMenu.contents += new MenuItem(Action("Check for Updates ...") {
     SwingHelper.invokeInOtherThread {
       logger.info("Update manager: Starting update")
-      val url = System.getProperty("vcc.update.url", "http://www.exnebula.org/files/release-history/vcc/vcc-all.xml")
+      val url = Configuration.getVersionReleaseURL
       logger.info("Update manager: Fetch version from URL: " + url)
-      UpdateManager.runUpgradeProcess(new URL(url), BootStrap.version, IconLibrary.MetalD20.getImage())
+      UpdateManager.runUpgradeProcess(url, BootStrap.version, IconLibrary.MetalD20.getImage, 0)
       logger.info("Update manager: End update")
     }
   })

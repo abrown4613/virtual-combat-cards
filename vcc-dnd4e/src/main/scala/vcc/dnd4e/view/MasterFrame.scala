@@ -27,6 +27,7 @@ import vcc.controller.TrackerChangeObserver
 import vcc.dnd4e.domain.tracker.snapshot.{CombatChangeAndStateSnapshotBuilder, CombatStateWithChanges}
 import vcc.infra.prompter.RulingBroker
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
+import vcc.dnd4e.Configuration
 
 class MasterFrame extends Frame {
   private val docker = new CustomDockingAdapter()
@@ -69,7 +70,7 @@ class MasterFrame extends Frame {
       }
     case WindowOpened(win) =>
       //Go fetch new and updates if needed
-      news.updateIfOld(24 * 3600, docker, this);
+      news.updateIfOld(Configuration.getCheckAfterAge, docker);
   }
 
 

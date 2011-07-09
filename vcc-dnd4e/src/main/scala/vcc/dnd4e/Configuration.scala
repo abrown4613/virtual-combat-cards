@@ -24,11 +24,15 @@ import java.io.File
 import vcc.infra.datastore.naming.DataStoreURI
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.UpdateManager
+import java.net.URL
+import java.lang.System
 
 object Configuration extends AbstractConfiguration with StartupStep {
   val autoStartWebServer = Property[Boolean]("vcc.dnd4e.autoWebServer", "true", x => x == "true")
   val storeLogs = Property[Boolean]("vcc.dnd4e.storeLogs", "false", x => x == "true")
-  val baseDirectory = Property[File]("vcc.dnd4e.basedir", System.getProperty("user.dir"), x => {new File(x)})
+  val baseDirectory = Property[File]("vcc.dnd4e.basedir", System.getProperty("user.dir"), x => {
+    new File(x)
+  })
   //This is either the VM option (vcc.dnd4e.datadir), or default to InstallDirectory/"fs-wc"
   val dataDirectory: File = {
     if (System.getProperty("vcc.dnd4e.datadir") != null) new File(System.getProperty("vcc.dnd4e.datadir"))
@@ -73,6 +77,29 @@ object Configuration extends AbstractConfiguration with StartupStep {
   }
 
   def isStartupComplete() = compendiumStoreID.value != null
+
+  /**
+   * String representation of the URL where VCC should search for updates
+   */
+  def getVersionReleaseURL = new URL(System.getProperty("vcc.update.url", "http://www.exnebula.org/files/release-history/vcc/vcc-all.xml"))
+
+  /**
+   * This is used to figure out where the binaries are found on different platforms.
+   * @see vcc.util.UpgradeManager.getInstallDirectory
+   */
+  def getInstallDirectory = new File(System.getProperty("vcc.install", System.getProperty("user.dir", ".")))
+
+  /**
+   * Maximum age of cached data.
+   */
+  val getCheckAfterAge: Long = {
+    val timeout: Long = try {
+      System.getProperty("vcc.update.check").toLong
+    } catch {
+      case _ => 24 * 3600
+    }
+    timeout * 1000
+  }
 }
 
 import scala.swing._
@@ -122,7 +149,7 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalPromptDi
   contents = mpanel
   placeOnScreenCenter()
 
-  def collectResult():Option[Boolean] = {
+  def collectResult(): Option[Boolean] = {
     val dir = if (homeDirRadioButton.selected) userHome else vccHome
     val cFile = if (initial) new File(dir.getParentFile, ConfigurationFinder.configFilename)
     else ConfigurationFinder.locateFile
