@@ -11,4 +11,5 @@ slf4j-log4j12.jar
 core-renderer.jar
 idw-gpl.jar
 vcc-infra.jar
+vcc-dnd4e-tracker.jar
 vcc-dnd4e.jar

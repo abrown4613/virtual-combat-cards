@@ -23,7 +23,7 @@
             <version>2.4</version>
             <classifier>jdk16</classifier>
             <type>jar</type>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.exnebula</groupId>
