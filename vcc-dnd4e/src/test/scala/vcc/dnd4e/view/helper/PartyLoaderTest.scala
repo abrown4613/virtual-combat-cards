@@ -33,7 +33,7 @@ class PartyLoaderTest extends SpecificationWithJUnit with Mockito {
   "PartyLoader.validatePartyLoadAndWarn" should {
     val peer = mock[PartyLoader.ViewPeer]
     val loader = new PartyLoader(null, peer)
-    val partyMembers = mock[List[PartyMember]]
+    val partyMembers = List(mock[PartyMember])
 
     "show failed load result" in {
       loader.validatePartyLoadAndWarn((Nil, false)) must_== Nil

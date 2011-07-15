@@ -35,7 +35,6 @@ class EnumerationValuePanel[E <: Enumeration](label: String, options: E) extends
   private val buttons = options.values.map(x => new RadioButton(x.toString)).toSeq
   private val radios = new ButtonGroup(buttons: _*);
   private var selected: Option[E#Value] = None
-  private val validRange = (0 until buttons.length)
 
   add(optionLabel)
   for (x <- buttons) {
