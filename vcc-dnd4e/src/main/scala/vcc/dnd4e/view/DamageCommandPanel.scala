@@ -27,6 +27,8 @@ import vcc.infra.docking._
 
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
+import vcc.controller.message.TransactionalAction
+import vcc.dnd4e.tracker.common.CombatantID
 
 class DamageCommandPanel(val director: PanelDirector)
   extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
@@ -49,39 +51,33 @@ class DamageCommandPanel(val director: PanelDirector)
 
   private val damage_btn = new Button("Damage")
 
-  class DamageFormula(term: DamageParser.Term) {
-    def evaluate(uc: UnifiedCombatant): Int = {
-      val cinfo = Map(
-        "b" -> uc.health.base.totalHP / 2,
-        "s" -> uc.health.base.totalHP / 4
-      )
-      val value = term.apply(cinfo)
-      value
+  private def dispatchAction(tgt: UnifiedCombatant, director: PanelDirector, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalAction) {
+    val cinfo = Map(
+      "b" -> tgt.health.base.totalHP / 2,
+      "s" -> tgt.health.base.totalHP / 4
+    )
+    val value = term.apply(cinfo)
+    if (value > 0) {
+      director requestAction builder(tgt.combId, value)
     }
   }
 
-  val dc = new DragAndDropController(IconLibrary.MiniWand)
-  dc.enableDragToCopy(DragAndDropSource.fromButton(damage_btn, () => {
-    val formula = new DamageFormula(damageEquation)
-
-    UnifiedCombatantActionTransfer("Damage " + damage.text, {
+  private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalAction) = {
+    new UnifiedCombatantActionTransfer(msg, {
       case uci => {
         val tgt = combatState.combatantOption(Some(uci)).get
-        val value = formula.evaluate(tgt)
-        if (value >= 0)
-          director requestAction ApplyDamage(uci.combId, value)
-        true
+        dispatchAction(tgt, director, term, builder)
       }
-    }).toTransferable
-  }))
+    })
+  }
 
-  damage_btn.tooltip = "Apply damage to selected combatant (shortcut Alt-D), drag to table to apply damage"
+  damage_btn.tooltip = "Apply damage to selected combatant (shortcut Alt-D), drag to table to apply damage to combatant"
 
   private val heal_btn = new Button("Heal")
-  heal_btn.tooltip = "Heal selected combatant (shortcut Alt-H)"
+  heal_btn.tooltip = "Heal selected combatant (shortcut Alt-H), drag to table to heal combatant"
 
   private val temp_btn = new Button("Set Temporary")
-  temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value (shortcut Alt-T)"
+  temp_btn.tooltip = "Set Temporary hitpoints on selected combatant; will keep highest value (shortcut Alt-T), drag to table to set temporary hit point combatant"
 
   private val death_btn = new Button("Fail Death Save")
   private val undie_btn = new Button("\"undie\"")
@@ -126,16 +122,25 @@ class DamageCommandPanel(val director: PanelDirector)
 
     case ButtonClicked(button) if (damageEquation != null) => {
       val tgt = combatState.combatantOption(target).get
-      val formula = new DamageFormula(damageEquation)
-      val value = formula.evaluate(tgt)
-      if (value >= 0)
-        button match {
-          case this.damage_btn => director requestAction ApplyDamage(target.get.combId, value)
-          case this.heal_btn => director requestAction HealDamage(target.get.combId, value)
-          case this.temp_btn => director requestAction SetTemporaryHP(target.get.combId, value)
-        }
+      dispatchAction(tgt, director, damageEquation, button match {
+        case this.damage_btn => (cid, hp) => ApplyDamage(cid, hp)
+        case this.heal_btn => (cid, hp) => HealDamage(cid, hp)
+        case this.temp_btn => (cid, hp) => SetTemporaryHP(cid, hp)
+      })
     }
   }
+
+  val dc = new DragAndDropController(IconLibrary.MiniWand)
+  dc.enableDragToCopy(DragAndDropSource.fromButton(damage_btn, () => {
+    makeAction("Apply " + damage.text + " hit points of damage", damageEquation, (cid, hp) => ApplyDamage(cid, hp)).toTransferable
+  }))
+  dc.enableDragToCopy(DragAndDropSource.fromButton(heal_btn, () => {
+    makeAction("Heal " + damage.text + " hit points", damageEquation, (cid, hp) => HealDamage(cid, hp)).toTransferable
+  }))
+  dc.enableDragToCopy(DragAndDropSource.fromButton(temp_btn, () => {
+    makeAction("Set " + damage.text + " temporary hit points ", damageEquation, (cid, hp) => SetTemporaryHP(cid, hp)).toTransferable
+  }))
+
 
   def enableDamageControls(enable: Boolean) {
     damage.background = if (enable) java.awt.Color.white else badColor
