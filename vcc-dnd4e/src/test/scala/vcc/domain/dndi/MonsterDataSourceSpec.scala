@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-package vcc.domain.dndi 
+package vcc.domain.dndi
 
 import org.specs.Specification
 import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
+import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import Parser.IconType
 import xml.{Text, Node, NodeSeq}
 import vcc.infra.text.StyledText
@@ -31,12 +31,12 @@ class MonsterDataSourceTest extends JUnit4(MonsterDataSourceSpec)
 
 object MonsterDataSourceSpec extends Specification with Mockito {
 
-  var power:Power = null
-  final val desc = StyledText.singleBlock("P","flavor", "Do something")
+  var power: Power = null
+  final val desc = StyledText.singleBlock("P", "flavor", "Do something")
   final val descXML = <p class='flavor'>Do something</p>
   final val atWillUsageXML = nodeSeq(<img src="x.gif"/>, Text(" "), <b>At-Will</b>)
 
-  def nodeSeq(node:Node*):NodeSeq = node
+  def nodeSeq(node: Node*): NodeSeq = node
 
   def commonPowerdefinition = {
     "provide correct image" in {
@@ -83,20 +83,20 @@ object MonsterDataSourceSpec extends Specification with Mockito {
 
   "Monster as DataSource" should {
 
-    val mockLegacy = mock[List[Power]]
-    val mockPowerGroup = mock[List[Power]]
+    val mockLegacy = List(mock[Power])
+    val mockPowerGroup = List(mock[Power])
     val mockAttribute = mock[Map[String, String]]
     val monster = new Monster(10, mockAttribute, mockLegacy, Map(ActionType.Standard -> mockPowerGroup))
 
     "return an attribute" in {
-      //Should be case insentive
+      //Should be case insensitive
       mockAttribute.get("foo") returns Some("bar")
       monster.templateVariable("FoO") must_== Some("bar")
       there was one(mockAttribute).get("foo")
     }
 
     "return legacy group" in {
-      monster.templateGroup("legacy") must beEqual(mockLegacy.asInstanceOf[List[TemplateDataSource]])
+      monster.templateGroup("legacy") must beEqualTo(mockLegacy.asInstanceOf[List[TemplateDataSource]])
     }
 
     "return action group by action name group" in {
@@ -142,13 +142,13 @@ object MonsterDataSourceSpec extends Specification with Mockito {
 
     "return recharge dice 2" in {
       UsageFormatter.format(RechargeDiceUsage(2)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Recharge</b>, Text(" "),
-        <img src = "2a.gif" />, <img src = "3a.gif" />, <img src = "4a.gif" />,
-        <img src = "5a.gif" />, <img src = "6a.gif" />)
+          <img src="2a.gif"/>, <img src="3a.gif"/>, <img src="4a.gif"/>,
+          <img src="5a.gif"/>, <img src="6a.gif"/>)
     }
 
     "return recharge dice 5" in {
       UsageFormatter.format(RechargeDiceUsage(5)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Recharge</b>, Text(" "),
-        <img src = "5a.gif" />, <img src = "6a.gif" />)
+          <img src="5a.gif"/>, <img src="6a.gif"/>)
     }
 
   }
