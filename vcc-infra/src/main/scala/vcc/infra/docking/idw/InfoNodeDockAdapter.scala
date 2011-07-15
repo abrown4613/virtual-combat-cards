@@ -77,7 +77,7 @@ abstract class InfoNodeDockAdapter extends DockingFrameworkAdapter[View] {
   def restoreMissing() {
     for (i <- 0 to vm.getViewCount - 1) {
       val d = vm.getViewAtIndex(i)
-      if (!d.isShowing) root.getWindowBar(net.infonode.util.Direction.DOWN).addTab(d)
+      if (!d.isDockable) root.getWindowBar(net.infonode.util.Direction.DOWN).addTab(d)
     }
   }
 }
