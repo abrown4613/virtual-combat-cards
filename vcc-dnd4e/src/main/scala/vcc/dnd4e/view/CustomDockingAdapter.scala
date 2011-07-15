@@ -18,7 +18,6 @@
 
 package vcc.dnd4e.view
 
-import vcc.infra.docking._
 import vcc.infra.docking.idw.InfoNodeDockAdapter
 import net.infonode.docking.util.DockingUtil
 import net.infonode.docking._
@@ -30,7 +29,7 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
   def setup(owner: java.awt.Window): javax.swing.JComponent = {
     root = DockingUtil.createRootWindow(vm, true)
     val theme = new net.infonode.docking.theme.SlimFlatDockingTheme()
-    root.getRootWindowProperties().addSuperObject(theme.getRootWindowProperties())
+    root.getRootWindowProperties.addSuperObject(theme.getRootWindowProperties)
     root.getWindowBar(Direction.DOWN).setEnabled(true)
     root.getWindowBar(Direction.LEFT).setEnabled(true)
     root.getWindowBar(Direction.UP).setEnabled(true)
@@ -62,18 +61,17 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-block"))
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-effects"))
     root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-notes"))
-    root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("project-news"))
   }
 
   //Helper functions to handle layout
   //These are all custom methods (not part of API)
 
-  def getDockLayoutFile(): java.io.File = {
+  def getDockLayoutFile: java.io.File = {
     new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value, "layout.dat")
   }
 
   def restoreLayoutFromFile(owner: scala.swing.Component) {
-    val file = getDockLayoutFile()
+    val file = getDockLayoutFile
     if (file.exists) {
       try {
         restoreLayout(new java.io.FileInputStream(file))
@@ -88,7 +86,7 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
   }
 
   def storeLayoutToFile(owner: scala.swing.Component) {
-    val file = getDockLayoutFile()
+    val file = getDockLayoutFile
     if (!file.exists ||
       Dialog.showConfirmation(owner, "A layout file already exists, overwrite?", "Overwrite layout file?", Dialog.Options.YesNo) == Dialog.Result.Yes
     ) {
