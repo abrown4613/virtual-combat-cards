@@ -59,29 +59,7 @@ object SaveEffectSpecialDecision {
 
   sealed trait Result
 
-  case object Saved extends Result {
-    /*
-        override def equals(obj: Any): Boolean = {
-          println("Calling Saved.equals")
-          if (obj.isInstanceOf[SaveEffectSpecialDecision.Saved.type]) {
-            println("Other is a Saved")
-            throw new Exception("Burn, this is a match")
-            true
-          } else if (obj.isInstanceOf[AnyRef]) {
-            val that = obj.asInstanceOf[AnyRef]
-            printf("This: %s\nThat: %s\n", this.getClass.toString, that.getClass.toString)
-            printf("This: " + this.toString + "\nThat: " + that.toString)
-            throw new Exception("Burn, this is a match")
-            this.toString == that.toString
-          } else {
-            printf("Not a AnyRef\n  This: " + this.toString + "\nThat: " + obj.toString)
-            false
-          }
-        }
-    */
-
-    override def toString: String = "Saved - obj"
-  }
+  case object Saved extends Result
 
   case class Changed(newCondition: String) extends Result
 
