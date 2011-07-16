@@ -21,10 +21,12 @@ import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
 import InitiativeTracker.action
-import java.io.PrintStream
+import org.slf4j.Logger
 
 trait MigrationHandler {
   this: AbstractCombatController =>
+
+  private val migrationLogger = org.slf4j.LoggerFactory.getLogger("infra")
 
   addRewriteRule {
     case InitiativeAction(it, action.Delay) =>
@@ -36,19 +38,20 @@ trait MigrationHandler {
     case InitiativeAction(it, action) => Seq(InternalInitiativeAction(it, action))
   }
 
-  def dumpState(state: CombatState, os: PrintStream) {
-    os.println("\tOrder: " + state.order)
-    os.println("\tCombs: " + state.roster)
+  def dumpState(state: CombatState, os: Logger) {
+    os.debug("\tOrder: " + state.order)
+    os.debug("\tCombs: " + state.roster)
   }
 
   addHandler {
     case action =>
       val ts = ActionTranslator.translate(action)
-      println("Action: " + action + "\nMapped to: " + ts.mkString(" + "))
+      migrationLogger.debug("Action: {}", action)
+      migrationLogger.debug("Mapped to {}: ", ts.mkString(" + "))
       val oldState = context.iState.value
       context.iState.value = context.iState.value.transitionWith(ts)
-      println("   New State: ")
-      dumpState(context.iState.value, System.out)
+      migrationLogger.debug("   New State: ")
+      dumpState(context.iState.value, migrationLogger)
       // Check if we need to advance dead if we rotated
       if (oldState.order.nextUp != context.iState.value.order.nextUp) {
         //We know we have someone new as the nextUp (first in order)
