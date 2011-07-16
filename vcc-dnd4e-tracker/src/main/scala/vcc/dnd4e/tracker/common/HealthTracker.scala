@@ -26,11 +26,11 @@ abstract class HealthDefinition(val totalHP: Int) {
   val hasTemporaryHP: Boolean
   val ctype: CombatantType.Value
 
-  def status(tracker: HealthTracker): HealthTracker.Status.Value = {
-    if (tracker.deathStrikes == 3) HealthTracker.Status.Dead
-    else if (tracker.currentHP <= 0) HealthTracker.Status.Dying
-    else if (tracker.currentHP <= totalHP / 2) HealthTracker.Status.Bloody
-    else HealthTracker.Status.Ok
+  def status(tracker: HealthTracker): HealthStatus.Value = {
+    if (tracker.deathStrikes == 3) HealthStatus.Dead
+    else if (tracker.currentHP <= 0) HealthStatus.Dying
+    else if (tracker.currentHP <= totalHP / 2) HealthStatus.Bloody
+    else HealthStatus.Ok
   }
 }
 
@@ -61,16 +61,19 @@ case object MinionHealthDefinition extends HealthDefinition(1) {
 }
 
 /**
+ * Health status type.
+ */
+object HealthStatus extends Enumeration {
+  val Ok = Value("Ok")
+  val Bloody = Value("Bloody")
+  val Dead = Value("Dead")
+  val Dying = Value("Dying")
+}
+
+/**
  * HealthTracker master object
  */
 object HealthTracker {
-
-  object Status extends Enumeration {
-    val Ok = Value("Ok")
-    val Bloody = Value("Bloody")
-    val Dead = Value("Dead")
-    val Dying = Value("Dying")
-  }
 
   /**
    * Create a HealthTracker based on a HealthDefinition
@@ -132,7 +135,7 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, ba
    * Healing dead is not allowed. They most be removed from death before updating hp
    */
   def heal(amnt: Int) = {
-    if (status != HealthTracker.Status.Dead)
+    if (status != HealthStatus.Dead)
       HealthTracker(boundedChange(if (currentHP < 0) amnt - currentHP else amnt), temporaryHP, deathStrikes, base)
     else
       this
@@ -148,15 +151,15 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, ba
   }
 
   def failDeathSave(): HealthTracker = {
-    if (this.status == HealthTracker.Status.Dying)
+    if (this.status == HealthStatus.Dying)
       HealthTracker(currentHP, temporaryHP, deathStrikes + 1, base)
     else this
   }
 
-  def status() = base.status(this)
+  def status = base.status(this)
 
   def rest(extended: Boolean): HealthTracker = {
-    if (status != HealthTracker.Status.Dead) {
+    if (status != HealthStatus.Dead) {
       if (extended) HealthTracker(base.totalHP, 0, 0, base)
       else HealthTracker(currentHP, 0, 0, base)
     } else
@@ -164,12 +167,12 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, ba
   }
 
   def raiseFromDead(): HealthTracker = {
-    if (status == HealthTracker.Status.Dead) {
+    if (status == HealthStatus.Dead) {
       HealthTracker(0, temporaryHP, 0, base)
     } else this
   }
 
-  def getDelta(): HealthTrackerDelta = {
+  def getDelta: HealthTrackerDelta = {
     HealthTrackerDelta(this.base.totalHP - this.currentHP, this.temporaryHP, this.deathStrikes)
   }
 
