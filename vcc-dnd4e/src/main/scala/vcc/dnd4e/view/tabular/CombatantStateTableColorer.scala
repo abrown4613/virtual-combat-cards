@@ -18,7 +18,7 @@
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
-import vcc.dnd4e.tracker.common.HealthTracker.Status._
+import vcc.dnd4e.tracker.common.HealthStatus._
 import vcc.dnd4e.tracker.common.InitiativeTracker.state._
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
 import java.awt.Color
@@ -54,7 +54,7 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
 
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, isDropLocation: Boolean, cmb: UnifiedCombatant) {
     var is = if (cmb.initiative != null) cmb.initiative.state else null
-    var hs = cmb.health.status()
+    var hs = cmb.health.status
     val normalBack = if (cmb.isCharacter) charBackground else normal
     label.setFont(if (cmb.matches(acting)) cellFontBold else cellFont)
 

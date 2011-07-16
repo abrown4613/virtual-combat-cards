@@ -55,7 +55,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       val minion = HealthTracker.createTracker(MinionHealthDefinition)
       val deadMinion = minion.applyDamage(10)
 
-      deadMinion.status must_== HealthTracker.Status.Dead
+      deadMinion.status must_== HealthStatus.Dead
 
       mockCombA.healthTracker returns deadMinion
       mockCombB.healthTracker returns deadMinion
@@ -70,7 +70,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       val minion = HealthTracker.createTracker(MinionHealthDefinition)
       val deadMinion = minion.applyDamage(10)
 
-      deadMinion.status must_== HealthTracker.Status.Dead
+      deadMinion.status must_== HealthStatus.Dead
 
       mockCombA.healthTracker returns deadMinion
       mockCombB.healthTracker returns minion

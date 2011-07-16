@@ -56,7 +56,7 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
   val mockComb = mock[Combatant]
   val mockHealth = mock[HealthTracker]
   mockComb.health returns mockHealth
-  mockHealth.status returns HealthTracker.Status.Ok
+  mockHealth.status returns HealthStatus.Ok
   mState.allEffects returns Nil
   mState.combatantFromID(combA) returns mockComb
 
@@ -80,7 +80,7 @@ class RulingSearchServiceTest extends SpecificationWithJUnit with MockCombatCont
     }
 
     "return save versus death if the combatant is dying" in {
-      mockHealth.status returns HealthTracker.Status.Dying
+      mockHealth.status returns HealthStatus.Dying
       var ruling = searchEndRound(mState, combA).map(_.ruling)
       ruling must_== List(SaveVersusDeathRuling(combA))
     }

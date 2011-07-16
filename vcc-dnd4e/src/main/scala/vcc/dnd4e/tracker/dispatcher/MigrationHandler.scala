@@ -62,7 +62,7 @@ trait MigrationHandler {
             val nextIOI = state.order.nextUp.get
             val nextIT = state.order.tracker(nextIOI)
             val health = context.combatantFromID(nextIOI.combId).health
-            if (health.status == HealthTracker.Status.Dead) {
+            if (health.status == HealthStatus.Dead) {
               if (nextIT.state == InitiativeTracker.state.Delaying)
                 enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound))
               enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.StartRound))

@@ -18,7 +18,7 @@
 package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.StateLensFactory
-import vcc.dnd4e.tracker.common.{CombatState, HealthTracker, CombatantID}
+import vcc.dnd4e.tracker.common.{HealthStatus, CombatState, HealthTracker, CombatantID}
 
 /**
  * Base health modification transition.
@@ -44,7 +44,7 @@ case class DamageTransition(target: CombatantID, amount: Int) extends HealthTran
   override def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     val nState = super.transition(lf, iState)
     val hl = lf.combatantHealth(target)
-    if (hl.get(nState).status() == HealthTracker.Status.Dead && nState.rules.areAllCombatantInOrderDead(nState)) {
+    if (hl.get(nState).status == HealthStatus.Dead && nState.rules.areAllCombatantInOrderDead(nState)) {
       nState.endCombat()
     } else {
       nState

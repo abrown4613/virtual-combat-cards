@@ -66,7 +66,7 @@ class HealthTransitionTest extends SpecificationWithJUnit with SampleStateData {
   case class Damage() extends HealthSetup {
     def createTransition(comb: CombatantID): HealthTransition = {
       mHealth.applyDamage(10) returns mHealth2
-      mHealth2.status() returns HealthTracker.Status.Ok
+      mHealth2.status returns HealthStatus.Ok
       DamageTransition(comb, 10)
     }
 

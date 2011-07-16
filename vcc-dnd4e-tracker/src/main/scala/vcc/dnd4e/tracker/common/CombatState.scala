@@ -48,7 +48,7 @@ object CombatState {
      * Inform if all the Combatants with and InitiativeOrderID are not dead.
      */
     def areAllCombatantInOrderDead(combatState: CombatState): Boolean = {
-      !combatState.order.sequence.exists(x => combatState.roster.entries(x.combId).health.status != HealthTracker.Status.Dead)
+      !combatState.order.sequence.exists(x => combatState.roster.entries(x.combId).health.status != HealthStatus.Dead)
     }
 
     def canCombatantRollInitiative(combatState: CombatState, combID: CombatantID): Boolean = {

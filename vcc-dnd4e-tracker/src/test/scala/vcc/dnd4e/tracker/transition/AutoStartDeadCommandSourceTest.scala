@@ -172,7 +172,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
   case class Abc() extends Mockito {
     val mh = mock[HealthTracker]
     val mi = mock[InitiativeTracker]
-    mh.status() returns HealthTracker.Status.Bloody
+    mh.status returns HealthStatus.Bloody
     mi.state returns InitiativeTracker.state.Delaying
     val state = StateBuilder.emptyState().
       addCombatant(None, null, entityMonster).
@@ -185,8 +185,8 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       done
 
     def e1 = {
-      (AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== Some((io1_0, InitiativeTracker.state.Delaying, HealthTracker.Status.Bloody))) and
-        (there was one(mi).state) and (there was one(mh).status())
+      (AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== Some((io1_0, InitiativeTracker.state.Delaying, HealthStatus.Bloody))) and
+        (there was one(mi).state) and (there was one(mh).status)
     }
 
     def e2 = AutomationCommandSource.HeadStateAndHealth.unapply(state.endCombat()) must_== None

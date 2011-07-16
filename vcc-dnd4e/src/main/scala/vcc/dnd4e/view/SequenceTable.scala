@@ -121,7 +121,7 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
     _changingState = true
     val hideDead = director.getBooleanProperty(PanelDirector.property.HideDead)
     val ncontent = if (hideDead && !state.elements.isEmpty) {
-      state.elements.filter(c => c.health.status != HealthTracker.Status.Dead || (state.orderFirst.isDefined && c.matches(state.orderFirst.get)))
+      state.elements.filter(c => c.health.status != HealthStatus.Dead || (state.orderFirst.isDefined && c.matches(state.orderFirst.get)))
     } else state.elements
 
     table.content = ncontent
