@@ -17,45 +17,48 @@
 //$Id$
 package vcc.dnd4e.tracker.common
 
+object InitiativeAction extends Enumeration {
+  val StartRound = Value("Start Round")
+  val EndRound = Value("End Round")
+  val MoveUp = Value("Move Up")
+  val DelayAction = Value("Delay")
+  val ReadyAction = Value("Ready Action")
+  val ExecuteReady = Value("Execute Ready")
+}
+
+object InitiativeState extends Enumeration {
+  val Ready = Value("Ready")
+  val Readying = Value("Readying")
+  // This state is when the combatant has readied but not ended it's round
+  val Delaying = Value("Delaying")
+  val Acting = Value("Acting")
+  val Waiting = Value("Waiting")
+}
+
 object InitiativeTracker {
-  def initialTracker(orderID: InitiativeOrderID, roll: Int): InitiativeTracker = InitiativeTracker(orderID, 0, roll, state.Waiting)
 
-  object action extends Enumeration {
-    val StartRound = Value("Start Round")
-    val EndRound = Value("End Round")
-    val MoveUp = Value("Move Up")
-    val Delay = Value("Delay")
-    val Ready = Value("Ready Action")
-    val ExecuteReady = Value("Execute Ready")
-  }
+  import InitiativeState._
+  import InitiativeAction._
 
-  object state extends Enumeration {
-    val Ready = Value("Ready")
-    val Readying = Value("Readying")
-    // This state is when the combatant has readied but not ended it's round
-    val Delaying = Value("Delaying")
-    val Acting = Value("Acting")
-    val Waiting = Value("Waiting")
-  }
+  def initialTracker(orderID: InitiativeOrderID, roll: Int): InitiativeTracker = InitiativeTracker(orderID, 0, roll, Waiting)
 
-
-  val transformation: PartialFunction[(InitiativeTracker, InitiativeTracker, action.Value), InitiativeTracker] = {
-    case (it, first, action.StartRound) if (it.orderID == first.orderID && (it.state == state.Waiting || it.state == state.Ready)) =>
-      it.copyAtNextRound(state.Acting)
-    case (it, first, action.EndRound) if (it.orderID == first.orderID && it.state == state.Acting) =>
-      it.copyAtSameRound(state.Waiting)
-    case (it, first, action.EndRound) if (it.orderID == first.orderID && it.state == state.Readying) =>
-      it.copyAtSameRound(state.Ready)
-    case (it, first, action.EndRound) if (it.orderID == first.orderID && it.state == state.Delaying) =>
-      it.copyAtSameRound(state.Waiting)
-    case (it, first, action.MoveUp) if (first.orderID != it.orderID && first.state != state.Acting && first.state != state.Readying && it.state == state.Delaying) =>
-      it.copyAtSameRound(state.Acting)
-    case (it, first, action.Ready) if (first.orderID == it.orderID && it.state == state.Acting) =>
-      it.copyAtSameRound(state.Readying)
-    case (it, first, action.ExecuteReady) if (it.orderID != first.orderID && first.state == state.Acting && it.state == state.Ready) =>
-      it.copyAtSameRound(state.Waiting)
-    case (it, first, action.Delay) if (first.orderID == it.orderID && it.state == state.Acting) =>
-      it.copyAtSameRound(state.Delaying)
+  val transformation: PartialFunction[(InitiativeTracker, InitiativeTracker, InitiativeAction.Value), InitiativeTracker] = {
+    case (it, first, StartRound) if (it.orderID == first.orderID && (it.state == Waiting || it.state == Ready)) =>
+      it.copy(round = it.round + 1, state = Acting)
+    case (it, first, EndRound) if (it.orderID == first.orderID && it.state == Acting) =>
+      it.copy(state = Waiting)
+    case (it, first, EndRound) if (it.orderID == first.orderID && it.state == Readying) =>
+      it.copy(state = Ready)
+    case (it, first, EndRound) if (it.orderID == first.orderID && it.state == Delaying) =>
+      it.copy(state = Waiting)
+    case (it, first, MoveUp) if (first.orderID != it.orderID && first.state != Acting && first.state != Readying && it.state == Delaying) =>
+      it.copy(state = Acting)
+    case (it, first, ReadyAction) if (first.orderID == it.orderID && it.state == Acting) =>
+      it.copy(state = Readying)
+    case (it, first, ExecuteReady) if (it.orderID != first.orderID && first.state == Acting && it.state == Ready) =>
+      it.copy(state = Waiting)
+    case (it, first, DelayAction) if (first.orderID == it.orderID && it.state == Acting) =>
+      it.copy(state = Delaying)
   }
 }
 
@@ -65,7 +68,7 @@ object InitiativeTracker {
  * @param round The round in which that InitiativeOrder is, used for traking number of action takes
  * @param state Current InitiativeState
  */
-case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, initScore: Int, state: InitiativeTracker.state.Value) extends CombatantAspect {
+case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, initScore: Int, state: InitiativeState.Value) extends CombatantAspect {
 
   /**
    * Indicate it a given transformation can be applied.
@@ -73,7 +76,7 @@ case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, initScore: 
    * @param action Initiative action to be executed
    * @return True if the transformation is valid
    */
-  def canTransform(first: InitiativeTracker, action: InitiativeTracker.action.Value): Boolean = InitiativeTracker.transformation.isDefinedAt(this, first, action)
+  def canTransform(first: InitiativeTracker, action: InitiativeAction.Value): Boolean = InitiativeTracker.transformation.isDefinedAt(this, first, action)
 
   /**
    * Indicate it a given transformation can be applied.
@@ -81,10 +84,12 @@ case class InitiativeTracker(orderID: InitiativeOrderID, round: Int, initScore: 
    * @param action Initiative action to be executed
    * @return The new InitiativeTracker with changes applied
    */
-  def transform(first: InitiativeTracker, action: InitiativeTracker.action.Value): InitiativeTracker = InitiativeTracker.transformation(this, first, action)
+  def transform(first: InitiativeTracker, action: InitiativeAction.Value): InitiativeTracker = InitiativeTracker.transformation(this, first, action)
 
-  private def copyAtNextRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round + 1, this.initScore, state)
+  //FIXME
+  private def copyAtNextRound(state: InitiativeState.Value) = InitiativeTracker(this.orderID, this.round + 1, this.initScore, state)
 
-  private def copyAtSameRound(state: InitiativeTracker.state.Value) = InitiativeTracker(this.orderID, this.round, this.initScore, state)
+  //FIXME
+  private def copyAtSameRound(state: InitiativeState.Value) = InitiativeTracker(this.orderID, this.round, this.initScore, state)
 
 }

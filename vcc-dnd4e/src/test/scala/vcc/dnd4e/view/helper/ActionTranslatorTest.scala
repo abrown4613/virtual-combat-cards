@@ -17,52 +17,54 @@
 //$Id$
 package vcc.dnd4e.view.helper
 
-import org.specs.SpecificationWithJUnit
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import vcc.dnd4e.domain.tracker.common.Command.{InternalInitiativeAction}
-import vcc.dnd4e.tracker.common.InitiativeTracker._
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.tracker.common._
 
 class ActionTranslatorTest extends SpecificationWithJUnit with Mockito {
 
-  val combA = CombatantID("A")
-  val combB = CombatantID("B")
-  val ioiA = InitiativeOrderID(combA, 0)
-  val ioiB = InitiativeOrderID(combB, 0)
-  val mState = mock[CombatStateView]
-  val mCombA = mock[CombatantStateView]
-  val mCombB = mock[CombatantStateView]
-  mState.combatantViewFromID(combA) returns mCombA
-  mState.combatantViewFromID(combB) returns mCombB
-  val combADef = combatantDefinition(combA, "Goblin", "Shorty", CombatantType.Monster)
-  val combBDef = combatantDefinition(combB, "Goblin", null, CombatantType.Monster)
-  mCombA.definition returns combADef
-  mCombB.definition returns combBDef
+  trait context extends Scope {
+    val combA = CombatantID("A")
+    val combB = CombatantID("B")
+    val ioiA = InitiativeOrderID(combA, 0)
+    val ioiB = InitiativeOrderID(combB, 0)
+    val mState = mock[CombatStateView]
+    val mCombA = mock[CombatantStateView]
+    val mCombB = mock[CombatantStateView]
+    mState.combatantViewFromID(combA) returns mCombA
+    mState.combatantViewFromID(combB) returns mCombB
+    val combADef = combatantDefinition(combA, "Goblin", "Shorty", CombatantType.Monster)
+    val combBDef = combatantDefinition(combB, "Goblin", null, CombatantType.Monster)
+    mCombA.definition returns combADef
+    mCombB.definition returns combBDef
+  }
 
   "ActionTranslator" should {
-    "fallback to description" in {
+    "fallback to description" in new context {
       val act = mock[TransactionalAction]
       val desc = "something " + System.currentTimeMillis
       act.description returns desc
       ActionTranslator.fullActionMessage(mState, act) must_== desc
     }
 
-    "tranlate StartRound with alias" in {
-      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, action.StartRound)) must_== "Start round of Goblin - Shorty [Aº]"
+    "tranlate StartRound with alias" in new context {
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, InitiativeAction.StartRound)) must_== "Start round of Goblin - Shorty [Aº]"
     }
 
-    "tranlate StartRound without alias" in {
-      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, action.StartRound)) must_== "Start round of Goblin [Bº]"
+    "tranlate StartRound without alias" in new context {
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, InitiativeAction.StartRound)) must_== "Start round of Goblin [Bº]"
     }
 
-    "tranlate EndRound with alias" in {
-      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, action.EndRound)) must_== "End round of Goblin - Shorty [Aº]"
+    "tranlate EndRound with alias" in new context {
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, InitiativeAction.EndRound)) must_== "End round of Goblin - Shorty [Aº]"
     }
 
-    "tranlate EndRound without alias" in {
-      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, action.EndRound)) must_== "End round of Goblin [Bº]"
+    "tranlate EndRound without alias" in new context {
+      ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiB, InitiativeAction.EndRound)) must_== "End round of Goblin [Bº]"
     }
   }
 

@@ -141,7 +141,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     val mState2 = mock[CombatState]
     val mITA = mock[InitiativeTracker]
     val mITF = mock[InitiativeTracker]
-    val mAction = mock[InitiativeTracker.action.Value]
+    val mAction = mock[InitiativeAction.Value]
     mLF.orderLens returns Lens(s => mOrder, (s, o) => throw new Exception("Not allowed"))
     mLF.initiativeTrackerLens(ioA0) returns Lens(s => mITA, (s, o) => mState2)
     mState.rules returns mRules

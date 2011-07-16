@@ -66,7 +66,7 @@ object RulingSearchService {
 trait RulingHandler {
   this: AbstractCombatController =>
 
-  import InitiativeTracker.action._
+  import InitiativeAction._
 
   addRulingSearch {
     case InternalInitiativeAction(who, EndRound) => RulingSearchService.searchEndRound(context, who.combId)

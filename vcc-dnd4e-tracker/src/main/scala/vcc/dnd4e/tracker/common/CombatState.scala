@@ -68,14 +68,14 @@ object CombatState {
      * @param whom In front of whom who will move
      */
     def canMoveBefore(combatState: CombatState, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
-      (who != whom) && combatState.isCombatStarted && combatState.order.tracker(who).state != InitiativeTracker.state.Acting
+      (who != whom) && combatState.isCombatStarted && combatState.order.tracker(who).state != InitiativeState.Acting
     }
 
     /**
      * Determines in a given action can be applied to an InitiativeTracker. Not that this does not cover compound
      * operations like the Delay which internally is broken into Start and Delay.
      */
-    def canInitiativeOrderPerform(combatState: CombatState, io: InitiativeOrderID, action: InitiativeTracker.action.Value): Boolean = {
+    def canInitiativeOrderPerform(combatState: CombatState, io: InitiativeOrderID, action: InitiativeAction.Value): Boolean = {
       if (!combatState.isCombatStarted || !combatState.order.nextUp.isDefined) false
       else {
         val first = combatState.order.tracker(combatState.order.nextUp.get)

@@ -20,7 +20,7 @@ package vcc.dnd4e.tracker.dispatcher
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
-import vcc.dnd4e.tracker.common.InitiativeTracker
+import vcc.dnd4e.tracker.common.InitiativeAction
 
 object ActionTranslator {
   implicit def transition2TransitionList(t: CombatTransition) = List(t)
@@ -39,12 +39,12 @@ object ActionTranslator {
       //Order actions
       case InternalInitiativeAction(who, initAction) =>
         initAction match {
-          case InitiativeTracker.action.StartRound => StartRoundTransition(who)
-          case InitiativeTracker.action.EndRound => EndRoundTransition(who)
-          case InitiativeTracker.action.Delay => DelayTransition(who)
-          case InitiativeTracker.action.MoveUp => MoveUpTransition(who)
-          case InitiativeTracker.action.ExecuteReady => ExecuteReadyTransition(who)
-          case InitiativeTracker.action.Ready => ReadyActionTransition(who)
+          case InitiativeAction.StartRound => StartRoundTransition(who)
+          case InitiativeAction.EndRound => EndRoundTransition(who)
+          case InitiativeAction.DelayAction => DelayTransition(who)
+          case InitiativeAction.MoveUp => MoveUpTransition(who)
+          case InitiativeAction.ExecuteReady => ExecuteReadyTransition(who)
+          case InitiativeAction.ReadyAction => ReadyActionTransition(who)
         }
 
       case MoveBefore(who, whom) => MoveBeforeTransition(who, whom);

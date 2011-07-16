@@ -68,32 +68,32 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
     val transition = EndRoundTransition(ioA0)
 
     def doUpdateEffects() = {
-      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeTracker.state.Acting), (s, v) => s)
+      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeState.Acting), (s, v) => s)
       mLF.initiativeTrackerLens(ioA0) returns lens
 
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.EndRound),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.EndRound),
         RotateRobinStep,
         EffectListTransformStep(EffectTransformation.endRound(ioA0)))) returns mState2
 
       (transition.transition(mLF, mState) must_== mState2) and
         (there was one(mState).transitionWith(List(
-          InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.EndRound),
+          InitiativeTrackerUpdateStep(ioA0, InitiativeAction.EndRound),
           RotateRobinStep,
           EffectListTransformStep(EffectTransformation.endRound(ioA0)))))
     }
 
     def doUpdateAfterDelaying() = {
-      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeTracker.state.Delaying), (s, v) => s)
+      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeState.Delaying), (s, v) => s)
       mLF.initiativeTrackerLens(ioA0) returns lens
 
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.EndRound),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.EndRound),
         EffectListTransformStep(EffectTransformation.endRound(ioA0)))) returns mState2
 
       (transition.transition(mLF, mState) must_== mState2) and
         (there was one(mState).transitionWith(List(
-          InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.EndRound),
+          InitiativeTrackerUpdateStep(ioA0, InitiativeAction.EndRound),
           EffectListTransformStep(EffectTransformation.endRound(ioA0)))))
     }
   }
@@ -103,12 +103,12 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
 
     def doUpdateAndEffects() = {
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.StartRound),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.StartRound),
         EffectListTransformStep(EffectTransformation.startRound(ioA0)))) returns mState2
 
       val nState = transition.transition(mLF, mState)
       (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.StartRound),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.StartRound),
         EffectListTransformStep(EffectTransformation.startRound(ioA0))))) and
         (nState must_== mState2)
     }
@@ -119,13 +119,13 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
 
     def doUpdateAndEffects() = {
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.Delay),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.DelayAction),
         RotateRobinStep,
         DelayEffectListTransformStep(ioA0))) returns mState2
 
       val nState = transition.transition(mLF, mState)
       (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.Delay),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.DelayAction),
         RotateRobinStep,
         DelayEffectListTransformStep(ioA0)))) and
         (nState must_== mState2)
@@ -136,10 +136,10 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
     val transition = ReadyActionTransition(ioA0)
 
     def doIt() = {
-      mState.transitionWith(List(InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.Ready))) returns mState2
+      mState.transitionWith(List(InitiativeTrackerUpdateStep(ioA0, InitiativeAction.ReadyAction))) returns mState2
 
       val nState = transition.transition(mLF, mState)
-      (there was one(mState).transitionWith(List(InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.Ready)))) and
+      (there was one(mState).transitionWith(List(InitiativeTrackerUpdateStep(ioA0, InitiativeAction.ReadyAction)))) and
         (nState must_== mState2)
 
     }
@@ -150,12 +150,12 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
 
     def doIt() = {
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.ExecuteReady),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.ExecuteReady),
         MoveBeforeFirstStep(ioA0))) returns mState2
 
       val nState = transition.transition(mLF, mState)
       (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.ExecuteReady),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.ExecuteReady),
         MoveBeforeFirstStep(ioA0)))) and
         (nState must_== mState2)
     }
@@ -166,13 +166,13 @@ class InitiativeTransitionTest extends SpecificationWithJUnit {
 
     def doIt() = {
       mState.transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.MoveUp),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.MoveUp),
         MoveBeforeFirstStep(ioA0),
         SetRobinStep(ioA0))) returns mState2
 
       val nState = transition.transition(mLF, mState)
       (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateStep(ioA0, InitiativeTracker.action.MoveUp),
+        InitiativeTrackerUpdateStep(ioA0, InitiativeAction.MoveUp),
         MoveBeforeFirstStep(ioA0),
         SetRobinStep(ioA0)))) and
         (nState must_== mState2)

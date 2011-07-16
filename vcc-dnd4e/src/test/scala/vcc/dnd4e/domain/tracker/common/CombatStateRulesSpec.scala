@@ -134,7 +134,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
 
     "not allow acting to move" in {
       state.isCombatStarted returns true
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Acting)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeState.Acting)
       rules.canMoveBefore(state, ioA0, ioB0) must beFalse
       there was one(state).initiativeTrackerFromID(ioA0)
     }
@@ -145,14 +145,14 @@ object CombatStateRulesSpec extends Specification with Mockito {
 
     "allow otherwise" in {
       state.isCombatStarted returns true
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Waiting)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeState.Waiting)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
       there was one(state).initiativeTrackerFromID(ioA0)
 
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Delaying)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeState.Delaying)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
 
-      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeTracker.state.Ready)
+      state.initiativeTrackerFromID(ioA0) returns InitiativeTracker(ioA0, 0, 0, InitiativeState.Ready)
       rules.canMoveBefore(state, ioA0, ioB0) must beTrue
 
     }
@@ -166,7 +166,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
     "work only when in combat" in {
       state.isCombatStarted returns false
       state.nextUp returns None
-      rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
+      rules.canInitiativeOrderPerform(state, ioA0, InitiativeAction.StartRound) must beFalse
       there was one(state).isCombatStarted
       there was no(state).getInitiativeOrder
     }
@@ -177,7 +177,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
       state.initiativeTrackerFromID(ioA0) returns mock[InitiativeTracker]
       state.initiativeTrackerFromID(ioA1) returns mock[InitiativeTracker]
 
-      rules.canInitiativeOrderPerform(state, ioA0, InitiativeTracker.action.StartRound) must beFalse
+      rules.canInitiativeOrderPerform(state, ioA0, InitiativeAction.StartRound) must beFalse
       there was one(state).isCombatStarted then
         atLeastOne(state).nextUp
     }
@@ -185,7 +185,7 @@ object CombatStateRulesSpec extends Specification with Mockito {
     "defer to InitiativeTracker with the correct first InitiativeTracker set" in {
       val mIT = mock[InitiativeTracker]
       val fIT = mock[InitiativeTracker]
-      val action = InitiativeTracker.action.StartRound
+      val action = InitiativeAction.StartRound
 
 
       mIT.canTransform(fIT, action) returns false

@@ -31,9 +31,9 @@ trait CombatStateSnapshotHelper[S] {
   val ioa1 = InitiativeOrderID(combA, 1)
   val iob = InitiativeOrderID(combB, 0)
 
-  val ita0 = InitiativeTracker(ioa0, 1, 0, InitiativeTracker.state.Waiting)
-  val ita0m = InitiativeTracker(ioa0, 2, 0, InitiativeTracker.state.Acting)
-  val itb = InitiativeTracker(iob, 1, 0, InitiativeTracker.state.Waiting)
+  val ita0 = InitiativeTracker(ioa0, 1, 0, InitiativeState.Waiting)
+  val ita0m = InitiativeTracker(ioa0, 2, 0, InitiativeState.Acting)
+  val itb = InitiativeTracker(iob, 1, 0, InitiativeState.Waiting)
 
   val baseHealth = HealthTracker(10, 0, 0, null)
   val modHealth = HealthTracker(12, 0, 0, null)
