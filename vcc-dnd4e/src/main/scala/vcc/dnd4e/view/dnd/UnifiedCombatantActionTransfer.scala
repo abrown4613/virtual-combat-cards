@@ -17,16 +17,16 @@
 //$Id$
 package vcc.dnd4e.view.dnd
 
-import vcc.dnd4e.view.UnifiedCombatantID
 import java.awt.datatransfer.Transferable
 import vcc.util.swing.dnd.GenTransferable
+import vcc.dnd4e.view.UnifiedCombatant
 
 /**
  * Represents a action that must be applied on a UnifiedCombatant
  * @param description Text to add to drag area
  * @param action Partial that checks if the action can be applied to a specific UnifiedCombatantID
  */
-case class UnifiedCombatantActionTransfer(description: String, action: PartialFunction[UnifiedCombatantID, Unit]) {
+case class UnifiedCombatantActionTransfer(description: String, action: PartialFunction[UnifiedCombatant, Unit]) {
 
   import UnifiedCombatantActionTransfer._
 

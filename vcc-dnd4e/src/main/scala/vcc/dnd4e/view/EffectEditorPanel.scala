@@ -42,12 +42,12 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private val otherCombatant = new UnifiedCombatant(otherId, null, CombatantState(CombatantRosterDefinition(otherId, null, terrainDefinition), null, null, null))
   val activeModel = new ContainerComboBoxModel[UnifiedCombatant](List(otherCombatant))
   val activeCombo = new ExplicitModelComboBox[UnifiedCombatant](activeModel)
-  activeCombo.setFormatRenderer(new StringFormatListCellRenderer(cmb => {
+  activeCombo.setFormatRenderer(new StringFormatListCellRenderer[UnifiedCombatant](cmb => {
     (if (cmb.isInOrder) cmb.orderId.toLabelString else cmb.combId.id) + " - " + cmb.name
   }))
 
   private val efpl = if (
-    java.awt.Toolkit.getDefaultToolkit.getScreenSize().getHeight() > 700 &&
+    java.awt.Toolkit.getDefaultToolkit.getScreenSize.getHeight > 700 &&
       BootStrap.getPropertyAsInt("vcc.view.efp.max", 3) > 2
   ) {
     List(new EffectEditor(this), new EffectEditor(this), new EffectEditor(this))
@@ -98,9 +98,9 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private def setActiveComboSelection(who: Option[UnifiedCombatantID]) {
     val ctx = state.combatantOption(who)
     val cmb: UnifiedCombatant = if (ctx == None) otherCombatant else ctx.get
-    val idx = activeModel.entries.findIndexOf(c => c.matches(cmb))
+    val idx = activeModel.entries.indexWhere(c => c.matches(cmb))
     activeCombo.selection.index = idx
-    activeCombo.repaint
+    activeCombo.repaint()
     switchActive(cmb.definition.entity.eid)
   }
 
@@ -117,12 +117,16 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
     }
   }
 
-  def createEffect(subPanel: EffectSubPanelComboOption, durOption: DurationComboEntry, beneficial: Boolean) {
+  /**
+   * Create the effect on the target
+   */
+  def createEffect(tgt: UnifiedCombatant, condition: Condition, duration: Duration, beneficial: Boolean) {
     val source = activeCombo.selection.item
-    val tgtComb = state(target.get.combId, target.get.orderId)
-    val cond = subPanel.generateEffect(source, tgtComb)
-    val duration = durOption.generate(source, tgtComb)
-    director.requestAction(AddEffect(target.get.combId, source.combId, cond, duration))
+    director.requestAction(AddEffect(tgt.combId, source.combId, condition, duration))
+  }
+
+  def getTargetCombatant: UnifiedCombatant = {
+    state(target.get.combId, target.get.orderId)
   }
 
   /**

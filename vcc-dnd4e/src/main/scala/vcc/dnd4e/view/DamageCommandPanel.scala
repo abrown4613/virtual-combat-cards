@@ -37,10 +37,9 @@ class DamageCommandPanel(val director: PanelDirector)
 
   val dockTitle = "Health Change"
 
-  private val damage = new TextField {
-    columns = 3
-    enabled = false
-  }
+  private val damage = new TextField
+  damage.columns = 3
+  damage.enabled = false
 
   val dockFocusComponent = damage.peer
 
@@ -64,8 +63,7 @@ class DamageCommandPanel(val director: PanelDirector)
 
   private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalAction) = {
     new UnifiedCombatantActionTransfer(msg, {
-      case uci => {
-        val tgt = combatState.combatantOption(Some(uci)).get
+      case tgt => {
         dispatchAction(tgt, director, term, builder)
       }
     })
