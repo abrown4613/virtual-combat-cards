@@ -17,10 +17,12 @@
 //$Id$
 package vcc.dnd4e.view
 
+import dnd.UnifiedCombatantActionTransfer
 import scala.swing._
 import vcc.util.swing._
 import vcc.dnd4e.tracker.common._
 import org.slf4j.LoggerFactory
+import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
 
 /**
  * A combo box option that included the information to display and what to
@@ -33,7 +35,7 @@ abstract class DurationComboEntry(text: String) {
 
   def generate(source: UnifiedCombatant, target: UnifiedCombatant): Duration
 
-  override def toString(): String = text
+  override def toString: String = text
 }
 
 class StaticDurationComboEntry(text: String, duration: Duration) extends DurationComboEntry(text) {
@@ -52,13 +54,13 @@ class BoundDurationComboEntry(text: String, limit: Duration.Limit.Value, ofSourc
 trait EffectSubPanelComboOption {
   val panelName: String
 
-  def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition
+  def generateCondition(): Condition
 
   def saveMemento(): Any
 
   def restoreMemento(memento: Any)
 
-  override def toString() = panelName
+  override def toString = panelName
 }
 
 object EffectEditor {
@@ -96,22 +98,8 @@ object EffectEditor {
       new AutoCompleteDictionary(Nil)
     }
   }
-}
 
-class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
-  private var source: Option[UnifiedCombatant] = None
-  private var target: Option[UnifiedCombatant] = None
-
-  private val smallFont = new java.awt.Font(java.awt.Font.SANS_SERIF, 0, 10)
-
-  private val idComboModel = new ContainerComboBoxModel[CombatantID](Nil)
-
-  private val durationCombo = new ComboBox(EffectEditor.durations) {
-    font = smallFont
-  }
-
-  //This is the subPanel for most general case
-  private val generalSubPanel = new MigPanel("fillx,gap 1 0, ins 0", "[]", "[24!]") with EffectSubPanelComboOption {
+  class GeneralConditionPanel(benefCheckbox: CheckBox, parent: EffectEditorPanel) extends MigPanel("fillx,gap 1 0, ins 0", "[]", "[24!]") with EffectSubPanelComboOption {
     val panelName = "Any"
     private val descField = new TextField() with AutoCompleteTextComponent
     descField.enableAutoComplete(EffectEditor.dictionary)
@@ -119,7 +107,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     add(descField, "growx, h 22!")
     visible = false
 
-    def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {
+    def generateCondition(): Condition = {
       Effect.Condition.Generic(descField.text, benefCheckbox.selected)
     }
 
@@ -143,10 +131,9 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     }
   }
 
-  // This is the mark panel
-  private val markSubPanel = new MigPanel("gap 1 0, ins 0", "[][][]", "[24!]") with EffectSubPanelComboOption {
-    private val markerText = new ExplicitModelComboBox(idComboModel)
-    markerText.setFormatRenderer(new StringFormatListCellRenderer(cid => cid.id))
+  class MarkConditionPanel(model: ContainerComboBoxModel[CombatantID]) extends MigPanel("gap 1 0, ins 0", "[][][]", "[24!]") with EffectSubPanelComboOption {
+    private val markerText = new ExplicitModelComboBox[CombatantID](model)
+    markerText.setFormatRenderer(new StringFormatListCellRenderer[CombatantID](cid => cid.id))
     private val permanentMarkCheck = new CheckBox("cant be superseded")
     val panelName = "Mark"
     add(new Label(" by "), "gap rel")
@@ -154,7 +141,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     add(permanentMarkCheck)
     visible = false
 
-    def generateEffect(source: UnifiedCombatant, target: UnifiedCombatant): Condition = {
+    def generateCondition(): Condition = {
       Effect.Condition.Mark(markerText.selection.item, permanentMarkCheck.selected)
     }
 
@@ -163,28 +150,46 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     def restoreMemento(memento: Any) {
       memento match {
         case (marker: CombatantID, perm: Boolean) =>
-          val idx = idComboModel.contents.indexOf(marker)
+          val idx = model.contents.indexOf(marker)
           permanentMarkCheck.selected = perm
           markerText.selection.index = idx
-          this.repaint
+          this.repaint()
         case _ =>
       }
     }
   }
 
-  private val subPanels = List(generalSubPanel, markSubPanel)
+}
 
-  private val typeCombo = new ComboBox(subPanels) {
+class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
+  private var source: Option[UnifiedCombatant] = None
+  private var target: Option[UnifiedCombatant] = None
+
+  private val smallFont = new java.awt.Font(java.awt.Font.SANS_SERIF, 0, 10)
+
+  private val idComboModel = new ContainerComboBoxModel[CombatantID](Nil)
+
+  private val durationCombo = new ComboBox[DurationComboEntry](EffectEditor.durations) {
     font = smallFont
   }
+  private val benefCheckbox = new CheckBox("Beneficial")
+  benefCheckbox.tooltip = "Check if the effect is beneficial for the target"
 
-  private val addButton = new Button("Add") {
-    enabled = false
-  }
+  //This is the subPanel for most general case
+  private val generalSubPanel = new EffectEditor.GeneralConditionPanel(benefCheckbox, parent)
+
+  // This is the mark panel
+  private val markSubPanel = new EffectEditor.MarkConditionPanel(idComboModel)
+  private val subPanels = List[Panel with EffectSubPanelComboOption](generalSubPanel, markSubPanel)
+
+  private val typeCombo = new ComboBox[Panel with EffectSubPanelComboOption](subPanels)
+  typeCombo.font = smallFont
+
+  private val addButton = new Button("Add")
+  addButton.enabled = false
+  addButton.tooltip = "Click to add effect to select target, or drag to any valid target"
+
   private val clearButton = new Button("Clear")
-  private val benefCheckbox = new CheckBox("Beneficial") {
-    tooltip = "Check if the effect is beneficial for the target"
-  }
 
   add(new Label("Condition"), "h 22!")
   add(typeCombo, "split 2, h 22!")
@@ -197,20 +202,36 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   add(addButton, "skip,split 2")
   add(clearButton)
 
+  private val dc = new DragAndDropController(IconLibrary.MiniWand)
+  dc.enableDragToCopy(DragAndDropSource.fromButton(addButton, () => {
+    val durationBuilder = durationCombo.selection.item
+    val condition = typeCombo.selection.item.generateCondition()
+    val beneficial = benefCheckbox.selected
+    val src = source.get
+
+    new UnifiedCombatantActionTransfer(
+    condition.description, {
+      case tgt if (durationBuilder.isDefinedAt(src, tgt)) =>
+        parent.createEffect(tgt, condition, durationBuilder.generate(src, tgt), beneficial)
+        false
+    }).toTransferable
+  }))
+
   listenTo(typeCombo.selection)
   listenTo(durationCombo.selection)
   listenTo(addButton, clearButton)
   reactions += {
     case event.SelectionChanged(this.typeCombo) =>
       for (p <- subPanels) {
-        p.visible = p == typeCombo.selection.item
+        p.visible = (p equals typeCombo.selection.item)
       }
     case event.SelectionChanged(this.durationCombo) =>
       checkAddButton()
     case event.ButtonClicked(this.addButton) =>
       parent.createEffect(
-        typeCombo.selection.item,
-        durationCombo.selection.item,
+        parent.getTargetCombatant,
+        typeCombo.selection.item.generateCondition(),
+        durationCombo.selection.item.generate(source.get, parent.getTargetCombatant),
         benefCheckbox.selected)
     case event.ButtonClicked(this.clearButton) =>
       clearPanel()

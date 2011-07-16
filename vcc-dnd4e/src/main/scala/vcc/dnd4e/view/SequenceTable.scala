@@ -83,8 +83,8 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
 
   //Enable drag and drop
   protected object CombatantAtCellDrop {
-    def unapply(d: CellDrop): Option[(UnifiedCombatantID, AnyRef)] = {
-      Some(table.content(d.row).unifiedId, d.data)
+    def unapply(d: CellDrop): Option[(UnifiedCombatant, AnyRef)] = {
+      Some(table.content(d.row), d.data)
     }
   }
 
@@ -92,8 +92,8 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
 
   cellDrop.decorateTable(table)
   cellDrop.interestedIn(UnifiedCombatantActionTransfer.UnifiedCombatantDataFlavor) {
-    case CombatantAtCellDrop(uci@UnifiedCombatantID(cid, ioi), UnifiedCombatantActionTransfer(_, pf)) if (pf.isDefinedAt(uci)) =>
-      pf.apply(uci)
+    case CombatantAtCellDrop(uc, UnifiedCombatantActionTransfer(_, pf)) if (pf.isDefinedAt(uc)) =>
+      pf.apply(uc)
       true
   }
 
