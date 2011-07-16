@@ -24,14 +24,8 @@ import vcc.infra.util.UniquelyIdentified
  */
 trait CombatantID {
   val id: String
-  /**
-   * Helper method to simplify interaction with the IDGenerator
-   * TODO Remove this method
-   */
-  @deprecated("To be removed")
-  def toSymbol(): Symbol = Symbol(id)
 
-  override def toString(): String = "CombatantID(" + id + ")"
+  override def toString: String = "CombatantID(" + id + ")"
 
   def asNumber: Option[Int]
 }
@@ -67,10 +61,10 @@ object CombatantID extends UniquenessCache[String, CombatantID] {
  * @param combId The combatant that own the InitiativeOrder entry
  * @param seq Sequential number to separate different InitiativeOrderID from the same CombatantID.
  */
-case class InitiativeOrderID(val combId: CombatantID, val seq: Int) {
-  override def toString(): String = "InitiativeOrderID(" + combId.id + ":" + seq + ")"
+case class InitiativeOrderID(combId: CombatantID, seq: Int) {
+  override def toString: String = "InitiativeOrderID(" + combId.id + ":" + seq + ")"
 
-  def toLabelString(): String = combId.id + (if (seq < 4) superscript(seq) else ":" + seq)
+  def toLabelString: String = combId.id + (if (seq < 4) superscript(seq) else ":" + seq)
 
   final private val superscript = "º¹²³"
 }
@@ -80,7 +74,7 @@ case class InitiativeOrderID(val combId: CombatantID, val seq: Int) {
  * This is used to set initiatives from the User interface.
  */
 case class InitiativeDefinition(combId: CombatantID, bonus: Int, inits: List[Int]) {
-  def toResult(): List[InitiativeResult] = {
+  def toResult: List[InitiativeResult] = {
     inits.zipWithIndex.map(p => InitiativeResult(InitiativeOrderID(combId, p._2), bonus, p._1, 0))
   }
 }
@@ -144,26 +138,26 @@ private[tracker] abstract class UniquenessCache[K, V >: Null] {
 
   def apply(name: K): V = {
     def cached(): V = {
-      rlock.lock
+      rlock.lock()
       try {
         val reference = map get name
-        if (reference == null) null
+        if (reference == null) null.asInstanceOf[V]
         else reference.get // will be null if we were gc-ed
       }
-      finally rlock.unlock
+      finally rlock.unlock()
     }
     def updateCache(): V = {
-      wlock.lock
+      wlock.lock()
       try {
         val res = cached()
         if (res != null) res
         else {
           val sym = valueFromKey(name)
-          map.put(name, new WeakReference(sym))
+          map.put(name, new WeakReference[V](sym))
           sym
         }
       }
-      finally wlock.unlock
+      finally wlock.unlock()
     }
 
     val res = cached()

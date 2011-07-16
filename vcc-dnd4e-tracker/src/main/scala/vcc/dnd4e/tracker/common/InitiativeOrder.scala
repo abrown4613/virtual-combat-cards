@@ -20,10 +20,19 @@ package vcc.dnd4e.tracker.common
 import vcc.infra.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
 import vcc.util.DiceBag
 
+/**
+ * A combat InitiativeOrder
+ * @param tracker Group of InitiativeTracker
+ * @param baseList InitiativeResult that were used to build the sequence
+ * @param reorderedList List of order changes in pair of who moved before whom
+ * @param sequence List of InitiativeOrderID by initiative sequence
+ * @param nextUp Current first in sequence, if None the combat has not started, otherwise it will be the curretn first
+ * in the sequence.
+ */
 case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, InitiativeTracker],
                                            baseList: List[InitiativeResult],
                                            reorderList: List[(InitiativeOrderID, InitiativeOrderID)],
-                                           order: List[InitiativeOrderID],
+                                           sequence: List[InitiativeOrderID],
                                            nextUp: Option[InitiativeOrderID]) {
 
   /**
@@ -36,10 +45,10 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
    * Will do nothing on further calls.
    */
   def startCombat() = {
-    if (order.isEmpty)
+    if (sequence.isEmpty)
       throw new IllegalStateException("No combatant has initiative")
     copy(
-      nextUp = Some(order.head)
+      nextUp = Some(sequence.head)
     )
   }
 
@@ -49,9 +58,9 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
   def rotate(): InitiativeOrder = {
     if (!nextUp.isDefined)
       throw new IllegalStateException("Rotate not allowed before start of combat")
-    val idx = order.indexOf(nextUp.get) + 1
-    if (idx < order.length) copy(nextUp = Some(order(idx)))
-    else copy(nextUp = Some(order.head))
+    val idx = sequence.indexOf(nextUp.get) + 1
+    if (idx < sequence.length) copy(nextUp = Some(sequence(idx)))
+    else copy(nextUp = Some(sequence.head))
   }
 
   /**
@@ -59,7 +68,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
    * the order and also add the base InitiativeTracker
    */
   def setInitiative(iDef: InitiativeDefinition): InitiativeOrder = {
-    val initRes = iDef.toResult()
+    val initRes = iDef.toResult
     var itMap = Map.empty[InitiativeOrderID, InitiativeTracker]
     val ioBuilder = new ReorderedListBuilder(baseList, reorderList, InitiativeOrder.initiativeResultComparator)
     for (res <- initRes) {
@@ -72,7 +81,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
     val bl = ioBuilder.baseList()
     this.copy(
       baseList = (bl.length to 1 by -1).toList.zip(bl).map(p => p._2.setTieBreak(p._1)),
-      order = ioBuilder.reorderedList(),
+      sequence = ioBuilder.reorderedList(),
       tracker = tracker ++ itMap
     )
   }
@@ -86,7 +95,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
     if (nextUp.isDefined) throw new IllegalStateException("Can't remove after combat start")
     this.copy(
       tracker = tracker.filterKeys(k => k.combId != comb),
-      order = order.filter(k => k.combId != comb),
+      sequence = sequence.filter(k => k.combId != comb),
       baseList = baseList.filter(k => k.uniqueId.combId != comb)
     )
   }
@@ -102,7 +111,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
     val ioBuilder = new ReorderedListBuilder(baseList, reorderList, InitiativeOrder.initiativeResultComparator)
     ioBuilder.addReorder(who, whom)
     this.copy(
-      order = ioBuilder.reorderedList(),
+      sequence = ioBuilder.reorderedList(),
       reorderList = ioBuilder.reorders()
     )
   }
@@ -126,7 +135,7 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
    */
   def setNextUp(orderId: InitiativeOrderID): InitiativeOrder = {
     if (!nextUp.isDefined) throw new IllegalStateException("Combat not started")
-    if (!order.contains(orderId)) throw new NoSuchElementException("Not in order " + orderId)
+    if (!sequence.contains(orderId)) throw new NoSuchElementException("Not in order " + orderId)
     else {
       this.copy(nextUp = Some(orderId))
     }
@@ -143,16 +152,16 @@ case class InitiativeOrder private[common](tracker: Map[InitiativeOrderID, Initi
    * </ul>
    */
   def isValid: Boolean = {
-    (this.order.toSet == this.tracker.keys.toSet) &&
-      (if (nextUp.isDefined) order.contains(nextUp.get) else true) &&
-      (!reorderList.exists(p => !order.contains(p._1) || !order.contains(p._2)))
+    (this.sequence.toSet == this.tracker.keys.toSet) &&
+      (if (nextUp.isDefined) sequence.contains(nextUp.get) else true) &&
+      (!reorderList.exists(p => !sequence.contains(p._1) || !sequence.contains(p._2)))
   }
 
   /**
    * Returns if a given CombatantID is in the initiative order. That is, it has at least one InitiativeOrderID in the
    * order.
    */
-  def isInSequence(combId: CombatantID): Boolean = order.exists(x => x.combId == combId)
+  def isInSequence(combId: CombatantID): Boolean = sequence.exists(x => x.combId == combId)
 }
 
 object InitiativeOrder {
