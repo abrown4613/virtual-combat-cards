@@ -18,15 +18,15 @@
 package vcc.dnd4e.tracker.transition
 
 import vcc.tracker.PartialFunctionCommandStream
-import vcc.dnd4e.tracker.common.{InitiativeOrderID, HealthStatus, InitiativeTracker, CombatState}
-import vcc.dnd4e.tracker.common.InitiativeTracker.state._
+import vcc.dnd4e.tracker.common.{InitiativeOrderID, HealthStatus, InitiativeState, CombatState}
+import vcc.dnd4e.tracker.common.InitiativeState._
 import vcc.dnd4e.tracker.common.HealthStatus._
 import vcc.dnd4e.tracker.StateLensFactory
 
 object AutomationCommandSource {
 
   object HeadStateAndHealth {
-    def unapply(state: CombatState): Option[(InitiativeOrderID, InitiativeTracker.state.Value, HealthStatus.Value)] = {
+    def unapply(state: CombatState): Option[(InitiativeOrderID, InitiativeState.Value, HealthStatus.Value)] = {
       if (state.isCombatStarted) {
         val ioi = state.order.nextUp.get
         val initState = StateLensFactory.initiativeTrackerLens(ioi).get(state).state

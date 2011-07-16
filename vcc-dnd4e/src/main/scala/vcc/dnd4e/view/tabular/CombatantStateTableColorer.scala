@@ -19,7 +19,7 @@ package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
 import vcc.dnd4e.tracker.common.HealthStatus._
-import vcc.dnd4e.tracker.common.InitiativeTracker.state._
+import vcc.dnd4e.tracker.common.InitiativeState._
 import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
 import java.awt.Color
 import javax.swing.SwingConstants

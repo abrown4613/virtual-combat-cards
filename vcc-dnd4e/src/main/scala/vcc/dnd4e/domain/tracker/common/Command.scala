@@ -55,13 +55,14 @@ object Command {
 
 
   // Initiative Actions
-  case class InitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
+  case class ExecuteInitiativeAction(who: InitiativeOrderID, action: InitiativeAction.Value)
     extends TransactionalActionWithMessage(who + "executed " + action)
 
   case class MoveBefore(who: InitiativeOrderID, before: InitiativeOrderID)
     extends TransactionalActionWithMessage(who + " moving before " + before + " in the sequence")
 
-  case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeTracker.action.Value)
+  @deprecated("Should move to InitiativeTranstion")
+  case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeAction.Value)
     extends TransactionalActionWithMessage(who + " executed initiative action " + action)
 
   // Effect Actions

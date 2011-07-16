@@ -76,18 +76,18 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
 
   reactions += {
     case ButtonClicked(this.startRound_btn) if (_first != null) =>
-      director requestAction InitiativeAction(_first.orderId, InitiativeTracker.action.StartRound)
+      director requestAction ExecuteInitiativeAction(_first.orderId, InitiativeAction.StartRound)
     case ButtonClicked(this.endRound_btn) if (_first != null) =>
-      director requestAction InitiativeAction(_first.orderId, InitiativeTracker.action.EndRound)
+      director requestAction ExecuteInitiativeAction(_first.orderId, InitiativeAction.EndRound)
     case ButtonClicked(this.ready_btn) if (_first != null) =>
-      director requestAction InitiativeAction(_first.orderId, InitiativeTracker.action.Ready)
+      director requestAction ExecuteInitiativeAction(_first.orderId, InitiativeAction.ReadyAction)
     case ButtonClicked(this.delay_btn) if (_first != null) =>
-      director requestAction InitiativeAction(_first.orderId, InitiativeTracker.action.Delay)
+      director requestAction ExecuteInitiativeAction(_first.orderId, InitiativeAction.DelayAction)
 
     case ButtonClicked(this.moveUp_btn) =>
-      director requestAction InitiativeAction(context.get.orderId, InitiativeTracker.action.MoveUp)
+      director requestAction ExecuteInitiativeAction(context.get.orderId, InitiativeAction.MoveUp)
     case ButtonClicked(this.executeReady_btn) =>
-      director requestAction InitiativeAction(context.get.orderId, InitiativeTracker.action.ExecuteReady)
+      director requestAction ExecuteInitiativeAction(context.get.orderId, InitiativeAction.ExecuteReady)
 
     case ButtonClicked(this.moveBefore_btn) if (before_Combo.selection.item != null) =>
       director requestAction MoveBefore(context.get.orderId, before_Combo.selection.item)
@@ -104,10 +104,10 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
 
   private def updatePanel() {
     if (_first != null) {
-      startRound_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeTracker.action.StartRound)
-      endRound_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeTracker.action.EndRound)
-      delay_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeTracker.action.StartRound)
-      ready_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeTracker.action.Ready)
+      startRound_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeAction.StartRound)
+      endRound_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeAction.EndRound)
+      delay_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeAction.StartRound)
+      ready_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, _first.orderId, InitiativeAction.ReadyAction)
     } else {
       startRound_btn.enabled = false
       endRound_btn.enabled = false
@@ -119,8 +119,8 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
       before_Combo.enabled = true
       moveLabel.enabled = true
 
-      moveUp_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, comb.orderId, InitiativeTracker.action.MoveUp)
-      executeReady_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, comb.orderId, InitiativeTracker.action.ExecuteReady)
+      moveUp_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, comb.orderId, InitiativeAction.MoveUp)
+      executeReady_btn.enabled = rules.canInitiativeOrderPerform(combatState.state, comb.orderId, InitiativeAction.ExecuteReady)
 
       //Get possible combatant to move before
       val before: Seq[InitiativeOrderID] = if (comb.isInOrder)

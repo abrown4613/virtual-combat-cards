@@ -51,7 +51,7 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
       val nOrder = order.setInitiative(InitiativeDefinition(combA, 10, List(3)))
       nOrder.sequence must_== List(ioA0)
       nOrder.tracker must beDefinedAt(ioA0)
-      nOrder.tracker(ioA0) must_== InitiativeTracker(ioA0, 0, 3, InitiativeTracker.state.Waiting)
+      nOrder.tracker(ioA0) must_== InitiativeTracker(ioA0, 0, 3, InitiativeState.Waiting)
       nOrder.baseList must have(ir => ir.uniqueId == ioA0)
       nOrder.baseList.length must_== 1
     }
@@ -60,8 +60,8 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
       val nOrder = order.setInitiative(InitiativeDefinition(combA, 10, List(3, 13)))
       nOrder.sequence must_== List(ioA1, ioA0)
       nOrder.tracker must beDefinedAt(ioA1, ioA0)
-      nOrder.tracker(ioA0) must_== InitiativeTracker(ioA0, 0, 3, InitiativeTracker.state.Waiting)
-      nOrder.tracker(ioA1) must_== InitiativeTracker(ioA1, 0, 13, InitiativeTracker.state.Waiting)
+      nOrder.tracker(ioA0) must_== InitiativeTracker(ioA0, 0, 3, InitiativeState.Waiting)
+      nOrder.tracker(ioA1) must_== InitiativeTracker(ioA1, 0, 13, InitiativeState.Waiting)
       nOrder.baseList.map(ir => ir.uniqueId) must_== List(ioA1, ioA0)
       nOrder.baseList.length must_== 2
     }
@@ -156,17 +156,17 @@ class InitiativeOrderTest extends SpecificationWithJUnit with CommonCombatantID 
     }
 
     "no be valid if there is IT for some IOI not in order" in new loadedOrder {
-      order.copy(tracker = order.tracker.updated(ioE0, InitiativeTracker(ioE0, 0, 20, InitiativeTracker.state.Waiting))).isValid must beFalse
+      order.copy(tracker = order.tracker.updated(ioE0, InitiativeTracker(ioE0, 0, 20, InitiativeState.Waiting))).isValid must beFalse
     }
 
     "update tracker if present in the order" in new loadedOrder {
-      val ta = InitiativeTracker(ioA0, 1, 10, InitiativeTracker.state.Acting)
+      val ta = InitiativeTracker(ioA0, 1, 10, InitiativeState.Acting)
       val nOrder = order.updateTracker(ta)
       nOrder.tracker(ioA0) must_== ta
     }
 
     "throw exception when updating tracker not present" in new loadedOrder {
-      val ta = InitiativeTracker(ioE0, 1, 10, InitiativeTracker.state.Acting)
+      val ta = InitiativeTracker(ioE0, 1, 10, InitiativeState.Acting)
       order.updateTracker(ta) must throwA[NoSuchElementException]
     }
 

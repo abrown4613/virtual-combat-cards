@@ -51,7 +51,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
   def testEndDeadAndDelaying = {
     val state = getStateBuilder.
       modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Delaying)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
       done
 
     cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
@@ -60,7 +60,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
   def testStartDeadAndReady = {
     val state = getStateBuilder.
       modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Ready)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready)).
       done
 
     cs.get(state) must_== Some(StartRoundTransition(io1_0), cs)
@@ -77,7 +77,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
   def testEndDeadAndActing = {
     val state = getStateBuilder.
       modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Acting)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Acting)).
       done
 
     cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
@@ -92,7 +92,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
 
   def testStartReadyLiving = {
     val state = getStateBuilder.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Ready)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready)).
       done
 
     ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
@@ -100,7 +100,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
 
   def testEndRoundDelayingLiving = {
     val state = getStateBuilder.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Delaying)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
       done
 
     ns.get(state) must_== Some(EndRoundTransition(io1_0), ns)
@@ -109,7 +109,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
 
   def testDelayingLivingAutomation = {
     val state = workAroundToNoSymbol.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Delaying)).
+      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
       done
 
     val (nState, transitions) = miniDispatcher(ns, state)
@@ -121,7 +121,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
 
 
   //This is a workaround to a no-symbol error on the compiler
-  private def workAroundToNoSymbol = getStateBuilder.modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Ready))
+  private def workAroundToNoSymbol = getStateBuilder.modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready))
 
 
   def miniDispatcher(cs: CommandStream[CombatState, CombatTransition], state: CombatState): (CombatState, List[CombatTransition]) = {
@@ -141,7 +141,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       modifyHealth(comb1, StateBuilder.kill).
       modifyHealth(combB, StateBuilder.kill).
       modifyHealth(comb2, StateBuilder.kill).
-      modifyInitiative(io2_0, it => it.copy(state = InitiativeTracker.state.Delaying)).
+      modifyInitiative(io2_0, it => it.copy(state = InitiativeState.Delaying)).
       done
 
     val (nState, transitions) = miniDispatcher(cs, state)
@@ -173,7 +173,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
     val mh = mock[HealthTracker]
     val mi = mock[InitiativeTracker]
     mh.status returns HealthStatus.Bloody
-    mi.state returns InitiativeTracker.state.Delaying
+    mi.state returns InitiativeState.Delaying
     val state = StateBuilder.emptyState().
       addCombatant(None, null, entityMonster).
       addCombatant(None, null, entityMonster).
@@ -185,7 +185,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       done
 
     def e1 = {
-      (AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== Some((io1_0, InitiativeTracker.state.Delaying, HealthStatus.Bloody))) and
+      (AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== Some((io1_0, InitiativeState.Delaying, HealthStatus.Bloody))) and
         (there was one(mi).state) and (there was one(mh).status)
     }
 

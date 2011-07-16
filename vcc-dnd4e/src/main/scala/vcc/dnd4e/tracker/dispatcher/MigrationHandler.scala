@@ -20,7 +20,7 @@ package vcc.dnd4e.tracker.dispatcher
 import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
-import InitiativeTracker.action
+import vcc.dnd4e.tracker.common.{InitiativeAction => action}
 import org.slf4j.Logger
 
 trait MigrationHandler {
@@ -29,13 +29,13 @@ trait MigrationHandler {
   private val migrationLogger = org.slf4j.LoggerFactory.getLogger("infra")
 
   addRewriteRule {
-    case InitiativeAction(it, action.Delay) =>
-      Seq(InternalInitiativeAction(it, action.StartRound), InternalInitiativeAction(it, action.Delay))
+    case ExecuteInitiativeAction(it, action.DelayAction) =>
+      Seq(InternalInitiativeAction(it, action.StartRound), InternalInitiativeAction(it, action.DelayAction))
 
-    case InitiativeAction(it, action.Ready) =>
-      Seq(InternalInitiativeAction(it, action.Ready), InternalInitiativeAction(it, action.EndRound))
+    case ExecuteInitiativeAction(it, action.ReadyAction) =>
+      Seq(InternalInitiativeAction(it, action.ReadyAction), InternalInitiativeAction(it, action.EndRound))
 
-    case InitiativeAction(it, action) => Seq(InternalInitiativeAction(it, action))
+    case ExecuteInitiativeAction(it, action) => Seq(InternalInitiativeAction(it, action))
   }
 
   def dumpState(state: CombatState, os: Logger) {
@@ -57,16 +57,16 @@ trait MigrationHandler {
         //We know we have someone new as the nextUp (first in order)
         //Now check if we just ended some one else and auto start if next is dead
         action match {
-          case InternalInitiativeAction(_, initAction) if ((initAction == InitiativeTracker.action.EndRound || initAction == InitiativeTracker.action.Delay)) => {
+          case InternalInitiativeAction(_, initAction) if ((initAction == InitiativeAction.EndRound || initAction == InitiativeAction.DelayAction)) => {
             val state = context.iState.value
             val nextIOI = state.order.nextUp.get
             val nextIT = state.order.tracker(nextIOI)
             val health = context.combatantFromID(nextIOI.combId).health
             if (health.status == HealthStatus.Dead) {
-              if (nextIT.state == InitiativeTracker.state.Delaying)
-                enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound))
-              enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.StartRound))
-              enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeTracker.action.EndRound))
+              if (nextIT.state == InitiativeState.Delaying)
+                enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeAction.EndRound))
+              enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeAction.StartRound))
+              enqueueAction(InternalInitiativeAction(nextIT.orderID, InitiativeAction.EndRound))
             }
           }
           case _ =>

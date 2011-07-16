@@ -19,11 +19,11 @@ package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.controller.IllegalActionException
-import vcc.dnd4e.tracker.common.{EffectTransformation, CombatState, InitiativeTracker, InitiativeOrderID}
+import vcc.dnd4e.tracker.common._
 
 /*
- * Place holder, not for real use.
- */
+* Place holder, not for real use.
+*/
 private object InitiativeTransition
 
 /**
@@ -88,7 +88,7 @@ private[transition] case class MoveBeforeOtherStep(who: InitiativeOrderID, whom:
 /**
  * This step will update a InitiativeTracker to it's new state. Notice that it does validate if the action is valid.
  */
-private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderID, action: InitiativeTracker.action.Value) extends CombatTransition {
+private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderID, action: InitiativeAction.Value) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     val ol = lf.orderLens
     val order = ol.get(iState)
@@ -104,7 +104,7 @@ private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderI
 
 case class StartRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.StartRound)
+    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.StartRound)
     val et = EffectListTransformStep(EffectTransformation.startRound(ioi))
     iState.transitionWith(List(iat, et))
   }
@@ -112,10 +112,10 @@ case class StartRoundTransition(ioi: InitiativeOrderID) extends CombatTransition
 
 case class EndRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.EndRound)
+    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.EndRound)
     val et = EffectListTransformStep(EffectTransformation.endRound(ioi))
     iState.transitionWith(
-      if (lf.initiativeTrackerLens(ioi).get(iState).state == InitiativeTracker.state.Delaying)
+      if (lf.initiativeTrackerLens(ioi).get(iState).state == InitiativeState.Delaying)
         List(iat, et)
       else
         List(iat, RotateRobinStep, et)
@@ -125,7 +125,7 @@ case class EndRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
 
 case class DelayTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.Delay)
+    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.DelayAction)
     val et = DelayEffectListTransformStep(ioi)
     iState.transitionWith(List(iat, RotateRobinStep, et))
   }
@@ -133,13 +133,13 @@ case class DelayTransition(ioi: InitiativeOrderID) extends CombatTransition {
 
 case class ReadyActionTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    iState.transitionWith(List(InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.Ready)))
+    iState.transitionWith(List(InitiativeTrackerUpdateStep(ioi, InitiativeAction.ReadyAction)))
   }
 }
 
 case class ExecuteReadyTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.ExecuteReady)
+    val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.ExecuteReady)
     val mb = MoveBeforeFirstStep(ioi)
     iState.transitionWith(List(iat, mb))
   }
@@ -148,7 +148,7 @@ case class ExecuteReadyTransition(ioi: InitiativeOrderID) extends CombatTransiti
 case class MoveUpTransition(ioi: InitiativeOrderID) extends CombatTransition {
   def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
     iState.transitionWith(List(
-      InitiativeTrackerUpdateStep(ioi, InitiativeTracker.action.MoveUp),
+      InitiativeTrackerUpdateStep(ioi, InitiativeAction.MoveUp),
       MoveBeforeFirstStep(ioi),
       SetRobinStep(ioi)))
   }
