@@ -73,7 +73,7 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
       val l = table.selection.rows.toSeq
       if (!l.isEmpty) {
         val c = table.content(l(0))
-        director.setTargetCombatant(Some(c.unifiedId()))
+        director.setTargetCombatant(Some(c.unifiedId))
       }
     case FocusGained(this.table, other, temp) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
@@ -84,7 +84,7 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
   //Enable drag and drop
   protected object CombatantAtCellDrop {
     def unapply(d: CellDrop): Option[(UnifiedCombatantID, AnyRef)] = {
-      Some(table.content(d.row).unifiedId(), d.data)
+      Some(table.content(d.row).unifiedId, d.data)
     }
   }
 

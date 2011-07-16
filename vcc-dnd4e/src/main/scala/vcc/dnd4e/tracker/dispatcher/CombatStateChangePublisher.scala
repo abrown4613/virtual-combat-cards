@@ -60,7 +60,7 @@ object CombatStateChangePublisher {
       (if (oldOrder.nextUp != curOrder.nextUp)
         List(InitiativeOrderFirstChange(if (curOrder.nextUp.isDefined) curOrder.nextUp.get else null))
       else Nil) :::
-        (if (oldOrder.order != curOrder.order) List(InitiativeOrderChange(curOrder.order.map(curOrder.tracker(_)))) else Nil) :::
+        (if (oldOrder.sequence != curOrder.sequence) List(InitiativeOrderChange(curOrder.sequence.map(curOrder.tracker(_)))) else Nil) :::
         (if (oldOrder.tracker != curOrder.tracker) {
           curOrder.tracker.collect {
             case (k, it) if (oldOrder.tracker.isDefinedAt(k) && it != oldOrder.tracker(k)) => InitiativeTrackerChange(it)
