@@ -60,24 +60,24 @@ class DragAndDropGhost(icon: Image) extends DragSourceAdapter with DragSourceMot
   }
 
   private class DragWindow(icon: Image) extends Window(null) {
-
-    this.setSize(30, 3 + icon.getHeight(null))
+    this.setSize(30, 5 + icon.getHeight(null))
     private var message: String = ""
-    setBackground(UIManager.getColor("control"))
+    setBackground(new Color(190, 238, 190))
 
     def setLabel(text: String) {
       message = text
       if (this.getGraphics != null) {
         val g: Graphics = this.getGraphics
-        this.setSize(g.getFontMetrics.getStringBounds(message, g).getBounds.width + 30, this.getSize.height)
+        this.setSize(g.getFontMetrics.getStringBounds(message, g).getBounds.width + 35, this.getSize.height)
       }
     }
 
     override def paint(graphics: Graphics) {
       val g: Graphics2D = graphics.create.asInstanceOf[Graphics2D]
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f))
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f))
       if (icon != null) g.drawImage(icon, 1, 1, null)
       g.drawString(message, 25, 15)
+      g.drawRect(0, 0, getSize.width - 1, getSize.height - 1)
       g.dispose()
     }
   }
