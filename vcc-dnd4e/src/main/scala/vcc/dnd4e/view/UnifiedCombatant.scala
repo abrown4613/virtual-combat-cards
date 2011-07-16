@@ -26,7 +26,7 @@ import vcc.dnd4e.domain.tracker.common.CombatantStateView
  * This identifier is used to search for UnifiedCombatant.
  * @param combId A valid CombatantID, this is always present
  * @param orderId An optional InitiativeOrderID that identifies the UnifiedCombatant as in initiative order, null if the
- * combatant is not in the iniatitive order.
+ * combatant is not in the initiative order.
  */
 case class UnifiedCombatantID(combId: CombatantID, orderId: InitiativeOrderID)
 
@@ -60,12 +60,12 @@ class UnifiedCombatant(val combId: CombatantID,
 
   def matches(oid: InitiativeOrderID): Boolean = (oid != null) && (orderId == oid)
 
-  def unifiedId() = UnifiedCombatantID(combId, this.orderId())
+  def unifiedId = UnifiedCombatantID(combId, this.orderId)
 
-  def orderId(): InitiativeOrderID = if (initiative != null) initiative.orderID else null
+  def orderId: InitiativeOrderID = if (initiative != null) initiative.orderID else null
 
-  def isInOrder() = (initiative != null)
+  def isInOrder = (initiative != null)
 
-  override def toString(): String = "UnifiedCombatant(" + combId.id + "/" + (if (orderId != null) orderId.toLabelString else "nio") + ")"
+  override def toString: String = "UnifiedCombatant(" + combId.id + "/" + (if (orderId != null) orderId.toLabelString else "nio") + ")"
 }
 

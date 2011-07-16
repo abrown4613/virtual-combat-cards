@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 //$Id$
-
 package vcc.dnd4e.view.tabular
 
 import vcc.util.swing.{ProjectionTableLabelFormatter}
@@ -39,7 +38,7 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private var nextUp: Option[UnifiedCombatantID] = None
 
   def updateNextUp(next: Option[UnifiedCombatant]) {
-    nextUp = if (next.isDefined) Some(next.get.unifiedId()) else None
+    nextUp = if (next.isDefined) Some(next.get.unifiedId) else None
   }
 
   // Pair[Color,Color]  where (background,foreground)
