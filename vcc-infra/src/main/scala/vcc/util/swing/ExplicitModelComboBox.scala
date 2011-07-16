@@ -20,7 +20,6 @@ package vcc.util.swing
 import scala.swing._
 import javax.swing._
 
-
 /**
  * This is the base type for all typed ComboBoxModels
  */
@@ -38,7 +37,9 @@ class ContainerComboBoxModel[A](iv: Seq[A]) extends TypedComboBoxModel[A] {
 
   def getSelectedItem: AnyRef = selected.asInstanceOf[AnyRef]
 
-  def setSelectedItem(a: Any) {selected = a.asInstanceOf[A]}
+  def setSelectedItem(a: AnyRef) {
+    selected = a.asInstanceOf[A]
+  }
 
   def getElementAt(n: Int) = entries(n).asInstanceOf[AnyRef]
 
@@ -58,7 +59,7 @@ class ContainerComboBoxModel[A](iv: Seq[A]) extends TypedComboBoxModel[A] {
  * @param format Returns the visual string for an object of type T
  */
 class StringFormatListCellRenderer[T](format: T => String) extends JLabel with ListCellRenderer {
-  def getListCellRendererComponent(model: JList, obj: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean) = {
+  def getListCellRendererComponent(model: JList, obj: AnyRef, index: Int, isSelected: Boolean, cellHasFocus: Boolean) = {
     if (obj != null) setText(format(obj.asInstanceOf[T]))
     this
   }
