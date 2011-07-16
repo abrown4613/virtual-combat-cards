@@ -95,7 +95,6 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       modifyInitiative(io1_0, it => it.copy(state = InitiativeTracker.state.Ready)).
       done
 
-    println(state.order.order.map(_.toLabelString()))
     ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
   }
 

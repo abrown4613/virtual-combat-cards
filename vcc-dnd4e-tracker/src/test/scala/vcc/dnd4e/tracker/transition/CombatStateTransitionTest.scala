@@ -140,17 +140,17 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
 
   def testSetFirstInitiative = {
     val state = transform(CombatState.empty, add1, add2, addA, rollA)
-    (state.order.order must_== List(ioA0)) and (state.isCombatStarted must beFalse)
+    (state.order.sequence must_== List(ioA0)) and (state.isCombatStarted must beFalse)
   }
 
   def testSetTwoInitiative = {
     val state = transform(CombatState.empty, add1, add2, addA, rollA, roll1)
-    (state.order.order must_== List(ioA0, io1_0)) and (state.isCombatStarted must beFalse)
+    (state.order.sequence must_== List(ioA0, io1_0)) and (state.isCombatStarted must beFalse)
   }
 
   def testSetTwoInitiativeAndStart = {
     val state = transform(CombatState.empty, add1, add2, addA, rollA, roll1, StartCombatTransition)
-    (state.order.order must_== List(ioA0, io1_0)) and (state.isCombatStarted must beTrue) and
+    (state.order.sequence must_== List(ioA0, io1_0)) and (state.isCombatStarted must beTrue) and
       (state.order.nextUp must_== Some(ioA0))
   }
 
@@ -161,7 +161,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
 
   def testSetTwoInitiativeAndStartThenRollThird = {
     val state = transform(CombatState.empty, add1, add2, addA, rollA, roll1, StartCombatTransition, roll2)
-    (state.order.order must_== List(io2_0, ioA0, io1_0)) and (state.isCombatStarted must beTrue) and
+    (state.order.sequence must_== List(io2_0, ioA0, io1_0)) and (state.isCombatStarted must beTrue) and
       (state.order.nextUp must_== Some(ioA0))
   }
 
@@ -184,7 +184,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
   def testReRollBeforeStart = {
     val r = SetInitiativeTransition(InitiativeDefinition(combA, 0, List(4, 19)))
     val state = transform(CombatState.empty, add1, add2, addA, rollA, roll1, r)
-    (state.order.order must_== List(ioA1, io1_0, ioA0))
+    (state.order.sequence must_== List(ioA1, io1_0, ioA0))
   }
 
   def testEndNotCombatStarted = {
