@@ -1,1 +1,0 @@
-vcc-ent:monster:0|vcc-class:block|monster-0.xml

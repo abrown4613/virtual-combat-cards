@@ -1,5 +1,0 @@
-<?xml version='1.0' encoding='UTF-8' ?>
-<entity id='vcc-ent:5fc88a66-72fc-39a6-bc00-03b3ebdd1e97'>
-  <datum id="type">extra-xml-entity</datum>
-  <echo id="abc">should not be here</echo>
-</entity>
