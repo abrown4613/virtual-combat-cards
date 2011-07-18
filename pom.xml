@@ -20,6 +20,7 @@
         <module>vcc-infra</module>
         <module>vcc-dnd4e-tracker</module>
         <module>vcc-dnd4e</module>
+        <module>vcc-dndi</module>
     </modules>
     <distributionManagement>
         <repository>
