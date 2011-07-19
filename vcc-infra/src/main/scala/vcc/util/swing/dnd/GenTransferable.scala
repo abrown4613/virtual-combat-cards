@@ -17,7 +17,7 @@
 //$Id$
 package vcc.util.swing.dnd
 
-import java.awt.datatransfer.{Transferable, DataFlavor}
+import java.awt.datatransfer.{DataFlavor, Transferable}
 
 /**
  * Generic Transferable
@@ -42,6 +42,12 @@ class GenTransferable[T <: AnyRef](obj: T, flavor: DataFlavor, description: Stri
 }
 
 object GenTransferable {
+  /**
+   * Create a new data flavor for a given class (local to the JVM).
+   * @param clazz The class to map on the DataFlavor
+   */
   def makeFlavor[T](clazz: Class[T]): DataFlavor =
-    new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + clazz.getCanonicalName, clazz.getSimpleName)
+    new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + clazz.getCanonicalName,
+      clazz.getSimpleName,
+      this.getClass.getClassLoader) // <- Needed to allow usage of other class loaders
 }
