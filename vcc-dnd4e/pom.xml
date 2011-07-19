@@ -88,46 +88,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2-beta-5</version>
-                <configuration>
-                    <finalName>vcc-${project.version}</finalName>
-                    <outputDirectory>target</outputDirectory>
-                    <workDirectory>target/assembly/work</workDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>directory-single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/main/assembly/vccrun.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>zip-all</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assembly</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/main/assembly/bundle-full.xml</descriptor>
-                                <descriptor>src/main/assembly/bundle-patch.xml</descriptor>
-                                <descriptor>src/main/assembly/release-full.xml</descriptor>
-                                <descriptor>src/main/assembly/release-patch.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
-
-            </plugin>
         </plugins>
     </build>
 </project>

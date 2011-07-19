@@ -20,6 +20,7 @@
         <module>vcc-infra</module>
         <module>vcc-dnd4e-tracker</module>
         <module>vcc-dnd4e</module>
+        <module>distribution</module>
     </modules>
     <distributionManagement>
         <repository>
@@ -79,6 +80,7 @@
             <groupId>org.specs2</groupId>
             <artifactId>specs2_${scala.version}</artifactId>
             <version>1.5</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
