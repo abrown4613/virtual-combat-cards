@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -23,9 +21,10 @@ import scala.swing.event._
 import vcc.util.swing.MigPanel
 import vcc.app.dndi.CaptureHoldingArea
 import vcc.dnd4e.view.IconLibrary
-import vcc.domain.dndi.{DNDIObject, MonsterImportService}
 import vcc.infra.webserver.WebServer
 import vcc.model.Registry
+import vcc.dndi.reader.DNDIObject
+import vcc.domain.dndi.MonsterImportService
 
 object DNDICaptureMonitor extends Frame {
   private val webServer = Registry.get[WebServer]("webserver").get
