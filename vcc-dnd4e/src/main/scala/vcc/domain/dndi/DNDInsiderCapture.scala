@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.domain.dndi
 
 import org.slf4j.LoggerFactory
 import vcc.app.dndi.CaptureHoldingArea
 import xml.{XML, Node}
 import java.io.{FileOutputStream, File, InputStream}
+import vcc.dndi.reader.{DNDIObject, MonsterReader, DNDIObjectReader, TrapReader,Parser}
 
 object DNDInsiderCapture {
   private val logger = LoggerFactory.getLogger("domain")

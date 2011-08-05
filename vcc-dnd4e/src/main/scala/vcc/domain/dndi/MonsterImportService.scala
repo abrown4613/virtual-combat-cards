@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.domain.dndi
 
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
 import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
-
+import vcc.dndi.reader.{Trap, Monster, DNDIObject}
 
 /**
  * This service is used to get Monster form the DNDI Capture model into

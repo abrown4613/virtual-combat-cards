@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.domain.dndi
 
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
@@ -24,6 +23,7 @@ import vcc.model.Registry
 import vcc.infra.xtemplate.{TemplateDataSource}
 import vcc.dnd4e.Configuration
 import java.io.{FileInputStream, File}
+import vcc.dndi.reader.DNDIObject
 
 object StatBlockGenerateAndView {
   val baseDir = Configuration.dataDirectory
