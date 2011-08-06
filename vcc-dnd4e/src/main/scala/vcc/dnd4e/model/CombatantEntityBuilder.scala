@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.model
 
 import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
-import vcc.domain.dndi.CaptureTemplateEngine
+import vcc.dndi.app.CaptureTemplateEngine
 import vcc.infra.xtemplate.{MapDataSource}
 import vcc.dnd4e.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition, CombatantEntity}
 
@@ -37,9 +36,9 @@ object CombatantEntityBuilder {
     val statBlock = if (comp.statblock.isDefined) {
       comp.statblock.value
     } else {
-      val template = CaptureTemplateEngine.fetchClassTemplate(comp.classID.shortClassName)
-      val dse = comp.asDataStoreEntity
-      template.render(new MapDataSource(dse.data, Map(), Map())).toString
+      val template = CaptureTemplateEngine.fetchClassTemplate(comp.classID.shortClassName())
+      val dse = comp.asDataStoreEntity()
+      template.render(new MapDataSource(dse.data, Map(), Map())).toString()
     }
     CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
   }

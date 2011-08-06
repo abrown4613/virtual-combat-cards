@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.domain.dndi.CharacterBuilderImporter
 import java.io.FileInputStream
 import vcc.dnd4e.domain.compendium.{CombatantEntityBuilder, Compendium}
 import vcc.dnd4e.view.PanelDirector
+import vcc.dndi.reader.CharacterBuilderImporter
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
   val logger = org.slf4j.LoggerFactory.getLogger("user")
 
   this.contents += new MenuItem(Action("Import Character Builder File..."){
-    var file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)
+    val file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)
     if(file.isDefined) {
       try {
         val dse = CharacterBuilderImporter.loadFromStream(new FileInputStream(file.get))
@@ -60,5 +58,4 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
   this.contents += new MenuItem(Action("D&D Insider Capture ...") {
     DNDICaptureMonitor.visible = true
   })
-  
 }

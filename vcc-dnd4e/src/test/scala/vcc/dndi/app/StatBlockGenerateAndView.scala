@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.domain.dndi
+package vcc.dndi.app
 
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
 import swing.{Button, Action, MainFrame}
@@ -23,7 +23,7 @@ import vcc.model.Registry
 import vcc.infra.xtemplate.{TemplateDataSource}
 import vcc.dnd4e.Configuration
 import java.io.{FileInputStream, File}
-import vcc.dndi.reader.DNDIObject
+import vcc.dndi.reader.{DNDInsiderCapture, DNDIObject}
 
 object StatBlockGenerateAndView {
   val baseDir = Configuration.dataDirectory
@@ -54,11 +54,11 @@ object StatBlockGenerateAndView {
       try {
         val template = CaptureTemplateEngine.fetchClassTemplate(monster.clazz)
         val xml = template.render(monster.asInstanceOf[TemplateDataSource])
-        xhtmlPane.setDocumentFromText(xml.toString)
+        xhtmlPane.setDocumentFromText(xml.toString())
       } catch {
         case e =>
-          e.printStackTrace
-          xhtmlPane.setDocumentFromText("<html><body>" + e.getMessage() + "</body></html>")
+          e.printStackTrace()
+          xhtmlPane.setDocumentFromText("<html><body>" + e.getMessage + "</body></html>")
       }
     }
   }

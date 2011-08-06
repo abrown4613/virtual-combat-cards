@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -24,8 +23,8 @@ import vcc.util.swing.forms._
 
 import vcc.dnd4e.domain.compendium._
 import vcc.infra.fields.Field
-import vcc.domain.dndi.CaptureTemplateEngine
 import vcc.infra.xtemplate.MapDataSource
+import vcc.dndi.app.CaptureTemplateEngine
 
 class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
   title = "Edit Combatant: " + (if (combatant.name.isValid) combatant.name.storageString else "")
@@ -37,7 +36,7 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
   reactions += {
     case WindowClosing(win) =>
       if (Dialog.showConfirmation(tabPane, "Are you sure you want to exit without saving the changes to the combatant?", "Exit without saving?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
-        this.dispose
+        this.dispose()
       }
   }
 
@@ -45,7 +44,7 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
 
   private val saveButton: Button = new Button(Action("Save & Close") {
     combatant.loadFromMap(form.extractMap + ("text:statblock" -> statBlock.text))
-    if (combatant.isValid) {
+    if (combatant.isValid()) {
       if (Compendium.activeRepository.store(combatant)) {
         // Ok
       } else {
@@ -107,8 +106,8 @@ class CombatantEditorDialog(combatant: CombatantEntity) extends Frame {
   private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
-      val template = CaptureTemplateEngine.fetchClassTemplate(combatant.classID.shortClassName)
-      statBlock.text = template.render(new MapDataSource(form.extractMap, Map(), Map())).toString
+      val template = CaptureTemplateEngine.fetchClassTemplate(combatant.classID.shortClassName())
+      statBlock.text = template.render(new MapDataSource(form.extractMap, Map(), Map())).toString()
       statBlock.sync()
     }
   }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,14 +17,13 @@
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
-import scala.swing.event._
 import vcc.util.swing.MigPanel
-import vcc.app.dndi.CaptureHoldingArea
 import vcc.dnd4e.view.IconLibrary
 import vcc.infra.webserver.WebServer
 import vcc.model.Registry
 import vcc.dndi.reader.DNDIObject
-import vcc.domain.dndi.MonsterImportService
+import vcc.dndi.app.MonsterImportService
+import vcc.dndi.servlet.CaptureHoldingArea
 
 object DNDICaptureMonitor extends Frame {
   private val webServer = Registry.get[WebServer]("webserver").get
@@ -73,16 +72,18 @@ object DNDICaptureMonitor extends Frame {
     val cacheMenu = new Menu("Cache")
     cacheMenu.contents += new MenuItem(Action("Clear Cache") {
       val ret = Dialog.showConfirmation(stateMessage, "You are about to clear all monsters in your cache, are you sure?", "Clear captured monster cache", Dialog.Options.YesNoCancel)
-      if (ret.id == 0) CaptureHoldingArea.clearCachedMonster()
+      if (ret.id == 0) CaptureHoldingArea.getInstance.clearCachedMonster()
     })
-    cacheMenu.contents += new MenuItem(Action("Load cached entries") {CaptureHoldingArea.loadCachedEntries()})
+    cacheMenu.contents += new MenuItem(Action("Load cached entries") {
+      CaptureHoldingArea.getInstance.loadCachedEntries()
+    })
     mb.contents += cacheMenu
     mb
   }
 
   toggleActionState()
 
-  CaptureHoldingArea.addObserver(new CaptureHoldingArea.CaptureHoldingObserver[DNDIObject] {
+  CaptureHoldingArea.getInstance.addObserver(new CaptureHoldingArea.CaptureHoldingObserver[DNDIObject] {
     def updateContent(newObject: DNDIObject, newContent: Seq[DNDIObject]) {
       entries = scala.util.Sorting.stableSort[DNDIObject](newContent, (a: DNDIObject, b: DNDIObject) => {a("base:name").get < b("base:name").get})
       entryList.listData = entries.map(monster => monster("base:name").get)

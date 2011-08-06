@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.domain.dndi
+package vcc.dndi.app
 
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
@@ -49,7 +49,7 @@ object MonsterImportService {
     trap.trapClass.value = dndiTrap("base:type").get
     val template = CaptureTemplateEngine.fetchClassTemplate(dndiTrap.clazz)
     val xml = template.render(dndiTrap)
-    trap.statblock.value = xml.toString
+    trap.statblock.value = xml.toString()
     es.store(trap)
     logger.info("Imported DNDI trap {} as TrapEntity: {}", dndiTrap.id, trap.eid)
   }
@@ -63,7 +63,7 @@ object MonsterImportService {
 
     val template = CaptureTemplateEngine.fetchClassTemplate(dndiMonster.clazz)
     val xml = template.render(dndiMonster)
-    monster.statblock.value = xml.toString
+    monster.statblock.value = xml.toString()
     es.store(monster)
     logger.info("Imported DNDI monster {} as MonsterEntity: {}", dndiMonster.id, monster.eid)
   }

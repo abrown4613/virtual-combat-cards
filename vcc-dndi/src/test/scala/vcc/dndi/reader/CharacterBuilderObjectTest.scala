@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.domain.dndi
+package vcc.dndi.reader
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnitSuiteRunner, JUnit4}
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.Scope
 import scala.xml.{XML}
 import java.io.InputStream
 import org.xml.sax.InputSource
 import vcc.infra.datastore.naming.EntityID
 import vcc.infra.datastore.{DataStoreIOException}
-import vcc.dnd4e.domain.compendium.{CharacterEntity, CombatantEntityBuilder}
 
-@RunWith(classOf[JUnitSuiteRunner])
-class CharacterBuilderImportServiceTest extends JUnit4(CharacterBuilderImportServiceSpec)
+class CharacterBuilderObjectTest extends SpecificationWithJUnit {
 
-object CharacterBuilderImportServiceSpec extends Specification {
-  var is: InputStream = null
+  trait someCharacter extends Scope {
+    val inputStream: InputStream = this.getClass.getResourceAsStream("/vcc/dndi/reader/Fionn.xml")
+  }
 
   "CharacterBuilderObject parsing" should {
     "accept multiple aliases" in {
@@ -47,75 +44,70 @@ object CharacterBuilderImportServiceSpec extends Specification {
       </Stat>)
 
       val sm = CharacterBuilderObject.extractStat(stat)
-      sm must notBeEmpty
-      sm must contain("ac", 17)
-      sm must contain("armor class", 17)
+      (sm must not beEmpty)
+      (sm must contain(("ac", 17)))
+      (sm must contain(("armor class", 17)))
     }
   }
 
-
-  val fionn = beforeContext {
-    is = this.getClass.getResourceAsStream("/vcc/domain/dndi/Fionn.xml")
-  }
-
-  "context setup" ->- (fionn) should {
-    "point to a valid XML" in {
-      is mustNot beNull
-      val elem = XML.load(new InputSource(is))
-      elem mustNot beNull
+  "context setup" should {
+    "point to a valid XML" in new someCharacter {
+      inputStream must not beNull
+      val elem = XML.load(new InputSource(inputStream))
+      elem must not beNull
     }
   }
 
-  "Import Service with valid file" ->- (fionn) should {
-    "return a valid DataStoreEntity" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse mustNot beNull
+  "Import Service with valid file" should {
+    "return a valid DataStoreEntity" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
+      (dse must not beNull)
     }
-    "bring a valid entityid" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.eid mustNot beNull
+    "bring a valid entityid" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
+      (dse.eid must not beNull)
       dse.eid must_== EntityID.fromName("dndi:character:Fionn:8")
     }
 
-    "return entity with correct classid" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with correct classid" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("classid") must_== "vcc-class:character"
     }
 
-    "return entity with valid name" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with valid name" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("base:name") must_== "Fionn"
     }
 
-    "return entity with valid level" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with valid level" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("base:level") must_== "8"
     }
 
-    "return entity with valid class" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with valid class" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("base:class") must_== "Rogue"
     }
 
-    "return entity with valid class" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with valid class" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("base:race") must_== "Elf"
     }
 
-    "return entity with sense" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
+    "return entity with sense" in new someCharacter {
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
       dse.data("base:senses") must_== "Low-light"
     }
 
-    "return base skills " in {
+    "return base skills " in new someCharacter {
       val expect = Map(
         "skill:insight" -> "12",
         "skill:perception" -> "14")
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.data must containAll(expect)
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
+      dse.data must havePairs(expect.toSeq: _*)
     }
 
-    "return all required stats:*" in {
+    "return all required stats:*" in new someCharacter {
       val expect = Map(
         "stat:ac" -> "22",
         "stat:fortitude" -> "17",
@@ -123,15 +115,8 @@ object CharacterBuilderImportServiceSpec extends Specification {
         "stat:initiative" -> "8",
         "stat:reflex" -> "22",
         "stat:will" -> "19")
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      dse.data must containAll(expect)
-    }
-
-    "return entity must be loadable into a CharacterEntity" in {
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      val ent = CombatantEntityBuilder.buildEntity(dse)
-      ent mustNot beNull
-      ent.isInstanceOf[CharacterEntity] must beTrue
+      val dse = CharacterBuilderImporter.loadFromStream(inputStream)
+      dse.data must havePairs(expect.toSeq: _*)
     }
   }
 
