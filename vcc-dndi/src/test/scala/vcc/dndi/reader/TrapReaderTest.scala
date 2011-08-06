@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,19 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 import vcc.infra.text._
 import vcc.dndi.reader.Parser.{BlockElement}
 
-@RunWith(classOf[JUnitSuiteRunner])
-class TrapReaderTest extends JUnit4(TrapReaderSpec)
-
-object TrapReaderSpec extends Specification {
+class TrapReaderTest extends SpecificationWithJUnit {
 
   "TrapSectionReader" should {
 
@@ -43,7 +37,7 @@ object TrapReaderSpec extends Specification {
 
       val tr = new TrapReader(0)
       val sec = tr.processSection(tbs)
-      sec must notBeNull
+      (sec must not beNull)
       sec must_== TrapSection("Attack", StyledText(List(
         TextBlock("SPAN", "trapblockbody", TextSegment.makeBold("Immediate Reaction"), TextSegment(" "),
           TextSegment.makeBold("Melee"), TextSegment(" "), LineBreak),
@@ -64,7 +58,7 @@ object TrapReaderSpec extends Specification {
 
       val tr = new TrapReader(0)
       val sec = tr.processSection(tbs)
-      sec must notBeNull
+      (sec must not beNull)
       sec must_== TrapSection("Countermeasures", StyledText(List(
         TextBlock("SPAN", "trapblockbody",
           InlineImage("bullet.gif"), TextSegment(" Thievery DC 5: Sneaky."), LineBreak,

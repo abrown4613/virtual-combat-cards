@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 import Parser._
 
-@RunWith(classOf[JUnitSuiteRunner])
-class ParserTest extends JUnit4(ParserSpec)
-
-object ParserSpec extends Specification {
+class ParserTest extends SpecificationWithJUnit {
   "Parser.parseNode" should {
     "parse <B>text<BR/>line<B>" in {
       Parser.parseNode(<B>text<BR/>line</B>) must_== Key("text\nline")
@@ -99,23 +93,25 @@ object ParserSpec extends Specification {
     }
   }
 
+/*
   if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))
+    val dirIter = new vcc.util.DirectoryIterator(dir, false)
     "parser" should {
-      val dirIter = new vcc.util.DirectoryIterator(dir, false)
-      for (file <- dirIter if (file.isFile)) {
-        "load " + file in {
+      for (file <- dirIter if (file.isFile)) yield {
+        ("load " + file) in {
           val xml = scala.xml.XML.loadFile(file)
           val log = org.slf4j.LoggerFactory.getLogger("test")
           DNDInsiderCapture.getTypeFromXML(xml).isDefined must beTrue
           DNDInsiderCapture.getIdFromXML(xml).isDefined must beTrue
           val blocks = parseBlockElements(xml.child, true)
-          blocks must notBeNull
-          blocks must notBeEmpty
-          for (b <- blocks) {log.debug("Block:  " + b)}
+          (blocks must not beNull)
+          (blocks must not beEmpty)
+          //for (b <- blocks) {log.debug("Block:  " + b)}
         }
       }
     }
   }
+*/
 
 }
