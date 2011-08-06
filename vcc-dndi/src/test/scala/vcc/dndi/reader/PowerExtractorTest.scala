@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
 import vcc.dndi.reader.Parser._
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class PowerExtractorTest extends JUnit4(PowerExtractorSpec)
-
-object PowerExtractorSpec extends Specification {
+class PowerExtractorTest extends SpecificationWithJUnit {
 
   "SomePowerDefinition" should {
     "read power with name and keyword" in {
@@ -38,9 +32,9 @@ object PowerExtractorSpec extends Specification {
               keyword must_== "Keyword"
               usage must_== AuraUsage(1)
               icon must_== Seq(IconType.Melee)
-            case _ => fail("Should be complete power definition")
+            case _ => failure("Should be complete power definition")
           }
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -51,7 +45,7 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== CompletePowerDefinition(Seq(), "Spider Burst", "(Poison, Zone)", NoUsage)
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -61,7 +55,7 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== CompletePowerDefinition(Seq(), "Mercurial Body", null, NoUsage)
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -71,7 +65,7 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== CompletePowerDefinition(Seq(), "Fey Light", null, AtWillUsage(1))
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -85,9 +79,9 @@ object PowerExtractorSpec extends Specification {
               keyword must beNull
               usage must_== AuraUsage(1)
               icon must_== Seq(IconType.Melee)
-            case _ => fail("Should be complete power definition")
+            case _ => failure("Should be complete power definition")
           }
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -102,9 +96,9 @@ object PowerExtractorSpec extends Specification {
               usage must beNull
               actionUsage must_== "(standard, at-will)"
               icon must_== Seq(IconType.Melee)
-            case _ => fail("Should be legacy power definition")
+            case _ => failure("Should be legacy power definition")
           }
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -117,7 +111,7 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== LegacyPowerDefinition(Seq(), "Goblin Tactics", "(immediate reaction, ...)", null, null)
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -128,7 +122,7 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(1))
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
     }
 
@@ -140,89 +134,8 @@ object PowerExtractorSpec extends Specification {
       parts match {
         case SomePowerDefinition(d) =>
           d must_== CompletePowerDefinition(Seq(IconType.Range), "Poison Spew", null, RechargeConditionalUsage("when first bloodied"))
-        case _ => fail("Should have matched")
+        case _ => failure("Should have matched")
       }
-    }
-  }
-
-  "WithoutParenthensis" should {
-    "strip parenthesis" in {
-      WithoutParenthesis.unapply("  (  test one, two 3, 4 )  ") must_== Some("test one, two 3, 4")
-    }
-    "keep without parenthesis" in {
-      WithoutParenthesis.unapply("     test one, two 3, 4    ") must_== Some("test one, two 3, 4")
-    }
-
-    "strip one layer of parenthesis" in {
-      WithoutParenthesis.unapply("  ( ( test one, two 3, 4 ))  ") must_== Some("( test one, two 3, 4 )")
-    }
-  }
-
-  "SomeUsage extractor" should {
-
-    "no additional data means no usage" in {
-      SomeUsage.unapply(Nil) must_== None
-    }
-
-    "blank key means no usage" in {
-      SomeUsage.unapply(List(Key(""))) must_== Some(NoUsage)
-    }
-
-    "extract an aura" in {
-      val parts = List(Key("Aura"), Text(" 1"))
-      SomeUsage.unapply(parts) must_== Some(AuraUsage(1))
-    }
-
-    "extract simple encounter usage" in {
-      val parts = List(Key("Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(1))
-    }
-
-    "extract simple multiple per encounter" in {
-      val parts = List(Key("3 / Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(3))
-
-      val parts2 = List(Key("3/Encounter"))
-      SomeUsage.unapply(parts2) must_== Some(EncounterUsage(3))
-    }
-
-    "handle dice recharge" in {
-      val parts = List(Text(" Recharge 5 6"))
-      SomeUsage.unapply(parts) must_== Some(RechargeDiceUsage(5))
-
-      val parts2 = List(Text(" Recharge 4 5 6"))
-      SomeUsage.unapply(parts2) must_== Some(RechargeDiceUsage(4))
-
-      val parts3 = List(Text(" Recharge 6"))
-      SomeUsage.unapply(parts3) must_== Some(RechargeDiceUsage(6))
-    }
-
-    "handle conditional recharge" in {
-      val parts = List(Key("Recharge"), Text(" when happy"))
-      SomeUsage.unapply(parts) must_== Some(RechargeConditionalUsage("when happy"))
-    }
-
-    "handle conditional recharge all in bold" in {
-      val parts = List(Key("Recharge when happy"))
-      SomeUsage.unapply(parts) must_== Some(RechargeConditionalUsage("when happy"))
-    }
-
-    "handle round limited at will" in {
-      val parts = List(Key("At-Will"), Text(" 2 / round"))
-      SomeUsage.unapply(parts) must_== Some(AtWillUsage(2))
-
-      val parts2 = List(Key("At-Will"), Text(" 2/round"))
-      SomeUsage.unapply(parts2) must_== Some(AtWillUsage(2))
-    }
-
-    "handle round limited at will in parenthesis" in {
-      val parts3 = List(Key("At-Will"), Text(" (1/round)"))
-      SomeUsage.unapply(parts3) must_== Some(AtWillUsage(1))
-    }
-
-    "handle unlimited at will" in {
-      val parts = List(Key("At-Will"))
-      SomeUsage.unapply(parts) must_== Some(AtWillUsage(0))
     }
   }
 
@@ -234,7 +147,7 @@ object PowerExtractorSpec extends Specification {
           icons must_== Seq(IconType.Melee, IconType.Range)
           part1 must_== List(Key("name"), Key("2"))
           part2 must_== List(Key("end"), Text("game"))
-        case _ => fail("Should match")
+        case _ => failure("Should match")
       }
     }
 
@@ -245,7 +158,7 @@ object PowerExtractorSpec extends Specification {
           icons must_== Seq(IconType.Melee, IconType.Range)
           part1 must_== List(Key("name"), Key("2"), Key("end"), Text("game"))
           part2 must_== List()
-        case _ => fail("Should match")
+        case _ => failure("Should match")
       }
     }
     "split with no icons" in {
@@ -255,7 +168,7 @@ object PowerExtractorSpec extends Specification {
           icons must_== Seq()
           part1 must_== List(Key("name"), Key("2"))
           part2 must_== List(Key("end"), Text("game"))
-        case _ => fail("Should match")
+        case _ => failure("Should match")
       }
     }
 
@@ -267,10 +180,9 @@ object PowerExtractorSpec extends Specification {
           icons must_== Seq()
           part1 must_== List(Key("name"), Text("end"))
           part2 must_== List(Key(""))
-        case _ => fail("Should match")
+        case _ => failure("Should match")
       }
     }
-
 
     "split after cleaning bad power headers" in {
       val parts = List(Key("name"), Key("2"), Icon(IconType.Separator), Key("end"), Text("game"), Break(), Text("now"))
@@ -279,25 +191,8 @@ object PowerExtractorSpec extends Specification {
           icons must_== Seq()
           part1 must_== List(Key("name"), Key("2"))
           part2 must_== List(Key("end"), Text("game now"))
-        case _ => fail("Should match")
+        case _ => failure("Should match")
       }
     }
-  }
-  "SectionActionType extractor" should {
-
-    "handle mixed case and spaces" in {
-      SectionActionType.unapply(List(Text(" StAnDard ActiOns "))) must_== Some(ActionType.Standard)
-    }
-
-    "handle all defined types" in {
-      ActionType.values.foreach(at => SectionActionType.unapply(List(Text((at.toString + "s").toUpperCase))) must_== Some(at))
-    }
-  }
-
-  "ActionType extractor" should {
-    "handle all defined types" in {
-      ActionType.values.foreach(at => ActionType.unapply(at.toString.toUpperCase) must_== Some(at))
-    }
-
   }
 }
