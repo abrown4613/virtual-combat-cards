@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e
 
 import vcc.util.{UpdateManager, PackageUtil}
@@ -27,6 +26,7 @@ import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
 import java.io.File
+import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -148,7 +148,10 @@ object BootStrap extends StartupRoutine {
 
     callStartupStep(srw, "Web Server") {
       import vcc.infra.webserver.WebServer
-      WebServer.initialize("webserver", 4143)
+      CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
+      WebServer.initialize("webserver", 4143, Map(
+        "/capture" -> classOf[CaptureServlet]
+      ))
       Registry.get[WebServer]("webserver").get
     }
 
