@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dndi.reader.Parser._
 import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 import xml.Node
@@ -27,10 +24,7 @@ import MonsterBlockStreamRewrite.EndOfPower
 import collection.mutable.ListBuffer
 
 
-@RunWith(classOf[JUnitSuiteRunner])
-class MonsterReaderTest extends JUnit4(MonsterReaderSpec)
-
-object MonsterReaderSpec extends Specification {
+class MonsterReaderTest extends SpecificationWithJUnit {
   val reader = new MonsterReader(0)
 
   final val sampleDesc = StyledText(List(
@@ -107,10 +101,7 @@ object MonsterReaderSpec extends Specification {
         "languages" -> "Common",
         "equipment" -> "club , javelin  x3, light shield ."
       )
-      for ((k, v) <- expects) {
-        map must haveKey(k)
-        map(k) must_== v
-      }
+      map must beDefinedBy(expects.toSeq: _*)
     }
     "STR block MM3" in {
       //<P class="flavor alt"><B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
@@ -124,10 +115,7 @@ object MonsterReaderSpec extends Specification {
         "str" -> "19 (+10)",
         "con" -> "20 (+11)",
         "cha" -> "17 (+9)")
-      for ((k, v) <- expects) {
-        map must haveKey(k)
-        map(k) must_== v
-      }
+      map must beDefinedBy(expects.toSeq: _*)
     }
   }
 
@@ -233,10 +221,7 @@ object MonsterReaderSpec extends Specification {
         "speed" -> "6",
         "perception" -> "15",
         "resist" -> "5 necrotic")
-      for ((k, v) <- expects) {
-        map must haveKey(k)
-        map(k) must_== v
-      }
+      map must beDefinedBy(expects.toSeq: _*)
 
     }
 
@@ -261,13 +246,10 @@ object MonsterReaderSpec extends Specification {
         "ac" -> "24",
         "reflex" -> "20",
         "speed" -> "6")
-      for ((k, v) <- expects) {
-        map must haveKey(k)
-        map(k) must_== v
-      }
-      map must notHaveKey("senses")
-      map must notHaveKey("saving throws")
-      map must notHaveKey("resist")
+      map must beDefinedBy(expects.toSeq: _*)
+      (map must not be haveKey("senses"))
+      (map must not be haveKey("saving throws"))
+      (map must not be haveKey("resist"))
     }
   }
 
@@ -283,7 +265,7 @@ object MonsterReaderSpec extends Specification {
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B>
         1</P>)
       val power = mr.processPower(ActionType.Trait, ts)
-      power must notBeNull
+      power must not beNull
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage(1))
       power.action must_== ActionType.Trait
@@ -295,7 +277,7 @@ object MonsterReaderSpec extends Specification {
         <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
       </P>)
       val power = mr.processPower(ActionType.Minor, ts)
-      power must notBeNull
+      power must not beNull
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(1))
       power.action must_== ActionType.Minor
@@ -416,14 +398,14 @@ object MonsterReaderSpec extends Specification {
     val auraDesc = StyledText.singleBlock("P", "flavorIndent", "some description.")
     "lift simple aura to new power" in {
       val power = reader.promoteAuraLike("Mocking Eye", "aura 10; some description.")
-      power mustNot beNull
+      (power must not beNull)
       power.action must_== ActionType.Trait
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage(10))
       power.description must_== auraDesc
     }
     "lift simple aura with keyword to new power" in {
       val power = reader.promoteAuraLike("Aura of Terror", "(Fear) aura 5; some description.")
-      power mustNot beNull
+      (power must not beNull)
       power.action must_== ActionType.Trait
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage(5))
       power.description must_== auraDesc
@@ -431,14 +413,14 @@ object MonsterReaderSpec extends Specification {
 
     "lift regeneration with only a number" in {
       val power = reader.promoteAuraLike("Regeneration", "10")
-      power mustNot beNull
+      (power must not beNull)
       power.action must_== ActionType.Trait
       power.definition must_== CompletePowerDefinition(Seq(), "Regeneration", null, NoUsage)
       power.description must_== StyledText(List(TextBlock("P", "flavorIndent", TextSegment("10"))))
     }
     "lift regeneration with a description" in {
       val power = reader.promoteAuraLike("Regeneration", "3 (if the werewolf takes damage from a silver weapon)")
-      power mustNot beNull
+      (power must not beNull)
       power.action must_== ActionType.Trait
       power.definition must_== CompletePowerDefinition(Seq(), "Regeneration", null, NoUsage)
       power.description must_== StyledText(List(TextBlock("P", "flavorIndent", TextSegment("3 (if the werewolf takes damage from a silver weapon)"))))
@@ -471,7 +453,7 @@ object MonsterReaderSpec extends Specification {
     "normalize Senses with no modes" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10"))
       norm must_== Map("hp" -> "100", "perception" -> "10")
-      norm mustNot haveKey("senses")
+      norm must not be haveKey("senses")
     }
   }
   /*
@@ -498,11 +480,11 @@ object MonsterReaderSpec extends Specification {
               //e.printStackTrace
               false
           }
-          if (!testedOk.isExpectation) {
+          if (testedOk) {
             failures += ("loading failed for " + file)
           }
         }
-        if (!failures.isEmpty) fail("Failed to process:\n" + failures.mkString("\n"))
+        failures.toList must beEmpty
       }
     }
   }
