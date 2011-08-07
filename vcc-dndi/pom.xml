@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.exnebula</groupId>
         <artifactId>vcc</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.7.0-SNAPSHOT</version>
     </parent>
     <description>DnD Insider Integration</description>
     <name>DnD Insider</name>
@@ -14,6 +14,14 @@
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>src/test/scala</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+        </testResources>
     </build>
 
     <dependencies>

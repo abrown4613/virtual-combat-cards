@@ -1,16 +1,16 @@
-<component xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.0"
+<component xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.2"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.0 http://maven.apache.org/xsd/component-1.1.0.xsd">
+           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.2 http://maven.apache.org/xsd/component-1.1.2.xsd">
     <fileSets>
         <fileSet>
-            <directory>fs-wc</directory>
+            <directory>../vcc-dnd4e/fs-wc</directory>
             <lineEnding>keep</lineEnding>
             <outputDirectory>fs-wc</outputDirectory>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
         <fileSet>
-            <directory>ant</directory>
+            <directory>../vcc-dnd4e/ant</directory>
             <lineEnding>keep</lineEnding>
             <outputDirectory>.</outputDirectory>
             <includes>
@@ -23,7 +23,7 @@
     </fileSets>
     <files>
         <file>
-            <source>ant/library.lst</source>
+            <source>../vcc-dnd4e/ant/library.lst</source>
             <outputDirectory>lib</outputDirectory>
             <destName>library.lst</destName>
             <fileMode>0644</fileMode>
