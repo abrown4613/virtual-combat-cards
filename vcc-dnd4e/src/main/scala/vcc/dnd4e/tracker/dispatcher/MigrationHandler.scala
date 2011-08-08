@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
@@ -49,7 +48,7 @@ trait MigrationHandler {
       migrationLogger.debug("Action: {}", action)
       migrationLogger.debug("Mapped to {}: ", ts.mkString(" + "))
       val oldState = context.iState.value
-      context.iState.value = context.iState.value.transitionWith(ts)
+      context.iState.value = ts.foldLeft(context.iState.value)((s, t) => t.transition(s))
       migrationLogger.debug("   New State: ")
       dumpState(context.iState.value, migrationLogger)
       // Check if we need to advance dead if we rotated

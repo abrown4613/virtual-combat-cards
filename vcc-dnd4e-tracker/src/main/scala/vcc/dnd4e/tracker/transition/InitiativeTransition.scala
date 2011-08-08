@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.StateLensFactory
@@ -29,12 +28,12 @@ private object InitiativeTransition
 /**
  * Applies effect transformation to all EffectList in the CombatState.
  */
-private[transition] case class EffectListTransformStep(elt: EffectTransformation) extends CombatTransition {
+private[transition] case class EffectListTransformStep(elt: EffectTransformation) extends CombatStateTransitionStep {
 
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     val combIds = iState.roster.entries.keys
     combIds.foldLeft(iState)((st, cid) => {
-      lf.combatantEffectList(cid).modIfChanged(st, _.transformAndFilter(elt))
+      iState.lensFactory.combatantEffectList(cid).modIfChanged(st, _.transformAndFilter(elt))
     })
   }
 }
@@ -42,8 +41,9 @@ private[transition] case class EffectListTransformStep(elt: EffectTransformation
 /**
  * Handle Delay action on all effects for all combatants.
  */
-private[transition] case class DelayEffectListTransformStep(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+private[transition] case class DelayEffectListTransformStep(ioi: InitiativeOrderID) extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = {
+    val lf = iState.lensFactory
     val combIds = iState.roster.entries.keys
     combIds.foldLeft(iState)((st, cid) => {
       val ally = iState.rules.areAllied(iState, ioi.combId, cid)
@@ -55,41 +55,42 @@ private[transition] case class DelayEffectListTransformStep(ioi: InitiativeOrder
 /**
  * Simple Robin Rotation
  */
-private[transition] case object RotateRobinStep extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = lf.orderLens.mod(iState, order => order.rotate())
+private[transition] case object RotateRobinStep extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = iState.lensFactory.orderLens.mod(iState, order => order.rotate())
 }
 
 /**
  * Set the robin to a new head (no checks are done)
  */
-private[transition] case class SetRobinStep(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = lf.orderLens.mod(iState, order => order.setNextUp(ioi))
+private[transition] case class SetRobinStep(ioi: InitiativeOrderID) extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = iState.lensFactory.orderLens.mod(iState, order => order.setNextUp(ioi))
 }
 
 /**
  * Compact notation to move a combatant before the first one on the list. Should be called
  * internally.
  */
-private[transition] case class MoveBeforeFirstStep(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    lf.orderLens.mod(iState, order => order.moveBefore(ioi, order.nextUp.get))
+private[transition] case class MoveBeforeFirstStep(ioi: InitiativeOrderID) extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = {
+    iState.lensFactory.orderLens.mod(iState, order => order.moveBefore(ioi, order.nextUp.get))
   }
 }
 
 /**
  * Move before internal transaction
  */
-private[transition] case class MoveBeforeOtherStep(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    lf.orderLens.mod(iState, order => order.moveBefore(who, whom))
+private[transition] case class MoveBeforeOtherStep(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = {
+    iState.lensFactory.orderLens.mod(iState, order => order.moveBefore(who, whom))
   }
 }
 
 /**
  * This step will update a InitiativeTracker to it's new state. Notice that it does validate if the action is valid.
  */
-private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderID, action: InitiativeAction.Value) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderID, action: InitiativeAction.Value) extends CombatStateTransitionStep {
+  def transition(iState: CombatState): CombatState = {
+    val lf = iState.lensFactory
     val ol = lf.orderLens
     val order = ol.get(iState)
     val firstIT = order.tracker(order.nextUp.get)

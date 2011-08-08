@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.tracker.transition.CombatTransition
 import vcc.dnd4e.tracker.StateLensFactory
+import vcc.dnd4e.tracker.transition.StateTransition
+
+trait CombatStateTransitionStep extends StateTransition[CombatState]
 
 case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {
   def endCombat(): CombatState = {
@@ -33,10 +34,11 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
 
   val rules = CombatState.rules
 
-  def transitionWith(trans: List[CombatTransition]): CombatState = {
-    trans.foldLeft(this)((s, x) => x.transition(StateLensFactory, s))
+  def transitionWith(trans: List[CombatStateTransitionStep]): CombatState = {
+    trans.foldLeft(this)((state, t) => t.transition(state))
   }
 
+  def lensFactory:StateLensFactory = StateLensFactory
 }
 
 object CombatState {
