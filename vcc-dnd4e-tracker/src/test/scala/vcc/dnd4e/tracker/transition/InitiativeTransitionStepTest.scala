@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import org.specs2.mock.Mockito
@@ -106,29 +105,30 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     val mLF = mock[StateLensFactory]
     val mOrder = mock[InitiativeOrder]
     mLF.orderLens returns Lens(x => mOrder, (s, o) => mState2)
+    mState.lensFactory returns mLF
 
     def moveBeforeOther = {
       val trans = MoveBeforeOtherStep(ioA0, ioB0)
-      val ns = trans.transition(mLF, mState)
+      val ns = trans.transition(mState)
       (there was one(mOrder).moveBefore(ioA0, ioB0)) and (ns must_== mState2)
     }
 
     def moveBeforeFirst = {
       val trans = MoveBeforeFirstStep(ioA0)
       mOrder.nextUp returns Some(io1_0)
-      val ns = trans.transition(mLF, mState)
+      val ns = trans.transition(mState)
       (there was one(mOrder).moveBefore(ioA0, io1_0)) and (ns must_== mState2)
     }
 
     def rotateRobin = {
       val trans = RotateRobinStep
-      val ns = trans.transition(mLF, mState)
+      val ns = trans.transition(mState)
       (there was one(mOrder).rotate()) and (ns must_== mState2)
     }
 
     def robinHeadUpdate = {
       val trans = SetRobinStep(ioA0)
-      val ns = trans.transition(mLF, mState)
+      val ns = trans.transition(mState)
       (there was one(mOrder).setNextUp(ioA0)) and (ns must_== mState2)
     }
   }
@@ -147,6 +147,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     mState.rules returns mRules
     mOrder.nextUp returns Some(io1_0)
     mOrder.tracker returns Map(io1_0 -> mITF, ioA0 -> mITA)
+    mState.lensFactory returns mLF
 
     /**
      * In this case InitiativeTracker cant be execute the actions, so an IllegalActionException must be thrown
@@ -154,7 +155,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     def illegalTransition = {
       mRules.canInitiativeOrderPerform(mState, ioA0, mAction) returns false
       val t = InitiativeTrackerUpdateStep(ioA0, mAction)
-      (t.transition(mLF, mState) must throwA[IllegalActionException]) and
+      (t.transition(mState) must throwA[IllegalActionException]) and
         (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction))
     }
 
@@ -164,7 +165,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     def allowedTransition = {
       mRules.canInitiativeOrderPerform(mState, ioA0, mAction) returns true
       val t = InitiativeTrackerUpdateStep(ioA0, mAction)
-      val ns = t.transition(mLF, mState)
+      val ns = t.transition(mState)
       (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction) then
         one(mITA).transform(mITF, mAction)) and (ns must_== mState2)
     }

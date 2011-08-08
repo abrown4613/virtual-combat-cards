@@ -14,16 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.dnd4e.tracker.{StateLensFactory, LensFactory}
+import vcc.dnd4e.tracker.{StateLensFactory}
 
 /**
  * Base trait for commands or operations that transition some state to a new state.
  */
-trait StateTransition[S, L <: LensFactory[S]] {
+trait StateTransition[S] {
   /**
    * Function to be applied to change state from current value to new value.
    * @param lf Lens factory to be used by state transition operations. Use is optional, but provides easier mocking and
@@ -31,7 +30,14 @@ trait StateTransition[S, L <: LensFactory[S]] {
    * @param iState Initial state, the transition with take iState to a new state
    * @return New state which results from applying this transition to the state.
    */
-  def transition(lf: L, iState: S): S
+  def transition(iState: S): S
 }
 
-trait CombatTransition extends StateTransition[CombatState, StateLensFactory]
+trait CombatTransition extends StateTransition[CombatState] {
+  @deprecated("move to new transition signature")
+  def transition(lf: StateLensFactory, iState: CombatState): CombatState
+
+  def transition(iState: CombatState): CombatState = {
+    transition(iState.lensFactory, iState)
+  }
+}
