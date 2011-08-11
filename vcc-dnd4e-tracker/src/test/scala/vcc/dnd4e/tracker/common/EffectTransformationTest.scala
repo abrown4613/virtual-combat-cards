@@ -1,7 +1,5 @@
-package vcc.dnd4e.tracker.common
-
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,16 +14,11 @@ package vcc.dnd4e.tracker.common
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+package vcc.dnd4e.tracker.common
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class EffectTransformationTest extends JUnit4(EffectTransformationSpec)
-
-object EffectTransformationSpec extends Specification {
+class EffectTransformationTest extends SpecificationWithJUnit {
   val combA = CombatantID("A")
   val goodCondition = Effect.Condition.Generic("a condition", true)
   val badCondition = Effect.Condition.Generic("a condition", false)
@@ -70,7 +63,7 @@ object EffectTransformationSpec extends Specification {
 
     "leave other unchanged" in {
       val et = EffectTransformation.startRound(ioa)
-      for (dur <- nonRoundBound) {
+      for (dur <- nonRoundBound) yield {
         val eff = Effect(combA, badCondition, dur)
         et.transform(eff) must_== eff
       }
@@ -94,7 +87,7 @@ object EffectTransformationSpec extends Specification {
 
     "leave other unchanged" in {
       val et = EffectTransformation.endRound(ioa)
-      for (dur <- nonRoundBound) {
+      for (dur <- nonRoundBound) yield {
         val eff = Effect(combA, badCondition, dur)
         et.transform(eff) must_== eff
       }
@@ -143,7 +136,7 @@ object EffectTransformationSpec extends Specification {
       val et = EffectTransformation.processDelay(true, ioa)
       val et2 = EffectTransformation.processDelay(true, ioa)
       val lst: List[Duration] = durationSoNT :: durationEoNT :: nonRoundBound
-      for (dur <- lst) {
+      for (dur <- lst) yield {
         val eff = Effect(combA, badCondition, dur)
         et.transform(eff) must_== eff
         et2.transform(eff) must_== eff
@@ -173,7 +166,7 @@ object EffectTransformationSpec extends Specification {
     "leave all other duration unchanged" in {
       val et = EffectTransformation.applyRest
       val lst: List[Duration] = Duration.Other :: saveDurations ::: roundBoundDurations
-      for (dur <- lst) {
+      for (dur <- lst) yield {
         val eff = Effect(combA, badCondition, dur)
         et.transform(eff) must_== eff
       }
