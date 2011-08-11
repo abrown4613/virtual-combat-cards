@@ -14,17 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
-import org.specs.SpecificationWithJUnit
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.scalaz.Lens
 
 class StateLensFactoryTest extends SpecificationWithJUnit with Mockito with DemoCompendium {
   val lf = mock[StateLensFactory]
-  val mhl = mockLens[CombatState, HealthTracker]
+  val mhl = mockLens[CombatState, HealthTracker]()
   val ms = mock[CombatState]
   val msAfter = mock[CombatState]
 
@@ -41,7 +40,7 @@ class StateLensFactoryTest extends SpecificationWithJUnit with Mockito with Demo
       mhl.set(ms, ht1) returns msAfter
 
       val l = lf.combatantHealth(CombatantID("A"))
-      l must beEqual(mhl)
+      (l must be equalTo(mhl))
       val ms2 = l.set(ms, l.get(ms))
       ms2 must_== msAfter
     }
@@ -50,7 +49,6 @@ class StateLensFactoryTest extends SpecificationWithJUnit with Mockito with Demo
       val combDef = CombatantRosterDefinition(CombatantID("A"), null, goblinDefinition)
       val s = CombatState.empty
       val s2 = StateLensFactory.combatant(CombatantID("A")).set(s, Combatant(combDef))
-      println(s2)
       s2.roster.isDefinedAt(CombatantID("A")) must beTrue
       val l = StateLensFactory.combatant(CombatantID("A"))
       l.get(s2) must_== Combatant(combDef)
