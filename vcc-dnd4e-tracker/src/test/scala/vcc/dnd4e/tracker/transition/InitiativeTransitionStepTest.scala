@@ -19,6 +19,7 @@ package vcc.dnd4e.tracker.transition
 import org.specs2.mock.Mockito
 import org.specs2.{SpecificationWithJUnit}
 import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.event._
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.scalaz.Lens
 import java.lang.Exception
@@ -69,7 +70,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
 
     def monsterDelays = {
       val ioi = io1_0
-      val trans = DelayEffectListTransformStep(ioi)
+      val trans = DelayEffectListTransformEvent(ioi)
       state.transitionWith(List(trans))
       (there was one(mELA).transformAndFilter(EffectTransformation.processDelay(false, ioi))) and
         (there was one(mELB).transformAndFilter(EffectTransformation.processDelay(false, ioi))) and
@@ -79,7 +80,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
 
     def characterDelays = {
       val ioi = ioA0
-      val trans = DelayEffectListTransformStep(ioi)
+      val trans = DelayEffectListTransformEvent(ioi)
       state.transitionWith(List(trans))
       (there was one(mELA).transformAndFilter(EffectTransformation.processDelay(true, ioi))) and
         (there was one(mELB).transformAndFilter(EffectTransformation.processDelay(true, ioi))) and
@@ -90,7 +91,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     def applyToAllEffect = {
       val mET = mock[EffectTransformation]
 
-      val trans = EffectListTransformStep(mET)
+      val trans = EffectListTransformEvent(mET)
       state.transitionWith(List(trans))
       (there was one(mELA).transformAndFilter(mET)) and
         (there was one(mELB).transformAndFilter(mET)) and
@@ -108,26 +109,26 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
     mState.lensFactory returns mLF
 
     def moveBeforeOther = {
-      val trans = MoveBeforeOtherStep(ioA0, ioB0)
+      val trans = MoveBeforeOtherEvent(ioA0, ioB0)
       val ns = trans.transition(mState)
       (there was one(mOrder).moveBefore(ioA0, ioB0)) and (ns must_== mState2)
     }
 
     def moveBeforeFirst = {
-      val trans = MoveBeforeFirstStep(ioA0)
+      val trans = MoveBeforeFirstEvent(ioA0)
       mOrder.nextUp returns Some(io1_0)
       val ns = trans.transition(mState)
       (there was one(mOrder).moveBefore(ioA0, io1_0)) and (ns must_== mState2)
     }
 
     def rotateRobin = {
-      val trans = RotateRobinStep
+      val trans = RotateRobinEvent
       val ns = trans.transition(mState)
       (there was one(mOrder).rotate()) and (ns must_== mState2)
     }
 
     def robinHeadUpdate = {
-      val trans = SetRobinStep(ioA0)
+      val trans = SetRobinEvent(ioA0)
       val ns = trans.transition(mState)
       (there was one(mOrder).setNextUp(ioA0)) and (ns must_== mState2)
     }
@@ -154,7 +155,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
      */
     def illegalTransition = {
       mRules.canInitiativeOrderPerform(mState, ioA0, mAction) returns false
-      val t = InitiativeTrackerUpdateStep(ioA0, mAction)
+      val t = InitiativeTrackerUpdateEvent(ioA0, mAction)
       (t.transition(mState) must throwA[IllegalActionException]) and
         (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction))
     }
@@ -164,7 +165,7 @@ class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleSta
      */
     def allowedTransition = {
       mRules.canInitiativeOrderPerform(mState, ioA0, mAction) returns true
-      val t = InitiativeTrackerUpdateStep(ioA0, mAction)
+      val t = InitiativeTrackerUpdateEvent(ioA0, mAction)
       val ns = t.transition(mState)
       (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction) then
         one(mITA).transform(mITF, mAction)) and (ns must_== mState2)
