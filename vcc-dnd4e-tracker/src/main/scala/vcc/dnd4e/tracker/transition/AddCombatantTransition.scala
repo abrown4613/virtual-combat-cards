@@ -14,10 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 
@@ -28,8 +26,8 @@ import vcc.dnd4e.tracker.common._
  * @param entity CombatantEntity definition
  */
 case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entity: CombatantEntity) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val rl = lf.rosterLens
+  def transition(iState: CombatState): CombatState = {
+    val rl = iState.lensFactory.rosterLens
     rl.set(iState, rl.get(iState).addCombatant(cid, alias, entity))
   }
 }
@@ -40,8 +38,8 @@ case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entit
  * @param iDef Initiative definition for the combatant
  */
 case class SetInitiativeTransition(iDef: InitiativeDefinition) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val ol = lf.orderLens
+  def transition(iState: CombatState): CombatState = {
+    val ol = iState.lensFactory.orderLens
     if (!iState.roster.isDefinedAt(iDef.combId))
       throw new IllegalActionException("Combatant " + iDef.combId + " not in combat roster")
     if (!iState.rules.canCombatantRollInitiative(iState, iDef.combId))
@@ -60,14 +58,14 @@ case class SetInitiativeTransition(iDef: InitiativeDefinition) extends CombatTra
  */
 case object StartCombatTransition extends CombatTransition {
 
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Combat already started")
 
     if (!iState.rules.hasActingCombatant(iState))
       throw new IllegalActionException("Must have at least on combatant in order")
 
-    lf.orderLens.mod(iState, _.startCombat())
+    iState.lensFactory.orderLens.mod(iState, _.startCombat())
   }
 }
 
@@ -76,11 +74,12 @@ case object StartCombatTransition extends CombatTransition {
  * @param isExtended True for Extended Rests, false if we should apply Short Rest
  */
 case class RestTransition(isExtended: Boolean) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not rest during combat")
     // We are ok, apply rest to all entries in roster
     val ids = iState.roster.entries.keys
+    val lf = iState.lensFactory
     ids.foldLeft(iState)((s, id) => lf.combatant(id).mod(s, c => c.applyRest(isExtended)))
   }
 }
@@ -90,7 +89,7 @@ case class RestTransition(isExtended: Boolean) extends CombatTransition {
  * @param comment Comment to be set
  */
 case class SetCombatCommentTransition(comment: String) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     iState.copy(comment = Option(comment))
   }
 }
@@ -100,11 +99,11 @@ case class SetCombatCommentTransition(comment: String) extends CombatTransition 
  * @param onlyMonsters Clear only the monsters, if false will clear all.
  */
 case class ClearRosterTransition(onlyMonsters: Boolean) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not clear while in combat")
     if (onlyMonsters) {
-      lf.rosterLens.modIfChanged(iState, roster => roster.clear(c => c.definition.entity.ctype != CombatantType.Character))
+      iState.lensFactory.rosterLens.modIfChanged(iState, roster => roster.clear(c => c.definition.entity.ctype != CombatantType.Character))
     } else {
       CombatState.empty
     }
@@ -115,7 +114,7 @@ case class ClearRosterTransition(onlyMonsters: Boolean) extends CombatTransition
  *  End combat.
  */
 case object EndCombatTransition extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     if (!iState.isCombatStarted)
       throw new IllegalActionException("Combat not started")
     iState.endCombat()
@@ -128,7 +127,7 @@ case object EndCombatTransition extends CombatTransition {
  * @param comment New comment message
  */
 case class SetCombatantCommentTransition(cid: CombatantID, comment: String) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    lf.combatantComment(cid).set(iState, comment)
+  def transition(iState: CombatState): CombatState = {
+    iState.lensFactory.combatantComment(cid).set(iState, comment)
   }
 }

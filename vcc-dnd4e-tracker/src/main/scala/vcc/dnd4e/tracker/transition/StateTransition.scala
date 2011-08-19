@@ -17,7 +17,6 @@
 package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.dnd4e.tracker.{StateLensFactory}
 
 /**
  * Base trait for commands or operations that transition some state to a new state.
@@ -33,11 +32,4 @@ trait StateTransition[S] {
   def transition(iState: S): S
 }
 
-trait CombatTransition extends StateTransition[CombatState] {
-  @deprecated("move to new transition signature")
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState
-
-  def transition(iState: CombatState): CombatState = {
-    transition(iState.lensFactory, iState)
-  }
-}
+trait CombatTransition extends StateTransition[CombatState]
