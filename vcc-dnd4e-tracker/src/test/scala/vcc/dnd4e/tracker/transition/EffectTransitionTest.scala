@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
@@ -27,7 +26,6 @@ import vcc.controller.IllegalActionException
 class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
   val eid = EffectID(combA, 11)
 
-  //TODO review pending case
   def is =
     "AddEffectTransition" ^
       "when we find source and target" ! m().testAddEffect ^
@@ -51,7 +49,7 @@ class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
     def testAddEffect = {
       val trans = AddEffectTransition(combA, combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
       mEL.addEffect(combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain)) returns mEL2
-      val nState = trans.transition(StateLensFactory, state)
+      val nState = trans.transition(state)
       (there was one(mEL).addEffect(combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))) and
         (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
     }
@@ -59,14 +57,14 @@ class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
     def testAddEffectWithMissingSource = {
       val trans = AddEffectTransition(combA, comb1, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
 
-      (trans.transition(StateLensFactory, state) must throwA(new IllegalActionException(comb1 + " is not in combat"))) and
+      (trans.transition(state) must throwA(new IllegalActionException(comb1 + " is not in combat"))) and
         (there was no(mEL).addEffect(any, any, any))
     }
 
     def cancelEffect = {
       val trans = CancelEffectTransition(eid)
       mEL.transformAndFilter(EffectTransformation.cancelEffect(eid)) returns mEL2
-      val nState = trans.transition(StateLensFactory, state)
+      val nState = trans.transition(state)
       (there was one(mEL).transformAndFilter(EffectTransformation.cancelEffect(eid))) and
         (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
     }
@@ -74,7 +72,7 @@ class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
     def sustainEffect = {
       val trans = SustainEffectTransition(eid)
       mEL.transformAndFilter(EffectTransformation.sustainEffect(eid)) returns mEL2
-      val nState = trans.transition(StateLensFactory, state)
+      val nState = trans.transition(state)
       (there was one(mEL).transformAndFilter(EffectTransformation.sustainEffect(eid))) and
         (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
     }
@@ -82,10 +80,9 @@ class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
     def testUpdateEffect = {
       val trans = UpdateEffectConditionTransition(eid, Condition.Generic("other", false))
       mEL.transformAndFilter(EffectTransformation.updateCondition(eid, Condition.Generic("other", false))) returns mEL2
-      val nState = trans.transition(StateLensFactory, state)
+      val nState = trans.transition(state)
       (there was one(mEL).transformAndFilter(EffectTransformation.updateCondition(eid, Condition.Generic("other", false)))) and
         (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
     }
   }
-
 }

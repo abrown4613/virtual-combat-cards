@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.dnd4e.tracker.common._
 import org.specs2.mock.Mockito
 import vcc.controller.IllegalActionException
@@ -88,11 +86,11 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
     val trans = RestTransition(true)
 
     def testStillInCombat = {
-      trans.transition(StateLensFactory, state.startCombat()) must throwAn(new IllegalActionException("Can not rest during combat"))
+      trans.transition(state.startCombat()) must throwAn(new IllegalActionException("Can not rest during combat"))
     }
 
     def restExecuted = {
-      trans.transition(StateLensFactory, state)
+      trans.transition(state)
       (there was one(mELA).transformAndFilter(EffectTransformation.applyRest)) and
         (there was one(mEL1).transformAndFilter(EffectTransformation.applyRest)) and
         (there was one(mHTA).rest(true)) and
@@ -101,7 +99,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
   }
 
   def transform(state: CombatState, trans: CombatTransition*): CombatState = {
-    trans.foldLeft(state)((s, x) => x.transition(StateLensFactory, s))
+    trans.foldLeft(state)((s, x) => x.transition(s))
   }
 
   def e1() = {
@@ -127,7 +125,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
     val state = CombatState.empty
 
     (state.comment must_== None) and
-      (trans.transition(StateLensFactory, state).comment must_== Some("new comment"))
+      (trans.transition(state).comment must_== Some("new comment"))
   }
 
   def e5 = {
@@ -135,7 +133,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
     val trans2 = SetCombatCommentTransition(null)
     val state = CombatState.empty
 
-    (trans2.transition(StateLensFactory, trans.transition(StateLensFactory, state)).comment must_== None)
+    (trans2.transition(trans.transition(state)).comment must_== None)
   }
 
   def testSetFirstInitiative = {
@@ -216,7 +214,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
   def testCombatantComment = {
     val trans = SetCombatantCommentTransition(combA, "new comment")
     val state = transform(CombatState.empty, addA)
-    val nState = trans.transition(StateLensFactory, state)
+    val nState = trans.transition(state)
 
     state.roster.combatantDiff(nState.roster) must_== Set(CombatantCommentDiff(combA, "", "new comment"))
   }
@@ -224,6 +222,6 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with SampleStateD
   def testMissingCombatantComment = {
     val trans = SetCombatantCommentTransition(combA, "new comment")
 
-    trans.transition(StateLensFactory, CombatState.empty) must throwA[NoSuchElementException]
+    trans.transition(CombatState.empty) must throwA[NoSuchElementException]
   }
 }

@@ -16,7 +16,6 @@
  */
 package vcc.dnd4e.tracker.transition
 
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 
@@ -104,7 +103,7 @@ private[transition] case class InitiativeTrackerUpdateStep(who: InitiativeOrderI
 
 
 case class StartRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.StartRound)
     val et = EffectListTransformStep(EffectTransformation.startRound(ioi))
     iState.transitionWith(List(iat, et))
@@ -112,11 +111,11 @@ case class StartRoundTransition(ioi: InitiativeOrderID) extends CombatTransition
 }
 
 case class EndRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.EndRound)
     val et = EffectListTransformStep(EffectTransformation.endRound(ioi))
     iState.transitionWith(
-      if (lf.initiativeTrackerLens(ioi).get(iState).state == InitiativeState.Delaying)
+      if (iState.lensFactory.initiativeTrackerLens(ioi).get(iState).state == InitiativeState.Delaying)
         List(iat, et)
       else
         List(iat, RotateRobinStep, et)
@@ -125,7 +124,7 @@ case class EndRoundTransition(ioi: InitiativeOrderID) extends CombatTransition {
 }
 
 case class DelayTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.DelayAction)
     val et = DelayEffectListTransformStep(ioi)
     iState.transitionWith(List(iat, RotateRobinStep, et))
@@ -133,13 +132,13 @@ case class DelayTransition(ioi: InitiativeOrderID) extends CombatTransition {
 }
 
 case class ReadyActionTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     iState.transitionWith(List(InitiativeTrackerUpdateStep(ioi, InitiativeAction.ReadyAction)))
   }
 }
 
 case class ExecuteReadyTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     val iat = InitiativeTrackerUpdateStep(ioi, InitiativeAction.ExecuteReady)
     val mb = MoveBeforeFirstStep(ioi)
     iState.transitionWith(List(iat, mb))
@@ -147,7 +146,7 @@ case class ExecuteReadyTransition(ioi: InitiativeOrderID) extends CombatTransiti
 }
 
 case class MoveUpTransition(ioi: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
+  def transition(iState: CombatState): CombatState = {
     iState.transitionWith(List(
       InitiativeTrackerUpdateStep(ioi, InitiativeAction.MoveUp),
       MoveBeforeFirstStep(ioi),
@@ -156,11 +155,11 @@ case class MoveUpTransition(ioi: InitiativeOrderID) extends CombatTransition {
 }
 
 case class MoveBeforeTransition(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatTransition {
-  def transition(lf: StateLensFactory, state: CombatState): CombatState = {
+  def transition(state: CombatState): CombatState = {
     if (!state.rules.canMoveBefore(state, who, whom))
       throw new IllegalActionException("Cant move " + who + " before " + whom)
     // Advance to second if first moved out (you must have 2 elements because of the rules.canMoveBefore
-    val ol = lf.orderLens
+    val ol = state.lensFactory.orderLens
     if (who == ol.get(state).nextUp.get)
       state.transitionWith(List(RotateRobinStep, MoveBeforeOtherStep(who, whom)))
     else

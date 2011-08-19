@@ -14,10 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.EffectTransformation._
 
@@ -29,8 +27,8 @@ import vcc.dnd4e.tracker.common.EffectTransformation._
  * @param duration Duration of effect
  */
 case class AddEffectTransition(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val ell = lf.combatantEffectList(target)
+  def transition(iState: CombatState): CombatState = {
+    val ell = iState.lensFactory.combatantEffectList(target)
     /*
         val rl = lf.rosterLens
         //TODO: This may not be really needed
@@ -45,16 +43,16 @@ case class AddEffectTransition(target: CombatantID, source: CombatantID, conditi
  *
  */
 case class SustainEffectTransition(eid: EffectID) extends CombatTransition {
-  def transition(lf: StateLensFactory, initialState: CombatState): CombatState =
-    lf.combatantEffectList(eid.combId).modIfChanged(initialState, s => s.transformAndFilter(sustainEffect(eid)))
+  def transition(iState: CombatState): CombatState =
+    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, s => s.transformAndFilter(sustainEffect(eid)))
 }
 
 case class UpdateEffectConditionTransition(eid: EffectID, newCondition: Condition) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState =
-    lf.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(updateCondition(eid, newCondition)))
+  def transition(iState: CombatState): CombatState =
+    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(updateCondition(eid, newCondition)))
 }
 
 case class CancelEffectTransition(eid: EffectID) extends CombatTransition {
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState =
-    lf.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(cancelEffect(eid)))
+  def transition(iState: CombatState): CombatState =
+    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(cancelEffect(eid)))
 }

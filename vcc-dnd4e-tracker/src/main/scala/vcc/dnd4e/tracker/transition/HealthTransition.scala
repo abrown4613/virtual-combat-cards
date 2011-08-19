@@ -14,10 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.dnd4e.tracker.common.{HealthStatus, CombatState, HealthTracker, CombatantID}
 
 /**
@@ -29,8 +27,8 @@ abstract class HealthTransition(target: CombatantID) extends CombatTransition {
    */
   protected def transitionHealth(ht: HealthTracker): HealthTracker
 
-  def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    lf.combatantHealth(target).modIfChanged(iState, ht => transitionHealth(ht))
+  def transition(iState: CombatState): CombatState = {
+    iState.lensFactory.combatantHealth(target).modIfChanged(iState, ht => transitionHealth(ht))
   }
 }
 
@@ -41,8 +39,9 @@ abstract class HealthTransition(target: CombatantID) extends CombatTransition {
  */
 case class DamageTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
 
-  override def transition(lf: StateLensFactory, iState: CombatState): CombatState = {
-    val nState = super.transition(lf, iState)
+  override def transition(iState: CombatState): CombatState = {
+    val nState = super.transition(iState)
+    val lf = iState.lensFactory
     val hl = lf.combatantHealth(target)
     if (hl.get(nState).status == HealthStatus.Dead && nState.rules.areAllCombatantInOrderDead(nState)) {
       nState.endCombat()

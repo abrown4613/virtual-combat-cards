@@ -1,5 +1,3 @@
-package vcc.dnd4e.tracker.transition
-
 /*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
@@ -16,10 +14,9 @@ package vcc.dnd4e.tracker.transition
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.StateLensFactory
 import org.specs2.mock.Mockito
 import vcc.tracker.CommandStream
 import vcc.dnd4e.tracker.common._
@@ -129,7 +126,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
     var step = cs.get(state)
     var nState = state
     while (step.isDefined) {
-      nState = step.get._1.transition(StateLensFactory, nState)
+      nState = step.get._1.transition(nState)
       trans = step.get._1 :: trans
       step = (step.get._2).get(nState)
     }

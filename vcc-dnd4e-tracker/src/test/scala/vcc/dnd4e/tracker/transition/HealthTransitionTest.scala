@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
@@ -53,11 +52,11 @@ class HealthTransitionTest extends SpecificationWithJUnit with SampleStateData {
     //Override this method to create behavior under test
     def createTransition(comb: CombatantID): HealthTransition
 
-    def caseCombatantNotFound() = createTransition(combB).transition(StateLensFactory, stateBuilder.done) must throwA[NoSuchElementException]
+    def caseCombatantNotFound() = createTransition(combB).transition(stateBuilder.done) must throwA[NoSuchElementException]
 
     def updateHealth() = {
       val state = stateBuilder.modifyHealth(combA, x => mHealth).done
-      val nState = createTransition(combA).transition(StateLensFactory, state)
+      val nState = createTransition(combA).transition(state)
       val hl = StateLensFactory.combatantHealth(combA)
       (hl.get(nState) must_== mHealth2) and (state.roster.combatantDiff(nState.roster) must_== Set(CombatantDiff(combA, mHealth, mHealth2)))
     }
@@ -73,7 +72,7 @@ class HealthTransitionTest extends SpecificationWithJUnit with SampleStateData {
     def testLastLivingDeath = {
       val state = stateBuilder.modifyHealth(comb1, ht => ht.applyDamage(1000)).done
       val trans = DamageTransition(combA, 1000)
-      val nState = trans.transition(StateLensFactory, state.startCombat())
+      val nState = trans.transition(state.startCombat())
 
       (nState.isCombatStarted must beFalse)
     }
