@@ -17,6 +17,7 @@
 package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.common.CombatState
+import vcc.dnd4e.tracker.event.CombatStateEvent
 
 /**
  * Base trait for commands or operations that transition some state to a new state.
@@ -33,3 +34,9 @@ trait StateTransition[S] {
 }
 
 trait CombatTransition extends StateTransition[CombatState]
+
+trait EventCombatTransition extends CombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent]
+
+  def transition(iState: CombatState): CombatState = iState.transitionWith(changeEvents(iState))
+}

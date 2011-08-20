@@ -18,6 +18,7 @@ package vcc.dnd4e.tracker.transition
 
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.event._
 
 /**
  * Add combatant to the combat.
@@ -25,11 +26,8 @@ import vcc.dnd4e.tracker.common._
  * @param alias Option alias for combatant (null if not present)
  * @param entity CombatantEntity definition
  */
-case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entity: CombatantEntity) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
-    val rl = iState.lensFactory.rosterLens
-    rl.set(iState, rl.get(iState).addCombatant(cid, alias, entity))
-  }
+case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entity: CombatantEntity) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = AddCombatantEvent(cid, alias, entity) :: Nil
 }
 
 /**
@@ -37,18 +35,33 @@ case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entit
  * have and initiative.
  * @param iDef Initiative definition for the combatant
  */
-case class SetInitiativeTransition(iDef: InitiativeDefinition) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
-    val ol = iState.lensFactory.orderLens
+case class SetInitiativeTransition(iDef: InitiativeDefinition) extends EventCombatTransition {
+  /*
+    override def transition(iState: CombatState): CombatState = {
+      val ol = iState.lensFactory.orderLens
+      if (!iState.roster.isDefinedAt(iDef.combId))
+        throw new IllegalActionException("Combatant " + iDef.combId + " not in combat roster")
+      if (!iState.rules.canCombatantRollInitiative(iState, iDef.combId))
+        throw new IllegalActionException("Combatant " + iDef.combId + " is already in order")
+
+      if (ol.get(iState).isInSequence(iDef.combId)) {
+        ol.mod(ol.mod(iState, _.removeCombatant(iDef.combId)), _.setInitiative(iDef))
+      } else {
+        ol.mod(iState, _.setInitiative(iDef))
+      }
+    }
+  */
+
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.roster.isDefinedAt(iDef.combId))
       throw new IllegalActionException("Combatant " + iDef.combId + " not in combat roster")
     if (!iState.rules.canCombatantRollInitiative(iState, iDef.combId))
       throw new IllegalActionException("Combatant " + iDef.combId + " is already in order")
 
-    if (ol.get(iState).isInSequence(iDef.combId)) {
-      ol.mod(ol.mod(iState, _.removeCombatant(iDef.combId)), _.setInitiative(iDef))
+    if (iState.lensFactory.orderLens.get(iState).isInSequence(iDef.combId)) {
+      RemoveCombatantFromOrderEvent(iDef.combId) :: AddCombatantToOrderEvent(iDef) :: Nil
     } else {
-      ol.mod(iState, _.setInitiative(iDef))
+      AddCombatantToOrderEvent(iDef) :: Nil
     }
   }
 }
@@ -56,16 +69,16 @@ case class SetInitiativeTransition(iDef: InitiativeDefinition) extends CombatTra
 /**
  * Start combat, must happen only when at least one combatant has an inititiave definition, and can not happen twice.
  */
-case object StartCombatTransition extends CombatTransition {
+case object StartCombatTransition extends EventCombatTransition {
 
-  def transition(iState: CombatState): CombatState = {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Combat already started")
 
     if (!iState.rules.hasActingCombatant(iState))
       throw new IllegalActionException("Must have at least on combatant in order")
 
-    iState.lensFactory.orderLens.mod(iState, _.startCombat())
+    StartCombatEvent :: Nil
   }
 }
 
