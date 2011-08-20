@@ -21,30 +21,30 @@ import org.specs2.execute.{Error, Result}
 import org.specs2.execute.Error.ThrowableException
 import org.specs2.matcher.{Matcher}
 
-trait EventSourceBehavior {
+trait EventSourceBehavior[S,E,C] {
   self: Specification =>
   //self: MustExpectations =>
 
   /**
    * Build state form a initial and a service of domain events.
    */
-  def given[S, E](s: S, evt: E*)(implicit buildState: (S, Seq[E]) => S): Given[S, E] = {
+  def given(s: S, evt: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
     val result: Either[S, Result] = try {
       Left(buildState(s, evt))
     } catch {
       case e => Right(new Error("Failed to build given state", new ThrowableException(e)))
     }
-    new Given[S, E](result)
+    new Given(result)
   }
 
-  class Given[S, E](stateOrError: Either[S, Result]) {
+  class Given(stateOrError: Either[S, Result]) {
     /**
      * Execute a command.
      */
-    def when[C](cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen[S, E, C](stateOrError, cmd, runner)
+    def when(cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen(stateOrError, cmd, runner)
   }
 
-  class GivenWithWhen[S, E, C](stateOrError: Either[S, Result], cmd: C, runner: (S, C) => Seq[E]) {
+  class GivenWithWhen(stateOrError: Either[S, Result], cmd: C, runner: (S, C) => Seq[E]) {
 
     /**
      * Check if the command generates the appropriate result
@@ -65,7 +65,7 @@ trait EventSourceBehavior {
      * Check if the When produced a given exception:
      * @param e Expected exception for the when command.
      */
-    def failWith[E <: Throwable](e: E): Result = {
+    def failWith[T <: Throwable](e: T): Result = {
       stateOrError match {
         case Left(state) =>
           runner(state, cmd) must throwAn(e)
@@ -75,7 +75,7 @@ trait EventSourceBehavior {
   }
 }
 
-class EventSourceBehaviorTest extends Specification with EventSourceBehavior {
+class EventSourceBehaviorTest extends Specification with EventSourceBehavior[Int,Int,String] {
 
   implicit val builder: (Int, Seq[Int]) => Int = {
     (is, evt) =>
