@@ -36,6 +36,9 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
       "RemoveCombatantFromOrderEvent when some have initiative" ! execRemoveCombatantFromRosterEventWithInitiative ^
       "SetCombatComment " ! execCombatComment ^
       "SetCombatCommentClear " ! execCombatCommentClear ^
+      "SetCombatantComment" ! execSetCombatantComment ^
+      "Short Rest Combatant" ! execRestCombatant(false) ^
+      "Extended Rest Combatant" ! execRestCombatant(true) ^
       end
 
   private def e1 = {
@@ -113,5 +116,29 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
     val state = SetCombatCommentEvent(None).transition(emptyState)
     (state.comment must_== None)
   }
+
+  private def execSetCombatantComment = {
+    val evt = SetCombatantCommentEvent(combA, "new comment")
+    val state = CombatState.empty.transitionWith(List(evtAddCombA))
+    val nState = evt.transition(state)
+
+    state.roster.combatantDiff(nState.roster) must_== Set(CombatantCommentDiff(combA, "", "new comment"))
+  }
+
+  private def stateWithMockCombatantCid(cid: CombatantID, evt: CombatStateEvent) = {
+    val state = CombatState.empty.transitionWith(List(evt))
+
+    state.lensFactory.combatant(cid).mod(state, c => spy[Combatant](c))
+  }
+
+  private def execRestCombatant(isExtended: Boolean) = {
+    val evt = RestCombatantEvent(combA, isExtended)
+    val state = stateWithMockCombatantCid(combA, evtAddCombA)
+    evt.transition(state)
+
+    val comb = state.roster.combatant(combA)
+    (there was one(comb).applyRest(isExtended))
+  }
+
 }
 

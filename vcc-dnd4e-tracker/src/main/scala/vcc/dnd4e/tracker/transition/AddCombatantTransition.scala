@@ -71,14 +71,12 @@ case object StartCombatTransition extends EventCombatTransition {
  * Apply rest to all combats.
  * @param isExtended True for Extended Rests, false if we should apply Short Rest
  */
-case class RestTransition(isExtended: Boolean) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
+case class RestTransition(isExtended: Boolean) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not rest during combat")
-    // We are ok, apply rest to all entries in roster
-    val ids = iState.roster.entries.keys
-    val lf = iState.lensFactory
-    ids.foldLeft(iState)((s, id) => lf.combatant(id).mod(s, c => c.applyRest(isExtended)))
+
+    iState.roster.entries.keys.map(cid => RestCombatantEvent(cid, isExtended)).toList
   }
 }
 
@@ -130,8 +128,12 @@ case object EndCombatTransition extends EventCombatTransition {
  * @param cid Combatant to set comment
  * @param comment New comment message
  */
-case class SetCombatantCommentTransition(cid: CombatantID, comment: String) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
-    iState.lensFactory.combatantComment(cid).set(iState, comment)
+case class SetCombatantCommentTransition(cid: CombatantID, comment: String) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (iState.roster.isDefinedAt(cid)) {
+      SetCombatantCommentEvent(cid, comment) :: Nil
+    } else {
+      throw new IllegalActionException("Cant set comment: Combatant " + cid + " does not exist")
+    }
   }
 }

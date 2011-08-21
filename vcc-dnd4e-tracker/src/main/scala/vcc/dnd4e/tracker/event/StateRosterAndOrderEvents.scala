@@ -79,3 +79,22 @@ case class RemoveCombatantFromRosterEvent(cid: CombatantID) extends CombatStateE
 case class SetCombatCommentEvent(comment: Option[String]) extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = iState.copy(comment = comment)
 }
+
+/**
+ * Set comment for a combatant
+ * @param cid Combatant ID to update
+ * @parma comment Comment to set
+ */
+case class SetCombatantCommentEvent(cid: CombatantID, comment: String) extends CombatStateEvent {
+  //TODO Move to better file
+  def transition(iState: CombatState): CombatState = iState.lensFactory.combatantComment(cid).set(iState, comment)
+}
+
+/**
+ * Rest a combatant
+ */
+case class RestCombatantEvent(cid: CombatantID, isExtended: Boolean) extends CombatStateEvent {
+  def transition(iState: CombatState): CombatState = {
+    iState.lensFactory.combatant(cid).mod(iState, c => c.applyRest(isExtended))
+  }
+}
