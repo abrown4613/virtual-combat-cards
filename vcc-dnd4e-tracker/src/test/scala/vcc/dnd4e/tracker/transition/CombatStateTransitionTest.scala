@@ -18,69 +18,27 @@ package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
-import org.specs2.mock.Mockito
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
 
 class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceSampleEvents with CombatStateEventSourceBehavior {
 
-  private val addA = AddCombatantTransition(Some(combA), null, entityPc1)
-
   def is =
-    "AddCombatantTransition" ^
-      "add combatant" ! execAddCombatant ^
-      "ApplyRest should" ^
-      "  fail if in combat" ! restCase().testStillInCombat ^
-      "  update combatants otherwise" ! restCase().restExecuted ^
-      endp ^
+    "Combat State Transactions" ^
+      execAddCombatant ^
       defineCombatComment ^
       defineInitiativeBeforeCombatStart ^
       startCombat ^
       defineInitiativeAfterCombatStarted ^
       endCombat ^
       clearRoster ^
-      "Set Combatant comment" ^
-      "  should fail if combatant not defined" ! testMissingCombatantComment ^
-      "  should change combatant comment" ! testCombatantComment ^
+      combatantComments ^
+      restCombatants ^
       end
 
-  case class restCase() extends Mockito {
-    val mELA = mock[EffectList]
-    val mEL1 = mock[EffectList]
-    val mHTA = mock[HealthTracker]
-    val mHT1 = mock[HealthTracker]
-    val state = StateBuilder.emptyState().
-      addCombatant(Some(combA), null, entityPc1).
-      addCombatant(None, null, entityMonster).
-      setInitiative(combA, 12).
-      setInitiative(comb1, 10).
-      modifyEffectList(combA, x => mELA).
-      modifyEffectList(comb1, x => mEL1).
-      modifyHealth(combA, x => mHTA).
-      modifyHealth(comb1, x => mHT1).
-      done
-
-    private val trans = RestTransition(true)
-
-    def testStillInCombat = {
-      trans.transition(state.startCombat()) must throwAn(new IllegalActionException("Can not rest during combat"))
-    }
-
-    def restExecuted = {
-      trans.transition(state)
-      (there was one(mELA).transformAndFilter(EffectTransformation.applyRest)) and
-        (there was one(mEL1).transformAndFilter(EffectTransformation.applyRest)) and
-        (there was one(mHTA).rest(true)) and
-        (there was one(mHT1).rest(true))
-    }
-  }
-
-  private def transform(state: CombatState, trans: CombatTransition*): CombatState = {
-    trans.foldLeft(state)((s, x) => x.transition(s))
-  }
-
   private def execAddCombatant = {
-    given(CombatState.empty) when addA then (AddCombatantEvent(addA.cid, null, entityPc1))
+    val addA = AddCombatantTransition(Some(combA), null, entityPc1)
+    "add combatant" ! (given(CombatState.empty) when addA then (AddCombatantEvent(addA.cid, null, entityPc1)))
   }
 
   private def defineCombatComment = {
@@ -92,18 +50,16 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
       endp
   }
 
-  private def testCombatantComment = {
-    val trans = SetCombatantCommentTransition(combA, "new comment")
-    val state = transform(CombatState.empty, addA)
-    val nState = trans.transition(state)
-
-    state.roster.combatantDiff(nState.roster) must_== Set(CombatantCommentDiff(combA, "", "new comment"))
-  }
-
-  private def testMissingCombatantComment = {
-    val trans = SetCombatantCommentTransition(combA, "new comment")
-
-    trans.transition(CombatState.empty) must throwA[NoSuchElementException]
+  //TODO Move this to some other file
+  private def combatantComments = {
+    val cmd = SetCombatantCommentTransition(combA, "message")
+    val exception = new IllegalActionException("Cant set comment: Combatant " + combA + " does not exist")
+    "Combatant Comment" ^
+      "Set commant on existant combatant" !
+        (given(emptyState, evtAddCombA) when (cmd) then (SetCombatantCommentEvent(combA, "message"))) ^
+      "Setting comment combatant on inexistant combatant should fail" !
+        (given(emptyState) when (cmd) failWith exception) ^
+      endp
   }
 
   private def defineInitiativeBeforeCombatStart = {
@@ -169,6 +125,26 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterTransition(false)) then (contain(rA, r1, r2).only)) ^
       "remove only monsters" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterTransition(true)) then (contain(r1, r2).only)) ^
+      endp
+  }
+
+  private def restCombatants = {
+    val exception = new IllegalActionException("Can not rest during combat")
+    val shortRest = RestTransition(false)
+    val extendedRest = RestTransition(true)
+    val sRest1: CombatStateEvent = RestCombatantEvent(comb1, false)
+    val sRestA: CombatStateEvent = RestCombatantEvent(combA, false)
+    val eRest1: CombatStateEvent = RestCombatantEvent(comb1, true)
+    val eRestA: CombatStateEvent = RestCombatantEvent(combA, true)
+    "Resting combatant" ^
+      "rest should fail if combat is started" !
+        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (shortRest) failWith exception) ^
+      "extend should fail if combat is started" !
+        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (extendedRest) failWith exception) ^
+      "extend should rest all" !
+        (given(emptyState, evtAddCombA, evtAddCombNoId) when (extendedRest) then (contain(eRestA, eRest1))) ^
+      "extend should rest all" !
+        (given(emptyState, evtAddCombA, evtAddCombNoId) when (shortRest) then (contain(sRestA, sRest1))) ^
       endp
   }
 }
