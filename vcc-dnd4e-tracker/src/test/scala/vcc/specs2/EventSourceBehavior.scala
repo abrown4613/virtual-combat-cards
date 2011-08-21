@@ -16,12 +16,12 @@
  */
 package vcc.specs2
 
-import org.specs2.Specification
 import org.specs2.execute.{Error, Result}
 import org.specs2.execute.Error.ThrowableException
 import org.specs2.matcher.{Matcher}
+import org.specs2.{SpecificationWithJUnit, Specification}
 
-trait EventSourceBehavior[S,E,C] {
+trait EventSourceBehavior[S, E, C] {
   self: Specification =>
   //self: MustExpectations =>
 
@@ -49,7 +49,7 @@ trait EventSourceBehavior[S,E,C] {
     /**
      * Check if the command generates the appropriate result
      */
-    def then(expected: E*): Result = then(be_==( expected))
+    def then(expected: E*): Result = then(be_==(expected))
 
     /**
      * Check resulting
@@ -73,9 +73,10 @@ trait EventSourceBehavior[S,E,C] {
       }
     }
   }
+
 }
 
-class EventSourceBehaviorTest extends Specification with EventSourceBehavior[Int,Int,String] {
+class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBehavior[Int, Int, String] {
 
   implicit val builder: (Int, Seq[Int]) => Int = {
     (is, evt) =>
@@ -91,7 +92,7 @@ class EventSourceBehaviorTest extends Specification with EventSourceBehavior[Int
   def is =
     "EventSourceBehavior" ^
       "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").then(4, 5) ^
-      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(5,6).inOrder) ^
+      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(5, 6).inOrder) ^
       "given 0 and 1,2,3 when '4,a' failWith()" ! given(0, 1, 2, 3).when("4,a").failWith(new NumberFormatException("For input string: \"a\"")) ^
       "given 0 and 1,-2 when '4' then 4" ! e1 ^
       end
