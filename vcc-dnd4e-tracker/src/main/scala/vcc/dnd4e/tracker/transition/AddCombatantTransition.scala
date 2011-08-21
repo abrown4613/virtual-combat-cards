@@ -36,21 +36,6 @@ case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entit
  * @param iDef Initiative definition for the combatant
  */
 case class SetInitiativeTransition(iDef: InitiativeDefinition) extends EventCombatTransition {
-  /*
-    override def transition(iState: CombatState): CombatState = {
-      val ol = iState.lensFactory.orderLens
-      if (!iState.roster.isDefinedAt(iDef.combId))
-        throw new IllegalActionException("Combatant " + iDef.combId + " not in combat roster")
-      if (!iState.rules.canCombatantRollInitiative(iState, iDef.combId))
-        throw new IllegalActionException("Combatant " + iDef.combId + " is already in order")
-
-      if (ol.get(iState).isInSequence(iDef.combId)) {
-        ol.mod(ol.mod(iState, _.removeCombatant(iDef.combId)), _.setInitiative(iDef))
-      } else {
-        ol.mod(iState, _.setInitiative(iDef))
-      }
-    }
-  */
 
   def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.roster.isDefinedAt(iDef.combId))
@@ -101,36 +86,42 @@ case class RestTransition(isExtended: Boolean) extends CombatTransition {
  * Set combat level comment.
  * @param comment Comment to be set
  */
-case class SetCombatCommentTransition(comment: String) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
-    iState.copy(comment = Option(comment))
-  }
+case class SetCombatCommentTransition(comment: String) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = SetCombatCommentEvent(Option(comment)) :: Nil
 }
 
 /**
  * Clear roster of combatants.
  * @param onlyMonsters Clear only the monsters, if false will clear all.
  */
-case class ClearRosterTransition(onlyMonsters: Boolean) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
+case class ClearRosterTransition(onlyMonsters: Boolean) extends EventCombatTransition {
+
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not clear while in combat")
-    if (onlyMonsters) {
-      iState.lensFactory.rosterLens.modIfChanged(iState, roster => roster.clear(c => c.definition.entity.ctype != CombatantType.Character))
-    } else {
-      CombatState.empty
+
+    val toClear: Seq[CombatantID] = {
+      if (onlyMonsters) {
+        (for ((cid, comb) <- iState.roster.entries if (comb.definition.entity.ctype != CombatantType.Character)) yield {
+          cid
+        }).toSeq
+      } else {
+        iState.roster.entries.keys.toSeq
+      }
     }
+    toClear.map(RemoveCombatantFromRosterEvent(_)).toList
   }
 }
 
 /**
  *  End combat.
  */
-case object EndCombatTransition extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
+case object EndCombatTransition extends EventCombatTransition {
+
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.isCombatStarted)
       throw new IllegalActionException("Combat not started")
-    iState.endCombat()
+    EndCombatEvent :: Nil
   }
 }
 

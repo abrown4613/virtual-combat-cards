@@ -18,6 +18,9 @@ package vcc.dnd4e.tracker.event
 
 import vcc.dnd4e.tracker.common._
 
+//Place holder
+private trait StateRosterAndOrderEvents
+
 /**
  * Add combatant to the combat.
  * @param cid Optional ID for the combatant, None is not relevant
@@ -31,18 +34,48 @@ case class AddCombatantEvent(cid: Option[CombatantID], alias: String, entity: Co
   }
 }
 
+/**
+ * Add a combatant to order (setting initiative)
+ */
 case class AddCombatantToOrderEvent(initDef: InitiativeDefinition) extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = iState.lensFactory.orderLens.mod(iState, _.setInitiative(initDef))
 }
 
+/**
+ * Remove a combatnat form the Initiative order
+ */
 case class RemoveCombatantFromOrderEvent(cid: CombatantID) extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = iState.lensFactory.orderLens.mod(iState, _.removeCombatant(cid))
 }
 
+/**
+ * Start combat event
+ */
 case object StartCombatEvent extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = iState.startCombat()
 }
 
+/**
+ * End Combat Event
+ */
 case object EndCombatEvent extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = iState.endCombat()
+}
+
+/**
+ * Remove a single combatant from the Roster and Order
+ */
+case class RemoveCombatantFromRosterEvent(cid: CombatantID) extends CombatStateEvent {
+  //THINK This is the proper semantic, but should we use two events?
+  def transition(iState: CombatState): CombatState = {
+    val s = iState.lensFactory.rosterLens.mod(iState, r => r.clear(_.definition.cid == cid))
+    s.lensFactory.orderLens.mod(s, o => o.removeCombatant(cid))
+  }
+}
+
+/**
+ * Set combat level comment
+ */
+case class SetCombatCommentEvent(comment: Option[String]) extends CombatStateEvent {
+  def transition(iState: CombatState): CombatState = iState.copy(comment = comment)
 }

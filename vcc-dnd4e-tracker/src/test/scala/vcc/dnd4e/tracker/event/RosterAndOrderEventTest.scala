@@ -18,9 +18,9 @@ package vcc.dnd4e.tracker.event
 
 import org.specs2.SpecificationWithJUnit
 import org.specs2.mock.Mockito
-import vcc.dnd4e.tracker.common.{InitiativeDefinition, InitiativeOrder, CombatState, SampleStateData}
+import vcc.dnd4e.tracker.common._
 
-class AddCombatantEventTest extends SpecificationWithJUnit with SampleStateData with Mockito {
+class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSampleEvents with Mockito {
 
   def is =
     "AddCombatantEvent" ^
@@ -32,26 +32,26 @@ class AddCombatantEventTest extends SpecificationWithJUnit with SampleStateData 
       "End combat execution" ! execEndCombatEvent ^
       "RemoveCombatantFromOrderEvent" ! execRemoveCombatantFromOrderEvent ^
       "AddCombatantToOrderEvent" ! execAddCombatantToOrderEvent ^
+      "RemoveCombatantFromOrderEvent" ! execRemoveCombatantFromRosterEvent ^
+      "RemoveCombatantFromOrderEvent when some have initiative" ! execRemoveCombatantFromRosterEventWithInitiative ^
+      "SetCombatComment " ! execCombatComment ^
+      "SetCombatCommentClear " ! execCombatCommentClear ^
       end
 
-  private val evtAddA = AddCombatantEvent(Some(combA), null, entityPc1)
-  private val evtAdd1 = AddCombatantEvent(None, null, entityMinion)
-  private val evtAdd2 = AddCombatantEvent(Some(comb2), null, entityMonster)
-
   private def e1 = {
-    val cs = evtAddA.transition(CombatState.empty)
+    val cs = evtAddCombA.transition(CombatState.empty)
     (cs.isCombatStarted must beFalse) and
       (cs.roster.entries must haveKey(combA))
   }
 
   private def e2 = {
-    val cs = evtAdd1.transition(CombatState.empty)
+    val cs = evtAddCombNoId.transition(CombatState.empty)
     (cs.isCombatStarted must beFalse) and
       (cs.roster.entries must haveKey(comb1))
   }
 
   private def e3 = {
-    val cs = CombatState.empty.transitionWith(List(evtAddA, evtAdd2, evtAdd1))
+    val cs = CombatState.empty.transitionWith(List(evtAddCombA, evtAddComb2, evtAddCombNoId))
     (cs.isCombatStarted must beFalse) and
       (cs.roster.entries.keySet must_== Set(combA, comb1, comb2))
   }
@@ -84,6 +84,34 @@ class AddCombatantEventTest extends SpecificationWithJUnit with SampleStateData 
     val iDef = InitiativeDefinition(combA, 5, List(5))
     AddCombatantToOrderEvent(iDef).transition(state)
     there was one(state.order).setInitiative(iDef)
+  }
+
+  private def execRemoveCombatantFromRosterEvent = {
+    val state = CombatState.empty.transitionWith(List(evtAddCombA, evtAddCombNoId))
+    val newState = RemoveCombatantFromRosterEvent(combA).transition(state)
+
+    (newState.roster.isDefinedAt(combA) must beFalse) and
+      (state.roster.isDefinedAt(combA) must beTrue)
+  }
+
+  private def execRemoveCombatantFromRosterEventWithInitiative = {
+    val state = CombatState.empty.transitionWith(List(evtAddCombA, evtAddCombNoId, evtAddComb2, evtInitA))
+    val newState = RemoveCombatantFromRosterEvent(combA).transition(state)
+
+    (newState.roster.isDefinedAt(combA) must beFalse) and
+      (newState.order.isInSequence(combA) must beFalse) and
+      (state.order.isInSequence(combA) must beTrue) and
+      (state.roster.entries.keys must contain(comb1, comb2))
+  }
+
+  private def execCombatComment = {
+    val state = SetCombatCommentEvent(Some("new comment")).transition(emptyState)
+    (state.comment must_== Some("new comment"))
+  }
+
+  private def execCombatCommentClear = {
+    val state = SetCombatCommentEvent(None).transition(emptyState)
+    (state.comment must_== None)
   }
 }
 
