@@ -14,18 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.tracker.transition
+package vcc.dnd4e.tracker.event
 
 import org.specs2.mock.Mockito
 import org.specs2.{SpecificationWithJUnit}
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.tracker.event._
 import vcc.dnd4e.tracker.StateLensFactory
 import vcc.scalaz.Lens
 import java.lang.Exception
 import vcc.controller.IllegalActionException
 
-class InitiativeTransitionStepTest extends SpecificationWithJUnit with SampleStateData {
+class InitiativeEventTest extends SpecificationWithJUnit with SampleStateData {
 
   def is =
     "DelayEffectListTransformStep" ^
