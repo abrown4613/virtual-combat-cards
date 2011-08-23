@@ -16,8 +16,7 @@
  */
 package vcc.dnd4e.tracker.event
 
-import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
-import vcc.dnd4e.tracker.common.InitiativeDefinition
+import vcc.dnd4e.tracker.common.{CombatantID, CombatState, SampleStateData, InitiativeDefinition}
 
 /**
  * Library of Event-Sourcing events to help build behaviour test
@@ -28,4 +27,10 @@ trait EventSourceSampleEvents extends SampleStateData {
   protected val evtAddComb2 = AddCombatantEvent(Some(comb2), null, entityMonster)
   protected val emptyState = CombatState.empty
   protected val evtInitA = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(10)))
+  protected val evtStart = StartCombatEvent
+  protected val evtEnd = EndCombatEvent
+
+  protected def meAddToOrder(cid: CombatantID, bonus: Int, init: Int*) = AddCombatantToOrderEvent(InitiativeDefinition(cid, bonus, init.toList))
+
+  protected def killEvent(cid: CombatantID) = ApplyDamageEvent(cid, 1000)
 }
