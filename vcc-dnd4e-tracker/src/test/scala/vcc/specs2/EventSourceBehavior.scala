@@ -23,23 +23,29 @@ import org.specs2.{SpecificationWithJUnit, Specification}
 
 trait EventSourceBehavior[S, E, C] {
   self: Specification =>
-  //self: MustExpectations =>
 
   /**
-   * Build state form a initial and a service of domain events.
+   * Build state from an initial and a service of domain events.
    */
-  def given(s: S, evt: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
+  def given(state: S, evt: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
     val result: Either[S, Result] = try {
-      Left(buildState(s, evt))
+      Left(buildState(state, evt))
     } catch {
       case e => Right(new Error("Failed to build given state", new ThrowableException(e)))
     }
     new Given(result)
   }
 
+  /**
+   * Build a state from initial state a sequence of event and some more domain event.
+   */
+  def given(s: S, events: Seq[E], moreEvents: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
+    given(s, (events ++ moreEvents): _*)(buildState)
+  }
+
   class Given(stateOrError: Either[S, Result]) {
     /**
-     * Execute a command.
+     * Execute a command on the state provided by the given
      */
     def when(cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen(stateOrError, cmd, runner)
   }
@@ -47,12 +53,13 @@ trait EventSourceBehavior[S, E, C] {
   class GivenWithWhen(stateOrError: Either[S, Result], cmd: C, runner: (S, C) => Seq[E]) {
 
     /**
-     * Check if the command generates the appropriate result
+     * Check if the command generates the appropriate sequence of domain events.
      */
     def then(expected: E*): Result = then(be_==(expected))
 
     /**
-     * Check resulting
+     * Check if the command generates a sequence of events that matches the specified matcher
+     * @param matcher A Specs2 matcher on a Iterable of domain events.
      */
     def then(matcher: Matcher[Iterable[E]]): Result = {
       stateOrError match {
@@ -85,15 +92,18 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
 
   implicit val runTest: (Int, String) => Seq[Int] = {
     (state, command) =>
-      command.split(",").map(_.toInt)
+      command.split(",").map(_.toInt + state)
 
   }
 
   def is =
-    "EventSourceBehavior" ^
-      "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").then(4, 5) ^
-      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(5, 6).inOrder) ^
+    "EventSourceBehavior".title ^
+      "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").then(10, 11) ^
+      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(11, 12).inOrder) ^
       "given 0 and 1,2,3 when '4,a' failWith()" ! given(0, 1, 2, 3).when("4,a").failWith(new NumberFormatException("For input string: \"a\"")) ^
+      "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").then(10) ^
+      "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").then(19) ^
+      "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").then(14) ^
       "given 0 and 1,-2 when '4' then 4" ! e1 ^
       end
 
