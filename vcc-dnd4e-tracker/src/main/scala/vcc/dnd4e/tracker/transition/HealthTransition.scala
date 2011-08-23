@@ -16,19 +16,34 @@
  */
 package vcc.dnd4e.tracker.transition
 
-import vcc.dnd4e.tracker.common.{HealthStatus, CombatState, HealthTracker, CombatantID}
+import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
+import vcc.dnd4e.tracker.event._
+import vcc.controller.IllegalActionException
 
 /**
  * Base health modification transition.
  */
-abstract class HealthTransition(target: CombatantID) extends CombatTransition {
+abstract class HealthTransition(target: CombatantID) extends EventCombatTransition {
   /**
    * Override this one
    */
-  protected def transitionHealth(ht: HealthTracker): HealthTracker
+  /*
+ protected def transitionHealth(ht: HealthTracker): HealthTracker
 
-  def transition(iState: CombatState): CombatState = {
-    iState.lensFactory.combatantHealth(target).modIfChanged(iState, ht => transitionHealth(ht))
+ override def transition(iState: CombatState): CombatState = {
+   if (!iState.roster.isDefinedAt(target))
+     throw new IllegalActionException("Combatant " + target + " not in combat")
+   iState.lensFactory.combatantHealth(target).modIfChanged(iState, ht => transitionHealth(ht))
+ }
+  */
+
+  protected def makeTransitionEvent(): CombatStateEvent
+
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(target))
+      throw new IllegalActionException("Combatant " + target + " not in combat")
+
+    makeTransitionEvent() :: Nil
   }
 }
 
@@ -37,20 +52,22 @@ abstract class HealthTransition(target: CombatantID) extends CombatTransition {
  * @param target Target of damage
  * @param amount How many hit points to take away.
  */
-case class DamageTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
+case class DamageTransition(target: CombatantID, amount: Int) extends EventCombatTransition {
 
-  override def transition(iState: CombatState): CombatState = {
-    val nState = super.transition(iState)
-    val lf = iState.lensFactory
-    val hl = lf.combatantHealth(target)
-    if (hl.get(nState).status == HealthStatus.Dead && nState.rules.areAllCombatantInOrderDead(nState)) {
-      nState.endCombat()
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(target))
+      throw new IllegalActionException("Combatant " + target + " not in combat")
+
+    // We need to check if all combatant are after we apply damage
+    val damageEvent = ApplyDamageEvent(target, amount)
+    val nState = damageEvent.transition(iState)
+
+    if (nState.rules.areAllCombatantInOrderDead(nState)) {
+      damageEvent :: EndCombatEvent :: Nil
     } else {
-      nState
+      damageEvent :: Nil
     }
   }
-
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.applyDamage(amount)
 }
 
 /**
@@ -59,7 +76,7 @@ case class DamageTransition(target: CombatantID, amount: Int) extends HealthTran
  * @param amount How many hit points to restore.
  */
 case class HealTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.heal(amount)
+  protected def makeTransitionEvent(): CombatStateEvent = ApplyHealingEvent(target, amount)
 }
 
 /**
@@ -68,7 +85,7 @@ case class HealTransition(target: CombatantID, amount: Int) extends HealthTransi
  * @param amount How many points to set.
  */
 case class SetTemporaryHPTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.setTemporaryHitPoints(amount, false)
+  protected def makeTransitionEvent(): CombatStateEvent = SetTemporaryHitPointsEvent(target, amount)
 }
 
 /**
@@ -76,7 +93,7 @@ case class SetTemporaryHPTransition(target: CombatantID, amount: Int) extends He
  * @param target Target that failed check
  */
 case class FailDeathSaveTransition(target: CombatantID) extends HealthTransition(target) {
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.failDeathSave()
+  protected def makeTransitionEvent(): CombatStateEvent = FailDeathSaveEvent(target)
 }
 
 /**
@@ -84,5 +101,5 @@ case class FailDeathSaveTransition(target: CombatantID) extends HealthTransition
  * @param target Target to restore
  */
 case class RevertDeathTransition(target: CombatantID) extends HealthTransition(target) {
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.raiseFromDead()
+  protected def makeTransitionEvent(): CombatStateEvent = RevertDeathEvent(target)
 }
