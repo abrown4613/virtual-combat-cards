@@ -21,14 +21,14 @@ import org.specs2.Specification
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.event.CombatStateEvent
 
-trait CombatStateEventSourceBehavior extends EventSourceBehavior[CombatState,CombatStateEvent,EventCombatTransition] {
-  self : Specification =>
+trait CombatStateEventSourceBehavior extends EventSourceBehavior[CombatState, CombatStateEvent, EventCombatTransition] {
+  self: Specification =>
 
-  implicit val runner: (CombatState, EventCombatTransition) => Seq[CombatStateEvent] = {
+  implicit val whenCommandRunner: (CombatState, EventCombatTransition) => Seq[CombatStateEvent] = {
     (s, c) => c.changeEvents(s)
   }
 
-  implicit val builder: (CombatState, Seq[CombatStateEvent]) => CombatState = {
+  implicit val stateBuilderFromEvents: (CombatState, Seq[CombatStateEvent]) => CombatState = {
     (s, evts) => s.transitionWith(evts.toList)
   }
 
