@@ -48,6 +48,23 @@ trait EventSourceBehavior[S, E, C] {
      * Execute a command on the state provided by the given
      */
     def when(cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen(errorOrState, cmd, runner)
+
+    /**
+     * Compose additional given steps based on a command. This is done by executing the command (using the runner) to
+     * generate a set of events, then applying the evento to the given state.
+     * @param cmd The command to be executed
+     */
+    def given(cmds: C*)(implicit runner: (S, C) => Seq[E], buildState: (S, Seq[E]) => S): Given = {
+      val n: Either[Result, S] = errorOrState match {
+        case l@Left(r) => l
+        case Right(state) => try {
+          Right(cmds.foldLeft(state)((ns, cmd) => buildState(ns, runner(ns, cmd))))
+        } catch {
+          case e => Left(new Error("Failed to build given state (with command)", new ThrowableException(e)))
+        }
+      }
+      new Given(n)
+    }
   }
 
   class GivenWithWhen(errorOrState: Either[Result, S], cmd: C, runner: (S, C) => Seq[E]) {
@@ -95,7 +112,6 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
   implicit val runTest: (Int, String) => Seq[Int] = {
     (state, command) =>
       command.split(",").map(_.toInt + state)
-
   }
 
   def is =
@@ -106,11 +122,19 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
       "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").then(10) ^
       "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").then(19) ^
       "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").then(14) ^
-      "given 0 and 1,-2 when '4' then 4" ! e1 ^
+      "given 0 and 1,-2 when '4' then 4" ! error1 ^
+      "given 0 and Seq(1,2) given(3) when '4' then 10" ! given(0, 1, 2).given("3").when("4").then(13) ^
+      "given 0 and Seq(1,2) given('1','1') when '4' then 15" ! given(0, 1, 2).given("1,1", "1").when("4").then(27) ^
+      "given 0 and Seq(1,2) given(3a) when '4' then 10" ! error2 ^
       end
 
-  def e1 = {
+  def error1 = {
     val result = (given(0, 1, -2).when("4").then(4))
     (result.isError must beTrue) and (result.message must_== "Failed to build given state")
+  }
+
+  def error2 = {
+    val result = given(0, 1, 2).given("3a").when("4").then(10)
+    (result.isError must beTrue) and (result.message must_== "Failed to build given state (with command)")
   }
 }
