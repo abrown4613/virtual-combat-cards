@@ -17,212 +17,132 @@
 package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
-import org.specs2.mock.Mockito
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
-import vcc.scalaz.Lens
 import vcc.controller.IllegalActionException
 
-class InitiativeTransitionTest extends SpecificationWithJUnit {
+class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   def is =
-    "on EndRound" ^
-      "update a normal Acting combatant" ! endRound().doUpdateEffects() ^
-      "update a Delaying combatant but dont rotate" ! endRound().doUpdateAfterDelaying() ^
-      endp ^
-      "on StartRound" ^
-      "  update tracker and effect lists" ! startRound().doUpdateAndEffects() ^
-      endp ^
-      "on DelayRound" ^
-      "  update tracker and call proper effect transformation" ! delayRound().doUpdateAndEffects() ^
-      endp ^
-      "on ReadyAction" ^
-      "  update tracker and rotate" ! readyRound().doIt() ^
-      endp ^
-      "on ExecuteReady" ^
-      "  update tracker and move up" ! executeReady().doIt() ^
-      endp ^
-      "on MoveUp from a delay" ^
-      "  update tracker and move up and rotate to delaying" ! moveUpRound().doIt() ^
-      endp ^
-      "on MoveBefore" ^
-      "  throw exceptions if move is not allowed" ! moveBefore().illegalMove() ^
-      "  adjust when first moves" ! moveBefore().validMoveOfFirst() ^
-      "  adjust when other than first moves" ! moveBefore().validMoveOfNotFirst() ^
+    "InitiativeTransition".title ^
+      mustStart ^
+      mustEndRound ^
+      execDelay ^
+      execEndRoundOfDelaying ^
+      execMoveUp ^
+      execReady ^
+      execExecuteReady ^
+      execMoveBefore ^
+      end
+
+  private val buildEvents = Seq(
+    evtAddCombA, evtAddComb2, evtAddCombNoId,
+    meAddToOrder(combA, 5, 10), meAddToOrder(comb1, 1, 10), meAddToOrder(comb2, 1, 1),
+    evtStart)
+  private val smallCombatBuildEvents = Seq(
+    evtAddCombA, evtAddCombNoId, meAddToOrder(comb1, 1, 1), meAddToOrder(combA, 5, 10), evtStart)
+
+  private val evtStartRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound)
+  private val evtDelayRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction)
+  private val evtReadyRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction)
+  private val evtEndRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound)
+  private val evtStartRound1 = InitiativeTrackerUpdateEvent(io1_0, InitiativeAction.StartRound)
+  private val evtEndRound1 = InitiativeTrackerUpdateEvent(io1_0, InitiativeAction.EndRound)
+
+  private def mustStart = {
+    "Start round" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents) when (StartRoundTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "start round" !
+        (given(emptyState, buildEvents).
+          when(StartRoundTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound), EffectListTransformEvent(EffectTransformation.startRound(ioA0)))) ^
+      endp
+  }
+
+  private def mustEndRound = {
+    "do End round" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents, evtStartRoundA) when (EndRoundTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "end round and rotate" !
+        (given(emptyState, buildEvents).
+          when(EndRoundTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), RotateRobinEvent, EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) ^
+      endp
+  }
+
+  private def execDelay = {
+    "do Delay round" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents, evtStartRoundA) when (DelayTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "delay and rotate" !
+        (given(emptyState, buildEvents, evtStartRoundA).
+          when(DelayTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
+      endp
+    //TODO Check for illegal state before execute
+  }
+
+  private def execEndRoundOfDelaying = {
+    "do end round of delaying" !
+      (given(emptyState, smallCombatBuildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent, evtStartRound1, evtEndRound1, RotateRobinEvent).
+        when(EndRoundTransition(ioA0)).
+        then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), EffectListTransformEvent(EffectTransformation.endRound(ioA0))))
+  }
+
+  private def execMoveUp = {
+    "do Move Up round" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent) when (MoveUpTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "move up, move to first, and set robin" !
+        (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent).
+          when(MoveUpTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp), MoveBeforeFirstEvent(ioA0), SetRobinEvent(ioA0))) ^
       endp
 
-  trait TestBase extends Mockito {
-    val combA = CombatantID("A")
-    val combB = CombatantID("B")
-    val ioA0 = InitiativeOrderID(combA, 0)
-    val ioB0 = InitiativeOrderID(combB, 0)
-    val mState = mock[CombatState]
-    val mState2 = mock[CombatState]
-    val mLF = mock[StateLensFactory]
-    mState.lensFactory returns mLF
-
-    val transition: CombatTransition
   }
 
-  case class endRound() extends TestBase {
+  private def execReady = {
+    "do Ready action" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents, evtStartRoundA) when (ReadyActionTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "delay and rotate" !
+        (given(emptyState, buildEvents, evtStartRoundA).
+          when(ReadyActionTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction))) ^
+      endp
 
-    val transition = EndRoundTransition(ioA0)
-
-    def doUpdateEffects() = {
-      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeState.Acting), (s, v) => s)
-      mLF.initiativeTrackerLens(ioA0) returns lens
-
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound),
-        RotateRobinEvent,
-        EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) returns mState2
-
-      (transition.transition(mState) must_== mState2) and
-        (there was one(mState).transitionWith(List(
-          InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound),
-          RotateRobinEvent,
-          EffectListTransformEvent(EffectTransformation.endRound(ioA0)))))
-    }
-
-    def doUpdateAfterDelaying() = {
-      val lens = Lens[CombatState, InitiativeTracker]((x) => InitiativeTracker(ioA0, 2, 0, InitiativeState.Delaying), (s, v) => s)
-      mLF.initiativeTrackerLens(ioA0) returns lens
-
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound),
-        EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) returns mState2
-
-      (transition.transition(mState) must_== mState2) and
-        (there was one(mState).transitionWith(List(
-            InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound),
-          EffectListTransformEvent(EffectTransformation.endRound(ioA0)))))
-    }
   }
 
-  case class startRound() extends TestBase {
-    val transition = StartRoundTransition(ioA0)
+  private def execExecuteReady = {
+    val events = buildEvents ++ Seq(evtStartRoundA, evtReadyRoundA, evtEndRoundA, RotateRobinEvent, evtStartRound1)
+    "do Move Up round" ^
+      "fail if not defined" !
+        (given(emptyState, events) when (ExecuteReadyTransition(ioB0)) must throwAn[IllegalActionException]) ^
+      "move up, move to first, and set robin" !
+        (given(emptyState, events).
+          when(ExecuteReadyTransition(ioA0)).
+          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioA0))) ^
+      endp
 
-    def doUpdateAndEffects() = {
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound),
-        EffectListTransformEvent(EffectTransformation.startRound(ioA0)))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound),
-        EffectListTransformEvent(EffectTransformation.startRound(ioA0))))) and
-        (nState must_== mState2)
-    }
   }
 
-  case class delayRound() extends TestBase {
-    val transition = DelayTransition(ioA0)
-
-    def doUpdateAndEffects() = {
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction),
-        RotateRobinEvent,
-        DelayEffectListTransformEvent(ioA0))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction),
-        RotateRobinEvent,
-        DelayEffectListTransformEvent(ioA0)))) and
-        (nState must_== mState2)
-    }
+  private def execMoveBefore = {
+    val exception: IllegalActionException = new IllegalActionException("Cant move " + ioA0 + " before " + io2_0)
+    "do Move Before" ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents) when (MoveBeforeTransition(ioA0, ioB0)) must throwAn[IllegalActionException]) ^
+      "fail if not defined" !
+        (given(emptyState, buildEvents) when (MoveBeforeTransition(ioB0, ioA0)) must throwAn[IllegalActionException]) ^
+      "fail if not allowed" !
+        (given(emptyState, buildEvents, evtStartRoundA) when (MoveBeforeTransition(ioA0, io2_0)) failWith exception) ^
+      "moving first out should move rotate then move" ! //TODO This will deprecate with new always acting
+        (given(emptyState, buildEvents).
+          when(MoveBeforeTransition(ioA0, io2_0)).
+          then(RotateRobinEvent, MoveBeforeOtherEvent(ioA0, io2_0))) ^
+      "moving any but the first is simple" !
+        (given(emptyState, buildEvents).
+          when(MoveBeforeTransition(io2_0, io1_0)).
+          then(MoveBeforeOtherEvent(io2_0, io1_0))) ^
+      endp
   }
-
-  case class readyRound() extends TestBase {
-    val transition = ReadyActionTransition(ioA0)
-
-    def doIt() = {
-      mState.transitionWith(List(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction)))) and
-        (nState must_== mState2)
-
-    }
-  }
-
-  case class executeReady() extends TestBase {
-    val transition = ExecuteReadyTransition(ioA0)
-
-    def doIt() = {
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady),
-        MoveBeforeFirstEvent(ioA0))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady),
-        MoveBeforeFirstEvent(ioA0)))) and
-        (nState must_== mState2)
-    }
-  }
-
-  case class moveUpRound() extends TestBase {
-    val transition = MoveUpTransition(ioA0)
-
-    def doIt() = {
-      mState.transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp),
-        MoveBeforeFirstEvent(ioA0),
-        SetRobinEvent(ioA0))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(
-        InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp),
-        MoveBeforeFirstEvent(ioA0),
-        SetRobinEvent(ioA0)))) and
-        (nState must_== mState2)
-
-    }
-  }
-
-  case class moveBefore() extends TestBase {
-    val transition = MoveBeforeTransition(ioA0, ioB0)
-
-    val mRule = mock[CombatState.Rules]
-    mState.rules returns mRule
-
-
-    val mOrder = mock[InitiativeOrder]
-    val mOrderLens: Lens[CombatState, InitiativeOrder] = Lens(x => mOrder, (s, t) => s)
-    mLF.orderLens returns mOrderLens
-
-    def illegalMove() = {
-      mRule.canMoveBefore(mState, ioA0, ioB0) returns false
-      (transition.transition(mState) must throwAn(new IllegalActionException("Cant move " + ioA0 + " before " + ioB0))) and
-        (there was one(mRule).canMoveBefore(mState, ioA0, ioB0))
-    }
-
-    def validMoveOfFirst() = {
-      mRule.canMoveBefore(mState, ioA0, ioB0) returns true
-      mOrder.nextUp returns Some(ioA0)
-
-      mState.transitionWith(List(
-        RotateRobinEvent,
-        MoveBeforeOtherEvent(ioA0, ioB0))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(
-        RotateRobinEvent,
-        MoveBeforeOtherEvent(ioA0, ioB0)))) and
-        (nState must_== mState2)
-    }
-
-    def validMoveOfNotFirst() = {
-      mRule.canMoveBefore(mState, ioA0, ioB0) returns true
-      mOrder.nextUp returns Some(InitiativeOrderID(CombatantID("1"), 0))
-
-      mState.transitionWith(List(MoveBeforeOtherEvent(ioA0, ioB0))) returns mState2
-
-      val nState = transition.transition(mState)
-      (there was one(mState).transitionWith(List(MoveBeforeOtherEvent(ioA0, ioB0)))) and
-        (nState must_== mState2)
-    }
-  }
-
 }
