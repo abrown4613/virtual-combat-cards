@@ -46,7 +46,6 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private val evtReadyRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction)
   private val evtEndRoundA = InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound)
   private val evtStartRound1 = InitiativeTrackerUpdateEvent(io1_0, InitiativeAction.StartRound)
-  private val evtEndRound1 = InitiativeTrackerUpdateEvent(io1_0, InitiativeAction.EndRound)
 
   private def mustStart = {
     "Start round" ^
@@ -75,7 +74,8 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
       "fail if not defined" !
         (given(emptyState, buildEvents, evtStartRoundA) when (DelayTransition(ioB0)) must throwAn[IllegalActionException]) ^
       "delay and rotate" !
-        (given(emptyState, buildEvents, evtStartRoundA).
+        (given(emptyState, buildEvents).
+          given(StartRoundTransition(ioA0)).
           when(DelayTransition(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
       endp
@@ -84,7 +84,8 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
 
   private def execEndRoundOfDelaying = {
     "do end round of delaying" !
-      (given(emptyState, smallCombatBuildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent, evtStartRound1, evtEndRound1, RotateRobinEvent).
+      (given(emptyState, smallCombatBuildEvents).
+        given(StartRoundTransition(ioA0), DelayTransition(ioA0), StartRoundTransition(io1_0), EndRoundTransition(io1_0)).
         when(EndRoundTransition(ioA0)).
         then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), EffectListTransformEvent(EffectTransformation.endRound(ioA0))))
   }
