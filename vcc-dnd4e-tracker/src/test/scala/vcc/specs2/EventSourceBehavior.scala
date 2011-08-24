@@ -18,20 +18,20 @@ package vcc.specs2
 
 import org.specs2.execute.{Error, Result}
 import org.specs2.execute.Error.ThrowableException
-import org.specs2.matcher.{Matcher}
-import org.specs2.{SpecificationWithJUnit, Specification}
+import org.specs2.{SpecificationWithJUnit}
+import org.specs2.matcher.{MustMatchers, Matcher}
 
 trait EventSourceBehavior[S, E, C] {
-  self: Specification =>
+  self: MustMatchers =>
 
   /**
    * Build state from an initial and a service of domain events.
    */
   def given(state: S, evt: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
-    val result: Either[S, Result] = try {
-      Left(buildState(state, evt))
+    val result: Either[Result, S] = try {
+      Right(buildState(state, evt))
     } catch {
-      case e => Right(new Error("Failed to build given state", new ThrowableException(e)))
+      case e => Left(new Error("Failed to build given state", new ThrowableException(e)))
     }
     new Given(result)
   }
@@ -43,14 +43,14 @@ trait EventSourceBehavior[S, E, C] {
     given(s, (events ++ moreEvents): _*)(buildState)
   }
 
-  class Given(stateOrError: Either[S, Result]) {
+  class Given(errorOrState: Either[Result, S]) {
     /**
      * Execute a command on the state provided by the given
      */
-    def when(cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen(stateOrError, cmd, runner)
+    def when(cmd: C)(implicit runner: (S, C) => Seq[E]) = new GivenWithWhen(errorOrState, cmd, runner)
   }
 
-  class GivenWithWhen(stateOrError: Either[S, Result], cmd: C, runner: (S, C) => Seq[E]) {
+  class GivenWithWhen(errorOrState: Either[Result, S], cmd: C, runner: (S, C) => Seq[E]) {
 
     /**
      * Check if the command generates the appropriate sequence of domain events.
@@ -62,9 +62,9 @@ trait EventSourceBehavior[S, E, C] {
      * @param matcher A Specs2 matcher on a Iterable of domain events.
      */
     def then(matcher: Matcher[Iterable[E]]): Result = {
-      stateOrError match {
-        case Left(state) => runner(state, cmd) must matcher
-        case Right(r) => r
+      errorOrState match {
+        case Right(state) => runner(state, cmd) must matcher
+        case Left(r) => r
       }
     }
 
@@ -72,11 +72,13 @@ trait EventSourceBehavior[S, E, C] {
      * Check if the When produced a given exception:
      * @param e Expected exception for the when command.
      */
-    def failWith[T <: Throwable](e: T): Result = {
-      stateOrError match {
-        case Left(state) =>
-          runner(state, cmd) must throwAn(e)
-        case Right(r) => r
+    def failWith[T <: Throwable](e: T) = this.must(throwAn(e))
+
+    def must(matcher: Matcher[Any]): Result = {
+      errorOrState match {
+        case Right(state) =>
+          runner(state, cmd) must matcher
+        case Left(r) => r
       }
     }
   }
@@ -100,7 +102,7 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
     "EventSourceBehavior".title ^
       "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").then(10, 11) ^
       "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(11, 12).inOrder) ^
-      "given 0 and 1,2,3 when '4,a' failWith()" ! given(0, 1, 2, 3).when("4,a").failWith(new NumberFormatException("For input string: \"a\"")) ^
+      "given 0 and 1,2,3 when '4,a' failWith()" ! (given(0, 1, 2, 3) when ("4,a") must throwA[NumberFormatException]) ^
       "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").then(10) ^
       "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").then(19) ^
       "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").then(14) ^
