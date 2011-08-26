@@ -18,6 +18,8 @@ package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.EffectTransformation._
+import vcc.controller.IllegalActionException
+import vcc.dnd4e.tracker.event.{ChangeEffectListEvent, AddEffectEvent, CombatStateEvent}
 
 /**
  * Locates target in initiative order, adds new effect to list.
@@ -26,33 +28,44 @@ import vcc.dnd4e.tracker.common.EffectTransformation._
  * @param condition Condition of the effect
  * @param duration Duration of effect
  */
-case class AddEffectTransition(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration) extends CombatTransition {
-  def transition(iState: CombatState): CombatState = {
-    val ell = iState.lensFactory.combatantEffectList(target)
-    /*
-        val rl = lf.rosterLens
-        //TODO: This may not be really needed
-        if (!rl.get(iState).isDefinedAt(source))
-          throw new IllegalActionException(source + " is not in combat")
-    */
-    ell.set(iState, ell.get(iState).addEffect(source, condition, duration))
+case class AddEffectTransition(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(target))
+      throw new IllegalActionException(target + " not in roster")
+    AddEffectEvent(target, source, condition, duration) :: Nil
   }
 }
 
 /**
+ * Update duration to sustain an effect
+ */
+case class SustainEffectTransition(eid: EffectID) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(eid.combId))
+      throw new IllegalActionException(eid.combId + " not in roster")
+    ChangeEffectListEvent(eid.combId, sustainEffect(eid)) :: Nil
+  }
+}
+
+/**
+ * Update condition for an effect
  *
  */
-case class SustainEffectTransition(eid: EffectID) extends CombatTransition {
-  def transition(iState: CombatState): CombatState =
-    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, s => s.transformAndFilter(sustainEffect(eid)))
+case class UpdateEffectConditionTransition(eid: EffectID, newCondition: Condition) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(eid.combId))
+      throw new IllegalActionException(eid.combId + " not in roster")
+    ChangeEffectListEvent(eid.combId, updateCondition(eid, newCondition)) :: Nil
+  }
 }
 
-case class UpdateEffectConditionTransition(eid: EffectID, newCondition: Condition) extends CombatTransition {
-  def transition(iState: CombatState): CombatState =
-    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(updateCondition(eid, newCondition)))
-}
-
-case class CancelEffectTransition(eid: EffectID) extends CombatTransition {
-  def transition(iState: CombatState): CombatState =
-    iState.lensFactory.combatantEffectList(eid.combId).modIfChanged(iState, el => el.transformAndFilter(cancelEffect(eid)))
+/**
+ * Cancel effect
+ */
+case class CancelEffectTransition(eid: EffectID) extends EventCombatTransition {
+  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+    if (!iState.roster.isDefinedAt(eid.combId))
+      throw new IllegalActionException(eid.combId + " not in roster")
+    ChangeEffectListEvent(eid.combId, cancelEffect(eid)) :: Nil
+  }
 }

@@ -18,71 +18,74 @@ package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
-import vcc.dnd4e.tracker.StateLensFactory
-import org.specs2.mock.Mockito
 import vcc.dnd4e.tracker.common._
 import vcc.controller.IllegalActionException
+import vcc.dnd4e.tracker.event._
 
-class EffectTransitionTest extends SpecificationWithJUnit with SampleStateData {
-  val eid = EffectID(combA, 11)
+class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
+  private val eid = EffectID(combA, 11)
+  private val eidBroken = EffectID(combB, 0)
+
+  private val buildEvents = Seq(evtAddCombA, evtAddComb2, evtAddCombNoId,
+    meAddToOrder(combA, 5, 15), meAddToOrder(comb1, 4, 14), meAddToOrder(comb2, 3, 13), evtStart)
+  private val addEffectTransition = AddEffectTransition(combA, combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
 
   def is =
-    "AddEffectTransition" ^
-      "when we find source and target" ! m().testAddEffect ^
-      "throw exeception if source no in combat" ! m().testAddEffectWithMissingSource.pendingUntilFixed("TODO Not really need") ^
-      endp ^
-      "CancelEffectTransition" ! m().cancelEffect ^
-      "SustainEffectTransition" ! m().sustainEffect ^
-      "UpdateEffectConditionTransition" ! m().testUpdateEffect ^
+    "Effect transition test".title ^
+      execAddEffect ^
+      execCancelEffectTransition ^
+      execSustainEffectTransition ^
+      execUpdateEffectTransition ^
+      end
+
+  private val conditionGood = Condition.Generic("nice", true)
+  private val conditionBad = Condition.Generic("bad", false)
+  private val durationEoRA0 = Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain)
+
+  private def execAddEffect = {
+    val addedEffectEvent = AddEffectEvent(combA, combB, conditionGood, durationEoRA0)
+    val brokenEffectTransition = AddEffectTransition(combB, combB, conditionGood, durationEoRA0)
+    "Add Effect" ^
+      "add effect" !
+        (given(emptyState, buildEvents) when (addEffectTransition) then (addedEffectEvent)) ^
+      "fail if target not defined" !
+        (given(emptyState, buildEvents) when (brokenEffectTransition) must (throwAn[IllegalActionException])) ^
       endp
+  }
 
-  case class m() extends Mockito {
+  private def execCancelEffectTransition = {
+    val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.cancelEffect(eid))
+    val goodTransition = CancelEffectTransition(eid)
+    val badTransition = CancelEffectTransition(eidBroken)
+    "Cancel Efect" ^
+      "do cancel effect" !
+        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+      "fail because target not defined" !
+        (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
+      endp
+  }
 
-    val mEL = mock[EffectList]
-    val mEL2 = mock[EffectList]
-    val state: CombatState = StateBuilder.emptyState().
-      addCombatant(Some(combA), null, entityPc1).
-      addCombatant(Some(combB), null, entityPc2).
-      modifyEffectList(combA, x => mEL).
-      done
+  private def execSustainEffectTransition = {
+    val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.sustainEffect(eid))
+    val goodTransition = SustainEffectTransition(eid)
+    val badTransition = SustainEffectTransition(eidBroken)
+    "Sustain Efect" ^
+      "do cancel effect" !
+        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+      "fail because target not defined" !
+        (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
+      endp
+  }
 
-    def testAddEffect = {
-      val trans = AddEffectTransition(combA, combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
-      mEL.addEffect(combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain)) returns mEL2
-      val nState = trans.transition(state)
-      (there was one(mEL).addEffect(combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))) and
-        (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
-    }
-
-    def testAddEffectWithMissingSource = {
-      val trans = AddEffectTransition(combA, comb1, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
-
-      (trans.transition(state) must throwA(new IllegalActionException(comb1 + " is not in combat"))) and
-        (there was no(mEL).addEffect(any, any, any))
-    }
-
-    def cancelEffect = {
-      val trans = CancelEffectTransition(eid)
-      mEL.transformAndFilter(EffectTransformation.cancelEffect(eid)) returns mEL2
-      val nState = trans.transition(state)
-      (there was one(mEL).transformAndFilter(EffectTransformation.cancelEffect(eid))) and
-        (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
-    }
-
-    def sustainEffect = {
-      val trans = SustainEffectTransition(eid)
-      mEL.transformAndFilter(EffectTransformation.sustainEffect(eid)) returns mEL2
-      val nState = trans.transition(state)
-      (there was one(mEL).transformAndFilter(EffectTransformation.sustainEffect(eid))) and
-        (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
-    }
-
-    def testUpdateEffect = {
-      val trans = UpdateEffectConditionTransition(eid, Condition.Generic("other", false))
-      mEL.transformAndFilter(EffectTransformation.updateCondition(eid, Condition.Generic("other", false))) returns mEL2
-      val nState = trans.transition(state)
-      (there was one(mEL).transformAndFilter(EffectTransformation.updateCondition(eid, Condition.Generic("other", false)))) and
-        (StateLensFactory.combatantEffectList(combA).get(nState) must_== mEL2)
-    }
+  private def execUpdateEffectTransition = {
+    val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.updateCondition(eid, conditionBad))
+    val goodTransition = UpdateEffectConditionTransition(eid, conditionBad)
+    val badTransition = UpdateEffectConditionTransition(eidBroken, conditionBad)
+    "Update Efect" ^
+      "do cancel effect" !
+        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+      "fail because target not defined" !
+        (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
+      endp
   }
 }
