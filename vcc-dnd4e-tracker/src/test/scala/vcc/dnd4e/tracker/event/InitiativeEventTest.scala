@@ -24,7 +24,7 @@ import vcc.scalaz.Lens
 import java.lang.Exception
 import vcc.controller.IllegalActionException
 
-class InitiativeEventTest extends SpecificationWithJUnit with SampleStateData {
+class InitiativeEventTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
   def is =
     "DelayEffectListTransformStep" ^
@@ -56,16 +56,12 @@ class InitiativeEventTest extends SpecificationWithJUnit with SampleStateData {
 
     val (mELA, mELB, mEL1, mEL2) = (setupMock(), setupMock(), setupMock(), setupMock())
 
-    val state: CombatState = StateBuilder.emptyState().
-      addCombatant(Some(combA), null, entityPc1).
-      addCombatant(Some(combB), null, entityPc2).
-      addCombatant(None, null, entityMinion).
-      addCombatant(None, null, entityMonster).
-      modifyEffectList(combA, x => mELA).
-      modifyEffectList(combB, x => mELB).
-      modifyEffectList(comb1, x => mEL1).
-      modifyEffectList(comb2, x => mEL2).
-      done
+    val state: CombatState = {
+      CombatState.empty.
+        transitionWith(List(evtAddCombA, evtAddCombB, evtAddCombNoId, evtAddMonsterNoId)).
+        transitionWith(Seq((combA, mELA), (combB, mELB), (comb1, mEL1), (comb2, mEL2)).map(p =>
+        ForceChangeEvent(state => state.lensFactory.combatantEffectList(p._1).mod(state, x => p._2))).toList)
+    }
 
     def monsterDelays = {
       val ioi = io1_0
