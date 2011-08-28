@@ -23,9 +23,9 @@ import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.common.InitiativeAction
 
 object ActionTranslator {
-  implicit def transition2TransitionList(t: CombatTransition) = List(t)
+  implicit def transition2TransitionList(t: EventCombatTransition) = List(t)
 
-  def translate(action: TransactionalAction): List[CombatTransition] = {
+  def translate(action: TransactionalAction): List[EventCombatTransition] = {
     action match {
 
       //Damage action
