@@ -38,14 +38,14 @@ object AutomationCommandSource {
     }
   }
 
-  val autoStartDead = new PartialFunctionCommandStream[CombatState, CombatTransition]({
+  val autoStartDead = new PartialFunctionCommandStream[CombatState, EventCombatTransition]({
     case HeadStateAndHealth(ioi, Delaying, Dead) => EndRoundTransition(ioi)
     case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundTransition(ioi)
     case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundTransition(ioi)
     case HeadStateAndHealth(ioi, Acting, Dead) => EndRoundTransition(ioi)
   })
 
-  val autoStartNext = new PartialFunctionCommandStream[CombatState, CombatTransition]({
+  val autoStartNext = new PartialFunctionCommandStream[CombatState, EventCombatTransition]({
     case HeadStateAndHealth(ioi, Waiting, health) if (health != Dead) => StartRoundTransition(ioi)
     case HeadStateAndHealth(ioi, Ready, health) if (health != Dead) => StartRoundTransition(ioi)
     case HeadStateAndHealth(ioi, Delaying, health) if (health != Dead) => EndRoundTransition(ioi)

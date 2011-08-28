@@ -48,7 +48,7 @@ trait MigrationHandler {
       migrationLogger.debug("Action: {}", action)
       migrationLogger.debug("Mapped to {}: ", ts.mkString(" + "))
       val oldState = context.iState.value
-      context.iState.value = ts.foldLeft(context.iState.value)((s, t) => t.transition(s))
+      context.iState.value = ts.foldLeft(context.iState.value)((s, t) => s.transitionWith(t.changeEvents(s)))
       migrationLogger.debug("   New State: ")
       dumpState(context.iState.value, migrationLogger)
       // Check if we need to advance dead if we rotated

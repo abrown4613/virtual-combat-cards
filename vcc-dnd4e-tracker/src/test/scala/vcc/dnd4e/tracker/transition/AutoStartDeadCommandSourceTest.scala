@@ -18,10 +18,10 @@ package vcc.dnd4e.tracker.transition
 
 import org.specs2.SpecificationWithJUnit
 import org.specs2.mock.Mockito
-import vcc.tracker.CommandStream
 import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import vcc.dnd4e.tracker.event.{CombatStateEvent, AddCombatantEvent, EventSourceSampleEvents}
+import vcc.tracker.{StateCommand, CommandStream}
 
 class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -107,12 +107,12 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       StartRoundTransition(io1_0)))
   }
 
-  def miniDispatcher(cs: CommandStream[CombatState, CombatTransition], state: CombatState): (CombatState, List[CombatTransition]) = {
-    var trans = List.empty[CombatTransition]
+  def miniDispatcher(cs: CommandStream[CombatState, EventCombatTransition], state: CombatState): (CombatState, List[EventCombatTransition]) = {
+    var trans = List.empty[EventCombatTransition]
     var step = cs.get(state)
     var nState = state
     while (step.isDefined) {
-      nState = step.get._1.transition(nState)
+      nState = nState.transitionWith(step.get._1.changeEvents(nState))
       trans = step.get._1 :: trans
       step = (step.get._2).get(nState)
     }
