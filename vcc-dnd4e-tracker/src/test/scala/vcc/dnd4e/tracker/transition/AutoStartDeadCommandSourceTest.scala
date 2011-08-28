@@ -20,13 +20,15 @@ import org.specs2.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import vcc.tracker.CommandStream
 import vcc.dnd4e.tracker.common._
+import vcc.scalaz.Lens
+import vcc.dnd4e.tracker.event.{CombatStateEvent, AddCombatantEvent, EventSourceSampleEvents}
 
-class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleStateData {
+class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
   def is =
     "HeadStateAndHealth" ^
-      "  extract proper entry on started combat" ! Abc().e1 ^
-      "  extract None if combat not started" ! Abc().e2 ^
+      "  extract proper entry on started combat" ! extractor().e1 ^
+      "  extract None if combat not started" ! extractor().e2 ^
       endp ^
       "Automatic dead handling" ^
       "  auto end round of dead delaying" ! testEndDeadAndDelaying ^
@@ -45,69 +47,58 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
   private val cs = AutomationCommandSource.autoStartDead
   private val ns = AutomationCommandSource.autoStartNext
 
-  def testEndDeadAndDelaying = {
-    val state = getStateBuilder.
-      modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
-      done
+  private def testEndDeadAndDelaying = {
+    val state = getInitialState.transitionWith(List(
+      killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Delaying))))
 
     cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
   }
 
-  def testStartDeadAndReady = {
-    val state = getStateBuilder.
-      modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready)).
-      done
+  private def testStartDeadAndReady = {
+    val state = getInitialState.transitionWith(List(
+      killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Ready))))
 
     cs.get(state) must_== Some(StartRoundTransition(io1_0), cs)
   }
 
-  def testStartDeadAndWaiting = {
-    val state = getStateBuilder.
-      modifyHealth(comb1, StateBuilder.kill).
-      done
+  private def testStartDeadAndWaiting = {
+    val state = getInitialState.transitionWith(List(killEvent(comb1)))
 
     cs.get(state) must_== Some(StartRoundTransition(io1_0), cs)
   }
 
-  def testEndDeadAndActing = {
-    val state = getStateBuilder.
-      modifyHealth(comb1, StateBuilder.kill).
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Acting)).
-      done
+  private def testEndDeadAndActing = {
+    val state = getInitialState.transitionWith(List(
+      killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Acting))))
 
     cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
   }
 
 
-  def testStartWaitingLiving = {
-    val state = getStateBuilder.done
+  private def testStartWaitingLiving = {
+    val state = getInitialState
 
     ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
   }
 
-  def testStartReadyLiving = {
-    val state = getStateBuilder.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready)).
-      done
+  private def testStartReadyLiving = {
+    val state = getInitialState.transitionWith(List(
+      X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Ready))))
 
     ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
   }
 
-  def testEndRoundDelayingLiving = {
-    val state = getStateBuilder.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
-      done
+  private def testEndRoundDelayingLiving = {
+    val state = getInitialState.transitionWith(List(
+      X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Delaying))))
 
     ns.get(state) must_== Some(EndRoundTransition(io1_0), ns)
   }
 
 
   def testDelayingLivingAutomation = {
-    val state = workAroundToNoSymbol.
-      modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Delaying)).
-      done
+    val state = getInitialState.transitionWith(List(
+      X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Delaying))))
 
     val (nState, transitions) = miniDispatcher(ns, state)
 
@@ -115,11 +106,6 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       EndRoundTransition(io1_0),
       StartRoundTransition(io1_0)))
   }
-
-
-  //This is a workaround to a no-symbol error on the compiler
-  private def workAroundToNoSymbol = getStateBuilder.modifyInitiative(io1_0, it => it.copy(state = InitiativeState.Ready))
-
 
   def miniDispatcher(cs: CommandStream[CombatState, CombatTransition], state: CombatState): (CombatState, List[CombatTransition]) = {
     var trans = List.empty[CombatTransition]
@@ -133,13 +119,11 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
     (nState, trans.reverse)
   }
 
-  def testFullDeadAutomation = {
-    val state = workAroundToNoSymbol.
-      modifyHealth(comb1, StateBuilder.kill).
-      modifyHealth(combB, StateBuilder.kill).
-      modifyHealth(comb2, StateBuilder.kill).
-      modifyInitiative(io2_0, it => it.copy(state = InitiativeState.Delaying)).
-      done
+  private def testFullDeadAutomation = {
+    val state = getInitialState.transitionWith(List(
+      killEvent(comb1), killEvent(combB), killEvent(comb2),
+      X.initiativeChanger(io2_0, _.copy(state = InitiativeState.Delaying)),
+      X.initiativeChanger(io1_0, _.copy(state = InitiativeState.Ready))))
 
     val (nState, transitions) = miniDispatcher(cs, state)
 
@@ -153,40 +137,51 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with SampleS
       EndRoundTransition(ioB0)))
   }
 
-  def getStateBuilder = {
-    StateBuilder.emptyState().
-      addCombatant(Some(comb1), null, entityMonster).
-      addCombatant(Some(combA), null, entityPc1).
-      addCombatant(Some(comb2), null, entityMonster).
-      addCombatant(Some(combB), null, entityMonster).
-      setInitiative(comb2, 15).
-      setInitiative(combB, 14).
-      setInitiative(comb1, 20).
-      setInitiative(combA, 10).
-      startCombat()
+  private def getInitialState: CombatState = {
+    CombatState.empty.transitionWith(List(
+      evtAddMonsterNoId, evtAddCombA, evtAddMonsterNoId, AddCombatantEvent(Some(combB), null, entityMonster),
+      meAddToOrder(comb2, 1, 15), meAddToOrder(combB, 1, 14), meAddToOrder(comb1, 1, 20), meAddToOrder(combA, 2, 10),
+      evtStart))
   }
 
-  case class Abc() extends Mockito {
-    val mh = mock[HealthTracker]
-    val mi = mock[InitiativeTracker]
-    mh.status returns HealthStatus.Bloody
-    mi.state returns InitiativeState.Delaying
-    val state = StateBuilder.emptyState().
-      addCombatant(None, null, entityMonster).
-      addCombatant(None, null, entityMonster).
-      setInitiative(comb1, 10).
-      setInitiative(comb2, 5).
-      startCombat().
-      modifyHealth(comb1, x => mh).
-      modifyInitiative(io1_0, x => mi).
-      done
+  object X extends Mockito {
+
+    def mockCombatantAspect[T](state: CombatState, lens: Lens[CombatState, T])(implicit cm: ClassManifest[T]): (CombatState, T) = {
+      val mockT = mock[T](cm) //(lens.get(state))
+      (lens.mod(state, x => mockT), mockT)
+    }
+
+    def spyCombatantAspect[T](state: CombatState, lens: Lens[CombatState, T]): (CombatState, T) = {
+      val spyT = spy(lens.get(state))
+      (lens.mod(state, x => spyT), spyT)
+    }
+
+    /**
+     * THis is hack to allow manipulating state and changing
+     */
+    def initiativeChanger(ioi: InitiativeOrderID, mod: InitiativeTracker => InitiativeTracker): CombatStateEvent = {
+      ForceChangeEvent(state => state.lensFactory.initiativeTrackerLens(ioi).mod(state, mod))
+    }
+  }
+
+  case class extractor() extends Mockito {
+    val state0 = CombatState.empty.transitionWith(List(
+      evtAddCombNoId, evtAddCombNoId, meAddToOrder(comb1, 0, 10), meAddToOrder(comb2, 0, 5), evtStart))
 
     def e1 = {
+      val (state1, mi) = X.mockCombatantAspect(state0, state0.lensFactory.initiativeTrackerLens(io1_0))
+      mi.state returns InitiativeState.Delaying
+      val (state, mh) = X.mockCombatantAspect(state1, state1.lensFactory.combatantHealth(comb1))
+      mh.status returns HealthStatus.Bloody
+
       (AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== Some((io1_0, InitiativeState.Delaying, HealthStatus.Bloody))) and
         (there was one(mi).state) and (there was one(mh).status)
     }
 
-    def e2 = AutomationCommandSource.HeadStateAndHealth.unapply(state.endCombat()) must_== None
+    def e2 = {
+      val state = state0.endCombat()
+      AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== None
+    }
   }
 
 }

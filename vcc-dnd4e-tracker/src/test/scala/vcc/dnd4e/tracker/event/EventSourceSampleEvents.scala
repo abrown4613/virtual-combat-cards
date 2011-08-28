@@ -23,7 +23,9 @@ import vcc.dnd4e.tracker.common.{CombatantID, CombatState, SampleStateData, Init
  */
 trait EventSourceSampleEvents extends SampleStateData {
   protected val evtAddCombA = AddCombatantEvent(Some(combA), null, entityPc1)
+  protected val evtAddCombB = AddCombatantEvent(Some(combB), null, entityPc2)
   protected val evtAddCombNoId = AddCombatantEvent(None, null, entityMinion)
+  protected val evtAddMonsterNoId = AddCombatantEvent(None, null, entityMonster)
   protected val evtAddComb2 = AddCombatantEvent(Some(comb2), null, entityMonster)
   protected val emptyState = CombatState.empty
   protected val evtInitA = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(10)))
@@ -33,4 +35,13 @@ trait EventSourceSampleEvents extends SampleStateData {
   protected def meAddToOrder(cid: CombatantID, bonus: Int, init: Int*) = AddCombatantToOrderEvent(InitiativeDefinition(cid, bonus, init.toList))
 
   protected def killEvent(cid: CombatantID) = ApplyDamageEvent(cid, 1000)
+
+  /**
+   * Helper event to allow hacks to the event source. This should be used only in test. It allows for a generic
+   * transformation of state via a event.
+   */
+  protected case class ForceChangeEvent(mod: CombatState => CombatState) extends CombatStateEvent {
+    def transition(iState: CombatState): CombatState = mod(iState)
+  }
+
 }
