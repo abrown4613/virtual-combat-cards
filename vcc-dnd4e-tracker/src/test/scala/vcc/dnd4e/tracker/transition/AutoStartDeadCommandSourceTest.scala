@@ -21,7 +21,7 @@ import org.specs2.mock.Mockito
 import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import vcc.dnd4e.tracker.event.{CombatStateEvent, AddCombatantEvent, EventSourceSampleEvents}
-import vcc.tracker.{StateCommand, CommandStream}
+import vcc.tracker.{CommandStream}
 
 class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -51,48 +51,48 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     val state = getInitialState.transitionWith(List(
       killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Delaying))))
 
-    cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
+    cs.get(state) must_== Some(EndRoundCommand(io1_0), cs)
   }
 
   private def testStartDeadAndReady = {
     val state = getInitialState.transitionWith(List(
       killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Ready))))
 
-    cs.get(state) must_== Some(StartRoundTransition(io1_0), cs)
+    cs.get(state) must_== Some(StartRoundCommand(io1_0), cs)
   }
 
   private def testStartDeadAndWaiting = {
     val state = getInitialState.transitionWith(List(killEvent(comb1)))
 
-    cs.get(state) must_== Some(StartRoundTransition(io1_0), cs)
+    cs.get(state) must_== Some(StartRoundCommand(io1_0), cs)
   }
 
   private def testEndDeadAndActing = {
     val state = getInitialState.transitionWith(List(
       killEvent(comb1), X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Acting))))
 
-    cs.get(state) must_== Some(EndRoundTransition(io1_0), cs)
+    cs.get(state) must_== Some(EndRoundCommand(io1_0), cs)
   }
 
 
   private def testStartWaitingLiving = {
     val state = getInitialState
 
-    ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
+    ns.get(state) must_== Some(StartRoundCommand(io1_0), ns)
   }
 
   private def testStartReadyLiving = {
     val state = getInitialState.transitionWith(List(
       X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Ready))))
 
-    ns.get(state) must_== Some(StartRoundTransition(io1_0), ns)
+    ns.get(state) must_== Some(StartRoundCommand(io1_0), ns)
   }
 
   private def testEndRoundDelayingLiving = {
     val state = getInitialState.transitionWith(List(
       X.initiativeChanger(io1_0, it => it.copy(state = InitiativeState.Delaying))))
 
-    ns.get(state) must_== Some(EndRoundTransition(io1_0), ns)
+    ns.get(state) must_== Some(EndRoundCommand(io1_0), ns)
   }
 
 
@@ -103,16 +103,16 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     val (nState, transitions) = miniDispatcher(ns, state)
 
     (nState.order.nextUp.get must_== io1_0) and (transitions must_== List(
-      EndRoundTransition(io1_0),
-      StartRoundTransition(io1_0)))
+      EndRoundCommand(io1_0),
+      StartRoundCommand(io1_0)))
   }
 
-  def miniDispatcher(cs: CommandStream[CombatState, EventCombatTransition], state: CombatState): (CombatState, List[EventCombatTransition]) = {
-    var trans = List.empty[EventCombatTransition]
+  def miniDispatcher(cs: CommandStream[CombatState, CombatStateCommand], state: CombatState): (CombatState, List[CombatStateCommand]) = {
+    var trans = List.empty[CombatStateCommand]
     var step = cs.get(state)
     var nState = state
     while (step.isDefined) {
-      nState = nState.transitionWith(step.get._1.changeEvents(nState))
+      nState = nState.transitionWith(step.get._1.generateTransitions(nState))
       trans = step.get._1 :: trans
       step = (step.get._2).get(nState)
     }
@@ -128,13 +128,13 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     val (nState, transitions) = miniDispatcher(cs, state)
 
     (nState.order.nextUp.get must_== ioA0) and (transitions must_== List(
-      StartRoundTransition(io1_0),
-      EndRoundTransition(io1_0),
-      EndRoundTransition(io2_0),
-      StartRoundTransition(io2_0),
-      EndRoundTransition(io2_0),
-      StartRoundTransition(ioB0),
-      EndRoundTransition(ioB0)))
+      StartRoundCommand(io1_0),
+      EndRoundCommand(io1_0),
+      EndRoundCommand(io2_0),
+      StartRoundCommand(io2_0),
+      EndRoundCommand(io2_0),
+      StartRoundCommand(ioB0),
+      EndRoundCommand(ioB0)))
   }
 
   private def getInitialState: CombatState = {

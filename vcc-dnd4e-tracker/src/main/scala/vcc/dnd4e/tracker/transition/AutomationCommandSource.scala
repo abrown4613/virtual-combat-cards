@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.transition
 
 import vcc.tracker.PartialFunctionCommandStream
@@ -38,16 +37,16 @@ object AutomationCommandSource {
     }
   }
 
-  val autoStartDead = new PartialFunctionCommandStream[CombatState, EventCombatTransition]({
-    case HeadStateAndHealth(ioi, Delaying, Dead) => EndRoundTransition(ioi)
-    case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundTransition(ioi)
-    case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundTransition(ioi)
-    case HeadStateAndHealth(ioi, Acting, Dead) => EndRoundTransition(ioi)
+  val autoStartDead = new PartialFunctionCommandStream[CombatState, CombatStateCommand]({
+    case HeadStateAndHealth(ioi, Delaying, Dead) => EndRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Acting, Dead) => EndRoundCommand(ioi)
   })
 
-  val autoStartNext = new PartialFunctionCommandStream[CombatState, EventCombatTransition]({
-    case HeadStateAndHealth(ioi, Waiting, health) if (health != Dead) => StartRoundTransition(ioi)
-    case HeadStateAndHealth(ioi, Ready, health) if (health != Dead) => StartRoundTransition(ioi)
-    case HeadStateAndHealth(ioi, Delaying, health) if (health != Dead) => EndRoundTransition(ioi)
+  val autoStartNext = new PartialFunctionCommandStream[CombatState, CombatStateCommand]({
+    case HeadStateAndHealth(ioi, Waiting, health) if (health != Dead) => StartRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Ready, health) if (health != Dead) => StartRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Delaying, health) if (health != Dead) => EndRoundCommand(ioi)
   })
 }

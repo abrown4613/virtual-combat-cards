@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.controller.message.TransactionalAction
@@ -23,46 +22,46 @@ import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.common.InitiativeAction
 
 object ActionTranslator {
-  implicit def transition2TransitionList(t: EventCombatTransition) = List(t)
+  implicit def transition2TransitionList(t: CombatStateCommand) = List(t)
 
-  def translate(action: TransactionalAction): List[EventCombatTransition] = {
+  def translate(action: TransactionalAction): List[CombatStateCommand] = {
     action match {
 
       //Damage action
-      case ApplyDamage(who, amount) => DamageTransition(who, amount)
-      case HealDamage(who, amount) => HealTransition(who, amount)
-      case SetTemporaryHP(who, amount) => SetTemporaryHPTransition(who, amount)
-      case FailDeathSave(who) => FailDeathSaveTransition(who)
-      case RevertDeath(who) => RevertDeathTransition(who)
-      case SetComment(who, comment) => SetCombatantCommentTransition(who, comment)
+      case ApplyDamage(who, amount) => DamageCommand(who, amount)
+      case HealDamage(who, amount) => HealCommand(who, amount)
+      case SetTemporaryHP(who, amount) => SetTemporaryHPCommand(who, amount)
+      case FailDeathSave(who) => FailDeathSaveCommand(who)
+      case RevertDeath(who) => RevertDeathCommand(who)
+      case SetComment(who, comment) => SetCombatantCommentCommand(who, comment)
 
       //Order actions
       case InternalInitiativeAction(who, initAction) =>
         initAction match {
-          case InitiativeAction.StartRound => StartRoundTransition(who)
-          case InitiativeAction.EndRound => EndRoundTransition(who)
-          case InitiativeAction.DelayAction => DelayTransition(who)
-          case InitiativeAction.MoveUp => MoveUpTransition(who)
-          case InitiativeAction.ExecuteReady => ExecuteReadyTransition(who)
-          case InitiativeAction.ReadyAction => ReadyActionTransition(who)
+          case InitiativeAction.StartRound => StartRoundCommand(who)
+          case InitiativeAction.EndRound => EndRoundCommand(who)
+          case InitiativeAction.DelayAction => DelayCommand(who)
+          case InitiativeAction.MoveUp => MoveUpCommand(who)
+          case InitiativeAction.ExecuteReady => ExecuteReadyCommand(who)
+          case InitiativeAction.ReadyAction => ReadyActionCommand(who)
         }
 
-      case MoveBefore(who, whom) => MoveBeforeTransition(who, whom);
+      case MoveBefore(who, whom) => MoveBeforeCommand(who, whom);
 
       // Effect messages
-      case AddEffect(target, source, condition, duration) => AddEffectTransition(target, source, condition, duration)
-      case UpdateEffectCondition(effectId, condition) => UpdateEffectConditionTransition(effectId, condition)
-      case CancelEffect(eid) => CancelEffectTransition(eid)
-      case SustainEffect(eid) => SustainEffectTransition(eid)
+      case AddEffect(target, source, condition, duration) => AddEffectCommand(target, source, condition, duration)
+      case UpdateEffectCondition(effectId, condition) => UpdateEffectConditionCommand(effectId, condition)
+      case CancelEffect(eid) => CancelEffectCommand(eid)
+      case SustainEffect(eid) => SustainEffectCommand(eid)
 
       //Combat Meta
-      case AddCombatants(combs) => combs.map(rd => AddCombatantTransition(Option(rd.cid), rd.alias, rd.entity))
-      case SetInitiative(iDefs) => iDefs.map(i => SetInitiativeTransition(i))
-      case SetCombatComment(comment) => SetCombatCommentTransition(comment)
-      case ApplyRest(extended) => RestTransition(extended)
-      case StartCombat() => StartCombatTransition
-      case EndCombat() => EndCombatTransition
-      case ClearRoster(all) => ClearRosterTransition(!all)
+      case AddCombatants(combs) => combs.map(rd => AddCombatantCommand(Option(rd.cid), rd.alias, rd.entity))
+      case SetInitiative(iDefs) => iDefs.map(i => SetInitiativeCommand(i))
+      case SetCombatComment(comment) => SetCombatCommentCommand(comment)
+      case ApplyRest(extended) => RestCommand(extended)
+      case StartCombat() => StartCombatCommand
+      case EndCombat() => EndCombatCommand
+      case ClearRoster(all) => ClearRosterCommand(!all)
       case _ => throw new Exception("Cant handle " + action)
     }
   }

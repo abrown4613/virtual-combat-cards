@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.common._
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
 
-class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceSampleEvents with CombatStateEventSourceBehavior {
+class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSampleEvents with CombatStateEventSourceBehavior {
 
   def is =
     "Combat State Transactions" ^
@@ -37,22 +37,22 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
       end
 
   private def execAddCombatant = {
-    val addA = AddCombatantTransition(Some(combA), null, entityPc1)
+    val addA = AddCombatantCommand(Some(combA), null, entityPc1)
     "add combatant" ! (given(CombatState.empty) when addA then (AddCombatantEvent(addA.cid, null, entityPc1)))
   }
 
   private def defineCombatComment = {
     "Combat level comment" ^
       "Set comment to none if null" !
-        (given(emptyState) when (SetCombatCommentTransition(null)) then (SetCombatCommentEvent(None))) ^
+        (given(emptyState) when (SetCombatCommentCommand(null)) then (SetCombatCommentEvent(None))) ^
       "Set comment" !
-        (given(emptyState) when (SetCombatCommentTransition("comment")) then (SetCombatCommentEvent(Some("comment")))) ^
+        (given(emptyState) when (SetCombatCommentCommand("comment")) then (SetCombatCommentEvent(Some("comment")))) ^
       endp
   }
 
   //TODO Move this to some other file
   private def combatantComments = {
-    val cmd = SetCombatantCommentTransition(combA, "message")
+    val cmd = SetCombatantCommentCommand(combA, "message")
     val exception = new IllegalActionException("Cant set comment: Combatant " + combA + " does not exist")
     "Combatant Comment" ^
       "Set commant on existant combatant" !
@@ -65,7 +65,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
   private def defineInitiativeBeforeCombatStart = {
     val evtInitA = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(10)))
     val evtInitAOld = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(3)))
-    val cmd = SetInitiativeTransition(InitiativeDefinition(combA, 5, List(10)))
+    val cmd = SetInitiativeCommand(InitiativeDefinition(combA, 5, List(10)))
     val exception = new IllegalActionException("Combatant " + combA + " not in combat roster")
     "Defining initiative before combat start" ^
       "define initiative" ! (given(emptyState, evtAddCombA) when (cmd) then (evtInitA)) ^
@@ -80,10 +80,10 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
     val exceptionAlreadyStart = new IllegalActionException("Combat already started")
 
     "StartCombat" ^
-      "cannot start if no combatant present" ! (given(emptyState) when (StartCombatTransition) failWith (exceptionNotInOrder)) ^
-      "cannot start if no combatant in order" ! (given(emptyState, evtAddCombA, evtAddCombNoId) when (StartCombatTransition) failWith (exceptionNotInOrder)) ^
-      "start must work" ! (given(emptyState, evtAddCombA, evtAddCombNoId, evtInitA) when (StartCombatTransition) then (StartCombatEvent)) ^
-      "start on started is not allowed" ! (given(emptyState, evtAddCombA, evtAddCombNoId, evtInitA, StartCombatEvent) when (StartCombatTransition) failWith (exceptionAlreadyStart)) ^
+      "cannot start if no combatant present" ! (given(emptyState) when (StartCombatCommand) failWith (exceptionNotInOrder)) ^
+      "cannot start if no combatant in order" ! (given(emptyState, evtAddCombA, evtAddCombNoId) when (StartCombatCommand) failWith (exceptionNotInOrder)) ^
+      "start must work" ! (given(emptyState, evtAddCombA, evtAddCombNoId, evtInitA) when (StartCombatCommand) then (StartCombatEvent)) ^
+      "start on started is not allowed" ! (given(emptyState, evtAddCombA, evtAddCombNoId, evtInitA, StartCombatEvent) when (StartCombatCommand) failWith (exceptionAlreadyStart)) ^
       endp
   }
 
@@ -91,7 +91,7 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
     val evtInitA = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(10)))
     val evtInit1 = AddCombatantToOrderEvent(InitiativeDefinition(comb1, 5, List(10)))
     val evtInitAOld = AddCombatantToOrderEvent(InitiativeDefinition(combA, 5, List(3)))
-    val cmd = SetInitiativeTransition(InitiativeDefinition(combA, 5, List(10)))
+    val cmd = SetInitiativeCommand(InitiativeDefinition(combA, 5, List(10)))
     val exception = new IllegalActionException("Combatant " + combA + " is already in order")
     "Defining initiative after combat start" ^
       "define initiative" ! (given(emptyState, evtAddCombA, evtAddCombNoId, evtInit1, StartCombatEvent) when (cmd) then (evtInitA)) ^
@@ -103,11 +103,11 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
     val notStartedException = new IllegalActionException("Combat not started")
     "EndCombat" ^
       "cant end combat that was not started" !
-        (given(emptyState) when (EndCombatTransition) failWith (notStartedException)) ^
+        (given(emptyState) when (EndCombatCommand) failWith (notStartedException)) ^
       "cant end combat that was not started, even if it looks full" !
-        (given(emptyState, evtAddCombA, evtInitA) when (EndCombatTransition) failWith (notStartedException)) ^
+        (given(emptyState, evtAddCombA, evtInitA) when (EndCombatCommand) failWith (notStartedException)) ^
       "end a properly started combat" !
-        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (EndCombatTransition) then (EndCombatEvent)) ^
+        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (EndCombatCommand) then (EndCombatEvent)) ^
       endp
   }
 
@@ -118,20 +118,20 @@ class CombatStateTransitionTest extends SpecificationWithJUnit with EventSourceS
     val r2: CombatStateEvent = RemoveCombatantFromRosterEvent(comb2)
     "Clear combat" ^
       "clear monster on started combat must fail" !
-        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (ClearRosterTransition(true)) failWith exception) ^
+        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (ClearRosterCommand(true)) failWith exception) ^
       "clear all on started combat must fail" !
-        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (ClearRosterTransition(false)) failWith exception) ^
+        (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (ClearRosterCommand(false)) failWith exception) ^
       "remove all the combat" !
-        (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterTransition(false)) then (contain(rA, r1, r2).only)) ^
+        (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterCommand(false)) then (contain(rA, r1, r2).only)) ^
       "remove only monsters" !
-        (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterTransition(true)) then (contain(r1, r2).only)) ^
+        (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddComb2) when (ClearRosterCommand(true)) then (contain(r1, r2).only)) ^
       endp
   }
 
   private def restCombatants = {
     val exception = new IllegalActionException("Can not rest during combat")
-    val shortRest = RestTransition(false)
-    val extendedRest = RestTransition(true)
+    val shortRest = RestCommand(false)
+    val extendedRest = RestCommand(true)
     val sRest1: CombatStateEvent = RestCombatantEvent(comb1, false)
     val sRestA: CombatStateEvent = RestCombatantEvent(combA, false)
     val eRest1: CombatStateEvent = RestCombatantEvent(comb1, true)
