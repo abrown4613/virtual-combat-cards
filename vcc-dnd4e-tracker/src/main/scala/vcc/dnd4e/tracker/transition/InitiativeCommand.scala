@@ -20,31 +20,26 @@ import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
 
-/*
-* Place holder, not for real use.
-*/
-private object InitiativeTransition
-
-trait InitiativeTransition extends EventCombatTransition {
+trait InitiativeCommand extends CombatStateCommand {
   val ioi: InitiativeOrderID
 
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent]
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent]
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.order.tracker.isDefinedAt(ioi))
       throw new IllegalActionException(ioi + " is not in sequence")
-    getChangeEvents(iState)
+    getTransitions(iState)
   }
 }
 
-case class StartRoundTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  def getChangeEvents(iState: CombatState): List[CombatStateEvent] = List(
+case class StartRoundCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  def getTransitions(iState: CombatState): List[CombatStateEvent] = List(
     InitiativeTrackerUpdateEvent(ioi, InitiativeAction.StartRound),
     EffectListTransformEvent(EffectTransformation.startRound(ioi)))
 }
 
-case class EndRoundTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent] = {
+case class EndRoundCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     val iat = InitiativeTrackerUpdateEvent(ioi, InitiativeAction.EndRound)
     val et = EffectListTransformEvent(EffectTransformation.endRound(ioi))
     if (combatState.lensFactory.initiativeTrackerLens(ioi).get(combatState).state == InitiativeState.Delaying)
@@ -54,28 +49,28 @@ case class EndRoundTransition(ioi: InitiativeOrderID) extends InitiativeTransiti
   }
 }
 
-case class DelayTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent] = {
+case class DelayCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     val iat = InitiativeTrackerUpdateEvent(ioi, InitiativeAction.DelayAction)
     val et = DelayEffectListTransformEvent(ioi)
     List(iat, RotateRobinEvent, et)
   }
 }
 
-case class ReadyActionTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent] = {
+case class ReadyActionCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     List(InitiativeTrackerUpdateEvent(ioi, InitiativeAction.ReadyAction))
   }
 }
 
-case class ExecuteReadyTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent] = {
+case class ExecuteReadyCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     List(InitiativeTrackerUpdateEvent(ioi, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioi))
   }
 }
 
-case class MoveUpTransition(ioi: InitiativeOrderID) extends InitiativeTransition {
-  protected def getChangeEvents(combatState: CombatState): List[CombatStateEvent] = {
+case class MoveUpCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+  protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     List(
       InitiativeTrackerUpdateEvent(ioi, InitiativeAction.MoveUp),
       MoveBeforeFirstEvent(ioi),
@@ -83,8 +78,8 @@ case class MoveUpTransition(ioi: InitiativeOrderID) extends InitiativeTransition
   }
 }
 
-case class MoveBeforeTransition(who: InitiativeOrderID, whom: InitiativeOrderID) extends EventCombatTransition {
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+case class MoveBeforeCommand(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     def moveOutFirst: List[CombatStateEvent] = List(RotateRobinEvent, MoveBeforeOtherEvent(who, whom))
     def moveOtherOut: List[CombatStateEvent] = List(MoveBeforeOtherEvent(who, whom))
 

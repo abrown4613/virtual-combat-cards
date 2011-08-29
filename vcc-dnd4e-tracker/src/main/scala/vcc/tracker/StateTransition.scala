@@ -37,6 +37,6 @@ trait StateCommand[S] {
    * @param iState State to use to generate the events
    * @return List of StateTransition
    */
-  def changeEvents(iState: S): List[StateTransition[S]]
+  def generateTransitions(iState: S): List[StateTransition[S]]
 }
 

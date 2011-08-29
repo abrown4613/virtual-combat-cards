@@ -21,18 +21,18 @@ import vcc.dnd4e.tracker.common._
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
 
-class HealthTransitionTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
+class HealthCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   def is = {
     "Health change command".title ^
       damaging ^
-      runTestFor(cid => (HealTransition(cid, 10), ApplyHealingEvent(cid, 10))) ^
-      runTestFor(cid => (SetTemporaryHPTransition(cid, 10), SetTemporaryHitPointsEvent(cid, 10))) ^
-      runTestFor(cid => (FailDeathSaveTransition(cid), FailDeathSaveEvent(cid))) ^
-      runTestFor(cid => (RevertDeathTransition(cid), RevertDeathEvent(cid))) ^
+      runTestFor(cid => (HealCommand(cid, 10), ApplyHealingEvent(cid, 10))) ^
+      runTestFor(cid => (SetTemporaryHPCommand(cid, 10), SetTemporaryHitPointsEvent(cid, 10))) ^
+      runTestFor(cid => (FailDeathSaveCommand(cid), FailDeathSaveEvent(cid))) ^
+      runTestFor(cid => (RevertDeathCommand(cid), RevertDeathEvent(cid))) ^
       end
   }
 
-  def runTestFor(builder: CombatantID => (EventCombatTransition, CombatStateEvent)) = {
+  def runTestFor(builder: CombatantID => (CombatStateCommand, CombatStateEvent)) = {
     val (cmd, evt) = builder(combA)
     ("Command " + cmd.getClass.getSimpleName) ^
       "fail if not found" !
@@ -49,21 +49,21 @@ class HealthTransitionTest extends SpecificationWithJUnit with CombatStateEventS
     "command ApplyDamageTransition" ^
       "fail if combantant is not present" !
         (given(emptyState, evtAddCombNoId).
-          when(DamageTransition(combA, 10)).
+          when(DamageCommand(combA, 10)).
           failWith(notFoundException)) ^
       "simple damage" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA, meAddToOrder(comb1, 3, 3), evtStart).
-          when(DamageTransition(combA, 10)).
+          when(DamageCommand(combA, 10)).
           then(ApplyDamageEvent(combA, 10))) ^
       "damage and end combat when last acting is killed" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA,
           meAddToOrder(comb1, 3, 3), evtStart, killEvent(comb1)).
-          when(DamageTransition(combA, 1000)).
+          when(DamageCommand(combA, 1000)).
           then(ApplyDamageEvent(combA, 1000), evtEnd)) ^
       "killing but not the last does kill" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA,
           meAddToOrder(comb1, 3, 3), evtStart).
-          when(DamageTransition(combA, 1000)).
+          when(DamageCommand(combA, 1000)).
           then(ApplyDamageEvent(combA, 1000))) ^
       endp
   }

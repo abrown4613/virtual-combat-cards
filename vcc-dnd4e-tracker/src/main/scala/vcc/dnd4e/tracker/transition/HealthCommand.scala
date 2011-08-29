@@ -23,7 +23,7 @@ import vcc.controller.IllegalActionException
 /**
  * Base health modification transition.
  */
-abstract class HealthTransition(target: CombatantID) extends EventCombatTransition {
+abstract class HealthCommand(target: CombatantID) extends CombatStateCommand {
   /**
    * Override this one
    */
@@ -39,7 +39,7 @@ abstract class HealthTransition(target: CombatantID) extends EventCombatTransiti
 
   protected def makeTransitionEvent(): CombatStateEvent
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.roster.isDefinedAt(target))
       throw new IllegalActionException("Combatant " + target + " not in combat")
 
@@ -52,9 +52,9 @@ abstract class HealthTransition(target: CombatantID) extends EventCombatTransiti
  * @param target Target of damage
  * @param amount How many hit points to take away.
  */
-case class DamageTransition(target: CombatantID, amount: Int) extends EventCombatTransition {
+case class DamageCommand(target: CombatantID, amount: Int) extends CombatStateCommand {
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.roster.isDefinedAt(target))
       throw new IllegalActionException("Combatant " + target + " not in combat")
 
@@ -75,7 +75,7 @@ case class DamageTransition(target: CombatantID, amount: Int) extends EventComba
  * @param target Target of healing
  * @param amount How many hit points to restore.
  */
-case class HealTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
+case class HealCommand(target: CombatantID, amount: Int) extends HealthCommand(target) {
   protected def makeTransitionEvent(): CombatStateEvent = ApplyHealingEvent(target, amount)
 }
 
@@ -84,7 +84,7 @@ case class HealTransition(target: CombatantID, amount: Int) extends HealthTransi
  * @param target Target to get temporary hit points.
  * @param amount How many points to set.
  */
-case class SetTemporaryHPTransition(target: CombatantID, amount: Int) extends HealthTransition(target) {
+case class SetTemporaryHPCommand(target: CombatantID, amount: Int) extends HealthCommand(target) {
   protected def makeTransitionEvent(): CombatStateEvent = SetTemporaryHitPointsEvent(target, amount)
 }
 
@@ -92,7 +92,7 @@ case class SetTemporaryHPTransition(target: CombatantID, amount: Int) extends He
  * Tick on of the character failed death saving throws.
  * @param target Target that failed check
  */
-case class FailDeathSaveTransition(target: CombatantID) extends HealthTransition(target) {
+case class FailDeathSaveCommand(target: CombatantID) extends HealthCommand(target) {
   protected def makeTransitionEvent(): CombatStateEvent = FailDeathSaveEvent(target)
 }
 
@@ -100,6 +100,6 @@ case class FailDeathSaveTransition(target: CombatantID) extends HealthTransition
  * Bring target back from dead (to 0 HP and dying).
  * @param target Target to restore
  */
-case class RevertDeathTransition(target: CombatantID) extends HealthTransition(target) {
+case class RevertDeathCommand(target: CombatantID) extends HealthCommand(target) {
   protected def makeTransitionEvent(): CombatStateEvent = RevertDeathEvent(target)
 }

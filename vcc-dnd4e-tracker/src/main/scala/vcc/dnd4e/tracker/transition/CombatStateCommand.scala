@@ -23,6 +23,6 @@ import vcc.tracker.{StateCommand}
 /**
  * Base trait for commands or operations that transition some state to a new state.
  */
-trait EventCombatTransition extends StateCommand[CombatState] {
-  def changeEvents(iState: CombatState): List[CombatStateEvent]
+trait CombatStateCommand extends StateCommand[CombatState] {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent]
 }

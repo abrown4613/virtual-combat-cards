@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
 import vcc.controller.IllegalActionException
 
-class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
+class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   def is =
     "InitiativeTransition".title ^
       mustStart ^
@@ -50,10 +50,10 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private def mustStart = {
     "Start round" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents) when (StartRoundTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents) when (StartRoundCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "start round" !
         (given(emptyState, buildEvents).
-          when(StartRoundTransition(ioA0)).
+          when(StartRoundCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound), EffectListTransformEvent(EffectTransformation.startRound(ioA0)))) ^
       endp
   }
@@ -61,10 +61,10 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private def mustEndRound = {
     "do End round" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents, evtStartRoundA) when (EndRoundTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents, evtStartRoundA) when (EndRoundCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "end round and rotate" !
         (given(emptyState, buildEvents).
-          when(EndRoundTransition(ioA0)).
+          when(EndRoundCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), RotateRobinEvent, EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) ^
       endp
   }
@@ -72,11 +72,11 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private def execDelay = {
     "do Delay round" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents, evtStartRoundA) when (DelayTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents, evtStartRoundA) when (DelayCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "delay and rotate" !
         (given(emptyState, buildEvents).
-          given(StartRoundTransition(ioA0)).
-          when(DelayTransition(ioA0)).
+          given(StartRoundCommand(ioA0)).
+          when(DelayCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
       endp
     //TODO Check for illegal state before execute
@@ -85,18 +85,18 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private def execEndRoundOfDelaying = {
     "do end round of delaying" !
       (given(emptyState, smallCombatBuildEvents).
-        given(StartRoundTransition(ioA0), DelayTransition(ioA0), StartRoundTransition(io1_0), EndRoundTransition(io1_0)).
-        when(EndRoundTransition(ioA0)).
+        given(StartRoundCommand(ioA0), DelayCommand(ioA0), StartRoundCommand(io1_0), EndRoundCommand(io1_0)).
+        when(EndRoundCommand(ioA0)).
         then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), EffectListTransformEvent(EffectTransformation.endRound(ioA0))))
   }
 
   private def execMoveUp = {
     "do Move Up round" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent) when (MoveUpTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent) when (MoveUpCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "move up, move to first, and set robin" !
         (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent).
-          when(MoveUpTransition(ioA0)).
+          when(MoveUpCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp), MoveBeforeFirstEvent(ioA0), SetRobinEvent(ioA0))) ^
       endp
 
@@ -105,10 +105,10 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
   private def execReady = {
     "do Ready action" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents, evtStartRoundA) when (ReadyActionTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents, evtStartRoundA) when (ReadyActionCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "delay and rotate" !
         (given(emptyState, buildEvents, evtStartRoundA).
-          when(ReadyActionTransition(ioA0)).
+          when(ReadyActionCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction))) ^
       endp
 
@@ -118,10 +118,10 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
     val events = buildEvents ++ Seq(evtStartRoundA, evtReadyRoundA, evtEndRoundA, RotateRobinEvent, evtStartRound1)
     "do Move Up round" ^
       "fail if not defined" !
-        (given(emptyState, events) when (ExecuteReadyTransition(ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, events) when (ExecuteReadyCommand(ioB0)) must throwAn[IllegalActionException]) ^
       "move up, move to first, and set robin" !
         (given(emptyState, events).
-          when(ExecuteReadyTransition(ioA0)).
+          when(ExecuteReadyCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioA0))) ^
       endp
 
@@ -131,18 +131,18 @@ class InitiativeTransitionTest extends SpecificationWithJUnit with CombatStateEv
     val exception: IllegalActionException = new IllegalActionException("Cant move " + ioA0 + " before " + io2_0)
     "do Move Before" ^
       "fail if not defined" !
-        (given(emptyState, buildEvents) when (MoveBeforeTransition(ioA0, ioB0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents) when (MoveBeforeCommand(ioA0, ioB0)) must throwAn[IllegalActionException]) ^
       "fail if not defined" !
-        (given(emptyState, buildEvents) when (MoveBeforeTransition(ioB0, ioA0)) must throwAn[IllegalActionException]) ^
+        (given(emptyState, buildEvents) when (MoveBeforeCommand(ioB0, ioA0)) must throwAn[IllegalActionException]) ^
       "fail if not allowed" !
-        (given(emptyState, buildEvents, evtStartRoundA) when (MoveBeforeTransition(ioA0, io2_0)) failWith exception) ^
+        (given(emptyState, buildEvents, evtStartRoundA) when (MoveBeforeCommand(ioA0, io2_0)) failWith exception) ^
       "moving first out should move rotate then move" ! //TODO This will deprecate with new always acting
         (given(emptyState, buildEvents).
-          when(MoveBeforeTransition(ioA0, io2_0)).
+          when(MoveBeforeCommand(ioA0, io2_0)).
           then(RotateRobinEvent, MoveBeforeOtherEvent(ioA0, io2_0))) ^
       "moving any but the first is simple" !
         (given(emptyState, buildEvents).
-          when(MoveBeforeTransition(io2_0, io1_0)).
+          when(MoveBeforeCommand(io2_0, io1_0)).
           then(MoveBeforeOtherEvent(io2_0, io1_0))) ^
       endp
   }

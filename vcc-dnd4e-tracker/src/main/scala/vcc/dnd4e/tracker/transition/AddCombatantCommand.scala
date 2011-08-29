@@ -26,8 +26,8 @@ import vcc.dnd4e.tracker.event._
  * @param alias Option alias for combatant (null if not present)
  * @param entity CombatantEntity definition
  */
-case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entity: CombatantEntity) extends EventCombatTransition {
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = AddCombatantEvent(cid, alias, entity) :: Nil
+case class AddCombatantCommand(cid: Option[CombatantID], alias: String, entity: CombatantEntity) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = AddCombatantEvent(cid, alias, entity) :: Nil
 }
 
 /**
@@ -35,9 +35,9 @@ case class AddCombatantTransition(cid: Option[CombatantID], alias: String, entit
  * have and initiative.
  * @param iDef Initiative definition for the combatant
  */
-case class SetInitiativeTransition(iDef: InitiativeDefinition) extends EventCombatTransition {
+case class SetInitiativeCommand(iDef: InitiativeDefinition) extends CombatStateCommand {
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.roster.isDefinedAt(iDef.combId))
       throw new IllegalActionException("Combatant " + iDef.combId + " not in combat roster")
     if (!iState.rules.canCombatantRollInitiative(iState, iDef.combId))
@@ -54,9 +54,9 @@ case class SetInitiativeTransition(iDef: InitiativeDefinition) extends EventComb
 /**
  * Start combat, must happen only when at least one combatant has an inititiave definition, and can not happen twice.
  */
-case object StartCombatTransition extends EventCombatTransition {
+case object StartCombatCommand extends CombatStateCommand {
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Combat already started")
 
@@ -71,8 +71,8 @@ case object StartCombatTransition extends EventCombatTransition {
  * Apply rest to all combats.
  * @param isExtended True for Extended Rests, false if we should apply Short Rest
  */
-case class RestTransition(isExtended: Boolean) extends EventCombatTransition {
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+case class RestCommand(isExtended: Boolean) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not rest during combat")
 
@@ -84,17 +84,17 @@ case class RestTransition(isExtended: Boolean) extends EventCombatTransition {
  * Set combat level comment.
  * @param comment Comment to be set
  */
-case class SetCombatCommentTransition(comment: String) extends EventCombatTransition {
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = SetCombatCommentEvent(Option(comment)) :: Nil
+case class SetCombatCommentCommand(comment: String) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = SetCombatCommentEvent(Option(comment)) :: Nil
 }
 
 /**
  * Clear roster of combatants.
  * @param onlyMonsters Clear only the monsters, if false will clear all.
  */
-case class ClearRosterTransition(onlyMonsters: Boolean) extends EventCombatTransition {
+case class ClearRosterCommand(onlyMonsters: Boolean) extends CombatStateCommand {
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not clear while in combat")
 
@@ -114,9 +114,9 @@ case class ClearRosterTransition(onlyMonsters: Boolean) extends EventCombatTrans
 /**
  *  End combat.
  */
-case object EndCombatTransition extends EventCombatTransition {
+case object EndCombatCommand extends CombatStateCommand {
 
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (!iState.isCombatStarted)
       throw new IllegalActionException("Combat not started")
     EndCombatEvent :: Nil
@@ -128,8 +128,8 @@ case object EndCombatTransition extends EventCombatTransition {
  * @param cid Combatant to set comment
  * @param comment New comment message
  */
-case class SetCombatantCommentTransition(cid: CombatantID, comment: String) extends EventCombatTransition {
-  def changeEvents(iState: CombatState): List[CombatStateEvent] = {
+case class SetCombatantCommentCommand(cid: CombatantID, comment: String) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
     if (iState.roster.isDefinedAt(cid)) {
       SetCombatantCommentEvent(cid, comment) :: Nil
     } else {

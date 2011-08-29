@@ -22,13 +22,13 @@ import vcc.dnd4e.tracker.common._
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
 
-class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
+class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   private val eid = EffectID(combA, 11)
   private val eidBroken = EffectID(combB, 0)
 
   private val buildEvents = Seq(evtAddCombA, evtAddComb2, evtAddCombNoId,
     meAddToOrder(combA, 5, 15), meAddToOrder(comb1, 4, 14), meAddToOrder(comb2, 3, 13), evtStart)
-  private val addEffectTransition = AddEffectTransition(combA, combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
+  private val addEffectTransition = AddEffectCommand(combA, combB, Condition.Generic("nice", true), Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain))
 
   def is =
     "Effect transition test".title ^
@@ -44,7 +44,7 @@ class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventS
 
   private def execAddEffect = {
     val addedEffectEvent = AddEffectEvent(combA, combB, conditionGood, durationEoRA0)
-    val brokenEffectTransition = AddEffectTransition(combB, combB, conditionGood, durationEoRA0)
+    val brokenEffectTransition = AddEffectCommand(combB, combB, conditionGood, durationEoRA0)
     "Add Effect" ^
       "add effect" !
         (given(emptyState, buildEvents) when (addEffectTransition) then (addedEffectEvent)) ^
@@ -55,8 +55,8 @@ class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventS
 
   private def execCancelEffectTransition = {
     val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.cancelEffect(eid))
-    val goodTransition = CancelEffectTransition(eid)
-    val badTransition = CancelEffectTransition(eidBroken)
+    val goodTransition = CancelEffectCommand(eid)
+    val badTransition = CancelEffectCommand(eidBroken)
     "Cancel Efect" ^
       "do cancel effect" !
         (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
@@ -67,8 +67,8 @@ class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventS
 
   private def execSustainEffectTransition = {
     val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.sustainEffect(eid))
-    val goodTransition = SustainEffectTransition(eid)
-    val badTransition = SustainEffectTransition(eidBroken)
+    val goodTransition = SustainEffectCommand(eid)
+    val badTransition = SustainEffectCommand(eidBroken)
     "Sustain Efect" ^
       "do cancel effect" !
         (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
@@ -79,8 +79,8 @@ class EffectTransitionTest extends SpecificationWithJUnit with CombatStateEventS
 
   private def execUpdateEffectTransition = {
     val expectedEvent = ChangeEffectListEvent(eid.combId, EffectTransformation.updateCondition(eid, conditionBad))
-    val goodTransition = UpdateEffectConditionTransition(eid, conditionBad)
-    val badTransition = UpdateEffectConditionTransition(eidBroken, conditionBad)
+    val goodTransition = UpdateEffectConditionCommand(eid, conditionBad)
+    val badTransition = UpdateEffectConditionCommand(eidBroken, conditionBad)
     "Update Efect" ^
       "do cancel effect" !
         (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
