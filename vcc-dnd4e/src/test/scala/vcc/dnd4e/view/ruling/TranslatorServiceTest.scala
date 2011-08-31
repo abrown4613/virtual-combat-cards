@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
-import org.specs.SpecificationWithJUnit
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import vcc.controller.{Decision, Ruling}
-import org.specs.mock.Mockito
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
@@ -35,37 +34,37 @@ class TranslatorServiceTest extends SpecificationWithJUnit with Mockito {
 
     "provide a controller for simple save " in {
       val c = ts.promptForRuling(SaveEffectRuling(null, "bad things"))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== RulingDialog.SimpleSavePanelIdentity
     }
 
     "provide a controller for save special" in {
       val c = ts.promptForRuling(SaveEffectSpecialRuling(null, "bad things"))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== SaveOrChangeValuePanel.Identity
     }
 
     "provide a controller for save versus death" in {
       val c = ts.promptForRuling(SaveVersusDeathRuling(CombatantID("A")))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== RulingDialog.SaveVersusDeathPanelIdentity
     }
 
     "provide a controller for ongoing damage" in {
       val c = ts.promptForRuling(RegenerateByRuling(eid, "regenerate 6", 6))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== RegeneratePromptControllerDelegate.panelId
     }
 
     "provide a controller for regenerations" in {
       val c = ts.promptForRuling(OngoingDamageRuling(eid, "regenerate 6", 6))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== OngoingPromptControllerDelegate.panelId
     }
 
     "provide a controller for sustain effect" in {
       val c = ts.promptForRuling(SustainEffectRuling(eid, "nasty zone"))
-      c mustNot beNull
+      c must not beNull;
       c.panelIdentity must_== RulingDialog.SustainEffectPanelIdentity
     }
   }

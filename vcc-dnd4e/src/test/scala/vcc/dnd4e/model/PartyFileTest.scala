@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.model
 
-import org.specs.SpecificationWithJUnit
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.tracker.common.CombatantID
 import java.io._

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,117 +14,109 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
-
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 import vcc.controller.transaction.ChangeNotification
 
-@RunWith(classOf[JUnitSuiteRunner])
-class CombatChangeAndStateSnapshotBuilderTest extends JUnit4(CombatChangeAndStateSnapshotBuilderSpec)
-
-object CombatChangeAndStateSnapshotBuilderSpec extends Specification
+class CombatChangeAndStateSnapshotBuilderTest extends SpecificationWithJUnit
 with Mockito with CombatStateSnapshotHelper[CombatStateWithChanges] {
-  var aBuilder: CombatChangeAndStateSnapshotBuilder = null
-  var mCSBuilder: CombatStateSnapshotBuilder = null
 
-  val contextWithMock = beforeContext {
-    mCSBuilder = mock[CombatStateSnapshotBuilder]
-    aBuilder = new CombatChangeAndStateSnapshotBuilder(mCSBuilder)
+  trait contextWithMock extends Scope {
+    val mCSBuilder = mock[CombatStateSnapshotBuilder]
+    val aBuilder = new CombatChangeAndStateSnapshotBuilder(mCSBuilder)
   }
 
-  "aBuilder relating to the sub builder " ->- (contextWithMock) should {
-    "forward changes cycle" in {
+  "aBuilder relating to the sub builder " should {
+    "forward changes cycle" in new contextWithMock {
       processChanges(aBuilder, InitiativeOrderChange(List(ita0)))
       there was one(mCSBuilder).beginChanges() then
         one(mCSBuilder).processChange(InitiativeOrderChange(List(ita0))) then
         one(mCSBuilder).endChanges()
     }
 
-    "request a valid snapshot" in {
+    "request a valid snapshot" in new contextWithMock {
       val snap = aBuilder.getSnapshot()
 
-      snap must notBeNull
+      snap must not beNull;
       there was one(mCSBuilder).getSnapshot()
     }
   }
 
-  "aBuilder capturing changes" ->- (contextWithMock) should {
+  "aBuilder capturing changes" should {
 
-    "return same change for between begin" in {
+    "return same change for between begin" in new contextWithMock {
       aBuilder.beginChanges()
       val s1 = aBuilder.getSnapshot.changes
       aBuilder.getSnapshot.changes.eq(s1) must beTrue // Same between begins
     }
 
-    "return different change for each begin" in {
+    "return different change for each begin" in new contextWithMock {
       aBuilder.beginChanges()
       val s1 = aBuilder.getSnapshot.changes
       aBuilder.beginChanges()
       aBuilder.getSnapshot.changes.eq(s1) must beFalse
     }
 
-    "throw exception on a ChangeNotification it does not handle" in {
+    "throw exception on a ChangeNotification it does not handle" in new contextWithMock {
       processChanges(aBuilder, mock[ChangeNotification]) must throwA[IllegalArgumentException]
     }
 
-    "return a valid StateChange" in {
+    "return a valid StateChange" in new contextWithMock {
       val snap = processChanges(aBuilder,
         InitiativeOrderChange(List(ita0)))
-      snap.changes must notBeNull
+      snap.changes must not beNull;
     }
 
-    "track change in order" in {
+    "track change in order" in new contextWithMock {
       val snap = processChanges(aBuilder,
         InitiativeOrderChange(List(ita0, itb)))
       snap.changes.combatantsThatChanged(StateChange.combatant.Initiative) must_== Set(combA, combB)
       snap.changes.changes must_== Set(StateChange.combat.Order)
     }
 
-    "track change in InitiativeTracker" in {
+    "track change in InitiativeTracker" in new contextWithMock {
       val snap = processChanges(aBuilder, InitiativeTrackerChange(ita0m))
       snap.changes.changesTo(combA) must_== Set(StateChange.combatant.Initiative)
       snap.changes.changes must_== Set()
     }
 
-    "track change in HealthTracker" in {
+    "track change in HealthTracker" in new contextWithMock {
       val snap = processChanges(aBuilder, CombatantChange(combA, modHealth))
       snap.changes.changesTo(combA) must_== Set(StateChange.combatant.Health)
       snap.changes.changes must_== Set()
     }
 
-    "track change in Comment" in {
+    "track change in Comment" in new contextWithMock {
       val snap = processChanges(aBuilder, CombatantChange(combA, CombatantComment("abc")))
       snap.changes.changesTo(combA) must_== Set(StateChange.combatant.Comment)
       snap.changes.changes must_== Set()
     }
 
-    "track change in Effects" in {
+    "track change in Effects" in new contextWithMock {
       val nel = EffectList(combA, Nil).addEffect(combA, null, null)
       val snap = processChanges(aBuilder, CombatantChange(combA, nel))
       snap.changes.changesTo(combA) must_== Set(StateChange.combatant.Effects)
       snap.changes.changes must_== Set()
     }
 
-    "track change in Definition" in {
+    "track change in Definition" in new contextWithMock {
       val nDef = CombatantRosterDefinition(combA, "alias", null)
       val snap = processChanges(aBuilder, CombatantChange(combA, nDef))
       snap.changes.changesTo(combA) must_== Set(StateChange.combatant.Definition)
       snap.changes.changes must_== Set()
     }
 
-    "track change in combat MetaData" in {
+    "track change in combat MetaData" in new contextWithMock {
       val snap = processChanges(aBuilder, CombatMetaDataChange(true, "fumes are active"))
       snap.changes.changes must_== Set(StateChange.combat.MetaData)
     }
 
-    "track roster change" in {
+    "track roster change" in new contextWithMock {
       val snap = processChanges(aBuilder,
         RosterChange(Map(
           combA -> generateCombatantAspectSet(combA),
@@ -140,10 +132,9 @@ with Mockito with CombatStateSnapshotHelper[CombatStateWithChanges] {
       }
     }
 
-    "track change in combat change robin head" in {
+    "track change in combat change robin head" in new contextWithMock {
       val snap = processChanges(aBuilder, InitiativeOrderFirstChange(ioa0))
       snap.changes.changes must_== Set(StateChange.combat.OrderFirst)
     }
-
   }
 }

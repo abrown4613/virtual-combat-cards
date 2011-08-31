@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,22 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.dialog
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.view.helper.InitiativeRoll
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class InitiativeDialogTest extends JUnit4(InitiativeDialogSpec)
-
-object InitiativeDialogSpec extends Specification {
-  val combA = CombatantID("A")
-  val combB = CombatantID("B")
-  val combC = CombatantID("C")
+class InitiativeDialogTest extends SpecificationWithJUnit {
+  private val combA = CombatantID("A")
+  private val combB = CombatantID("B")
 
   "InitiativeDialogEntry" should {
     "be similar is name, roll and bonus are the same" in {
@@ -60,5 +53,4 @@ object InitiativeDialogSpec extends Specification {
       (iea isSimilar ieb) must beFalse
     }
   }
-
 }

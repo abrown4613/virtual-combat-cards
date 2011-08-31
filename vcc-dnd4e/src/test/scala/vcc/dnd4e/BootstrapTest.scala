@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,25 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e 
+package vcc.dnd4e
 
-
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
 import vcc.util.swing.XHTMLPaneAgent
 import view.{EffectEditor, IconLibrary}
-
-@RunWith(classOf[JUnitSuiteRunner])
-class BootstrapTest extends JUnit4(BootstrapSpec)
+import org.specs2.mutable.SpecificationWithJUnit
 
 /**
  * Class to test singleton objects.
  */
-object BootstrapSpec extends Specification {
+class BootstrapTest extends SpecificationWithJUnit {
   "IconLibrary must startup" in {
-    IconLibrary.MetalD20 mustNot beNull
+    (IconLibrary.MetalD20 must not beNull)
   }
 
   "Load XHTMLPaneAgent configured properly" in {

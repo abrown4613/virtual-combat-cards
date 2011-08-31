@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,21 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.helper
 
-
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import java.text.ParseException
 import vcc.util.DiceGenerator
-import org.specs.mock.Mockito
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.Scope
 
-@RunWith(classOf[JUnitSuiteRunner])
-class InitiativeRollTest extends JUnit4(InitiativeRollSpec)
-
-object InitiativeRollSpec extends Specification with Mockito {
+class InitiativeRollTest extends SpecificationWithJUnit with Mockito {
   "a InitiativeRoll.toString" should {
     "format Nil rolls to empty string" in {
       val ir = InitiativeRoll(Nil)
@@ -87,25 +81,30 @@ object InitiativeRollSpec extends Specification with Mockito {
       ir.rolls must_== List()
     }
   }
-  "a InitiativeRoll.resolve" should {
-    val db = mock[DiceGenerator]
 
-    "return empty on an empty list" in {
+  trait diceMock extends Scope {
+    protected val db = mock[DiceGenerator]
+  }
+
+  "a InitiativeRoll.resolve" should {
+
+    "return empty on an empty list" in new diceMock {
       InitiativeRoll(Nil).resolve(0, db) must_== Nil
+      there was no(db).D(20)
     }
 
-    "add bonus to informed number" in {
+    "add bonus to informed number" in new diceMock {
       InitiativeRoll.fromString("10").resolve(3, db) must_== List(13)
       there was no(db).D(20)
     }
 
-    "return the result of a dice if undefined" in {
+    "return the result of a dice if undefined" in new diceMock {
       db.D(20) returns 13
       InitiativeRoll.simpleRoll.resolve(2, db) must_== List(15)
       there was one(db).D(20)
     }
 
-    "apply same logic to all" in {
+    "apply same logic to all" in new diceMock {
       db.D(20) returns 17
       InitiativeRoll.fromString("10/r/4").resolve(4, db) must_== List(14, 21, 8)
       there was one(db).D(20)
