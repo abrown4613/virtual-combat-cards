@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,20 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.domain.compendium
 
-import org.junit.runner.RunWith
-import org.specs.Specification
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.datastore.naming.EntityID
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class CombatantEntityBuilderTest extends JUnit4(CombatantEntityBuilderSpec)
-
-object CombatantEntityBuilderSpec extends Specification {
+class CombatantEntityBuilderTest extends SpecificationWithJUnit {
 
   val eid = EntityID.generateRandom()
 
@@ -51,14 +44,14 @@ object CombatantEntityBuilderSpec extends Specification {
 
     "return a minimal monster on a build" in {
       val e = CombatantEntityBuilder.buildEntity(new DataStoreEntity(eid,Map("classid"->"vcc-class:monster","base:name"->"me")))
-      e mustNot beNull
+      e must not beNull;
       e.isInstanceOf[MonsterEntity]
       e.name.value must_== "me"
     }
 
     "return a minimal monster on a build" in {
       val e = CombatantEntityBuilder.buildEntity(new DataStoreEntity(eid,Map("classid"->"vcc-class:character","base:name"->"me")))
-      e mustNot beNull
+      e must not beNull;
       e.isInstanceOf[CharacterEntity]
       e.name.value must_== "me"
     }

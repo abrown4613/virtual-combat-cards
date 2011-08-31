@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.common
 
-import org.specs.SpecificationWithJUnit
+import org.specs2.mutable.SpecificationWithJUnit
 import vcc.controller.{PendingRuling}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
@@ -30,8 +29,6 @@ class DomainRulingTest extends SpecificationWithJUnit {
   "SaveEffectQuestion" should {
     val se = SaveEffectRuling(eid, "slowed")
     val se2 = SaveEffectRuling(eid, "slowed -> new effect")
-    val ses = SaveEffectSpecialRuling(eid, "bad -> worst")
-    val ses2 = SaveEffectSpecialRuling(eid, "bad -> even worst")
     val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(se)
 
     "Saved is a valid answer" in {

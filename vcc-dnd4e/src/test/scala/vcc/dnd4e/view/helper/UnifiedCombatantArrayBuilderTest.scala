@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,22 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.helper
 
-
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import vcc.dnd4e.domain.tracker.snapshot.{CombatState, CombatStateSnapshotHelper}
 import vcc.dnd4e.domain.tracker.common.CombatantStateView
 import vcc.dnd4e.view.UnifiedSequenceTable
 
-@RunWith(classOf[JUnitSuiteRunner])
-class UnifiedCombatantArrayBuilderTest extends JUnit4(UnifiedCombatantArrayBuilderSpec)
-
-object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with CombatStateSnapshotHelper[String] {
+class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mockito with CombatStateSnapshotHelper[String] {
   val cs = CombatState(
     false,
     null,
@@ -72,10 +65,9 @@ object UnifiedCombatantArrayBuilderSpec extends Specification with Mockito with 
       val ret = UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       ret.elements.length must_== 3
       ret(0).initiative must_== ita0
-      ret(1).initiative must beNull
+      ret(1).initiative must_== null
       ret(1).combId must_== combC
       ret(2).combId must_== combB
     }
   }
-
 }

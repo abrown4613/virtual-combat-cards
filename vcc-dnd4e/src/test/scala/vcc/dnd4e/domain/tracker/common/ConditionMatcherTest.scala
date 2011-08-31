@@ -14,16 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.common
 
-import org.specs.SpecificationWithJUnit
+import org.specs2.SpecificationWithJUnit
 
 class ConditionMatcherTest extends SpecificationWithJUnit {
 
   import ConditionMatcher._
 
-  "splitFirstCondition" should {
+  def is =
+    "splitFirstCondition" ^ e1 ^ endp ^
+      "Regeneration matcher" ^ e2 ^ endp ^
+      "Ongoing matcher" ^ e3 ^ endp ^
+      end
+
+  private def e1 = {
     val cases = List(
       ("slowed and weak", List("slowed", "weak")),
       ("slowed aNd Weak", List("slowed", "Weak")),
@@ -32,14 +37,14 @@ class ConditionMatcherTest extends SpecificationWithJUnit {
       ("slowed-> weak", List("slowed")),
       ("slowed -> weak", List("slowed"))
     )
-    for ((str, ret) <- cases) {
-      "split " + str + " to " + ret in {
+    for ((str, ret) <- cases) yield {
+      ("split " + str + " to " + ret) ! {
         splitFirstCondition(str) must_== ret
       }
     }
   }
 
-  "Regeneration matcher" should {
+  private def e2 = {
     val cases = List(
       ("regenerate 2", ("regenerate 2", 2)),
       ("regen 2", ("regen 2", 2)),
@@ -54,14 +59,14 @@ class ConditionMatcherTest extends SpecificationWithJUnit {
       ("slowed and weakened", null),
       ("ongoing 4 fire", null)
     )
-    for ((str, ret) <- cases) {
-      "match " + str in {
+    for ((str, ret) <- cases) yield {
+      ("match " + str) ! {
         FirstRegenerate.unapply(str) must_== Option(ret)
       }
     }
   }
 
-  "Ongoing matcher" should {
+  private def e3 = {
     val cases = List(
       ("ongoing 4 fire", ("ongoing 4 fire", 4)),
       ("ongoing 4 fire and immobilized", ("ongoing 4 fire", 4)),
@@ -73,8 +78,8 @@ class ConditionMatcherTest extends SpecificationWithJUnit {
       ("ongoing 4 fire -> ongoing 10 cold", ("ongoing 4 fire", 4)),
       ("Ongooing 124 fire & thunder and insustancia", null)
     )
-    for ((str, ret) <- cases) {
-      "match " + str in {
+    for ((str, ret) <- cases) yield {
+      "match " + str ! {
         FirstOngoing.unapply(str) must_== Option(ret)
       }
     }
