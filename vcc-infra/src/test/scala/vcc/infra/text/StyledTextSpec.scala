@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.text
 
-import org.specs.{SpecificationWithJUnit}
+import org.specs2.mutable.{SpecificationWithJUnit}
 
 class StyledTextSpec extends SpecificationWithJUnit {
   "TextBuilder" should {
@@ -57,7 +56,6 @@ class StyledTextSpec extends SpecificationWithJUnit {
       TextBlock.extractSegment(<text style="Italic">Hello</text>) must_== TextSegment(Style.Italic,"Hello")
     }
 
-    //TODO Deserialize LineBreak and Img
     "serialize Block" in {
       TextBlock("DIV", "blast").toXML must_== <block tag="DIV" class="blast"></block>
     }
@@ -98,7 +96,7 @@ class StyledTextSpec extends SpecificationWithJUnit {
     }
 
     "produce sequence of nodes" in {
-      val fmt = StyledText(List(blk1, blk2)).toXHTML
+      val fmt = StyledText(List(blk1, blk2)).toXHTML()
 
       fmt.size must_== 2
       fmt(0) must_== blk1.toXHTML

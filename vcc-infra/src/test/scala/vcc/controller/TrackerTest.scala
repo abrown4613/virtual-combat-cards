@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,38 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.controller
 
 import message._
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import org.mockito.Matchers._
 import actors.Actor
 import collection.mutable.ArrayBuffer
 import transaction._
 import actors.scheduler.SingleThreadedScheduler
 
-@RunWith(classOf[JUnitSuiteRunner])
-class TrackerTest extends JUnit4(TrackerSpec)
+class TrackerTest extends SpecificationWithJUnit with Mockito {
 
-object TrackerSpec extends Specification with Mockito {
-  val mController = mock[TrackerController]
-  val mLog = mock[TransactionLog[TransactionalAction]]
-  val mObserver = mock[Actor]
-  val tracker = new Tracker(mController, mLog) {
-    override def scheduler = new SingleThreadedScheduler
+  trait context extends Scope {
+    val mController = mock[TrackerController]
+    val mLog = mock[TransactionLog[TransactionalAction]]
+    val mObserver = mock[Actor]
+    val tracker = new Tracker(mController, mLog) {
+      override def scheduler = new SingleThreadedScheduler
+    }
+    tracker.start()
   }
 
   case class MyChange(msg: String) extends ChangeNotification
 
-  tracker.start()
-
   "Tracker" should {
 
-    "dispatch message to TrackerController" in {
+    "dispatch message to TrackerController" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -54,7 +51,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mController).dispatch(any[Transaction], refEq(src), refEq(msg))
     }
 
-    "notify CommandSource on success" in {
+    "notify CommandSource on success" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -66,7 +63,7 @@ object TrackerSpec extends Specification with Mockito {
       there was no(src).actionCancelled(any[String])
     }
 
-    "notify CommandSource on success with changes" in {
+    "notify CommandSource on success with changes" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -87,7 +84,7 @@ object TrackerSpec extends Specification with Mockito {
       there was no(src).actionCancelled(any[String])
     }
 
-    "notify CommandSource of failure with exception" in {
+    "notify CommandSource of failure with exception" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
       mController.dispatch(any[Transaction], refEq(src), refEq(msg)) throws new RuntimeException("boom!")
@@ -99,7 +96,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(src).actionCancelled("boom!")
     }
 
-    "call change publisher to process changes" in {
+    "call change publisher to process changes" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -110,7 +107,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mController).publish(new ArrayBuffer()) //This is needed since there are boxing issues in this
     }
 
-    "save transaction to log when it has something" in {
+    "save transaction to log when it has something" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
       val myData = new Undoable[Int](10, x => new ChangeNotification() {})
@@ -126,7 +123,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mLog).store(refEq(msg), any[Transaction])
     }
 
-    "not save empty transactions" in {
+    "not save empty transactions" in new context {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -135,17 +132,19 @@ object TrackerSpec extends Specification with Mockito {
       there was no(mLog).store(refEq(msg), any[Transaction])
     }
 
-    "clear transaction log" in {
+    "clear transaction log" in new context {
       tracker ! ClearTransactionLog()
       there was one(mLog).clear
     }
   }
 
-  "tracker with observers" ->- (beforeContext {
+  trait contextWithObserver extends context {
     tracker ! AddObserver(mObserver)
-  }) should {
+  }
 
-    "send changes to observers" in {
+  "tracker with observers" should {
+
+    "send changes to observers" in new contextWithObserver {
       val msg = mock[TransactionalAction]
       val src = mock[CommandSource]
 
@@ -157,7 +156,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mObserver) ! TrackerChanged(List(MyChange("11")))
     }
 
-    "silently do nothing if roll forward is out of bounds not publishing" in {
+    "silently do nothing if roll forward is out of bounds not publishing" in new contextWithObserver {
       mLog.rollforward(tracker) throws new TransactionLogOutOfBounds("bla")
 
       tracker ! Redo()
@@ -166,7 +165,7 @@ object TrackerSpec extends Specification with Mockito {
       there was no(mObserver) ! any[Any]
     }
 
-    "ask TransactionLog to Redo and publish " in {
+    "ask TransactionLog to Redo and publish " in new contextWithObserver {
       mLog.rollforward(tracker) answers {
         pub => pub.asInstanceOf[TransactionChangePublisher].publishChange(new ArrayBuffer)
       }
@@ -177,7 +176,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mObserver) ! TrackerChanged(List(MyChange("Rolled forward")))
     }
 
-    "ask TransactionLog to Undo and publish " in {
+    "ask TransactionLog to Undo and publish " in new contextWithObserver {
       mLog.rollback(tracker) answers {
         pub => pub.asInstanceOf[TransactionChangePublisher].publishChange(new ArrayBuffer)
       }
@@ -188,7 +187,7 @@ object TrackerSpec extends Specification with Mockito {
       there was one(mObserver) ! TrackerChanged(List(MyChange("Rolled back")))
     }
 
-    "silently do nothing if roll back is out of bounds not publishing " in {
+    "silently do nothing if roll back is out of bounds not publishing " in new contextWithObserver {
       mLog.rollback(tracker) throws new TransactionLogOutOfBounds("bla")
 
       tracker ! Undo()
@@ -197,5 +196,4 @@ object TrackerSpec extends Specification with Mockito {
       there was no(mObserver) ! any[Any]
     }
   }
-
 }

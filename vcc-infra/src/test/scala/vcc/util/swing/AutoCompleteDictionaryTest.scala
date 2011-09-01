@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,40 +14,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing
 
-import org.specs.SpecificationWithJUnit
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import java.io.ByteArrayInputStream
-import org.specs.mock.Mockito
+import org.specs2.specification.Scope
 
 class AutoCompleteDictionaryTest extends SpecificationWithJUnit with Mockito {
 
-  "AutoCompleteDictionary class" should {
+  trait dictionary extends Scope {
     val dict = new AutoCompleteDictionary(List("", "test", "tea"))
+  }
 
-    "return blank prefix is need" in {
+  "AutoCompleteDictionary class" should {
+
+    "return blank prefix is need" in new dictionary {
       dict.findSuggestion("") must_== Some("")
     }
 
-    "return first instance" in {
+    "return first instance" in new dictionary {
       dict.findSuggestion("te") must_== Some("test")
     }
 
-    "return full word" in {
+    "return full word" in new dictionary {
       dict.findSuggestion("tea") must_== Some("tea")
     }
 
-    "return first instance" in {
+    "return first instance" in new dictionary {
       dict.findSuggestion("dagger") must_== None
     }
   }
 
   "AutoCompleteDictionary object" should {
-    val callback = mock[(String, String) => Unit]
 
     "ignore blank lines and \\r" in {
-      val winBuffer = new ByteArrayInputStream("first\n\rsecond\n\rsector\n\r ".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val winBuffer = new ByteArrayInputStream("first\n\rsecond\n\rsector\n\r ".getBytes)
 
       val dict = AutoCompleteDictionary.fromStream(winBuffer, callback)
       there was no(callback).apply(any[String], any[String])
@@ -56,7 +59,8 @@ class AutoCompleteDictionaryTest extends SpecificationWithJUnit with Mockito {
     }
 
     "ignore blank lines work with linux format" in {
-      val linuxBuffer = new ByteArrayInputStream("first\nsecond\nsector\n ".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val linuxBuffer = new ByteArrayInputStream("first\nsecond\nsector\n ".getBytes)
       val dict = AutoCompleteDictionary.fromStream(linuxBuffer, callback)
       there was no(callback).apply(any[String], any[String])
       dict.findSuggestion(" ") must_== None
@@ -64,7 +68,8 @@ class AutoCompleteDictionaryTest extends SpecificationWithJUnit with Mockito {
     }
 
     "remove extra spaced on the line" in {
-      val toTrim = new ByteArrayInputStream("   first  \n  second  \n  sector   \n".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val toTrim = new ByteArrayInputStream("   first  \n  second  \n  sector   \n".getBytes)
       val dict = AutoCompleteDictionary.fromStream(toTrim, callback)
       there was no(callback).apply(any[String], any[String])
       dict.findSuggestion("fi") must_== Some("first")
@@ -72,7 +77,8 @@ class AutoCompleteDictionaryTest extends SpecificationWithJUnit with Mockito {
     }
 
     "warn if compound term has same prefix" in {
-      val toRead = new ByteArrayInputStream("  second  \n  second attack  \n".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val toRead = new ByteArrayInputStream("  second  \n  second attack  \n".getBytes)
       val dict = AutoCompleteDictionary.fromStream(toRead, callback)
       there was one(callback).apply("second attack", "Prefix 'second' already defined")
       dict.findSuggestion("se") must_== Some("second")
@@ -80,14 +86,16 @@ class AutoCompleteDictionaryTest extends SpecificationWithJUnit with Mockito {
     }
 
     "warn if compound term has same prefix in reverse" in {
-      val toRead = new ByteArrayInputStream("  second attack \n  second  \n".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val toRead = new ByteArrayInputStream("  second attack \n  second  \n".getBytes)
       val dict = AutoCompleteDictionary.fromStream(toRead, callback)
       there was one(callback).apply("second", "Prefix 'second' already defined")
       dict.findSuggestion("se") must_== Some("second attack")
     }
 
     "ignore comment lines" in {
-      val toRead = new ByteArrayInputStream("# comment\n  second  \n".getBytes())
+      val callback = mock[(String, String) => Unit]
+      val toRead = new ByteArrayInputStream("# comment\n  second  \n".getBytes)
       val dict = AutoCompleteDictionary.fromStream(toRead, callback)
       dict.findSuggestion("# co") must_== None
     }

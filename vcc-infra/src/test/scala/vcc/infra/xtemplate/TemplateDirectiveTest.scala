@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,21 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
-
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import vcc.infra.text.StyledText
-import xml.NodeSeq
+import org.specs2.mutable.SpecificationWithJUnit
 import scala.xml.{NodeSeq, Text, Node}
 
-@RunWith(classOf[JUnitSuiteRunner])
-class TemplateDirectiveTest extends JUnit4(TemplateDirectiveSpec)
-
-object TemplateDirectiveSpec extends Specification {
+class TemplateDirectiveTest extends SpecificationWithJUnit {
   val fooDS = new MapDataSource(Map("foo" -> "subbar"), Map(), Map())
   val simpleDS = new MapDataSource(Map("foo" -> "bar"), Map("foo" -> List(fooDS)), Map("foo" -> Text("bar")))
   val emptyDS = new MapDataSource(Map(), Map(), Map())
@@ -44,16 +35,16 @@ object TemplateDirectiveSpec extends Specification {
 
     "accept only id" in {
       val tn = resolveEchoData(<t:data id="foo"/>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.label must_== "data"
       tn.arguments must_== ("foo", null)
     }
 
     "accept id and format" in {
       val tn = resolveEchoData(<t:data id="foo" fmt="csv"/>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.arguments._1 must_== "foo"
-      tn.arguments._2 mustEq engine.getFormatter("csv")
+      tn.arguments._2 must beEqualTo(engine.getFormatter("csv"))
     }
 
     "fail if no id provided" in {
@@ -84,7 +75,7 @@ object TemplateDirectiveSpec extends Specification {
 
     "accept id" in {
       val tn = resolveIfDefined(<t:ifdefined id="foo"/>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.label must_== "ifdefined"
       simpleDS.templateVariable("foo").isDefined must beTrue
       tn.arguments(simpleDS) must beTrue
@@ -93,14 +84,14 @@ object TemplateDirectiveSpec extends Specification {
 
     "accept group" in {
       val tn = resolveIfDefined(<t:ifdefined group="foo"/>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.arguments(simpleDS) must beTrue
       tn.arguments(emptyDS) must beFalse
     }
 
     "accept styled" in {
       val tn = resolveIfDefined(<t:ifdefined inline="foo"/>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.arguments(simpleDS) must beTrue
       tn.arguments(emptyDS) must beFalse
     }
@@ -130,9 +121,10 @@ object TemplateDirectiveSpec extends Specification {
   }
 
   "render complex nested parsed template" in {
-    val loader = new TemplateLoader("t", TemplateLoaderSpec.engine)
+    engine.registerDirective(EchoDataDirective)
+    engine.registerDirective(IfDefinedDirective)
+    val loader = new TemplateLoader("t",  engine)
     val t = loader.resolveNode(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>, null)
     TemplateNode.renderNode(simpleDS, t) must_== (<hey class="nice"><foo>bar</foo></hey>)
   }
-
 }

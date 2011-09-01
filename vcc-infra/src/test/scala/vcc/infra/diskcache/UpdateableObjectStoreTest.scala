@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,25 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.diskcache
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import org.specs.mock.Mockito
+import org.specs2.mutable.{SpecificationWithJUnit}
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import java.io.{File}
 
-@RunWith(classOf[JUnitSuiteRunner])
-class UpdateableObjectStoreTest extends JUnit4(UpdateableObjectStoreSpec)
+class UpdateableObjectStoreTest extends SpecificationWithJUnit with Mockito {
 
-object UpdateableObjectStoreSpec extends Specification with Mockito {
-  "UpdateableObjectStore" should {
+  trait commonMock extends Scope {
     val mockResolver = mock[UpdateableObjectStoreResolver[Int, String]]
     val mockLoader = mock[UpdateAwareLoader[String]]
     val store = new UpdateableObjectStore[Int, String](mockResolver)
+  }
 
-    "ask resolver for object if its not already known" in {
+  "UpdateableObjectStore" should {
+
+    "ask resolver for object if its not already known" in new commonMock {
       mockResolver.getObjectUpdateAwareLoader(10) returns mockLoader
       mockLoader.getCurrent() returns Some("Ten")
       store.fetch(10) must_== Some("Ten")
@@ -40,7 +39,7 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
               one(mockLoader).getCurrent()
 
     }
-    "call already know object when it is already defined" in {
+    "call already know object when it is already defined" in new commonMock {
       mockResolver.getObjectUpdateAwareLoader(10) returns mockLoader
       mockLoader.getCurrent() returns Some("Ten") thenReturns Some("Eleven")
       store.fetch(10) must_== Some("Ten")
@@ -51,7 +50,7 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
       there was two(mockLoader).getCurrent()
 
     }
-    "null object are not registered, and will be return as null" in {
+    "null object are not registered, and will be return as null" in new commonMock {
       mockResolver.getObjectUpdateAwareLoader(10) returns null
       store.fetch(10) must_== None
       there was one(mockResolver).getObjectUpdateAwareLoader(10)
@@ -60,19 +59,22 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
     }
   }
 
-  "FileUpdateAwareLoader" should {
+  trait fileUpdateMock extends Scope {
     val mockFile = mock[File]
     val mockLoader = mock[File => Option[Int]]
     val fileLoader = new FileUpdateAwareLoader(mockFile, mockLoader)
+  }
 
-    "return object, getting the last modification date" in {
+  "FileUpdateAwareLoader" should {
+
+    "return object, getting the last modification date" in new fileUpdateMock {
       mockLoader.apply(mockFile) returns Some(10)
       fileLoader.getCurrent() must_== Some(10)
       there was one(mockFile).lastModified
       there was one(mockLoader).apply(mockFile)
     }
 
-    "check time on every evocation" in {
+    "check time on every evocation" in new fileUpdateMock {
       mockLoader.apply(mockFile) returns Some(10)
       fileLoader.getCurrent() must_== Some(10)
       there was one(mockFile).lastModified
@@ -80,7 +82,7 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
       there was two(mockFile).lastModified
     }
 
-    "check time on every evocation, but not call loader every time" in {
+    "check time on every evocation, but not call loader every time" in new fileUpdateMock {
       mockLoader.apply(mockFile) returns Some(10)
       fileLoader.getCurrent() must_== Some(10)
       there was one(mockFile).lastModified
@@ -89,7 +91,7 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
       there was one(mockLoader).apply(mockFile)
     }
 
-    "if time changed, call loader again" in {
+    "if time changed, call loader again" in new fileUpdateMock {
       mockFile.lastModified returns 10 thenReturns 9 // Move back should trigger update
       mockLoader.apply(mockFile) returns Some(10) thenReturns Some(20)
       fileLoader.getCurrent() must_== Some(10)
@@ -99,6 +101,5 @@ object UpdateableObjectStoreSpec extends Specification with Mockito {
       there was two(mockFile).lastModified
       there was two(mockLoader).apply(mockFile)
     }
-
   }
 }

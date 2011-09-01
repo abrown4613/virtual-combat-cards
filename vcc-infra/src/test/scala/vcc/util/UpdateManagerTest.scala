@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,19 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 import vcc.util.UpdateManager._
 import java.io.ByteArrayInputStream
 
-@RunWith(classOf[JUnitSuiteRunner])
-class UpdateManagerTest extends JUnit4(UpdateManagerSpec)
-
-object UpdateManagerSpec extends Specification {
+class UpdateManagerTest extends SpecificationWithJUnit {
   "UpdateManager Version" should {
     "read form string 1.2.3-RC" in {
       Version.fromString("1.2.3-RC") must_== Version(1, 2, 3, "RC")
@@ -53,7 +47,7 @@ object UpdateManagerSpec extends Specification {
     }
 
     "read from a version file" in {
-      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml")) mustNot beNull
+      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml")) must not beNull
     }
 
     "throw exception on strange file" in {
@@ -62,7 +56,7 @@ object UpdateManagerSpec extends Specification {
   }
 
   "UpdateManager.Version.eligibleVersion" should {
-    // From, To, should happene
+    // From, To, should happen
     val versionTests = Seq[(Version, Version, Boolean)](
       (Version(1, 1, 0, null), Version(1, 1, 2, null), true),
       (Version(1, 1, 1, null), Version(1, 1, 2, null), true),
@@ -76,10 +70,12 @@ object UpdateManagerSpec extends Specification {
       (Version(1, 1, 1, "RC"), Version(1, 1, 1, null), true),
       (Version(1, 1, 1, "SNAPSHOT"), Version(1, 1, 1, null), true))
 
-    for ((from, to, result) <- versionTests) {
-      (if (result) "allow" else "not allow") + " migration from " + from.toString + " to " + to.toString in {
+
+    for((from, to, result) <- versionTests) {
+      ((if (result) "allow" else "not allow") + " migration from " + from.toString + " to " + to.toString) in {
         to.isEligibleUpgradeFromVersion(from) must_== result
       }
     }
+    1 must_== 1
   }
 }
