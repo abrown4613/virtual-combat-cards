@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 import scala.xml.{Node, NodeSeq, Text}
 
-@RunWith(classOf[JUnitSuiteRunner])
-class GroupDirectiveTest extends JUnit4(GroupDirectiveSpec)
-
-object GroupDirectiveSpec extends Specification {
+class GroupDirectiveTest extends SpecificationWithJUnit {
   val foo1DS = new MapDataSource(Map("foo" -> "bar 1"), Map(), Map())
   val foo2DS = new MapDataSource(Map("foo" -> "bar 2"), Map(), Map())
   val simpleDS = new MapDataSource(Map("foo" -> "bar"), Map("foo" -> List(foo1DS, foo2DS)), Map("foo" -> Text("bar")))
@@ -42,7 +36,7 @@ object GroupDirectiveSpec extends Specification {
 
     "accept ingroup attribute" in {
       val tn = resolveGroup(<t:foreach ingroup="foo"></t:foreach>, Nil)
-      tn mustNot beNull
+      tn must not beNull;
       tn.label must_== "foreach"
       tn.arguments must_== "foo"
     }

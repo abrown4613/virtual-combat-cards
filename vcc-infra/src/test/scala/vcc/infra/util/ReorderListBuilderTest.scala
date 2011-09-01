@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.util
 
-import org.specs.SpecificationWithJUnit
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.Scope
 
 class ReorderListBuilderTest extends SpecificationWithJUnit {
-  var theList: ReorderedListBuilder[Int, UIInt] = null
 
   object comparator extends ReorderedListBuilderCompare[UIInt] {
     def isBefore(a: UIInt, b: UIInt) = (a.uniqueId - b.uniqueId) < 0
@@ -33,8 +32,8 @@ class ReorderListBuilderTest extends SpecificationWithJUnit {
   implicit def listInt2ListUIInt(lst: List[Int]): List[UIInt] = lst.map(int2UIInt(_))
 
 
-  val emptyList = beforeContext {
-    theList = new ReorderedListBuilder[Int, UIInt](Nil, Nil, comparator)
+  trait emptyList extends Scope {
+    val theList: ReorderedListBuilder[Int, UIInt] = new ReorderedListBuilder[Int, UIInt](Nil, Nil, comparator)
   }
 
   "ReorderListBuilder constructor" should {
@@ -65,26 +64,26 @@ class ReorderListBuilderTest extends SpecificationWithJUnit {
     }
   }
 
-  "empty ReorderListBuilder" ->- (emptyList) should {
+  "empty ReorderListBuilder" should {
 
-    "initialize correctly" in {
+    "initialize correctly" in new emptyList {
       theList.baseList must_== Nil
       theList.reorders must_== Nil
       theList.reorderedList must_== Nil
     }
 
-    "add element" in {
+    "add element" in new emptyList {
       theList.addEntry(6)
       theList.baseList must_== List[UniquelyIdentified[Int]](6)
       theList.reorders must_== Nil
     }
 
-    "reject duplication on add" in {
+    "reject duplication on add" in new emptyList {
       theList.addEntry(6)
       theList.addEntry(6) must throwA[DuplicateElementException]
     }
 
-    "correctly sort two elements placed in the wrong order" in {
+    "correctly sort two elements placed in the wrong order" in new emptyList {
       theList.addEntry(4)
       theList.addEntry(7)
       theList.addEntry(1)
@@ -93,7 +92,7 @@ class ReorderListBuilderTest extends SpecificationWithJUnit {
       theList.baseList must_== List[UniquelyIdentified[Int]](1, 3, 4, 7)
     }
 
-    "accept reoder of elements just added" in {
+    "accept reoder of elements just added" in new emptyList {
       theList.addEntry(4)
       theList.addEntry(7)
       theList.addEntry(1)
@@ -102,74 +101,73 @@ class ReorderListBuilderTest extends SpecificationWithJUnit {
 
       theList.reorders must_== List((1, 4))
     }
-
   }
 
-  val baseList = beforeContext {
-    theList = new ReorderedListBuilder[Int, UIInt](List(1, 3, 5, 7, 9), List((5, 1), (7, 3)), comparator)
+  trait baseList extends Scope {
+    val theList = new ReorderedListBuilder[Int, UIInt](List(1, 3, 5, 7, 9), List((5, 1), (7, 3)), comparator)
   }
 
-  "small ReorderListBuilder" ->- (baseList) should {
+  "small ReorderListBuilder" should {
 
-    "return the proper reorderd list" in {
+    "return the proper reorderd list" in new baseList {
       theList.reorderedList must_== List(5, 1, 7, 3, 9)
     }
 
-    "add new element in proper place of base list" in {
+    "add new element in proper place of base list" in new baseList {
       theList.addEntry(6)
       theList.baseList must_== List[UniquelyIdentified[Int]](1, 3, 5, 6, 7, 9)
     }
 
-    "regenerate reorder list once we add an entity" in {
+    "regenerate reorder list once we add an entity" in new baseList {
       theList.reorderedList must_== List(5, 1, 7, 3, 9)
       theList.addEntry(6)
 
       theList.reorderedList must_== List(5, 1, 7, 3, 6, 9)
     }
 
-    "generate reorder list once we add an entity to the end" in {
+    "generate reorder list once we add an entity to the end" in new baseList {
       theList.reorderedList must_== List(5, 1, 7, 3, 9)
       theList.addEntry(12)
       theList.addReorder(12, 7)
       theList.reorderedList must_== List(5, 1, 12, 7, 3, 9)
     }
-    "add element before all" in {
+    "add element before all" in new baseList {
       theList.addEntry(0)
       theList.reorderedList must_== List(0, 5, 1, 7, 3, 9)
     }
 
-    "add element before all and move it" in {
+    "add element before all and move it" in new baseList {
       theList.addEntry(0)
       theList.addReorder(0, 7)
       theList.reorderedList must_== List(5, 1, 0, 7, 3, 9)
     }
-    "add a reorder to the list" in {
+    "add a reorder to the list" in new baseList {
       theList.addReorder(3, 7)
 
       theList.reorders must_== List((5, 1), (7, 3), (3, 7))
     }
 
-    "preserve base list when adding reorder" in {
+    "preserve base list when adding reorder" in new baseList {
       theList.addReorder(3, 7)
 
       theList.baseList must_== List[UniquelyIdentified[Int]](1, 3, 5, 7, 9)
     }
 
-    "correctly apply new reorder" in {
+    "correctly apply new reorder" in new baseList {
       theList.addReorder(3, 7)
 
       theList.reorderedList must_== List(5, 1, 3, 7, 9)
     }
 
-    "reject reorder of before not in list " in {
+    "reject reorder of before not in list " in new baseList {
       theList.addReorder(5, 4) must throwA[NoSuchElementException]
     }
 
-    "reject reorder of after not in list " in {
+    "reject reorder of after not in list " in new baseList {
       theList.addReorder(4, 5) must throwA[NoSuchElementException]
     }
 
-    "reject reorder of with same element" in {
+    "reject reorder of with same element" in new baseList {
       theList.addReorder(5, 5) must throwA[IllegalArgumentException]
     }
   }

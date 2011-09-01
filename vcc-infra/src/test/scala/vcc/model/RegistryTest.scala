@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.model
 
-import org.specs.{SpecificationWithJUnit}
+import org.specs2.mutable.SpecificationWithJUnit
 
 class RegistryTest extends SpecificationWithJUnit {
   val aRegistry = new Registry[String]()
@@ -58,10 +57,9 @@ class RegistryTest extends SpecificationWithJUnit {
   }
 
   "experimental" should {
-    val reg = new Registry[Class[_]]()
-    reg.register[Int](classOf[Int], 10)
-
     "register base on class" in {
+      val reg = new Registry[Class[_]]()
+      reg.register[Int](classOf[Int], 10)
       val o = reg.get[Int](classOf[Int])
       o.isDefined must beTrue
       o.get must_== 10

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util
 
 import vcc.util.ListHelper._
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitSuiteRunner])
-class ListHelperTest extends JUnit4(ListHelperSpec)
-
-object ListHelperSpec extends Specification {
+class ListHelperTest extends SpecificationWithJUnit {
   "splice list" should {
     "replace first element" in {splice(List(1, 2, 3, 4, 5), 0, List(10, 11)) must_== List(10, 11, 2, 3, 4, 5)}
     "replace second element" in {splice(List(1, 2, 3, 4, 5), 1, List(20)) must_== List(1, 20, 3, 4, 5)}
@@ -35,6 +29,4 @@ object ListHelperSpec extends Specification {
     "fail on out of range" in {splice(List(1, 2, 3, 4, 5), 6, List(50)) must throwA[Exception]}
     "fail on out of range" in {splice(List(1, 2, 3, 4, 5), -1, List(50)) must throwA[Exception]}
   }
-
-
 }

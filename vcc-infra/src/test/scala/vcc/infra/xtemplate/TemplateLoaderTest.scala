@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.infra.xtemplate 
+package vcc.infra.xtemplate
 
-import org.specs.Specification
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4,JUnitSuiteRunner}
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
 import java.io.StringReader
 import org.xml.sax.InputSource
 
-@RunWith(classOf[JUnitSuiteRunner])
-class TemplateLoaderTest extends JUnit4(TemplateLoaderSpec)
-
-object TemplateLoaderSpec extends Specification with Mockito {
+class TemplateLoaderTest extends SpecificationWithJUnit with Mockito {
   val engine = new TemplateEngine()
   engine.registerDirective(EchoDataDirective)
   engine.registerDirective(IfDefinedDirective)
-  val spyEngine = spy(engine)
   val template = new Template("t")
 
   "Load plain xml" in {
@@ -40,6 +33,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
   }
 
   "resolve simple directive" in {
+    val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     val t = loader.resolveNode(<foo><t:data id="foo"/></foo>, template)
 
@@ -48,6 +42,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
   }
 
   "resolve simple directive in nested xml" in {
+    val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     val t = loader.resolveNode(<hey><foo><t:data id="foo"/></foo></hey>, template)
 
@@ -57,6 +52,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
   }
 
   "depth recursion first" in {
+    val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     val t = loader.resolveNode(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>, template)
     there was one(spyEngine).hasDirective("data") then
@@ -70,12 +66,14 @@ object TemplateLoaderSpec extends Specification with Mockito {
   }
 
   "surface no directive exception" in {
+    val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     loader.resolveNode(<hey><foo><t:foo id="foo"/></foo></hey>, template) must
             throwAn(new IllegalTemplateDirectiveException("Directive 'foo' not defined",(<t:foo id="foo"/>)))
   }
 
   "surface failed exceptions" in {
+    val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     loader.resolveNode(<hey><t:ifdefined id="foo"><foo><t:data ida="foo"/></foo></t:ifdefined></hey>, template) must
             throwA[IllegalTemplateDirectiveException]
@@ -89,7 +87,7 @@ object TemplateLoaderSpec extends Specification with Mockito {
   "load from inputsource" in {
     val loader = new TemplateLoader("t", engine)
     val t = loader.load(new InputSource(new StringReader("<hey><t:data id='foo' /></hey>")))
-    t mustNot beNull
+    t must not beNull;
     t.prefix must_== "t"
   }
 
@@ -97,5 +95,4 @@ object TemplateLoaderSpec extends Specification with Mockito {
     val loader = new TemplateLoader("t", engine)
     loader.load(new InputSource(new StringReader("<t:data id='foo' />"))) must throwAn[IllegalTemplateDirectiveException]
   }
-
 }
