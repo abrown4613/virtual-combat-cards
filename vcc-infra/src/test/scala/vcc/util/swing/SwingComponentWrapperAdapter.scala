@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing
 
 import org.uispec4j.{Trigger, UISpecAdapter}
 import org.uispec4j.interception.WindowInterceptor
-import scala.swing.{MainFrame, Component}
+import swing.{Frame, Component}
 
 /**
  * This is a UISpecAdapter that wraps a single swing.scala.Component.
@@ -30,12 +29,12 @@ class SwingComponentWrapperAdapter(component: Component) extends UISpecAdapter {
   /**
    * Simple wrapper for a component to be used by the SwingComponentWrapperAdapter
    */
-  class SwingComponentWrapper(val component: Component) extends MainFrame {
+  class SwingComponentWrapper(val component: Component) extends Frame {
     contents = component
     visible = true
   }
 
-  def getMainWindow(): org.uispec4j.Window = {
+  def getMainWindow: org.uispec4j.Window = {
     WindowInterceptor.run(new Trigger() {
       def run() {
         new SwingComponentWrapper(component)

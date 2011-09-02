@@ -14,72 +14,62 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.prompter
 
-import org.specs.{Specification}
-import org.uispec4j.{UISpecAdapter}
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
-import org.uispec4j.finder.{ComponentMatchers}
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
+import org.uispec4j.finder.ComponentMatchers
 import javax.swing.{JRadioButton, JLabel}
-import org.specs.mock.Mockito
-import vcc.util.swing.{UISpec4JSpecification, SwingComponentWrapperAdapter, SwingHelper}
+import org.uispec4j.UISpec4J
+import vcc.util.swing.{UISpec4JPanelScope, SwingHelper}
+import swing.Panel
 
-@RunWith(classOf[JUnitSuiteRunner])
-class RadioButtonValuePanelTest extends JUnit4(RadioButtonValuePanelSpec)
+class RadioButtonValuePanelTest extends SpecificationWithJUnit with Mockito {
 
-object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecification with Mockito {
-
-  private var panel: RadioButtonValuePanel = null
   private val options = List("one", "two", "three")
+  UISpec4J.init()
 
-  def getComponent(): UISpecAdapter = {
-    panel = new RadioButtonValuePanel("text", options)
-    new SwingComponentWrapperAdapter(panel)
+  trait context extends UISpec4JPanelScope{
+    protected var panel: RadioButtonValuePanel = null
+
+    def createPanelAdapter(): Panel = {
+      panel = new RadioButtonValuePanel("text", options)
+      panel
+    }
+
+    def getRadioButton = getPanel.getSwingComponents(ComponentMatchers.fromClass(classOf[JRadioButton])).toList.asInstanceOf[List[JRadioButton]]
   }
-
-  def getRadioButton = getMainWindow.getSwingComponents(ComponentMatchers.fromClass(classOf[JRadioButton])).toList.asInstanceOf[List[JRadioButton]]
 
   "RadioButtonValuePanel" should {
 
-    "Place label with collon" in {
-      setAdapter(getComponent())
-      val win = getMainWindow
-      win mustNot beNull
-      val l = win.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList
+    "Place label with collon" in new context {
+      val l = getPanel.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList
       l.size must_== 1
       l(0).asInstanceOf[JLabel].getText must_== "text"
     }
 
-    "add a check box for each item" in {
-      setAdapter(getComponent())
-      val win = getMainWindow
+    "add a check box for each item" in new context{
       val rbs = getRadioButton
       rbs.size must_== 3
       rbs.map(x => x.getText) must_== options
     }
 
-    "update value on a click" in {
-      setAdapter(getComponent)
-      val b = getMainWindow.getRadioButton("two")
-      b mustNot beNull
+    "update value on a click" in new context{
+      val b = getPanel.getRadioButton("two")
+      b must not beNull;
       b.click()
       Thread.sleep(200)
       panel.value must_== Some(1)
     }
 
-    "fire of value change to listener" in {
+    "fire of value change to listener" in new context{
       val mMediator = mock[ValuePanel.ChangeListener]
-      setAdapter(getComponent)
       panel.setListener(mMediator)
-      getMainWindow.getRadioButton("two").click
+      getPanel.getRadioButton("two").click()
       there was one(mMediator).valuePanelChanged(RadioButtonValuePanel.Return(Some(1)))
     }
 
-    "clear all option when value is set to null" in {
-      setAdapter(getComponent)
-
+    "clear all option when value is set to null" in new context{
       SwingHelper.invokeInEventDispatchThread{
         panel.setValue(Some(2))
       }
@@ -91,11 +81,9 @@ object RadioButtonValuePanelSpec extends Specification with UISpec4JSpecificatio
       syncWithSwing()
       getRadioButton.find(b => b.isSelected == true).isDefined must beFalse
       panel.value must_== None
-
     }
-    "not fire value change when value is set externally" in {
+    "not fire value change when value is set externally" in new context{
       val mMediator = mock[ValuePanel.ChangeListener]
-      setAdapter(getComponent)
       panel.setListener(mMediator)
 
       SwingHelper.invokeInEventDispatchThread{
