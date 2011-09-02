@@ -18,7 +18,7 @@ package vcc.infra.datastore.directory
 
 import vcc.infra.datastore.naming._
 import java.io.File
-import vcc.infra.datastore.{DataStoreIOException, DataStoreFactory, DataStoreSpec}
+import vcc.infra.datastore.{DataStore, DataStoreIOException, DataStoreFactory, DataStoreSpec}
 
 class DirectoryDataStoreTest extends DataStoreSpec {
 
@@ -33,8 +33,11 @@ class DirectoryDataStoreTest extends DataStoreSpec {
   val badTestEntity = Seq("notxml","noid","extra-xml-entity","bad-encoding","missing-datum-id","bad-xml","id-mismatch").map(x=>EntityID.fromName(x))
   
   val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:"+testStore.toURI.toString)
+
+  var aDataStore: DataStore = null
+
   val storeContext = beforeContext {
-    storeID = testStoreURI
+    val storeID = testStoreURI
     val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
     dsb.exists(storeID) must beTrue
     aDataStore = dsb.open(storeID)
@@ -92,7 +95,6 @@ class DirectoryDataStoreTest extends DataStoreSpec {
     "replace relative URL with current dir + path" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:path/to/some.sa")
       val pwd = new File(System.getProperty("user.dir"))
-      val repl = pwd.toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
       val resolved = dsb.resolveDataStoreURI(baseURI,Map())
@@ -107,7 +109,5 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
       dsb.resolveDataStoreURI(baseURI,Map("OTHER"->repl)) must beNull
     }
-    
   }
-  
 }
