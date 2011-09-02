@@ -14,36 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing
 
-import org.specs.Specification
-import org.uispec4j.{UISpec4J, UISpecAdapter}
 import org.uispec4j.interception.toolkit.UISpecDisplay
 import concurrent.SyncVar
+import org.specs2.specification.Scope
+import org.specs2.mutable.BeforeAfter
+import org.uispec4j.Panel
 
-trait UISpec4JSpecification {
-  spec: Specification =>
-  private var adapter: UISpecAdapter = null
+trait UISpec4JPanelScope extends Scope with BeforeAfter {
+  private var adapterPanel: Panel = null
 
-  UISpec4J.init()
+  def createPanelAdapter(): scala.swing.Panel
 
-  val swingContext = SpecContext() before {
-    UISpecDisplay.instance.reset
-  } after {
-    adapter = null
-    UISpecDisplay.instance.rethrowIfNeeded
-    UISpecDisplay.instance.reset
-  }
-  swingContext(spec)
-
-  def setAdapter(adapter: UISpecAdapter): Unit = {
-    this.adapter = adapter
+  def before {
+    UISpecDisplay.instance.reset()
+    adapterPanel = new Panel(createPanelAdapter().peer)
   }
 
-  private def getAdapter(): UISpecAdapter = adapter
+  def after {
+    adapterPanel = null
+    UISpecDisplay.instance.rethrowIfNeeded()
+    UISpecDisplay.instance.reset()
+  }
 
-  def getMainWindow() = getAdapter.getMainWindow
+  def getPanel: Panel = adapterPanel
 
   /**
    * Executes an dummy action on the AWT-EventQueue, which means any pending swing actions

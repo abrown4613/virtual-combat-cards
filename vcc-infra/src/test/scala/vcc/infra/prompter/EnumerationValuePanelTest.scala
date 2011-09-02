@@ -14,22 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.prompter
 
-import org.specs.{Specification}
-import org.uispec4j.{UISpecAdapter}
-import org.junit.runner.RunWith
-import org.specs.runner.{JUnit4, JUnitSuiteRunner}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 import org.uispec4j.finder.{ComponentMatchers}
 import javax.swing.{JRadioButton, JLabel}
-import org.specs.mock.Mockito
-import vcc.util.swing.{UISpec4JSpecification, SwingComponentWrapperAdapter, SwingHelper}
+import vcc.util.swing.{UISpec4JPanelScope, SwingHelper}
+import swing.Panel
+import org.uispec4j.UISpec4J
 
-@RunWith(classOf[JUnitSuiteRunner])
-class EnumerationValuePanelTest extends JUnit4(EnumerationValuePanelSpec)
-
-object EnumerationValuePanelSpec extends Specification with UISpec4JSpecification with Mockito {
+class EnumerationValuePanelTest extends SpecificationWithJUnit with Mockito {
 
   object SomeEnum extends Enumeration {
     val Yes = Value("Yes")
@@ -37,55 +32,50 @@ object EnumerationValuePanelSpec extends Specification with UISpec4JSpecificatio
     val Maybe = Value("Maybe")
   }
 
-  private var panel: EnumerationValuePanel[SomeEnum.type] = null
   private val options = List("Yes", "No", "Maybe")
 
-  def getComponent(): UISpecAdapter = {
-    panel = new EnumerationValuePanel[SomeEnum.type]("text", SomeEnum)
-    new SwingComponentWrapperAdapter(panel)
-  }
+  UISpec4J.init()
 
-  def getRadioButton = getMainWindow.getSwingComponents(ComponentMatchers.fromClass(classOf[JRadioButton])).toList.asInstanceOf[List[JRadioButton]]
+  trait context extends UISpec4JPanelScope {
+    protected var panel: EnumerationValuePanel[SomeEnum.type] = null
+
+    def createPanelAdapter(): Panel = {
+      panel = new EnumerationValuePanel[SomeEnum.type]("text", SomeEnum)
+      panel
+    }
+    def getRadioButton = getPanel.getSwingComponents(ComponentMatchers.fromClass(classOf[JRadioButton])).toList.asInstanceOf[List[JRadioButton]]
+  }
 
   "EnumerationValuePanel" should {
 
-    "Place label with collon" in {
-      setAdapter(getComponent())
-      val win = getMainWindow
-      win mustNot beNull
-      val l = win.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList
+    "Place label with collon" in new context {
+      val l = getPanel.getSwingComponents(ComponentMatchers.fromClass(classOf[JLabel])).toList
       l.size must_== 1
       l(0).asInstanceOf[JLabel].getText must_== "text"
     }
 
-    "add a check box for each item" in {
-      setAdapter(getComponent())
-      val win = getMainWindow
+    "add a check box for each item" in new context {
       val rbs = getRadioButton
       rbs.size must_== 3
       rbs.map(x => x.getText) must_== options
     }
 
-    "update value on a click" in {
-      setAdapter(getComponent)
-      val b = getMainWindow.getRadioButton("Yes")
-      b mustNot beNull
+    "update value on a click" in new context {
+      val b = getPanel.getRadioButton("Yes")
+      b must not beNull;
       b.click()
-      syncWithSwing
+      syncWithSwing()
       panel.value must_== Some(SomeEnum.Yes)
     }
 
-    "fire of value change to listener" in {
+    "fire of value change to listener" in new context {
       val mMediator = mock[ValuePanel.ChangeListener]
-      setAdapter(getComponent)
       panel.setListener(mMediator)
-      getMainWindow.getRadioButton("No").click
+      getPanel.getRadioButton("No").click()
       there was one(mMediator).valuePanelChanged(EnumerationValuePanel.Value(Some(SomeEnum.No)))
     }
 
-    "clear all option when value is set to null" in {
-      setAdapter(getComponent)
-
+    "clear all option when value is set to null" in new context {
       SwingHelper.invokeInEventDispatchThread{
         panel.setValue(Some(SomeEnum.Maybe))
       }
@@ -97,11 +87,10 @@ object EnumerationValuePanelSpec extends Specification with UISpec4JSpecificatio
       syncWithSwing()
       getRadioButton.find(b => b.isSelected == true).isDefined must beFalse
       panel.value must_== None
-
     }
-    "not fire value change when value is set externally" in {
+
+    "not fire value change when value is set externally" in new context {
       val mMediator = mock[ValuePanel.ChangeListener]
-      setAdapter(getComponent)
       panel.setListener(mMediator)
 
       SwingHelper.invokeInEventDispatchThread{
