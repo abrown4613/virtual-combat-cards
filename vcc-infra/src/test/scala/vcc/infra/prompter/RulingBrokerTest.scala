@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.prompter
 
-import org.specs.SpecificationWithJUnit
-import org.specs.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import vcc.controller.{Decision, Ruling}
 
 class RulingBrokerTest extends SpecificationWithJUnit with Mockito {
@@ -27,7 +27,7 @@ class RulingBrokerTest extends SpecificationWithJUnit with Mockito {
 
   trait AnotherRuling extends Ruling
 
-  "RulingBroker" should {
+  trait context extends Scope {
     val ruling1 = mock[SomeRuling]
     val ruling2 = mock[AnotherRuling]
     val rulings = List(ruling1, ruling2)
@@ -44,31 +44,33 @@ class RulingBrokerTest extends SpecificationWithJUnit with Mockito {
     val promptContext = "some action"
 
     val broker = new RulingBroker(mDialog, mTranslator)
+  }
 
-    "translate Ruling to Prompts using tranlation service" in {
+  "RulingBroker" should {
+    "translate Ruling to Prompts using tranlation service" in new context {
       broker.promptRuling(promptContext, rulings)
       there was one(mTranslator).promptForRuling(ruling1) then
         one(mTranslator).promptForRuling(ruling2)
     }
-    "sent promper prompts to dialog controller" in {
+    "sent promper prompts to dialog controller" in new context {
       broker.promptRuling(promptContext, rulings)
       there was one(mDialog).promptUser(promptContext, List(mPrompt1, mPrompt2))
     }
 
-    "ignore decision if dialog cancelled" in {
+    "ignore decision if dialog cancelled" in new context {
       mDialog.promptUser(any, any) returns false
       broker.promptRuling(promptContext, rulings) must_== Nil
       there was no(mPrompt1).extractDecision()
       there was no(mPrompt2).extractDecision()
     }
 
-    "extract decision from prompts if positive" in {
+    "extract decision from prompts if positive" in new context {
       mDialog.promptUser(any, any) returns true
       broker.promptRuling(promptContext, rulings)
       there was one(mPrompt1).extractDecision()
       there was one(mPrompt2).extractDecision()
     }
-    "sent decision back" in {
+    "sent decision back" in new context {
       mDialog.promptUser(any, any) returns true
       broker.promptRuling(promptContext, rulings) must_== List(mDecision1, mDecision2)
     }
