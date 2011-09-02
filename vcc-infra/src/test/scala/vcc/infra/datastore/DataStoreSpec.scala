@@ -22,8 +22,6 @@ import naming._
 
 abstract class DataStoreSpec extends SpecificationWithJUnit {
 
-  protected var storeID: DataStoreURI = null
-  var aDataStore: DataStore = null
   val eid1 = EntityID.fromName("eid:1")
   val eid2 = EntityID.fromName("eid:2")
   val eid3 = EntityID.fromName("eid:3")
@@ -42,28 +40,27 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
 
   "the DataStoreFactory" should {
 
-    storeID = generateStoreID()
+    val aStoreID = getStoreID('FactoryStoreID)
 
     "provide a builder" in {
-      val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
+      val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
       dsb must notBeNull
     }
     "must be always the same" in {
-      val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
-      val dsb2 = DataStoreFactory.getDataStoreBuilder(storeID)
+      val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
+      val dsb2 = DataStoreFactory.getDataStoreBuilder(aStoreID)
       dsb2 must notBeNull
       dsb2 must beEqual(dsb)
     }
   }
 
-  var adsb: DataStoreBuilder = null
-
   val dsbContext = beforeContext {
-    storeID = getStoreID('DataStoreBuilder)
-    adsb = DataStoreFactory.getDataStoreBuilder(storeID)
+    val storeID = getStoreID('DataStoreBuilder)
   }
 
   "a DataStoreBuilder" ->- (dsbContext) should {
+    val storeID = getStoreID('DataStoreBuilder)
+    val adsb = DataStoreFactory.getDataStoreBuilder(storeID)
     "prove the store does not exists before creating" in {
       adsb.exists(storeID) must beFalse
     }
@@ -88,8 +85,9 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
   }
 
   "a DataStore implementation" should {
+    val storeID = getStoreID('DataStoreImplementation)
+    var aDataStore: DataStore = null
     doBefore {
-      storeID = getStoreID('Store)
       val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
       if (!dsb.exists(storeID)) {
         dsb.create(storeID)
