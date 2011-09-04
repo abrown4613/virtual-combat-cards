@@ -28,8 +28,7 @@ class IllegalAnswerException(msg: String) extends Exception(msg)
 /**
  * A request for a ruling or a completed ruling.
  */
-abstract class Ruling[S, Q <: Question[S], A] {
-  type R <: Ruling[S, Q, A]
+abstract class Ruling[S, Q <: Question[S], A, R <: Ruling[S, Q, A, R]] {
   val question: Q
   val answer: Option[A]
 
@@ -39,7 +38,7 @@ abstract class Ruling[S, Q <: Question[S], A] {
 
   def generateCommands(state: S): List[StateCommand[S]] = {
     if (hasDecision) commandsFromAnswer(state)
-    else throw new IllegalAnswerException("No answer for ruling " + question.userPrompt(state))
+    else throw new IllegalAnswerException("No answer for ruling " + question)
   }
 
   def withAnswer(value: A): R

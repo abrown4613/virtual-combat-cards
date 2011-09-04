@@ -29,12 +29,14 @@ object Save {
   }
 
   sealed trait Result
+
   case object Saved extends Result
+
   case object Failed extends Result
+
 }
 
-case class SaveRuling(question: Save.Against, answer: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result] {
-  type R = SaveRuling
+case class SaveRuling(question: Save.Against, answer: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result, SaveRuling] {
   import Save._
 
 

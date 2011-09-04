@@ -30,7 +30,10 @@ class SaveRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _]] = List(SaveRuling(Save.Against(eid, "death"), Some(Save.Saved)))
+  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
+    SaveRuling(Save.Against(eid, "death"), Some(Save.Saved)),
+    NextUpRuling(EligibleNext(ioA0,List(io1_0)),None)
+  )
   private val state = CombatState.empty
 
   private def e1 = {

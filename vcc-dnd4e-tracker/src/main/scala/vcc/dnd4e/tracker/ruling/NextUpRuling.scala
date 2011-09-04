@@ -24,16 +24,15 @@ case class EligibleNext(primary: InitiativeOrderID, other: List[InitiativeOrderI
   def userPrompt(state: CombatState): String = "Select which combatant should act next"
 }
 
-case class NextUpRuling(question: EligibleNext, answer: Option[InitiativeOrderID]) extends Ruling[CombatState, EligibleNext, InitiativeOrderID] {
-  type R = NextUpRuling
+case class NextUpRuling(question: EligibleNext, answer: Option[InitiativeOrderID]) extends Ruling[CombatState, EligibleNext, InitiativeOrderID, NextUpRuling] {
 
   protected def commandsFromAnswer(state: CombatState): List[StateCommand[CombatState]] = {
     val ioi = answer.get
-    (if(ioi == question.primary) StartRoundCommand(ioi) else MoveUpCommand(ioi)):: Nil
+    (if (ioi == question.primary) StartRoundCommand(ioi) else MoveUpCommand(ioi)) :: Nil
   }
 
   def withAnswer(value: InitiativeOrderID): NextUpRuling = {
-    if(value != question.primary && !question.other.contains(value))
+    if (value != question.primary && !question.other.contains(value))
       throw new IllegalAnswerException(value + " is not eligible to act")
     copy(answer = Some(value))
   }
