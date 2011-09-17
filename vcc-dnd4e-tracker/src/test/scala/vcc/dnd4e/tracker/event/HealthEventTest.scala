@@ -50,7 +50,7 @@ class HealthEventTest extends SpecificationWithJUnit with EventSourceSampleEvent
   private def tempHPEvent = {
     val state = makeState()
     SetTemporaryHitPointsEvent(combA, 10).transition(state)
-    there was one(state.lensFactory.combatantHealth(combA).get(state)).setTemporaryHitPoints(10, false)
+    there was one(state.lensFactory.combatantHealth(combA).get(state)).setTemporaryHitPoints(10)
   }
 
   private def failDeathEvent = {

@@ -19,7 +19,7 @@ package vcc.dnd4e.tracker.event
 
 import vcc.dnd4e.tracker.common.{HealthTracker, CombatState, CombatantID}
 
-trait HealthEvent extends CombatStateEvent {
+abstract class HealthEvent extends CombatStateEvent {
   val target: CombatantID
 
   protected def transitionHealth(ht: HealthTracker): HealthTracker
@@ -36,7 +36,7 @@ case class ApplyHealingEvent(target: CombatantID, amount: Int) extends HealthEve
 }
 
 case class SetTemporaryHitPointsEvent(target: CombatantID, amount: Int) extends HealthEvent {
-  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.setTemporaryHitPoints(amount, false)
+  protected def transitionHealth(ht: HealthTracker): HealthTracker = ht.setTemporaryHitPoints(amount)
 }
 
 case class FailDeathSaveEvent(target: CombatantID) extends HealthEvent {

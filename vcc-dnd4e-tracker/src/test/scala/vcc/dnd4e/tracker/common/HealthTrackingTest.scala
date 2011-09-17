@@ -61,7 +61,7 @@ class HealthTrackingTest extends TestCase {
     var minion: HealthTracker = HealthTracker.createTracker(CombatantType.Minion, 1)
 
     // Cant get temporary HP
-    var mmod = minion.setTemporaryHitPoints(10, true)
+    val mmod = minion.setTemporaryHitPoints(10)
     assert(mmod eq minion, mmod)
 
     // Any damage should become one, and cause him to be dead
@@ -93,7 +93,7 @@ class HealthTrackingTest extends TestCase {
     assert(monster.currentHP == 45)
     assert(monster.status == Ok)
 
-    monster = monster.setTemporaryHitPoints(10, false)
+    monster = monster.setTemporaryHitPoints(10)
     assert(monster.currentHP == 45)
     assert(monster.temporaryHP == 10)
     assert(monster.status == Ok)
@@ -103,7 +103,7 @@ class HealthTrackingTest extends TestCase {
     assert(monster.temporaryHP == 3)
     assert(monster.status == Ok)
 
-    monster = monster.setTemporaryHitPoints(5, false)
+    monster = monster.setTemporaryHitPoints(5)
     assert(monster.currentHP == monster.base.totalHP)
     assert(monster.temporaryHP == 5)
     assert(monster.status == Ok)
@@ -148,7 +148,7 @@ class HealthTrackingTest extends TestCase {
     assert(pc.currentHP == pc.base.totalHP)
     assert(pc.status == Ok)
 
-    pc = pc.setTemporaryHitPoints(10, false)
+    pc = pc.setTemporaryHitPoints(10)
     assert(pc.currentHP == pc.base.totalHP)
     assert(pc.temporaryHP == 10)
     assert(pc.status == Ok)
@@ -158,12 +158,12 @@ class HealthTrackingTest extends TestCase {
     assert(pc.temporaryHP == 3)
     assert(pc.status == Ok)
 
-    pc = pc.setTemporaryHitPoints(2, false)
+    pc = pc.setTemporaryHitPoints(2)
     assert(pc.temporaryHP == 3)
     assert(pc.status == Ok)
 
 
-    pc = pc.setTemporaryHitPoints(5, false)
+    pc = pc.setTemporaryHitPoints(5)
     assert(pc.currentHP == pc.base.totalHP)
     assert(pc.temporaryHP == 5)
     assert(pc.status == Ok)
@@ -330,5 +330,4 @@ class HealthTrackingTest extends TestCase {
 
     assert(pc30_mode == HealthTracker(pc30.currentHP - 5, 4, 1, pc30.base))
   }
-
 }
