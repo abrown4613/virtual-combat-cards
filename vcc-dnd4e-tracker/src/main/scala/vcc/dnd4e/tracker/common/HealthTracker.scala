@@ -115,38 +115,40 @@ case class HealthTrackerDelta(damage: Int, temporaryHP: Int, deathStrikes: Int)
  * @param bas
  */
 case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, base: HealthDefinition) extends CombatantAspect {
-  private def boundedChange(amnt: Int): Int = {
-    val n = currentHP + amnt;
+  private def boundedChange(amount: Int): Int = {
+    val n = currentHP + amount;
     if (n < base.lowerBound) base.lowerBound
     else if (n > base.totalHP) base.totalHP
     else n
   }
 
-  def applyDamage(amnt: Int) = {
-    if (amnt > temporaryHP) {
-      val nchp = boundedChange(-amnt + temporaryHP)
+  def applyDamage(amount: Int) = {
+    if (amount > temporaryHP) {
+      val nchp = boundedChange(-amount + temporaryHP)
       HealthTracker(nchp, 0, if (nchp == base.lowerBound) 3 else deathStrikes, base)
     } else {
-      HealthTracker(currentHP, temporaryHP - amnt, deathStrikes, base)
+      HealthTracker(currentHP, temporaryHP - amount, deathStrikes, base)
     }
   }
 
   /**
    * Healing dead is not allowed. They most be removed from death before updating hp
    */
-  def heal(amnt: Int) = {
+  def heal(amount: Int) = {
     if (status != HealthStatus.Dead)
-      HealthTracker(boundedChange(if (currentHP < 0) amnt - currentHP else amnt), temporaryHP, deathStrikes, base)
+      HealthTracker(boundedChange(if (currentHP < 0) amount - currentHP else amount), temporaryHP, deathStrikes, base)
     else
       this
   }
 
-  def setTemporaryHitPoints(amnt: Int, force: Boolean) = {
-    if (base.hasTemporaryHP) {
-      if (force) HealthTracker(currentHP, amnt, deathStrikes, base)
-      else if (amnt > temporaryHP)
-        HealthTracker(currentHP, amnt, deathStrikes, base)
-      else this
+  /**
+   * Set temporary hit points of creature if it can have them, and the new amount is greater the current score.
+   * @param amount Amount of temporary hit points
+   * @return a new tracker with the modified temporary hit points.
+   */
+  def setTemporaryHitPoints(amount: Int):HealthTracker = {
+    if (base.hasTemporaryHP && amount > temporaryHP) {
+        HealthTracker(currentHP, amount, deathStrikes, base)
     } else this
   }
 
