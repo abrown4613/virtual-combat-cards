@@ -42,6 +42,10 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       "  auto start first Ready" ! testStartReadyLiving ^
       "  auto end first Delaying living" ! testEndRoundDelayingLiving ^
       "  on living delay must end and start round" ! testDelayingLivingAutomation ^
+      "  if some other is delaying must call for NextUp selection" ! testStartNextUpWithOneDelaying ^
+      "  if some other is delaying but dead, must start living" ! testStartNextUpWithOneDelayingButDead ^
+      "  if two are delaying must include both on NextUp selection" ! testStartNextUpWithMultipleDelaying ^
+      "  if two are delaying but one is dead just show living" ! testStartNextUpWithMultipleDelayingWithDead ^
       end
 
   private val cs = AutomationCommandSource.autoStartDead
@@ -105,6 +109,44 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     (nState.order.nextUp.get must_== io1_0) and (transitions must_== List(
       EndRoundCommand(io1_0),
       StartRoundCommand(io1_0)))
+  }
+
+  private def runCommands(iState: CombatState, cmds: CombatStateCommand*): CombatState = {
+    cmds.foldLeft(iState)((state, cmd) => state.transitionWith(cmd.generateTransitions(state)))
+  }
+
+  private def testStartNextUpWithOneDelaying = {
+    val state = runCommands(getInitialState,
+      StartRoundCommand(io1_0),
+      DelayCommand(io1_0))
+    ns.get(state) must_== Some(NextUpCommand(io2_0, List(io1_0)), ns)
+  }
+
+  private def testStartNextUpWithOneDelayingButDead = {
+    val state = runCommands(getInitialState,
+      StartRoundCommand(io1_0),
+      DelayCommand(io1_0),
+      DamageCommand(comb1, 1000))
+    ns.get(state) must_== Some(StartRoundCommand(io2_0), ns)
+  }
+
+  private def testStartNextUpWithMultipleDelaying = {
+    val state = runCommands(getInitialState,
+      StartRoundCommand(io1_0),
+      DelayCommand(io1_0),
+      StartRoundCommand(io2_0),
+      DelayCommand(io2_0))
+    ns.get(state) must_== Some(NextUpCommand(ioB0, List(io1_0, io2_0)), ns)
+  }
+
+  private def testStartNextUpWithMultipleDelayingWithDead = {
+    val state = runCommands(getInitialState,
+      StartRoundCommand(io1_0),
+      DelayCommand(io1_0),
+      StartRoundCommand(io2_0),
+      DelayCommand(io2_0),
+      DamageCommand(comb2, 1000))
+    ns.get(state) must_== Some(NextUpCommand(ioB0, List(io1_0)), ns)
   }
 
   def miniDispatcher(cs: CommandStream[CombatState, CombatStateCommand], state: CombatState): (CombatState, List[CombatStateCommand]) = {
@@ -183,5 +225,4 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== None
     }
   }
-
 }
