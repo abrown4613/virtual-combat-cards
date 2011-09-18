@@ -20,7 +20,7 @@ import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
 
-trait InitiativeCommand extends CombatStateCommand {
+abstract class InitiativeCommand extends CombatStateCommand {
   val ioi: InitiativeOrderID
 
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent]
@@ -99,3 +99,6 @@ case class MoveBeforeCommand(who: InitiativeOrderID, whom: InitiativeOrderID) ex
   }
 }
 
+case class NextUpCommand(next: InitiativeOrderID, delaying: List[InitiativeOrderID]) extends CombatStateCommand {
+  def generateTransitions(iState: CombatState): List[CombatStateEvent] = Nil
+}
