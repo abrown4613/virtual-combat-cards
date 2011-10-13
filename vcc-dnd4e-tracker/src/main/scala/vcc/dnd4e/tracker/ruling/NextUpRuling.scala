@@ -18,22 +18,22 @@ package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatState}
 import vcc.dnd4e.tracker.transition.{MoveUpCommand, StartRoundCommand}
-import vcc.tracker.{IllegalAnswerException, StateCommand, Question, Ruling}
+import vcc.tracker.{IllegalDecisionException, StateCommand, Question, Ruling}
 
 case class EligibleNext(primary: InitiativeOrderID, other: List[InitiativeOrderID]) extends Question[CombatState] {
   def userPrompt(state: CombatState): String = "Select which combatant should act next"
 }
 
-case class NextUpRuling(question: EligibleNext, answer: Option[InitiativeOrderID]) extends Ruling[CombatState, EligibleNext, InitiativeOrderID, NextUpRuling] {
+case class NextUpRuling(question: EligibleNext, decision: Option[InitiativeOrderID]) extends Ruling[CombatState, EligibleNext, InitiativeOrderID, NextUpRuling] {
 
-  protected def commandsFromAnswer(state: CombatState): List[StateCommand[CombatState]] = {
-    val ioi = answer.get
+  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+    val ioi = decision.get
     (if (ioi == question.primary) StartRoundCommand(ioi) else MoveUpCommand(ioi)) :: Nil
   }
 
-  def withAnswer(value: InitiativeOrderID): NextUpRuling = {
+  def withDecision(value: InitiativeOrderID): NextUpRuling = {
     if (value != question.primary && !question.other.contains(value))
-      throw new IllegalAnswerException(value + " is not eligible to act")
-    copy(answer = Some(value))
+      throw new IllegalDecisionException(value + " is not eligible to act")
+    copy(decision = Some(value))
   }
 }
