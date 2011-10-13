@@ -23,25 +23,46 @@ trait Question[S] {
   def userPrompt(state: S): String
 }
 
-class IllegalAnswerException(msg: String) extends Exception(msg)
+/**
+ * Indicates that a specified decision is not valid.
+ */
+class IllegalDecisionException(msg: String) extends Exception(msg)
 
 /**
  * A request for a ruling or a completed ruling.
  */
-abstract class Ruling[S, Q <: Question[S], A, R <: Ruling[S, Q, A, R]] {
+abstract class Ruling[S, Q <: Question[S], D, R <: Ruling[S, Q, D, R]] {
   val question: Q
-  val answer: Option[A]
+  val decision: Option[D]
 
-  def hasDecision: Boolean = answer.isDefined
+  /**
+   * Determines whether the ruling has a decision or not.
+   */
+  def hasDecision: Boolean = decision.isDefined
 
-  protected def commandsFromAnswer(state: S): List[StateCommand[S]]
+  /**
+   * This is the method must be overridden to generate appropriate events for a given decision. If this method is called
+   * the ruling has a valid decision.
+   * @param state Current state
+   */
+  protected def commandsFromDecision(state: S): List[StateCommand[S]]
 
+  /**
+   * Give a ruling with a decision, generates all the commands that are a result of the ruling with that decision on
+   * that state.
+   * @param state Base state to generate the commands to.
+   */
   def generateCommands(state: S): List[StateCommand[S]] = {
-    if (hasDecision) commandsFromAnswer(state)
-    else throw new IllegalAnswerException("No answer for ruling " + question)
+    if (hasDecision) commandsFromDecision(state)
+    else throw new IllegalDecisionException("No answer for ruling " + question)
   }
 
-  def withAnswer(value: A): R
+  /**
+   * Create a new ruling with a decision specified. This new ruling can be used to generate commands from the decision.
+   * @param decision A decision of the appropriate type
+   * @return A new ruling of type R with the a valida ruling.
+   */
+  def withDecision(decision: D): R
 }
 
 

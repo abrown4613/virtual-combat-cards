@@ -36,18 +36,18 @@ object Save {
 
 }
 
-case class SaveRuling(question: Save.Against, answer: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result, SaveRuling] {
+case class SaveRuling(question: Save.Against, decision: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result, SaveRuling] {
   import Save._
 
 
-  protected def commandsFromAnswer(state: CombatState): List[StateCommand[CombatState]] = {
-    answer.get match {
+  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+    decision.get match {
       case Saved => List(CancelEffectCommand(question.eid))
       case Failed => Nil
     }
   }
 
-  def withAnswer(value: Result): SaveRuling = copy(answer = Some(value))
+  def withDecision(value: Result): SaveRuling = copy(decision = Some(value))
 }
 
 

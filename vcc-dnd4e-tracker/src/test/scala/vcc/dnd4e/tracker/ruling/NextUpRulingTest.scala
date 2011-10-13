@@ -19,7 +19,7 @@ package vcc.dnd4e.tracker.ruling
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
 import vcc.dnd4e.tracker.transition.{MoveUpCommand, StartRoundCommand}
-import vcc.tracker.IllegalAnswerException
+import vcc.tracker.IllegalDecisionException
 
 class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
 
@@ -39,15 +39,15 @@ class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
   }
 
   private def e2 = {
-    r.withAnswer(ioA0).generateCommands(combatState) must_== List(StartRoundCommand(ioA0))
+    r.withDecision(ioA0).generateCommands(combatState) must_== List(StartRoundCommand(ioA0))
   }
 
   private def e3 = {
-    (r.withAnswer(io1_0).generateCommands(combatState) must_== List(MoveUpCommand(io1_0))) and
-      (r.withAnswer(ioB0).generateCommands(combatState) must_== List(MoveUpCommand(ioB0)))
+    (r.withDecision(io1_0).generateCommands(combatState) must_== List(MoveUpCommand(io1_0))) and
+      (r.withDecision(ioB0).generateCommands(combatState) must_== List(MoveUpCommand(ioB0)))
   }
 
   private def e4 = {
-    r.withAnswer(io2_0) must throwA(new IllegalAnswerException(io2_0 + " is not eligible to act"))
+    r.withDecision(io2_0) must throwA(new IllegalDecisionException(io2_0 + " is not eligible to act"))
   }
 }
