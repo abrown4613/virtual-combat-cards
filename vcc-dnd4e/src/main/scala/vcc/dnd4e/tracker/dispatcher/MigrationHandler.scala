@@ -21,6 +21,7 @@ import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common.Command._
 import vcc.dnd4e.tracker.common.{InitiativeAction => action}
 import org.slf4j.Logger
+import vcc.controller.message.TransactionalAction
 
 trait MigrationHandler {
   this: AbstractCombatController =>
@@ -51,6 +52,11 @@ trait MigrationHandler {
       context.iState.value = ts.foldLeft(context.iState.value)((s, t) => s.transitionWith(t.generateTransitions(s)))
       migrationLogger.debug("   New State: ")
       dumpState(context.iState.value, migrationLogger)
+      advanceDead(oldState, action)
+  }
+
+  private def advanceDead(oldState: CombatState, action: TransactionalAction) {
+    {
       // Check if we need to advance dead if we rotated
       if (oldState.order.nextUp != context.iState.value.order.nextUp) {
         //We know we have someone new as the nextUp (first in order)
@@ -71,5 +77,6 @@ trait MigrationHandler {
           case _ =>
         }
       }
+    }
   }
 }
