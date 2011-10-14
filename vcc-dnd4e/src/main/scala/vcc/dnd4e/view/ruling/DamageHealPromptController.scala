@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import vcc.infra.prompter.ValuePanel.Return
@@ -25,7 +24,7 @@ import vcc.dnd4e.domain.tracker.common.{RegenerateByDecision, RegenerateByRuling
 /**
  * Helper trait to with decoration of the DamageHealPromptController is delegated.
  */
-trait DamageHealPromptControllerDelegate[R <: Ruling] {
+abstract class DamageHealPromptControllerDelegate[R <: Ruling] {
 
   /**
    * Panel ID to be used of this delegate
@@ -92,11 +91,10 @@ class DamageHealPromptController[R <: Ruling](ruling: R, delegate: DamageHealPro
     }
   }
 
-  def decoratePanel(panel: ValuePanel[_]) = {
-    val dhPanel = panel.asInstanceOf[DamageHealValuePanel]
+  def decoratePanel(panel: ValuePanel[_]) {
     val default = delegate.startValue(ruling)
-    if (default.isDefined) dhPanel.setInputValue(default.get.toString)
-    if (result.isDefined) dhPanel.setValue(result.map(x => x.toString))
+    if (default.isDefined) panel.setField("input", default.get.toString)
+    if (result.isDefined) panel.asInstanceOf[ValuePanel[String]].setValue(result.map(x => x.toString))
   }
 
   def panelIdentity(): String = delegate.panelId

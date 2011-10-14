@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import vcc.infra.prompter.ValuePanel
@@ -69,8 +68,8 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
   }
 
   newConditionField.peer.addActionListener(new ActionListener() {
-    def actionPerformed(e: ActionEvent): Unit = {
-      if (acceptButton.enabled) acceptButton.doClick
+    def actionPerformed(e: ActionEvent) {
+      if (acceptButton.enabled) acceptButton.doClick()
     }
   })
 
@@ -79,7 +78,7 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
     saveButton.requestFocus()
   }
 
-  def value(): Option[SaveEffectSpecialDecision.Result] = {
+  def value: Option[SaveEffectSpecialDecision.Result] = {
     if (saveButton.selected) Some(Saved)
     else if (changeButton.selected) Some(Changed(newConditionField.text))
     else None
@@ -98,11 +97,14 @@ class SaveOrChangeValuePanel extends MigPanel("ins dialog", "[]", "[][][][]10:pu
         changeButton.selected = true
         acceptButton.enabled = true
         newConditionField.enabled = true
-        setNewCondition(newCondition)
+        setField("NewCondition", newCondition)
     }
   }
 
-  def setNewCondition(condition: String) {
-    newConditionField.text = condition
+  override def setField(fieldName: String, value: String) {
+    fieldName match {
+      case "NewCondition" => newConditionField.text = value
+      case _ => throw new IllegalArgumentException("Field '" + fieldName + "' unknown.")
+    }
   }
 }
