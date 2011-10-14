@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import org.mockito.Mockito._
@@ -25,23 +24,29 @@ class DamageHealValuePanelTest extends UISpecTestCase {
   UISpec4J.init()
 
   private val listener = mock(classOf[ValuePanel.ChangeListener])
-  private var panel = new DamageHealValuePanel("question")
+  private val panel = new DamageHealValuePanel("question")
   panel.setListener(listener)
   val uiPanel = new Panel(panel.peer)
 
-  def testNotifyListenerOnChangeWithValidValue {
+  def testNotifyListenerOnChangeWithValidValue() {
     val ef = uiPanel.getTextBox("editField")
     ef.setText("10", true)
     verify(listener, times(1)).valuePanelChanged(TextFieldValuePanel.Return(Some("10")))
   }
 
-  def testNotifyListenerOnZeroHit {
-    uiPanel.getButton("Zero").click
+  def testSetInputFieldValue() {
+    val ef = uiPanel.getTextBox("editField")
+    panel.setField("input","123")
+    assert(ef.getText == "123", "text must be set via panel.setField")
+  }
+
+  def testNotifyListenerOnZeroHit() {
+    uiPanel.getButton("Zero").click()
     verify(listener, times(1)).valuePanelChanged(TextFieldValuePanel.Return(Some("0")))
   }
 
-  def testSetReturnValueOnZeroClick {
-    uiPanel.getButton("Zero").click
+  def testSetReturnValueOnZeroClick() {
+    uiPanel.getButton("Zero").click()
     assert(panel.value == Some("0"))
   }
 

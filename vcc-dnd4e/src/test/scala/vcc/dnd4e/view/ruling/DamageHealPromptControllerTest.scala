@@ -14,15 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
 import vcc.controller.{Ruling, Decision}
-import vcc.infra.prompter.{TextFieldValuePanel}
 import vcc.dnd4e.domain.tracker.common.{RegenerateByDecision, RegenerateByRuling, OngoingDamageDecision, OngoingDamageRuling}
 import org.specs2.mutable.{Specification, SpecificationWithJUnit}
+import vcc.infra.prompter.{ValuePanel, TextFieldValuePanel}
 
 class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito {
 
@@ -30,7 +29,7 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
     val mDelegate = mock[DamageHealPromptControllerDelegate[Ruling]]
     val mDecision = mock[Decision[Ruling]]
     val mRuling = mock[Ruling]
-    val mPanel = mock[DamageHealValuePanel]
+    val mPanel = mock[ValuePanel[String]]
     val mDefaults = mock[Ruling => (String, Int)]
 
     mDelegate.panelId returns "someId"
@@ -42,7 +41,6 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
     val controller = new DamageHealPromptController(mRuling, mDelegate)
   }
 
-  //FIXME: Mock fail on 1.6-SNAPSHOT and scala 2.9.0 need to fix
   "a DamageHealPromptController" should {
 
     "call defaultGenerator" in new context {
@@ -61,9 +59,9 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
 
     "decorate to default on first" in new context {
       controller.decoratePanel(mPanel)
-      there was one(mPanel).setInputValue("7")
+      there was one(mPanel).setField("input", "7")
       there was no(mPanel).setValue(any)
-    }.pendingUntilFixed("Fix mock")
+    }
 
     "sending None as Return must not be accepted" in new context {
       controller.handleAccept(TextFieldValuePanel.Return(None)) must beFalse
@@ -80,7 +78,7 @@ class DamageHealPromptControllerTest extends SpecificationWithJUnit with Mockito
       controller.handleAccept(TextFieldValuePanel.Return(Some("0")))
       controller.decoratePanel(mPanel)
       there was one(mPanel).setValue(Some("0"))
-    }.pendingUntilFixed("Fix mock")
+    }
 
     "extract default value will generate null" in new context {
       controller.extractDecision() must beNull

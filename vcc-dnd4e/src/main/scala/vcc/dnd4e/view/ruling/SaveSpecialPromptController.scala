@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import vcc.controller.Decision
@@ -46,13 +45,12 @@ class SaveSpecialPromptController(ruling: SaveEffectSpecialRuling) extends Rulin
   }
 
   def decoratePanel(panel: ValuePanel[_]) {
-    val scPanel = panel.asInstanceOf[SaveOrChangeValuePanel]
+    val scPanel = panel.asInstanceOf[ValuePanel[SaveEffectSpecialDecision.Result]]
     scPanel.setValue(result)
     result match {
-      case Some(Changed(v)) => scPanel.setNewCondition(v)
-      case _ => scPanel.setNewCondition(progressCondition(ruling.condition))
+      case Some(Changed(v)) => scPanel.setField("NewCondition", v)
+      case _ => scPanel.setField("NewCondition", progressCondition(ruling.condition))
     }
-
   }
 
   def panelIdentity(): String = SaveOrChangeValuePanel.Identity

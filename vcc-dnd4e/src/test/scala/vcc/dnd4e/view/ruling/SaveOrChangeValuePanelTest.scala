@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.ruling
 
 import org.uispec4j.{Panel, UISpec4J, UISpecTestCase}
@@ -26,8 +25,6 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   import vcc.dnd4e.domain.tracker.common.SaveEffectSpecialDecision._
 
   UISpec4J.init()
-
-  private val thePanelName = "SaveOrChangePanel"
 
   val thePanel = new SaveOrChangeValuePanel()
   val mListener = mock(classOf[ValuePanel.ChangeListener])
@@ -47,7 +44,7 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   }
 
   def testSetNewCondition() {
-    thePanel.setNewCondition("new condition")
+    thePanel.setField("NewCondition", "new condition")
     assertTrue(uiPanel.getTextBox("NewCondition").textEquals("new condition"))
   }
 
@@ -69,61 +66,61 @@ class SaveOrChangeValuePanelTest extends UISpecTestCase {
   }
 
   def testCheckDisableNewConditionIfWeClickSaveAfterChange() {
-    uiPanel.getRadioButton("Change").click
-    uiPanel.getRadioButton("Save").click
+    uiPanel.getRadioButton("Change").click()
+    uiPanel.getRadioButton("Save").click()
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled)
     assertFalse(uiPanel.getTextBox("NewCondition").isEnabled)
   }
 
   def testClickOnSaveAndCallListener() {
-    uiPanel.getRadioButton("Save").click
+    uiPanel.getRadioButton("Save").click()
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled)
     verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Saved)))
   }
 
   def testClickOnSaveSetValueCorrectly() {
-    uiPanel.getRadioButton("Save").click
+    uiPanel.getRadioButton("Save").click()
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled)
     assert(thePanel.value == Some(Saved))
   }
 
   def testClickOnChangeEnableNewCondition() {
-    uiPanel.getRadioButton("Change").click
+    uiPanel.getRadioButton("Change").click()
     assertTrue(uiPanel.getTextBox("NewCondition").isEnabled)
   }
 
   def testSettingChangeTextWithEnterCallsListener() {
-    uiPanel.getRadioButton("Change").click
+    uiPanel.getRadioButton("Change").click()
     uiPanel.getTextBox("NewCondition").setText("worst", true)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
     verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
   }
 
   def testSettingChangeTextSetsValue() {
-    uiPanel.getRadioButton("Change").click
+    uiPanel.getRadioButton("Change").click()
     uiPanel.getTextBox("NewCondition").setText("worst", false)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
     assert(thePanel.value == Some(Changed("worst")))
   }
 
   def testSettingChangeTextWithoutEnterDoesNotCallsListener() {
-    uiPanel.getRadioButton("Change").click
+    uiPanel.getRadioButton("Change").click()
     uiPanel.getTextBox("NewCondition").setText("worst", false)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
     verify(mListener, never).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
   }
 
   def testSettingChangeTextAddHitAcceptCallsListener() {
-    uiPanel.getRadioButton("Change").click
+    uiPanel.getRadioButton("Change").click()
     uiPanel.getTextBox("NewCondition").setText("worst", false)
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
-    uiPanel.getButton("AcceptButton").click
+    uiPanel.getButton("AcceptButton").click()
     verify(mListener).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Changed("worst"))))
   }
 
   def testClickSaveThenAcceptCallsListenerTwice() {
-    uiPanel.getRadioButton("Save").click
-    uiPanel.getButton("AcceptButton").click
+    uiPanel.getRadioButton("Save").click()
+    uiPanel.getButton("AcceptButton").click()
     assertTrue(uiPanel.getButton("AcceptButton").isEnabled) // Just for sync
     verify(mListener, times(2)).valuePanelChanged(SaveOrChangeValuePanel.Value(Some(Saved)))
   }

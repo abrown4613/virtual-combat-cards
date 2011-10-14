@@ -14,10 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.prompter
-
-import swing.Panel
 
 /**
  * ValuePanel companion object
@@ -47,7 +44,7 @@ object ValuePanel {
  */
 trait ValuePanel[T] {
 
-  panel: Panel =>
+  //panel: Panel =>
 
   private var listener: ValuePanel.ChangeListener = null
 
@@ -78,10 +75,19 @@ trait ValuePanel[T] {
    * Returns current value defined in the panel
    * @return None if no value has been set, or Some(v) is the Panel has some valid value.
    */
-  def value(): Option[T]
+  def value: Option[T]
 
   /**
    * Set focus to the important input element.
    */
   def adjustFocus()
+
+  /**
+   * This method can be overridden to allow controller to define field values (like defaults).
+   * @param fieldName Name of the field to set
+   * @param value Value to set the field to
+   */
+  def setField(fieldName:String, value:String) {
+    //Do nothing
+  }
 }

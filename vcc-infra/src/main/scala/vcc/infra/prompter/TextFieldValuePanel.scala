@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.prompter
 
 import vcc.util.swing.MigPanel
@@ -73,7 +72,7 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
     editField.background = if (valid) Color.WHITE else warning
   }
 
-  def value(): Option[String] = if (validator(editField.text)) Some(editField.text) else None
+  def value: Option[String] = if (validator(editField.text)) Some(editField.text) else None
 
   def setValue(value: Option[String]) {
     if (value.isDefined) editField.text = value.get
@@ -84,11 +83,10 @@ class TextFieldValuePanel(question: String, validator: String => Boolean) extend
     editField.requestFocus()
   }
 
-  /**
-   * Set the value of the input field
-   * @param text Value to be placed
-   */
-  def setInputValue(text: String) {
-    editField.text = text
+  override def setField(fieldName: String, value: String) {
+    fieldName match {
+      case "input" => editField.text = value
+      case _ => throw new IllegalArgumentException("Field '" + fieldName + "' unknown.")
+    }
   }
 }
