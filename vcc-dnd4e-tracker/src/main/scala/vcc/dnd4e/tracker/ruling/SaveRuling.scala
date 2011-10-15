@@ -24,7 +24,7 @@ object Save {
 
   case class Against(eid: EffectID, what: String) extends Question[CombatState] {
     def userPrompt(state: CombatState): String = {
-      state.roster.combatant(eid.combId).definition.entity.name + " must make a saving throws against " + what
+      state.roster.combatant(eid.combId).name + " must make a saving throws against " + what
     }
   }
 
