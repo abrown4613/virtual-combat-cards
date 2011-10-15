@@ -24,4 +24,6 @@ import vcc.dnd4e.domain.tracker.common.CombatantStateView
 case class CombatantState(definition: CombatantRosterDefinition,
                           healthTracker: HealthTracker,
                           effects: EffectList,
-                          comment: String) extends CombatantStateView
+                          comment: String) extends CombatantStateView {
+  def name: String = definition.entity.name
+}

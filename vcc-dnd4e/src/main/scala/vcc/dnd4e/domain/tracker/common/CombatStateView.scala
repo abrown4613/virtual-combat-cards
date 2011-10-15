@@ -30,6 +30,8 @@ trait CombatantStateView {
   def definition: CombatantRosterDefinition
 
   def comment: String
+
+  def name: String
 }
 
 /**

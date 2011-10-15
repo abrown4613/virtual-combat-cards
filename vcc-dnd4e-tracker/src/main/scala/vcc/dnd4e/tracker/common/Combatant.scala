@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
 /**
@@ -61,6 +60,12 @@ case class Combatant(definition: CombatantRosterDefinition, comment: String, hea
     if (this.comment != that.comment) l = CombatantCommentDiff(definition.cid, this.comment, that.comment) :: l
     l.toSet
   }
+
+  /**
+   * Alias to the name in the definition
+   */
+  def name = definition.entity.name
+
 }
 
 /**

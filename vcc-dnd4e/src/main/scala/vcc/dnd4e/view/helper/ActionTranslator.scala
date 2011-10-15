@@ -29,10 +29,10 @@ object ActionTranslator {
     action match {
       case InternalInitiativeAction(ioi, InitiativeAction.StartRound) =>
         val cmb = state.combatantViewFromID(ioi.combId)
-        "Start round of " + cmb.definition.entity.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
+        "Start round of " + cmb.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
       case InternalInitiativeAction(ioi, InitiativeAction.EndRound) =>
         val cmb = state.combatantViewFromID(ioi.combId)
-        "End round of " + cmb.definition.entity.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
+        "End round of " + cmb.name + formatIfNotNull(cmb.definition.alias, " - %s") + " [" + ioi.toLabelString + "]"
       case _ => action.description
     }
   }
