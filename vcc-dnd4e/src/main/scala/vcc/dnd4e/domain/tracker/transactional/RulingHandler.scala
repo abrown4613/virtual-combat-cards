@@ -17,7 +17,7 @@
 //$Id$
 package vcc.dnd4e.domain.tracker.transactional
 
-import vcc.dnd4e.domain.tracker.common.Command.InternalInitiativeAction
+import vcc.dnd4e.tracker.common.Command.InternalInitiativeAction
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, PendingRuling}
 import vcc.dnd4e.tracker.common._

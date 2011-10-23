@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Decision, Ruling}
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.tracker.common.EffectID
+import vcc.dnd4e.tracker.common.{Command, EffectID}
 
 /**
  * Ruling for the sustain of a given effect.

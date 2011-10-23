@@ -19,7 +19,7 @@ package vcc.dnd4e.domain.tracker.common
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.controller.{PendingRuling}
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.domain.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
+import vcc.dnd4e.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
 import vcc.dnd4e.tracker.common._
 import Effect.Condition
 
@@ -178,7 +178,6 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
 
   "SustainEffectRuling" should {
-    val comb = CombatantID("G")
     val sRuling = SustainEffectRuling(eid, "some nasty zone")
     val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
 

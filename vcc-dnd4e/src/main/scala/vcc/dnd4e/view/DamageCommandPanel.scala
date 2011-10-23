@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import dnd.UnifiedCombatantActionTransfer
@@ -25,7 +24,7 @@ import vcc.util.swing.{MigPanel, ClickButtonAction, KeystrokeContainer}
 import vcc.util.swing.KeystrokeBinder
 import vcc.infra.docking._
 
-import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.dnd4e.tracker.common.Command._
 import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.CombatantID
