@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import org.specs2.mutable.SpecificationWithJUnit
@@ -26,7 +25,7 @@ import vcc.controller.{Decision, Ruling, TrackerChangeObserver}
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
 import vcc.infra.prompter.{RulingBroker}
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.domain.tracker.common.Command.ExecuteInitiativeAction
+import vcc.dnd4e.tracker.common.Command.ExecuteInitiativeAction
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 

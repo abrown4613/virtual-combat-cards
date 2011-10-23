@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.helper
 
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
-import vcc.dnd4e.domain.tracker.common.Command.{InternalInitiativeAction}
+import vcc.dnd4e.tracker.common.Command.{InternalInitiativeAction}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.domain.tracker.common._
 import vcc.dnd4e.tracker.common._
@@ -40,7 +39,9 @@ class ActionTranslatorTest extends SpecificationWithJUnit with Mockito {
     val combADef = combatantDefinition(combA, "Goblin", "Shorty", CombatantType.Monster)
     val combBDef = combatantDefinition(combB, "Goblin", null, CombatantType.Monster)
     mCombA.definition returns combADef
+    mCombA.name returns combADef.entity.name
     mCombB.definition returns combBDef
+    mCombB.name returns combBDef.entity.name
   }
 
   "ActionTranslator" should {
@@ -52,6 +53,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with Mockito {
     }
 
     "tranlate StartRound with alias" in new context {
+      println(combBDef)
       ActionTranslator.fullActionMessage(mState, InternalInitiativeAction(ioiA, InitiativeAction.StartRound)) must_== "Start round of Goblin - Shorty [Aº]"
     }
 

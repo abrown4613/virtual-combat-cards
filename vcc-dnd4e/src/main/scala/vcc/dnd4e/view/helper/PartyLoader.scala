@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.helper
 
 import vcc.dnd4e.model.{PartyFile, PartyMember}
-import vcc.dnd4e.domain.tracker.common.Command.AddCombatants
+import vcc.dnd4e.tracker.common.Command.AddCombatants
 import vcc.dnd4e.domain.compendium.CompendiumRepository
 import vcc.model.Registry
 import vcc.infra.datastore.naming._

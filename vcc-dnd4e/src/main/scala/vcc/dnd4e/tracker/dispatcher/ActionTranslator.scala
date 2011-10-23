@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.common.InitiativeAction
 
