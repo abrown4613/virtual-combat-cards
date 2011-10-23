@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.common
 
 import vcc.dnd4e.tracker.StateLensFactory
-import vcc.dnd4e.tracker.event.CombatStateEvent
+import vcc.tracker.StateTransition
 
 case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {
   def endCombat(): CombatState = {
@@ -32,11 +32,11 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
 
   val rules = CombatState.rules
 
-  def transitionWith(trans: List[CombatStateEvent]): CombatState = {
+  def transitionWith(trans: List[StateTransition[CombatState]]): CombatState = {
     trans.foldLeft(this)((state, t) => t.transition(state))
   }
 
-  def lensFactory:StateLensFactory = StateLensFactory
+  def lensFactory: StateLensFactory = StateLensFactory
 }
 
 object CombatState {
