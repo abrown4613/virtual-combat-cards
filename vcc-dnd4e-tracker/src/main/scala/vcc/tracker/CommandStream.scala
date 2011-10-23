@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 
 /**
  * This package include general logic and supporting classes for dispatching commands to tracker and converting it into
@@ -35,7 +34,7 @@ trait CommandStream[S, A] {
    * @param that Stream to check if current stream yields not result.
    * @return Composed stream
    */
-  def followedBy(that: CommandStream[S, A]) = ChainedCommandStream(this, that)
+  def followedBy(that: CommandStream[S, A]): CommandStream[S, A] = ChainedCommandStream(this, that)
 
   /**
    * Get next command, based on a given state, if there is a command for the state Some will be returned, None indicates
