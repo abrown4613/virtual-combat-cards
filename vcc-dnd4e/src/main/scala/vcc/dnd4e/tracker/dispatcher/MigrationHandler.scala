@@ -18,7 +18,7 @@ package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.domain.tracker.common.Command._
+import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.common.{InitiativeAction => action}
 import org.slf4j.Logger
 import vcc.controller.message.TransactionalAction
@@ -53,11 +53,12 @@ trait MigrationHandler {
       migrationLogger.debug("   New State: ")
       dumpState(context.iState.value, migrationLogger)
       advanceDead(oldState, action)
+      //this.source.asInstanceOf[PanelDirector].provideDecisionForNewRuling()
   }
 
   private def advanceDead(oldState: CombatState, action: TransactionalAction) {
     {
-      // Check if we need to advance dead if we rotated
+        // Check if we need to advance dead if we rotated
       if (oldState.order.nextUp != context.iState.value.order.nextUp) {
         //We know we have someone new as the nextUp (first in order)
         //Now check if we just ended some one else and auto start if next is dead
