@@ -67,7 +67,7 @@ class DebugTransitionBuilder[S, A](delegate: TransitionBuilder[S, A], log: Logge
   }
 
   def addEvents(events: List[StateTransition[S]]) {
-    log.debug("Executed followin events: " + events.mkString(", "))
+    log.debug("Executed following events: " + events.mkString(", "))
     delegate.addEvents(events)
   }
 

@@ -103,7 +103,6 @@ class DamageCommandPanel(val director: PanelDirector)
       } catch {
         case _ => null
       }
-      println(damageEquation)
       enableDamageControls(damageEquation != null)
     case FocusGained(this.damage, other, temporary) =>
       director.setStatusBarMessage("Enter equation with: + - * / and parenthesis and variable: 's' for surge value ; 'b' for bloody value")
