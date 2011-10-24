@@ -19,9 +19,12 @@ package vcc.dnd4e.tracker.dispatcher
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
-import vcc.dnd4e.tracker.common.InitiativeAction
+import vcc.dnd4e.tracker.common.{CombatState, InitiativeAction}
+import vcc.tracker.{StateCommand, CommandStream, ActionStreamTranslator}
+import vcc.tracker.SeqCommandStream
+import vcc.dnd4e.tracker.transition.AutomationCommandSource._
 
-object ActionTranslator {
+object ActionTranslator extends ActionStreamTranslator[CombatState, TransactionalAction] {
   implicit def transition2TransitionList(t: CombatStateCommand) = List(t)
 
   def translate(action: TransactionalAction): List[CombatStateCommand] = {
@@ -36,7 +39,7 @@ object ActionTranslator {
       case SetComment(who, comment) => SetCombatantCommentCommand(who, comment)
 
       //Order actions
-      case InternalInitiativeAction(who, initAction) =>
+      case ExecuteInitiativeAction(who, initAction) =>
         initAction match {
           case InitiativeAction.StartRound => StartRoundCommand(who)
           case InitiativeAction.EndRound => EndRoundCommand(who)
@@ -63,6 +66,24 @@ object ActionTranslator {
       case EndCombat() => EndCombatCommand
       case ClearRoster(all) => ClearRosterCommand(!all)
       case _ => throw new Exception("Cant handle " + action)
+    }
+  }
+
+  private def seqStream(s: StateCommand[CombatState]*): CommandStream[CombatState, StateCommand[CombatState]] = {
+    SeqCommandStream(s)
+  }
+
+  def translateToCommandStream(action: TransactionalAction): CommandStream[CombatState, StateCommand[CombatState]] = {
+    action match {
+      case StartCombat() =>
+        seqStream(StartCombatCommand) followedBy  autoStartDead followedBy autoStartNext
+      case ExecuteInitiativeAction(who, InitiativeAction.EndRound) =>
+        seqStream(EndRoundCommand(who)) followedBy autoStartDead followedBy autoStartNext
+      case ExecuteInitiativeAction(who, InitiativeAction.ReadyAction) =>
+        seqStream(ReadyActionCommand(who), EndRoundCommand(who)) followedBy autoStartDead followedBy autoStartNext
+      case ExecuteInitiativeAction(who, InitiativeAction.DelayAction) =>
+        seqStream(DelayCommand(who)) followedBy autoStartDead followedBy autoStartNext
+      case s => SeqCommandStream(ActionTranslator.translate(action))
     }
   }
 }
