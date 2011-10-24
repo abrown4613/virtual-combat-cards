@@ -16,9 +16,6 @@
  */
 package vcc.tracker
 
-import collection.mutable.ListBuffer
-import org.slf4j.Logger
-
 trait RulingPeer[S] {
   def provideDecisionForRuling(state: S, rulings: List[Ruling[S, _, _, _]]): List[Ruling[S, _, _, _]]
 }
@@ -38,7 +35,7 @@ class RulingDispatcher[S](peer: RulingPeer[S], rls: RulingLocationService[S]) {
   }
 }
 
-class RulingCollector[S](ruling: RulingDispatcher[S]) {
+class StateCommandDispatcher[S](ruling: RulingDispatcher[S]) {
   def dispatch(state: S, command: StateCommand[S], builder: TransitionBuilder[S, _]): S = {
     val commands = ruling.dispatch(state, command)
     commands.foldLeft(state)((s, c) => {

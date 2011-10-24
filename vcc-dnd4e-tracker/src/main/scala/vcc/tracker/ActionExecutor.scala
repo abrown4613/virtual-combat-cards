@@ -20,7 +20,7 @@ trait ActionStreamTranslator[S, A] {
   def translateToCommandStream(action: A): CommandStream[S, StateCommand[S]]
 }
 
-class ActionExecutor[S, A](translator: ActionStreamTranslator[S, A], rulingCollector: RulingCollector[S], builder: TransitionBuilder[S, A]) {
+class ActionExecutor[S, A](translator: ActionStreamTranslator[S, A], commandDispatcher: StateCommandDispatcher[S], builder: TransitionBuilder[S, A]) {
   type CmdStream = CommandStream[S, StateCommand[S]]
   type Cmd = StateCommand[S]
 
@@ -29,7 +29,7 @@ class ActionExecutor[S, A](translator: ActionStreamTranslator[S, A], rulingColle
     next match {
       case Some((command, nextStream)) =>
         builder.startCommand(command)
-        Left((rulingCollector.dispatch(state, command, builder), nextStream))
+        Left((commandDispatcher.dispatch(state, command, builder), nextStream))
       case None => Right(state)
     }
   }
