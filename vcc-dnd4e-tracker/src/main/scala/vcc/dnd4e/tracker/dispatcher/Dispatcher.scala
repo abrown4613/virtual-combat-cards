@@ -16,10 +16,11 @@
  */
 package vcc.dnd4e.tracker.dispatcher
 
-import vcc.dnd4e.tracker.common.CombatState
 import vcc.controller.message.TransactionalAction
 import vcc.tracker._
 import org.slf4j.Logger
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.ruling._
 
 class Dispatcher private(log: Logger) {
 
@@ -29,40 +30,44 @@ class Dispatcher private(log: Logger) {
     new RulingDispatcher[CombatState](
       new RulingPeer[CombatState] {
         def provideDecisionForRuling(state: CombatState, rulings: List[Ruling[CombatState, _, _, _]]): List[Ruling[CombatState, _, _, _]] = {
-          Nil
+          for (ruling <- rulings) yield {
+            ruling match {
+              case r: NextUpRuling => r.withDecision(r.question.primary)
+              case r: SaveRuling => r.withDecision(Save.Saved)
+              case r: SaveSpecialRuling => r.withDecision(SaveSpecial.Saved)
+              case r: SaveVersusDeathRuling => r.withDecision(SaveVersusDeath.Result.Failed)
+              case r: SustainEffectRuling => r.withDecision(SustainEffect.Sustain)
+              case r => throw new Exception("Unknown ruling " + r)
+            }
+          }
         }
       },
-      new RulingLocationService[CombatState] {
-        def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[Ruling[CombatState, _, _, _]] = {
-          Nil
-        }
-      }
-    ))
+      CombatStateRulingLocator))
 
   private def regularDispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
-    val builder = new AccumulatorTransitionBuilder[CombatState, TransactionalAction]()
-    val executor = new ActionExecutor(translator, commandDispatcher, builder)
-    executor.executeCommand(state, action)
-  }
+          val builder = new AccumulatorTransitionBuilder[CombatState, TransactionalAction]()
+          val executor = new ActionExecutor(translator, commandDispatcher, builder)
+          executor.executeCommand(state, action)
+        }
 
-  private def debugDispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
-    val builder = new DebugTransitionBuilder(new AccumulatorTransitionBuilder[CombatState, TransactionalAction], log)
-    val debugExecutor = new ActionExecutor(translator, commandDispatcher, builder)
-    debugExecutor.executeCommand(state, action)
-  }
+        private def debugDispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
+          val builder = new DebugTransitionBuilder(new AccumulatorTransitionBuilder[CombatState, TransactionalAction], log)
+          val debugExecutor = new ActionExecutor(translator, commandDispatcher, builder)
+          debugExecutor.executeCommand(state, action)
+        }
 
-  def dispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
-    try {
-      regularDispatch(state, action)
-    } catch {
-      case e =>
-        debugDispatch(state, action)
+        def dispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
+          try {
+            regularDispatch(state, action)
+          } catch {
+            case e =>
+              debugDispatch(state, action)
+          }
+        }
+      }
+
+  object Dispatcher {
+    def getInstance(log: Logger): Dispatcher = {
+      new Dispatcher(log)
     }
   }
-}
-
-object Dispatcher {
-  def getInstance(log: Logger): Dispatcher = {
-    new Dispatcher(log)
-  }
-}
