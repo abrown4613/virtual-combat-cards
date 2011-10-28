@@ -20,10 +20,20 @@ import vcc.dnd4e.tracker.common._
 import vcc.tracker.{StateCommand, Ruling, RulingLocationService}
 import vcc.dnd4e.tracker.transition.{EndRoundCommand, StartRoundCommand, NextUpCommand}
 import vcc.dnd4e.tracker.ruling._
+import vcc.dnd4e.tracker.common.ConditionMatcher
 
 object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   type R = Ruling[CombatState, _, _, _]
+
+  def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[Ruling[CombatState, _, _, _]] = {
+    command match {
+      case NextUpCommand(first, eligible) => List(NextUpRuling(EligibleNext(first, eligible), None))
+      case EndRoundCommand(who) => searchEndRound(state, who.combId)
+      case StartRoundCommand(who) => searchStartRound(state, who.combId)
+      case _ => Nil
+    }
+  }
 
   private def endRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
     case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) =>
@@ -36,40 +46,27 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   private def searchEndRound(state: CombatState, who: CombatantID): List[R] = {
     val whoMatcher = endRoundMatcher(who)
-    val deathCheck: List[R] = {
-      if (state.roster.combatant(who).health.status == HealthStatus.Dying)
-        List(SaveVersusDeathRuling(SaveVersusDeath.Dying(who), None))
-      else
-        Nil
-    }
-    state.roster.entries.values.flatMap(c => c.effects.effects).flatMap(whoMatcher.lift(_)).toList ::: deathCheck
+    state.getAllEffects.flatMap(whoMatcher.lift(_)) ::: dyingRuling(state, who)
   }
-  /*
-    private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
-      case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
-        (OngoingDamageRuling(eid, full, hint))
-      case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
-        (RegenerateByRuling(eid, full, hint))
-    }
 
-*/
 
-  /*
+  private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
+      (OngoingDamageRuling(OngoingDamage.CausedBy(eid), None))
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
+      (RegenerationRuling(CausedBy(eid), None))
+  }
 
-    def searchStartRound(context: CombatContext, who: CombatantID): List[PendingRuling[List[TransactionalAction]]] = {
-      val whoMatcher = startRoundMatcher(who)
-      val (regen, rest) = context.allEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerateByRuling])
-      (regen ::: rest).map(new PendingRuling(_))
-    }
 
-  */
+  private def searchStartRound(state: CombatState, who: CombatantID): List[Ruling[CombatState, _, _, _]] = {
+    val whoMatcher = startRoundMatcher(who)
+    val (regen, rest) = state.getAllEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerationRuling])
+    (regen ::: rest)
+  }
 
-  def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[Ruling[CombatState, _, _, _]] = {
-    command match {
-      case NextUpCommand(first, eligible) => List(NextUpRuling(EligibleNext(first, eligible), None))
-      case EndRoundCommand(who) => searchEndRound(state, who.combId)
-      case StartRoundCommand(who) => Nil //TODO
-      case _ => Nil
-    }
+  private def dyingRuling(state: CombatState, who: CombatantID): List[CombatStateRulingLocator.R] = {
+    if (state.combatant(who).health.status == HealthStatus.Dying)
+      List(SaveVersusDeathRuling(SaveVersusDeath.Dying(who), None))
+    else Nil
   }
 }

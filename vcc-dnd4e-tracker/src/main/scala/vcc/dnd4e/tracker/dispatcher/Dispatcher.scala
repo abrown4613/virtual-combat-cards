@@ -37,6 +37,8 @@ class Dispatcher private(log: Logger) {
               case r: SaveSpecialRuling => r.withDecision(SaveSpecial.Saved)
               case r: SaveVersusDeathRuling => r.withDecision(SaveVersusDeath.Result.Failed)
               case r: SustainEffectRuling => r.withDecision(SustainEffect.Sustain)
+              case r: OngoingDamageRuling => r.withDecision(OngoingDamage.DamageToApply(0))
+              case r: RegenerationRuling => r.withDecision(0)
               case r => throw new Exception("Unknown ruling " + r)
             }
           }

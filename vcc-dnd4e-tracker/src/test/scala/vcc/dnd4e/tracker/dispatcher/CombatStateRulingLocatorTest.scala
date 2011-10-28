@@ -19,9 +19,11 @@ package vcc.dnd4e.tracker.dispatcher
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common.{EffectID, Duration, CombatState}
-import vcc.dnd4e.tracker.transition.{EndRoundCommand}
 import vcc.dnd4e.tracker.ruling._
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, AddEffectEvent, EventSourceSampleEvents}
+import vcc.dnd4e.tracker.transition.{StartRoundCommand, EndRoundCommand}
+import vcc.tracker.Ruling
+import org.specs2.matcher.ContainMatcher
 
 class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -30,23 +32,25 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
   private val durationEoTSA = Duration.RoundBound(ioA0, Duration.Limit.EndOfTurnSustain)
   private val aCondition = Condition.Generic("bad", false)
   private val anotherCondition = Condition.Generic("bad -> worst", false)
+  private val regenerateCondition = Condition.Generic("regenerate 10 while bloodied", false)
+  private val ongoingCondition = Condition.Generic("ongoing 5 fire", false)
 
   private val state = CombatState.empty.transitionWith(List(
     evtAddCombA, evtAddCombNoId, evtInitA, evtStart,
     AddEffectEvent(combA, combA, aCondition, durationSaveEnd),
     AddEffectEvent(combA, combA, anotherCondition, durationSaveEndSpecial),
     AddEffectEvent(comb1, combA, aCondition, durationEoTSA),
-    AddEffectEvent(combA, combA, aCondition, durationEoTSA)
+    AddEffectEvent(combA, combA, aCondition, durationEoTSA),
+    AddEffectEvent(combA, combA, ongoingCondition, durationSaveEnd),
+    AddEffectEvent(combA, combA, regenerateCondition, durationSaveEnd)
   ))
 
   private val eidA1 = EffectID(combA, 1)
   private val eidA2 = EffectID(combA, 2)
   private val eidA3 = EffectID(combA, 3)
+  private val eidA4 = EffectID(combA, 4)
+  private val eidA5 = EffectID(combA, 5)
   private val eid1_1 = EffectID(comb1, 1)
-
-  println("State roster : " + state.roster)
-  println("State order: " + state.order)
-  state.roster.combatant(combA).effects.effects.foreach(x => println("  --> " + x))
 
   "CombatStateRulingLocator" should {
     "Detect Save on end of round" in {
@@ -66,6 +70,26 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
       val nState = state.transitionWith(List(ApplyDamageEvent(combA, 41)))
       (CombatStateRulingLocator.rulingsFromStateWithCommand(nState, EndRoundCommand(ioA0))
         must contain(SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), None)))
+    }
+
+    "Detect Ongoing damage" in {
+      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+        must contain(OngoingDamageRuling(OngoingDamage.CausedBy(eidA4), None)))
+    }
+
+    "Detect Regeneration damage" in {
+      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+        must contain(RegenerationRuling(CausedBy(eidA5), None)))
+    }
+
+    "Detect regeneration first" in {
+      type R = Ruling[CombatState, _, _, _]
+      val regen: List[R] = List(RegenerationRuling(CausedBy(eidA5), None),
+        OngoingDamageRuling(OngoingDamage.CausedBy(eidA4), None))
+      val detected: List[R] = CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+      detected must contain(regen(0))
+      detected must contain(regen(1))
+      (detected.indexOf(regen(0)) must  beLessThan(detected.indexOf(regen(1))))
     }
   }
 }
