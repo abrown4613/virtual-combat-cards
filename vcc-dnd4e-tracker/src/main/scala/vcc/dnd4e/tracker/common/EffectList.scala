@@ -26,12 +26,6 @@ case class EffectList(target: CombatantID, effects: List[Effect]) extends Combat
 
   import Effect._
 
-  private[common] def maxEffectID: Int = {
-    var max = 0
-    for (effect <- effects) if (effect.effectId.seq >= max) max = effect.effectId.seq
-    max
-  }
-
   /**
    * Add an Effect to the list. This process will generate a new EffectID (unique with regards to the other) and
    * will do the following:
@@ -76,4 +70,16 @@ case class EffectList(target: CombatantID, effects: List[Effect]) extends Combat
     EffectList(target, effects.map(e => transformation.transform(e)).filter(e => e != null))
   }
 
+  /**
+   * Find effect in effect list, None if not found
+   */
+  def find(eid: EffectID):Option[Effect] = {
+    effects.find(_.effectId == eid)
+  }
+
+  private[common] def maxEffectID: Int = {
+    var max = 0
+    for (effect <- effects) if (effect.effectId.seq >= max) max = effect.effectId.seq
+    max
+  }
 }

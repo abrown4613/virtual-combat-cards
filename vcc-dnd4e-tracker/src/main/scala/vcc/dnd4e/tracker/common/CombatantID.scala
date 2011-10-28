@@ -23,11 +23,14 @@ import vcc.infra.util.UniquelyIdentified
  * CombatantID defines a unique combatant in the Roster.
  */
 trait CombatantID {
-  val id: String
+  def id: String
 
   override def toString: String = "CombatantID(" + id + ")"
 
   def asNumber: Option[Int]
+
+  /** Return user notation [id] */
+  def simpleNotation: String = "[" + id + "]"
 }
 
 object CombatantID extends UniquenessCache[String, CombatantID] {
