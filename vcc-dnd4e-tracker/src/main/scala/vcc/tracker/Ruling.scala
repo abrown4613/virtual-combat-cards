@@ -35,6 +35,8 @@ abstract class Ruling[S, Q <: Question[S], D, R <: Ruling[S, Q, D, R]] {
   val question: Q
   val decision: Option[D]
 
+  def userPrompt(state: S) = question.userPrompt(state)
+
   /**
    * Determines whether the ruling has a decision or not.
    */
