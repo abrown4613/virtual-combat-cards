@@ -20,6 +20,7 @@ package vcc.dnd4e.domain.tracker.transactional
 import vcc.dnd4e.tracker.common.Command.InternalInitiativeAction
 import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, PendingRuling}
+import vcc.dnd4e.domain.tracker.common.{ConditionMatcher=>OldConditionMatcher}
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.domain.tracker.common._
@@ -38,9 +39,9 @@ object RulingSearchService {
   }
 
   private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
-    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(OldConditionMatcher.FirstOngoing(full, hint), _), _) =>
       (OngoingDamageRuling(eid, full, hint))
-    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(OldConditionMatcher.FirstRegenerate(full, hint), _), _) =>
       (RegenerateByRuling(eid, full, hint))
   }
 
