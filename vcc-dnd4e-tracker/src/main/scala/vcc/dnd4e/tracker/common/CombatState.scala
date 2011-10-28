@@ -37,6 +37,10 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
   }
 
   def lensFactory: StateLensFactory = StateLensFactory
+
+  def getAllEffects:List[Effect] = roster.entries.values.flatMap(_.effects.effects).toList
+
+  def combatant(cid: CombatantID):Combatant = roster.combatant(cid)
 }
 
 object CombatState {
