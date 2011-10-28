@@ -26,29 +26,22 @@ import vcc.util.swing._
 
 class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hidemode 3", "[19%,fill][27%,fill][27%,fill][27%,fill]", "")
 with CombatStateObserver with ContextObserver with ScalaDockableComponent with KeystrokeContainer {
-  private val next_btn = new Button("Next")
-  next_btn.tooltip = ("End round of the first combatant and start next (shortcut Alt-N)")
+  private val next_btn = createButton("Next", "End round of the first combatant and start next (shortcut Alt-N)")
+  private val delay_btn = createButton("Delay", "Delay the round of the first combatant")
+  private val ready_btn = createButton("Ready", "Ready an action for the first combatant")
+  private val executeReady_btn = createButton("Execute ready", "Make a combatant that is ready execute its action, first combatant needs to be acting")
+  private val moveBefore_btn = createButton("Move", "Move select combatant to a position before the combatant selected on the combo box to the left")
 
-  private val delay_btn = new Button("Delay")
-  delay_btn.tooltip = "Delay the round of the first combatant"
-  private val ready_btn = new Button("Ready")
-  ready_btn.tooltip = "Ready an action for the first combatant"
-  private val executeReady_btn = new Button("Execute ready")
-  executeReady_btn.tooltip = "Make a combatant that is ready execute its action, first combatant needs to be acting"
-  private val moveBefore_btn = new Button("Move")
-  private val moveLabel = new Label("Move select combatant before:")
-  moveLabel.horizontalAlignment = scala.swing.Alignment.Right
-  private val firstLabel = new Label("First can:")
-  firstLabel.horizontalAlignment = scala.swing.Alignment.Right
-  private val targetLabel = new Label("Target can:")
-  targetLabel.horizontalAlignment = scala.swing.Alignment.Right
+  private val moveLabel = createLabel("Move select combatant before:")
+  private val firstLabel = createLabel("First can:")
+  private val targetLabel = createLabel("Target can:")
+
   private val candidateBefore = new ContainerComboBoxModel[InitiativeOrderID](Nil)
   private val before_Combo = new ExplicitModelComboBox[InitiativeOrderID](candidateBefore)
   before_Combo.setFormatRenderer(new StringFormatListCellRenderer[InitiativeOrderID](o => o.toLabelString))
 
-  moveBefore_btn.tooltip = "Move select combatant to a position before the combatant selected on the combo box to the left"
-
   private var target: Option[UnifiedCombatant] = None
+  private val rules = director.rules
   private var _first: Option[UnifiedCombatant] = None
   private var combatState = director.currentState
 
@@ -80,6 +73,16 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
       director requestAction MoveBefore(target.get.orderId, before_Combo.selection.item)
   }
 
+  val dockID = DockID("initiative")
+  val dockTitle = "Initiative Actions"
+
+  def dockFocusComponent: javax.swing.JComponent = {
+    for (x <- contents) {
+      if (x.peer.isInstanceOf[javax.swing.JButton] && x.enabled) return x.peer
+    }
+    null
+  }
+
   def changeContext(newContext: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (isTarget) {
       target = combatState.combatantOption(newContext)
@@ -87,20 +90,39 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
     if (newContext.isDefined && isTarget) updatePanel()
   }
 
-  val rules = director.rules
+  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+    _first = newState.orderFirst()
+    combatState = newState
+    target = combatState.combatantOption(target.map(o => o.unifiedId))
+    updatePanel()
+  }
+
+  def registerKeystroke() {
+    KeystrokeBinder.bindKeystrokeAction(next_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt N", new ClickButtonAction("init.end", next_btn))
+  }
+
+  private def createButton(label: String, tooltip: String): Button = {
+    val button = new Button(label)
+    button.tooltip = tooltip
+    button
+  }
+
+  private def createLabel(text: String): Label = {
+    val label = new Label(text)
+    label.horizontalAlignment = scala.swing.Alignment.Right
+    label
+  }
 
   private def updateMoveBeforeCombo(comb: UnifiedCombatant) {
-    val before: Seq[InitiativeOrderID] = if (comb.isInOrder) {
-      combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map {
-        c => c.orderId
-      }
+    val validMoveTargets: Seq[InitiativeOrderID] = if (comb.isInOrder) {
+      combatState.elements.filter(c => rules.canMoveBefore(combatState.state, comb.orderId, c.orderId)).map(c => c.orderId)
     } else {
       Seq()
     }
-    candidateBefore.contents = before
-    moveLabel.enabled = !before.isEmpty
-    moveBefore_btn.enabled = !before.isEmpty
-    if(!before.isEmpty) before_Combo.selection.index = 0
+    candidateBefore.contents = validMoveTargets
+    moveLabel.enabled = !validMoveTargets.isEmpty
+    moveBefore_btn.enabled = !validMoveTargets.isEmpty
+    if (!validMoveTargets.isEmpty) before_Combo.selection.index = 0
     before_Combo.enabled = true
   }
 
@@ -132,27 +154,5 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
       }
     }
     updateLabels()
-  }
-
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
-    _first = newState.orderFirst()
-    combatState = newState
-    //Validate context
-    target = combatState.combatantOption(target.map(o => o.unifiedId))
-    updatePanel()
-  }
-
-  val dockID = DockID("initiative")
-  val dockTitle = "Initiative Actions"
-
-  def dockFocusComponent: javax.swing.JComponent = {
-    for (x <- contents) {
-      if (x.peer.isInstanceOf[javax.swing.JButton] && x.enabled) return x.peer
-    }
-    null
-  }
-
-  def registerKeystroke() {
-    KeystrokeBinder.bindKeystrokeAction(next_btn, true, KeystrokeBinder.FocusCondition.WhenWindowFocused, "alt N", new ClickButtonAction("init.end", next_btn))
   }
 }
