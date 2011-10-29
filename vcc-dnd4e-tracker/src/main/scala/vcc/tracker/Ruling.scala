@@ -16,6 +16,8 @@
  */
 package vcc.tracker
 
+import vcc.dnd4e.tracker.common.CombatState
+
 /**
  * Indicates that a specified decision is not valid.
  */
@@ -27,6 +29,12 @@ class IllegalDecisionException(msg: String) extends Exception(msg)
 abstract class Ruling[S, Q, D, R <: Ruling[S, Q, D, R]] {
   val question: Q
   val decision: Option[D]
+
+  /**
+   * Check to see if ruling refer to the same subject. This MUST consider the class and the parameter
+   * to avoid mixing subjects form different classes with similar parameters.
+   */
+  def isRulingSameSubject(otherRuling: Ruling[S, _, _, _]):Boolean
 
   def userPrompt(state: S): String
 

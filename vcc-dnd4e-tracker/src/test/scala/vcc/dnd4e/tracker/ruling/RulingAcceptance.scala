@@ -18,10 +18,22 @@ package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.tracker.Ruling
 import org.specs2.specification.Fragments
+import vcc.tracker.{StateCommand, Ruling}
 
 abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUnit {
+
+  private case class DummyRuling(decision: Option[Int]) extends Ruling[CombatState, String, Int, DummyRuling] {
+    def withDecision(decision: Int): DummyRuling = copy(decision = Some(decision))
+
+    val question: String = "arg"
+
+    def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = false
+
+    def userPrompt(state: CombatState): String = null
+
+    protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = Nil
+  }
 
   protected val rulingWithAnswer: Ruling[CombatState, _, _, _]
   protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _]
@@ -37,6 +49,7 @@ abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUni
     "base cases" ^
     "  have correct prompt" ! haveCorrectPrompt ^
     "  match answered and unanswered" ! answeredMatchUnanswered ^
+    "  not match some other ruling" ! notMatchRuling ^
     "  have answer when it has" ! answeredHasDecision ^
     "  not have answer when it doesn't" ! unansweredHasNoDecision ^
     endp
@@ -47,7 +60,11 @@ abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUni
   }
 
   private def answeredMatchUnanswered = {
-    rulingWithAnswer.question must_== rulingWithoutAnswer.question
+    rulingWithAnswer.isRulingSameSubject(rulingWithoutAnswer) must beTrue
+  }
+
+  private def notMatchRuling = {
+    rulingWithAnswer.isRulingSameSubject(DummyRuling(None)) must beFalse
   }
 
   private def unansweredHasNoDecision = {

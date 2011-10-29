@@ -23,6 +23,13 @@ import vcc.dnd4e.tracker.transition.HealCommand
 case class RegenerationRuling(question: EffectID, decision: Option[Int])
   extends Ruling[CombatState, EffectID, Int, RegenerationRuling] {
 
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+    otherRuling match {
+      case RegenerationRuling(otherSubject,_) => this.question == otherSubject
+      case _ => false
+    }
+  }
+
   def userPrompt(state: CombatState): String = {
     val eid = question
     val comb = state.roster.combatant(eid.combId)

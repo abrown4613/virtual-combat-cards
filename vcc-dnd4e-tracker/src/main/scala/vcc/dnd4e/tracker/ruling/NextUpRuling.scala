@@ -23,6 +23,12 @@ import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCom
 case class NextUpRuling(question: NextUpCommand, decision: Option[InitiativeOrderID])
   extends Ruling[CombatState, NextUpCommand, InitiativeOrderID, NextUpRuling] {
 
+  def isRulingSameSubject(other: Ruling[CombatState, _, _, _]): Boolean = {
+    other match {
+      case NextUpRuling(otherQuestion, _) => this.question == otherQuestion
+      case _ => false
+    }
+  }
 
   def userPrompt(state: CombatState):String = "Select which combatant should act next"
 

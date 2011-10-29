@@ -29,6 +29,12 @@ object SaveVersusDeathResult extends Enumeration {
 case class SaveVersusDeathRuling(question: CombatantID, decision: Option[SaveVersusDeathResult.Value])
   extends Ruling[CombatState, CombatantID, SaveVersusDeathResult.Value, SaveVersusDeathRuling] {
 
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+    otherRuling match {
+      case SaveVersusDeathRuling(otherSubject,_) => otherSubject == this.question
+      case _ => false
+    }
+  }
 
   def userPrompt(state: CombatState) = {
     val combatant = state.combatant(question)

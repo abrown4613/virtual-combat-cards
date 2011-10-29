@@ -39,6 +39,13 @@ case class SaveSpecialRuling(question: EffectID, decision: Option[SaveSpecialRul
 
   import SaveSpecialRulingResult._
 
+  def isRulingSameSubject(other: Ruling[CombatState, _, _, _]): Boolean = {
+    other match {
+      case SaveSpecialRuling(otherQuestion,_) => this.question == otherQuestion
+      case _ => false
+    }
+  }
+
   def userPrompt(state: CombatState): String = {
     val eid = question
     val combatant = state.combatant(eid.combId)
