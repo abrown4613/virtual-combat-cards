@@ -44,10 +44,10 @@ class ExecutorTest extends SpecificationWithJUnit {
     new Trans,
     new StateCommandDispatcher[Int](new RulingDispatcher[Int](
       new RulingPeer[Int] {
-        def provideDecisionForRuling(state: Int, rulings: List[Ruling[Int, _, _, _]]): List[Ruling[Int, _, _, _]] = Nil
+        def provideDecisionForRuling(state: Int, rulings: List[Ruling[Int, _, _]]): List[Ruling[Int, _, _]] = Nil
       },
       new RulingLocationService[Int] {
-        def rulingsFromStateWithCommand(state: Int, command: StateCommand[Int]): List[Ruling[Int, _, _, _]] = Nil
+        def rulingsFromStateWithCommand(state: Int, command: StateCommand[Int]): List[Ruling[Int, _, _]] = Nil
       }
     )),
     new DebugTransitionBuilder[Int, String](new AccumulatorTransitionBuilder[Int, String], null))

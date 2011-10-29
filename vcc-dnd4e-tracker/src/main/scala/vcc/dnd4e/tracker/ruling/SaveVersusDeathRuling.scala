@@ -21,32 +21,32 @@ import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{FailDeathSaveCommand, HealCommand}
 
 object SaveVersusDeathResult extends Enumeration {
-    val Saved = Value("Saved")
-    val Failed = Value("Failed")
-    val SaveAndHeal = Value("Save and heal 1 hp")
+  val Saved = Value("Saved")
+  val Failed = Value("Failed")
+  val SaveAndHeal = Value("Save and heal 1 hp")
 }
 
-case class SaveVersusDeathRuling(question: CombatantID, decision: Option[SaveVersusDeathResult.Value])
-  extends Ruling[CombatState, CombatantID, SaveVersusDeathResult.Value, SaveVersusDeathRuling] {
+case class SaveVersusDeathRuling(sourceEffect: CombatantID, decision: Option[SaveVersusDeathResult.Value])
+  extends Ruling[CombatState, SaveVersusDeathResult.Value, SaveVersusDeathRuling] {
 
-  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
     otherRuling match {
-      case SaveVersusDeathRuling(otherSubject,_) => otherSubject == this.question
+      case SaveVersusDeathRuling(otherSourceEffect, _) => otherSourceEffect == this.sourceEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState) = {
-    val combatant = state.combatant(question)
-    "Save versus death for " + combatant.name + " " + question.simpleNotation
+    val combatant = state.combatant(sourceEffect)
+    "Save versus death for " + combatant.name + " " + sourceEffect.simpleNotation
   }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     import SaveVersusDeathResult._
     decision.get match {
       case Saved => Nil
-      case SaveAndHeal => List(HealCommand(question, 1))
-      case Failed => List(FailDeathSaveCommand(question))
+      case SaveAndHeal => List(HealCommand(sourceEffect, 1))
+      case Failed => List(FailDeathSaveCommand(sourceEffect))
     }
   }
 

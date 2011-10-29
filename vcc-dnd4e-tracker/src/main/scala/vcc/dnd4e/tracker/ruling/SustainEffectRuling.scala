@@ -25,20 +25,20 @@ object SustainEffectRulingResult extends Enumeration {
   val Cancel = Value("Cancel")
 }
 
-case class SustainEffectRuling(question: EffectID, decision: Option[SustainEffectRulingResult.Value])
-  extends Ruling[CombatState, EffectID, SustainEffectRulingResult.Value, SustainEffectRuling] {
+case class SustainEffectRuling(sustainableEffect: EffectID, decision: Option[SustainEffectRulingResult.Value])
+  extends Ruling[CombatState, SustainEffectRulingResult.Value, SustainEffectRuling] {
 
   import SustainEffectRulingResult._
 
-  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
     otherRuling match {
-      case SustainEffectRuling(otherSubject, _) => otherSubject == this.question
+      case SustainEffectRuling(otherSustainableEffect, _) => otherSustainableEffect == this.sustainableEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState) = {
-    val eid = question
+    val eid = sustainableEffect
     val combatant = state.combatant(eid.combId)
     val effect = combatant.effects.find(eid).get
     "Sustain \"" + effect.condition.description + "\" (from " + combatant.name + " " + eid.combId.simpleNotation + ")"
@@ -47,7 +47,7 @@ case class SustainEffectRuling(question: EffectID, decision: Option[SustainEffec
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
       case Cancel => Nil
-      case Sustain => List(SustainEffectCommand(question))
+      case Sustain => List(SustainEffectCommand(sustainableEffect))
     }
   }
 

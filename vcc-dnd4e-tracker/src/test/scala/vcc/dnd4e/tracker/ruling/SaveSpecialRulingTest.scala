@@ -28,8 +28,8 @@ class SaveSpecialRulingTest extends RulingAcceptance("SaveSpecialRuling") with E
   private val changedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Changed("worst")))
 
   protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad -> worst")))
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = savedRuling
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SaveSpecialRuling(eid, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = savedRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = SaveSpecialRuling(eid, None)
   protected val userPromptMessage: String = "Fighter [A] must make a saving throws against: bad -> worst"
 
   def buildCases =

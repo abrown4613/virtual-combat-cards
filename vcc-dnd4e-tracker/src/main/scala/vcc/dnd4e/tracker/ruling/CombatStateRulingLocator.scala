@@ -23,9 +23,9 @@ import vcc.dnd4e.tracker.common.ConditionMatcher
 
 object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
-  type R = Ruling[CombatState, _, _, _]
+  type R = Ruling[CombatState, _, _]
 
-  def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[Ruling[CombatState, _, _, _]] = {
+  def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[R] = {
     command match {
       case nextUp@NextUpCommand(first, eligible) => List(NextUpRuling(nextUp, None))
       case EndRoundCommand(who) => searchEndRound(state, who.combId)
@@ -57,13 +57,13 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
   }
 
 
-  private def searchStartRound(state: CombatState, who: CombatantID): List[Ruling[CombatState, _, _, _]] = {
+  private def searchStartRound(state: CombatState, who: CombatantID): List[R] = {
     val whoMatcher = startRoundMatcher(who)
     val (regen, rest) = state.getAllEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerationRuling])
     (regen ::: rest)
   }
 
-  private def dyingRuling(state: CombatState, who: CombatantID): List[CombatStateRulingLocator.R] = {
+  private def dyingRuling(state: CombatState, who: CombatantID): List[R] = {
     if (state.combatant(who).health.status == HealthStatus.Dying)
       List(SaveVersusDeathRuling(who, None))
     else Nil

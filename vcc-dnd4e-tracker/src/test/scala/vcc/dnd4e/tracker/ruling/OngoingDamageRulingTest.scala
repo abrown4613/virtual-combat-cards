@@ -29,8 +29,8 @@ class OngoingDamageRulingTest extends RulingAcceptance("OngoingDamageRuling") wi
   private val damageOngoingRuling = OngoingDamageRuling(eid, Some(7))
 
   protected val state = CombatState.empty.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "ongoing 5 fire")))
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = noDamageOngoingRuling
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = OngoingDamageRuling(eid, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = noDamageOngoingRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = OngoingDamageRuling(eid, None)
   protected val userPromptMessage: String = "Fighter [A] affected by: ongoing 5 fire"
 
   def buildCases =

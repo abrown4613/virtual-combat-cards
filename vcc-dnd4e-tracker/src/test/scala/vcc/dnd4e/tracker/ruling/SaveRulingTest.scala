@@ -26,8 +26,8 @@ class SaveRulingTest extends RulingAcceptance("SaveRuling") with EventSourceSamp
   private val savedRuling = SaveRuling(eid, Some(SaveRulingResult.Saved))
   private val failedRuling = SaveRuling(eid, Some(SaveRulingResult.Failed))
 
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = savedRuling
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SaveRuling(eid, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = savedRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = SaveRuling(eid, None)
   protected val userPromptMessage: String = "Fighter [A] must make a saving throws against: bad"
   protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad")))
 

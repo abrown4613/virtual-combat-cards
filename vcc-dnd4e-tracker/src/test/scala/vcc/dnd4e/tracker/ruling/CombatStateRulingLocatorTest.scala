@@ -81,7 +81,7 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
     }
 
     "Detect regeneration first" in {
-      type R = Ruling[CombatState, _, _, _]
+      type R = Ruling[CombatState, _, _]
       val regen: List[R] = List(RegenerationRuling(eidA5, None),
         OngoingDamageRuling(eidA4, None))
       val detected: List[R] = CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))

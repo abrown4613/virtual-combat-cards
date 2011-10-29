@@ -25,8 +25,8 @@ class NextUpRulingTest extends RulingAcceptance("NextUpRuling") with SampleState
   private val ruling = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
 
   protected val state = CombatState.empty
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = ruling.withDecision(io1_0)
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = ruling
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = ruling.withDecision(io1_0)
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = ruling
   protected val userPromptMessage: String = "Select which combatant should act next"
 
   def buildCases =
