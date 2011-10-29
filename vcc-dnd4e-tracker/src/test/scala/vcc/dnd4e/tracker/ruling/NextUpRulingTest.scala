@@ -16,38 +16,26 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
-import vcc.tracker.IllegalDecisionException
 import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
+import vcc.tracker.{Ruling, IllegalDecisionException}
 
-class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
+class NextUpRulingTest extends RulingAcceptance("NextUpRuling") with SampleStateData {
 
-  private val combatState = CombatState.empty
-  private val r = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
+  private val ruling = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
 
-  def is =
-    "NextUpRuling".title ^
-      "has standard message" ! e1 ^
-      "generate StartRount if main selected" ! e2 ^
-      "generate MoveUp if some other is selected" ! e3 ^
-      "not allow answers " ! e4 ^
-      end
+  protected val state = CombatState.empty
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = ruling.withDecision(io1_0)
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = ruling
+  protected val userPromptMessage: String = "Select which combatant should act next"
 
-  private def e1 = {
-    r.userPrompt(combatState) must_== "Select which combatant should act next"
-  }
-
-  private def e2 = {
-    r.withDecision(ioA0).generateCommands(combatState) must_== List(StartRoundCommand(ioA0))
-  }
-
-  private def e3 = {
-    (r.withDecision(io1_0).generateCommands(combatState) must_== List(MoveUpCommand(io1_0))) and
-      (r.withDecision(ioB0).generateCommands(combatState) must_== List(MoveUpCommand(ioB0)))
-  }
-
-  private def e4 = {
-    r.withDecision(io2_0) must throwA(new IllegalDecisionException(io2_0 + " is not eligible to act"))
-  }
+  def buildCases =
+    "generate StartRount if main selected" !
+      (ruling.withDecision(ioA0).generateCommands(state) must_== List(StartRoundCommand(ioA0))) ^
+      "generate moveUp if delaying is selected" !
+        (ruling.withDecision(io1_0).generateCommands(state) must_== List(MoveUpCommand(io1_0))) ^
+      "generate moveUp if delaying is selected " !
+        (ruling.withDecision(ioB0).generateCommands(state) must_== List(MoveUpCommand(ioB0))) ^
+      "not allow answers " !
+        (ruling.withDecision(io2_0) must throwA(new IllegalDecisionException(io2_0 + " is not eligible to act")))
 }

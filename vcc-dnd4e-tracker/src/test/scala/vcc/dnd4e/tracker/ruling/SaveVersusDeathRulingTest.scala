@@ -16,44 +16,24 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.transition.{HealCommand, FailDeathSaveCommand}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, EventSourceSampleEvents}
 import vcc.dnd4e.tracker.common.{CombatState}
+import vcc.tracker.Ruling
 
-class SaveVersusDeathRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
-  def is =
-    "SaveVersusDeath".title ^
-      "have proper is user message" ! e0 ^
-      "have answer " ! e1 ^
-      "produce nothing on save" ! e2 ^
-      "produce produce healing on save 20" ! e3 ^
-      "produce produce death thick on failed" ! e4 ^
-      end
-
+class SaveVersusDeathRulingTest extends RulingAcceptance("SaveVersusDeathRuling") with EventSourceSampleEvents {
   private val savedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Saved))
   private val savedAndHealRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.SaveAndHeal))
   private val failedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Failed))
 
-  private val state = CombatState.empty.transitionWith(List(evtAddCombA, ApplyDamageEvent(combA, 41)))
+  protected val state = CombatState.empty.transitionWith(List(evtAddCombA, ApplyDamageEvent(combA, 41)))
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = savedRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SaveVersusDeathRuling(combA, None)
+  protected val userPromptMessage: String = "Save versus death for Fighter [A]"
 
-  private def e0 = {
-    savedRuling.userPrompt(state) must_== "Save versus death for Fighter [A]"
-  }
-
-  private def e1 = {
-    savedRuling.hasDecision must beTrue
-  }
-
-  private def e2 = {
-    savedRuling.generateCommands(state) must_== Nil
-  }
-
-  private def e3 = {
-    savedAndHealRuling.generateCommands(state) must_== List(HealCommand(combA, 1))
-  }
-
-  private def e4 = {
-    failedRuling.generateCommands(state) must_== List(FailDeathSaveCommand(combA))
-  }
+  def buildCases =
+    "produce nothing on save" ! (savedRuling.generateCommands(state) must_== Nil) ^
+      "produce healing on save 20" ! (savedAndHealRuling.generateCommands(state) must_== List(HealCommand(combA, 1))) ^
+      "produce death thick on failed" ! (failedRuling.generateCommands(state) must_== List(FailDeathSaveCommand(combA))) ^
+      end
 }

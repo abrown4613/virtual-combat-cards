@@ -16,38 +16,25 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.dnd4e.tracker.common.EffectID
 import vcc.dnd4e.tracker.transition.SustainEffectCommand
+import org.specs2.specification.Fragments
+import vcc.tracker.Ruling
+import vcc.dnd4e.tracker.common.{CombatState, EffectID}
 
-class SustainEffectRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
-  def is =
-    "SustainEffectRuling".title ^
-      "have valid user prompt" ! e0 ^
-      "have answer" ! e1 ^
-      "produce nothing on not sustained" ! e2 ^
-      "produce command on sustained " ! e3 ^
-      end
+class SustainEffectRulingTest extends RulingAcceptance("SustainEffectRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val cancelRulings = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Cancel))
   private val sustainRuling = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Sustain))
-  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "effect")))
 
-  private def e0 = {
-    cancelRulings.userPrompt(state) must_== "Sustain \"effect\" (from Fighter [A])"
-  }
+  protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "effect")))
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = cancelRulings
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SustainEffectRuling(eid, None)
+  protected val userPromptMessage: String = "Sustain \"effect\" (from Fighter [A])"
 
-  private def e1 = {
-    cancelRulings.hasDecision must beTrue
-  }
-
-  private def e2 = {
-    cancelRulings.generateCommands(state) must_== Nil
-  }
-
-  private def e3 = {
-    sustainRuling.generateCommands(state) must_== List(SustainEffectCommand(eid))
-  }
+  def buildCases: Fragments =
+    "produce nothing on not sustained" ! (cancelRulings.generateCommands(state) must_== Nil) ^
+      "produce command on sustained " ! (sustainRuling.generateCommands(state) must_== List(SustainEffectCommand(eid))) ^
+      endp
 }

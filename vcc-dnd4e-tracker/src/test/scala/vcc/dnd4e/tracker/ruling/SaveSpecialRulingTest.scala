@@ -16,42 +16,27 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
 import vcc.dnd4e.tracker.transition.{UpdateEffectConditionCommand, CancelEffectCommand}
-import vcc.dnd4e.tracker.common.{Effect, EffectID}
+import vcc.tracker.Ruling
+import vcc.dnd4e.tracker.common.{CombatState, Effect, EffectID}
 
-class SaveSpecialRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
-  def is =
-    "SaveSpecialRuling".title ^
-      "have proper user prompt" ! e0 ^
-      "have answer" ! e1 ^
-      "produce on saved" ! e2 ^
-      "produce on changed" ! e3 ^
-      "create ruling from effect" ! e5 ^
-      end
+class SaveSpecialRulingTest extends RulingAcceptance("SaveSpecialRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val savedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Saved))
   private val changedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Changed("worst")))
 
-  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad -> worst")))
+  protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad -> worst")))
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = savedRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SaveSpecialRuling(eid, None)
+  protected val userPromptMessage: String = "Fighter [A] must make a saving throws against: bad -> worst"
 
-  private def e0 = {
-    savedRuling.userPrompt(state) must_== "Fighter [A] must make a saving throws against: bad -> worst"
-  }
-
-  private def e1 = {
-    savedRuling.hasDecision must beTrue
-  }
-
-  private def e2 = {
-    savedRuling.generateCommands(state) must_== List(CancelEffectCommand(eid))
-  }
-
-  private def e3 = {
-    changedRuling.generateCommands(state) must_== List(UpdateEffectConditionCommand(eid, Effect.Condition.Generic("worst", false)))
-  }
+  def buildCases =
+    "produce on saved" ! (savedRuling.generateCommands(state) must_== List(CancelEffectCommand(eid))) ^
+      "produce on changed" ! (changedRuling.generateCommands(state) must_== List(UpdateEffectConditionCommand(eid, Effect.Condition.Generic("worst", false)))) ^
+      "create ruling from effect" ! e5 ^
+      end
 
   private def e5 = {
     val eid = EffectID(combA, 1)
