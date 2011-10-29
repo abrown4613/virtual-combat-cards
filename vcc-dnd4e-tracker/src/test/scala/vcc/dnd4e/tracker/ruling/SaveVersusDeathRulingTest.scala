@@ -17,40 +17,43 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.transition.{HealCommand, FailDeathSaveCommand}
+import vcc.dnd4e.tracker.event.{ApplyDamageEvent, EventSourceSampleEvents}
 
 class SaveVersusDeathRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "SaveVersusDeath".title ^
+      "have proper is user message" ! e0 ^
       "have answer " ! e1 ^
       "produce nothing on save" ! e2 ^
       "produce produce healing on save 20" ! e3 ^
       "produce produce death thick on failed" ! e4 ^
       end
 
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Saved)),
-    SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.SaveAndHeal)),
-    SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Failed))
-  )
-  private val state = CombatState.empty
+  private val savedRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Saved))
+  private val savedAndHealRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.SaveAndHeal))
+  private val failedRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Failed))
+
+  private val state = CombatState.empty.transitionWith(List(evtAddCombA, ApplyDamageEvent(combA, 41)))
+
+  private def e0 = {
+    savedRuling.userPrompt(state) must_== "Save versus death for Fighter [A]"
+  }
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    savedRuling.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== Nil
+    savedRuling.generateCommands(state) must_== Nil
   }
 
   private def e3 = {
-    rulings(1).generateCommands(state) must_== List(HealCommand(combA, 1))
+    savedAndHealRuling.generateCommands(state) must_== List(HealCommand(combA, 1))
   }
 
   private def e4 = {
-    rulings(2).generateCommands(state) must_== List(FailDeathSaveCommand(combA))
+    failedRuling.generateCommands(state) must_== List(FailDeathSaveCommand(combA))
   }
 }

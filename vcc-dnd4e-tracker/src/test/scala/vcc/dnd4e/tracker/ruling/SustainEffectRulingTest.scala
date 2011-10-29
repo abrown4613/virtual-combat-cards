@@ -19,34 +19,35 @@ package vcc.dnd4e.tracker.ruling
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
 import vcc.dnd4e.tracker.common.EffectID
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.transition.SustainEffectCommand
-import vcc.dnd4e.tracker.common.CombatState
 
 class SustainEffectRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "SustainEffectRuling".title ^
-      "have answer " ! e1 ^
+      "have valid user prompt" ! e0 ^
+      "have answer" ! e1 ^
       "produce nothing on not sustained" ! e2 ^
       "produce command on sustained " ! e3 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Cancel)),
-    SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Sustain))
-  )
-  private val state = CombatState.empty
+  private val cancelRulings = SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Cancel))
+  private val sustainRuling =   SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Sustain))
+  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "effect")))
+
+  private def e0 = {
+    cancelRulings.userPrompt(state) must_== "Sustain \"effect\" (from Fighter [A])"
+  }
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    cancelRulings.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== Nil
+    cancelRulings.generateCommands(state) must_== Nil
   }
 
   private def e3 = {
-    rulings(1).generateCommands(state) must_== List(SustainEffectCommand(eid))
+    sustainRuling.generateCommands(state) must_== List(SustainEffectCommand(eid))
   }
 }

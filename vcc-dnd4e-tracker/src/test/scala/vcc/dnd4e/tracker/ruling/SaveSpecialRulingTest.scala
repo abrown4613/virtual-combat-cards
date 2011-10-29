@@ -18,34 +18,37 @@ package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.transition.{UpdateEffectConditionCommand, CancelEffectCommand}
-import vcc.dnd4e.tracker.common.{Effect, EffectID, CombatState}
+import vcc.dnd4e.tracker.common.{Effect, EffectID}
 
 class SaveSpecialRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "SaveSpecialRuling".title ^
-      "have answer " ! e1 ^
+      "have proper user prompt" ! e0 ^
+      "have answer" ! e1 ^
       "produce on saved" ! e2 ^
       "produce on changed" ! e3 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Saved)),
-    SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Changed("worst")))
-  )
-  private val state = CombatState.empty
+  private val savedRuling = SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Saved))
+  private val changedRuling = SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Changed("worst")))
+
+  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad -> worst")))
+
+  private def e0 = {
+    savedRuling.userPrompt(state) must_== "Fighter [A] must make a saving throws against: bad -> worst"
+  }
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    savedRuling.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== List(CancelEffectCommand(eid))
+    savedRuling.generateCommands(state) must_== List(CancelEffectCommand(eid))
   }
 
   private def e3 = {
-    rulings(1).generateCommands(state) must_== List(UpdateEffectConditionCommand(eid, Effect.Condition.Generic("worst", false)))
+    changedRuling.generateCommands(state) must_== List(UpdateEffectConditionCommand(eid, Effect.Condition.Generic("worst", false)))
   }
 }

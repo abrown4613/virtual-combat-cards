@@ -20,6 +20,7 @@ package vcc.tracker
  * What is being decided by the Ruling
  */
 trait Question[S] {
+  @deprecated("Will go away")
   def userPrompt(state: S): String
 }
 
@@ -35,7 +36,7 @@ abstract class Ruling[S, Q <: Question[S], D, R <: Ruling[S, Q, D, R]] {
   val question: Q
   val decision: Option[D]
 
-  def userPrompt(state: S) = question.userPrompt(state)
+  def userPrompt(state: S): String
 
   /**
    * Determines whether the ruling has a decision or not.

@@ -23,9 +23,7 @@ import vcc.tracker.{Question, StateCommand, Ruling}
 object Save {
 
   case class Against(eid: EffectID, what: String) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = {
-      state.roster.combatant(eid.combId).name + " must make a saving throws against " + what
-    }
+    def userPrompt(state: CombatState): String = null
   }
 
   sealed trait Result
@@ -37,8 +35,14 @@ object Save {
 }
 
 case class SaveRuling(question: Save.Against, decision: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result, SaveRuling] {
+
   import Save._
 
+  def userPrompt(state: CombatState): String = {
+    val eid = question.eid
+    val combatant = state.combatant(eid.combId)
+    combatant.name + " " + eid.combId.simpleNotation + " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
+  }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {

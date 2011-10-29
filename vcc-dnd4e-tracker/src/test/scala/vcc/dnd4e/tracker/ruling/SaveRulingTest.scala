@@ -17,30 +17,37 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.dnd4e.tracker.common.{EffectID, CombatState}
+import vcc.dnd4e.tracker.common.{EffectID}
 import vcc.dnd4e.tracker.transition.CancelEffectCommand
 
 class SaveRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "Ruling".title ^
-      "have answer " ! e1 ^
+      "have proper user prompt" ! e0 ^
+      "have answer" ! e1 ^
       "produce answer" ! e2 ^
+      "produce no answer if not saved" ! e3 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    SaveRuling(Save.Against(eid, "death"), Some(Save.Saved)),
-    NextUpRuling(EligibleNext(ioA0,List(io1_0)),None)
-  )
-  private val state = CombatState.empty
+  private val savedRuling = SaveRuling(Save.Against(eid, "death"), Some(Save.Saved))
+  private val failedRuling = SaveRuling(Save.Against(eid, "death"), Some(Save.Failed))
+  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad")))
+
+  private def e0 = {
+    savedRuling.userPrompt(state) must_== "Fighter [A] must make a saving throws against: bad"
+  }
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    savedRuling.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== List(CancelEffectCommand(eid))
+    savedRuling.generateCommands(state) must_== List(CancelEffectCommand(eid))
+  }
+
+  private def e3 = {
+    failedRuling.generateCommands(state) must_== Nil
   }
 }

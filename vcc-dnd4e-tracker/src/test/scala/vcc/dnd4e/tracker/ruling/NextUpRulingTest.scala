@@ -27,7 +27,7 @@ class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
   private val r = NextUpRuling(EligibleNext(ioA0, List(io1_0, ioB0)), None)
 
   def is =
-    "NextUpRuling" ^
+    "NextUpRuling".title ^
       "has standard message" ! e1 ^
       "generate StartRount if main selected" ! e2 ^
       "generate MoveUp if some other is selected" ! e3 ^
@@ -35,7 +35,7 @@ class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
       end
 
   private def e1 = {
-    r.question.userPrompt(combatState) must_== "Select which combatant should act next"
+    r.userPrompt(combatState) must_== "Select which combatant should act next"
   }
 
   private def e2 = {

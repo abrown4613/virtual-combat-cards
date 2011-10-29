@@ -24,7 +24,7 @@ import vcc.dnd4e.tracker.transition.{FailDeathSaveCommand, HealCommand}
 object SaveVersusDeath {
 
   case class Dying(cid: CombatantID) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = "Save versus death for " + state.roster.combatant(cid).name
+    def userPrompt(state: CombatState): String = null
   }
 
   object Result extends Enumeration {
@@ -39,6 +39,11 @@ object SaveVersusDeath {
 case class SaveVersusDeathRuling(question: SaveVersusDeath.Dying, decision: Option[SaveVersusDeath.Result.Value])
   extends Ruling[CombatState, SaveVersusDeath.Dying, SaveVersusDeath.Result.Value, SaveVersusDeathRuling] {
 
+
+  def userPrompt(state: CombatState) = {
+    val combatant = state.combatant(question.cid)
+    "Save versus death for " + combatant.name + " " + question.cid.simpleNotation
+  }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     import SaveVersusDeath.Result._

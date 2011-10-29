@@ -29,7 +29,7 @@ object SustainEffect {
   case object Cancel extends Result
 
   case class ToSustain(eid: EffectID) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = "Sustain effect " + state.roster.combatant(eid.combId).effects.effects.find(x => x.effectId == eid).map(_.condition.description).getOrElse("")
+    def userPrompt(state: CombatState): String = null
   }
 
   def fromEffect(effect: Effect): SustainEffectRuling = {
@@ -41,6 +41,13 @@ case class SustainEffectRuling(question: SustainEffect.ToSustain, decision: Opti
   extends Ruling[CombatState, SustainEffect.ToSustain, SustainEffect.Result, SustainEffectRuling] {
 
   import SustainEffect._
+
+  def userPrompt(state: CombatState) = {
+    val eid = question.eid
+    val combatant = state.combatant(eid.combId)
+    val effect = combatant.effects.find(eid).get
+    "Sustain \"" + effect.condition.description + "\" (from " + combatant.name + " " + eid.combId.simpleNotation + ")"
+  }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
