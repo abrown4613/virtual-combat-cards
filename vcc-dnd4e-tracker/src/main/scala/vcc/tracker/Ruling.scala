@@ -17,14 +17,6 @@
 package vcc.tracker
 
 /**
- * What is being decided by the Ruling
- */
-trait Question[S] {
-  @deprecated("Will go away")
-  def userPrompt(state: S): String
-}
-
-/**
  * Indicates that a specified decision is not valid.
  */
 class IllegalDecisionException(msg: String) extends Exception(msg)
@@ -32,7 +24,7 @@ class IllegalDecisionException(msg: String) extends Exception(msg)
 /**
  * A request for a ruling or a completed ruling.
  */
-abstract class Ruling[S, Q <: Question[S], D, R <: Ruling[S, Q, D, R]] {
+abstract class Ruling[S, Q, D, R <: Ruling[S, Q, D, R]] {
   val question: Q
   val decision: Option[D]
 

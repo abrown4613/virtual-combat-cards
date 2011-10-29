@@ -19,7 +19,6 @@ package vcc.dnd4e.tracker.ruling
 import vcc.dnd4e.tracker.common._
 import vcc.tracker.{StateCommand, Ruling, RulingLocationService}
 import vcc.dnd4e.tracker.transition.{EndRoundCommand, StartRoundCommand, NextUpCommand}
-import vcc.dnd4e.tracker.ruling._
 import vcc.dnd4e.tracker.common.ConditionMatcher
 
 object CombatStateRulingLocator extends RulingLocationService[CombatState] {
@@ -28,7 +27,7 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[Ruling[CombatState, _, _, _]] = {
     command match {
-      case NextUpCommand(first, eligible) => List(NextUpRuling(EligibleNext(first, eligible), None))
+      case nextUp@NextUpCommand(first, eligible) => List(NextUpRuling(nextUp, None))
       case EndRoundCommand(who) => searchEndRound(state, who.combId)
       case StartRoundCommand(who) => searchStartRound(state, who.combId)
       case _ => Nil
@@ -37,11 +36,11 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   private def endRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
     case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) =>
-      (SaveRuling(Save.Against(effect.effectId, effect.condition.description), None))
+      (SaveRuling(effect.effectId, None))
     case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) =>
-      SaveSpecial.rulingFromEffect(effect)
+      SaveSpecialRuling.rulingFromEffect(effect)
     case effect@Effect(eid, _, condition, Duration.RoundBound(InitiativeOrderID(`who`, _), Duration.Limit.EndOfTurnSustain)) =>
-      SustainEffect.fromEffect(effect)
+      SustainEffectRuling(effect.effectId, None)
   }
 
   private def searchEndRound(state: CombatState, who: CombatantID): List[R] = {
@@ -52,9 +51,9 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, R] = {
     case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
-      (OngoingDamageRuling(OngoingDamage.CausedBy(eid), None))
+      (OngoingDamageRuling(eid, None))
     case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
-      (RegenerationRuling(CausedBy(eid), None))
+      (RegenerationRuling(eid, None))
   }
 
 
@@ -66,7 +65,7 @@ object CombatStateRulingLocator extends RulingLocationService[CombatState] {
 
   private def dyingRuling(state: CombatState, who: CombatantID): List[CombatStateRulingLocator.R] = {
     if (state.combatant(who).health.status == HealthStatus.Dying)
-      List(SaveVersusDeathRuling(SaveVersusDeath.Dying(who), None))
+      List(SaveVersusDeathRuling(who, None))
     else Nil
   }
 }

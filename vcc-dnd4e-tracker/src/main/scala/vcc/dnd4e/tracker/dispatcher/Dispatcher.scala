@@ -32,12 +32,12 @@ class Dispatcher private(log: Logger) {
         def provideDecisionForRuling(state: CombatState, rulings: List[Ruling[CombatState, _, _, _]]): List[Ruling[CombatState, _, _, _]] = {
           for (ruling <- rulings) yield {
             ruling match {
-              case r: NextUpRuling => r.withDecision(r.question.primary)
-              case r: SaveRuling => r.withDecision(Save.Saved)
-              case r: SaveSpecialRuling => r.withDecision(SaveSpecial.Saved)
-              case r: SaveVersusDeathRuling => r.withDecision(SaveVersusDeath.Result.Failed)
-              case r: SustainEffectRuling => r.withDecision(SustainEffect.Sustain)
-              case r: OngoingDamageRuling => r.withDecision(OngoingDamage.DamageToApply(0))
+              case r: NextUpRuling => r.withDecision(r.question.next)
+              case r: SaveRuling => r.withDecision(SaveRulingResult.Saved)
+              case r: SaveSpecialRuling => r.withDecision(SaveSpecialRulingResult.Saved)
+              case r: SaveVersusDeathRuling => r.withDecision(SaveVersusDeathResult.Failed)
+              case r: SustainEffectRuling => r.withDecision(SustainEffectRulingResult.Sustain)
+              case r: OngoingDamageRuling => r.withDecision(0)
               case r: RegenerationRuling => r.withDecision(0)
               case r => throw new Exception("Unknown ruling " + r)
             }

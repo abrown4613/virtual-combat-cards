@@ -31,8 +31,8 @@ class RegenerationRulingTest extends SpecificationWithJUnit with EventSourceSamp
       end
 
   private val eid = EffectID(combA, 1)
-  private val zeroRegenRuling = RegenerationRuling(CausedBy(eid), Some(0))
-  private val realRegenRuling = RegenerationRuling(CausedBy(eid), Some(7))
+  private val zeroRegenRuling = RegenerationRuling(eid, Some(0))
+  private val realRegenRuling = RegenerationRuling(eid, Some(7))
   private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "regenerate 5")))
 
   private def e1 = {

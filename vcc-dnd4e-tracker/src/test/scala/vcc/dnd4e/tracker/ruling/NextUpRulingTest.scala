@@ -18,13 +18,13 @@ package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
-import vcc.dnd4e.tracker.transition.{MoveUpCommand, StartRoundCommand}
 import vcc.tracker.IllegalDecisionException
+import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 
 class NextUpRulingTest extends SpecificationWithJUnit with SampleStateData {
 
   private val combatState = CombatState.empty
-  private val r = NextUpRuling(EligibleNext(ioA0, List(io1_0, ioB0)), None)
+  private val r = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
 
   def is =
     "NextUpRuling".title ^

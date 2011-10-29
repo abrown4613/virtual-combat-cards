@@ -31,8 +31,8 @@ class OngoingDamageRulingTest extends SpecificationWithJUnit with EventSourceSam
       end
 
   private val eid = EffectID(combA, 1)
-  private val noDamageOngoingRuling = OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(0)))
-  private val damageOngoingRuling = OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(7)))
+  private val noDamageOngoingRuling = OngoingDamageRuling(eid, Some(0))
+  private val damageOngoingRuling = OngoingDamageRuling(eid, Some(7))
 
   val state = CombatState.empty.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "ongoing 5 fire")))
 

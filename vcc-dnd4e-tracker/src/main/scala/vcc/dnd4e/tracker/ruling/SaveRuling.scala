@@ -18,40 +18,32 @@ package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 import vcc.dnd4e.tracker.transition.{CancelEffectCommand}
-import vcc.tracker.{Question, StateCommand, Ruling}
+import vcc.tracker.{StateCommand, Ruling}
 
-object Save {
-
-  case class Against(eid: EffectID, what: String) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = null
-  }
-
-  sealed trait Result
-
-  case object Saved extends Result
-
-  case object Failed extends Result
-
+object SaveRulingResult extends Enumeration {
+  val Saved = Value("Saved")
+  val Failed = Value("Failed")
 }
 
-case class SaveRuling(question: Save.Against, decision: Option[Save.Result]) extends Ruling[CombatState, Save.Against, Save.Result, SaveRuling] {
+case class SaveRuling(question: EffectID, decision: Option[SaveRulingResult.Value])
+  extends Ruling[CombatState, EffectID, SaveRulingResult.Value, SaveRuling] {
 
-  import Save._
+  import SaveRulingResult._
 
   def userPrompt(state: CombatState): String = {
-    val eid = question.eid
+    val eid = question
     val combatant = state.combatant(eid.combId)
     combatant.name + " " + eid.combId.simpleNotation + " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
   }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
-      case Saved => List(CancelEffectCommand(question.eid))
+      case Saved => List(CancelEffectCommand(question))
       case Failed => Nil
     }
   }
 
-  def withDecision(value: Result): SaveRuling = copy(decision = Some(value))
+  def withDecision(value: Value): SaveRuling = copy(decision = Some(value))
 }
 
 

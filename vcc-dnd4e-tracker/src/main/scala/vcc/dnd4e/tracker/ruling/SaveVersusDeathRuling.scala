@@ -17,42 +17,32 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
-import vcc.dnd4e.tracker.ruling.SaveVersusDeath.Result
-import vcc.tracker.{StateCommand, Question, Ruling}
+import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{FailDeathSaveCommand, HealCommand}
 
-object SaveVersusDeath {
-
-  case class Dying(cid: CombatantID) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = null
-  }
-
-  object Result extends Enumeration {
+object SaveVersusDeathResult extends Enumeration {
     val Saved = Value("Saved")
     val Failed = Value("Failed")
     val SaveAndHeal = Value("Save and heal 1 hp")
-  }
-
-  def createRuling(cid: CombatantID): SaveVersusDeathRuling = SaveVersusDeathRuling(Dying(cid), None)
 }
 
-case class SaveVersusDeathRuling(question: SaveVersusDeath.Dying, decision: Option[SaveVersusDeath.Result.Value])
-  extends Ruling[CombatState, SaveVersusDeath.Dying, SaveVersusDeath.Result.Value, SaveVersusDeathRuling] {
+case class SaveVersusDeathRuling(question: CombatantID, decision: Option[SaveVersusDeathResult.Value])
+  extends Ruling[CombatState, CombatantID, SaveVersusDeathResult.Value, SaveVersusDeathRuling] {
 
 
   def userPrompt(state: CombatState) = {
-    val combatant = state.combatant(question.cid)
-    "Save versus death for " + combatant.name + " " + question.cid.simpleNotation
+    val combatant = state.combatant(question)
+    "Save versus death for " + combatant.name + " " + question.simpleNotation
   }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
-    import SaveVersusDeath.Result._
+    import SaveVersusDeathResult._
     decision.get match {
       case Saved => Nil
-      case SaveAndHeal => List(HealCommand(question.cid, 1))
-      case Failed => List(FailDeathSaveCommand(question.cid))
+      case SaveAndHeal => List(HealCommand(question, 1))
+      case Failed => List(FailDeathSaveCommand(question))
     }
   }
 
-  def withDecision(decision: Result.Value): SaveVersusDeathRuling = copy(decision = Some(decision))
+  def withDecision(decision: SaveVersusDeathResult.Value): SaveVersusDeathRuling = copy(decision = Some(decision))
 }
