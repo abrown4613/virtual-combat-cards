@@ -14,16 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.tracker.dispatcher
+package vcc.dnd4e.tracker.ruling
 
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common.{EffectID, Duration, CombatState}
-import vcc.dnd4e.tracker.ruling._
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, AddEffectEvent, EventSourceSampleEvents}
 import vcc.dnd4e.tracker.transition.{StartRoundCommand, EndRoundCommand}
 import vcc.tracker.Ruling
-import org.specs2.matcher.ContainMatcher
 
 class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
