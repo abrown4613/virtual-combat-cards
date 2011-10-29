@@ -16,38 +16,24 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.transition.HealCommand
 import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
-import vcc.dnd4e.tracker.common.{EffectID}
+import vcc.tracker.Ruling
+import vcc.dnd4e.tracker.common.{CombatState, EffectID}
 
-class RegenerationRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
-  def is =
-    "OngoingDamageRuling".title ^
-      "have answer" ! e1 ^
-      "have a user prompt" ! e4 ^
-      "produce command no command when zero" ! e2 ^
-      "produce heal command when set to greater than 0" ! e3 ^
-      end
-
+class RegenerationRulingTest extends RulingAcceptance("OngoingDamageRuling") with EventSourceSampleEvents {
   private val eid = EffectID(combA, 1)
   private val zeroRegenRuling = RegenerationRuling(eid, Some(0))
   private val realRegenRuling = RegenerationRuling(eid, Some(7))
-  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "regenerate 5")))
 
-  private def e1 = {
-    zeroRegenRuling.hasDecision must beTrue
-  }
+  protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "regenerate 5")))
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = zeroRegenRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = RegenerationRuling(eid, None)
+  protected val userPromptMessage: String = "Fighter [A] affected by: regenerate 5"
 
-  private def e2 = {
-    zeroRegenRuling.generateCommands(state) must_== Nil
-  }
-
-  private def e3 = {
-    realRegenRuling.generateCommands(state) must_== List(HealCommand(combA, 7))
-  }
-
-  private def e4 = {
-    zeroRegenRuling.userPrompt(state) must_== "Fighter [A] affected by: regenerate 5"
-  }
+  def buildCases =
+    "produce command no command when zero" ! (zeroRegenRuling.generateCommands(state) must_== Nil) ^
+      "produce heal command when set to greater than 0" !
+        (realRegenRuling.generateCommands(state) must_== List(HealCommand(combA, 7))) ^
+      end
 }

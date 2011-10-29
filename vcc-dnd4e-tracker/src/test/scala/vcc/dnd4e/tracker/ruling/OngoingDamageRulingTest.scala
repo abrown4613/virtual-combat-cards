@@ -20,35 +20,22 @@ import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.transition.DamageCommand
 import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
+import vcc.tracker.Ruling
 
-class OngoingDamageRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
-  def is =
-    "OngoingDamageRuling".title ^
-      "have answer" ! e1 ^
-      "have a user prompt" ! e4 ^
-      "produce command no command when zero" ! e2 ^
-      "produce damage command when set to greater than 0" ! e3 ^
-      end
+class OngoingDamageRulingTest extends RulingAcceptance("OngoingDamageRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val noDamageOngoingRuling = OngoingDamageRuling(eid, Some(0))
   private val damageOngoingRuling = OngoingDamageRuling(eid, Some(7))
 
-  val state = CombatState.empty.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "ongoing 5 fire")))
+  protected val state = CombatState.empty.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "ongoing 5 fire")))
+  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = noDamageOngoingRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = OngoingDamageRuling(eid, None)
+  protected val userPromptMessage: String = "Fighter [A] affected by: ongoing 5 fire"
 
-  private def e1 = {
-    noDamageOngoingRuling.hasDecision must beTrue
-  }
-
-  private def e2 = {
-    noDamageOngoingRuling.generateCommands(state) must_== Nil
-  }
-
-  private def e3 = {
-    damageOngoingRuling.generateCommands(state) must_== List(DamageCommand(combA, 7))
-  }
-
-  private def e4 = {
-    noDamageOngoingRuling.userPrompt(state) must_== "Fighter [A] affected by: ongoing 5 fire"
-  }
+  def buildCases =
+    "produce command no command when zero" !
+      (noDamageOngoingRuling.generateCommands(state) must_== Nil) ^
+      "produce damage command when set to greater than 0" !
+        (damageOngoingRuling.generateCommands(state) must_== List(DamageCommand(combA, 7)))
 }
