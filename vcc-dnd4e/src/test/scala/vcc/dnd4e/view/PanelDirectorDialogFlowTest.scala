@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
-import helper.ActionTranslator
 import actors.Actor
 import vcc.controller.{Decision, Ruling, TrackerChangeObserver}
 import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
@@ -42,7 +41,7 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
     val rulings = List(ruling1, ruling2)
     val mDecisions = List(decision1, decision2)
     val mAction = mock[TransactionalAction]
-    mAction.description returns "some action"
+    mAction.description returns "NO-MESSAGE-MIGRATING"
 
     // TO test real actions
     val combA = CombatantID("A")
@@ -62,10 +61,10 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
 
     "forward request to RulingBroker" in new context {
       pd.provideDecisionsForRulings(mAction, rulings)
-      there was one(mockRuleBroker).promptRuling("some action", rulings)
+      there was one(mockRuleBroker).promptRuling("NO-MESSAGE-MIGRATING", rulings)
     }
     "send reply back to requestor" in new context {
-      mockRuleBroker.promptRuling("some action", rulings) returns mDecisions
+      mockRuleBroker.promptRuling("NO-MESSAGE-MIGRATING", rulings) returns mDecisions
       pd.provideDecisionsForRulings(mAction, rulings) must_== mDecisions
     }
 
@@ -77,7 +76,7 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
     "provide correct message for the end round" in new context {
       csm.getSnapshot() returns CombatStateWithChanges(CombatState(false, "", Nil, Map(), None, Map(combA -> mCombA)), new StateChange())
       val action = ExecuteInitiativeAction(ioiA, InitiativeAction.EndRound)
-      val msg = ActionTranslator.fullActionMessage(mState, action)
+      val msg = "NO-MESSAGE-MIGRATING"
       mockRuleBroker.promptRuling(msg, rulings) returns mDecisions
       pd.provideDecisionsForRulings(action, rulings)
       there was one(mockRuleBroker).promptRuling(msg, rulings)
