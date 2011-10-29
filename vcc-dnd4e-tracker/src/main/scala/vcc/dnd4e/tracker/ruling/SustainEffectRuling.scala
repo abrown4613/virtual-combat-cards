@@ -30,6 +30,13 @@ case class SustainEffectRuling(question: EffectID, decision: Option[SustainEffec
 
   import SustainEffectRulingResult._
 
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+    otherRuling match {
+      case SustainEffectRuling(otherSubject, _) => otherSubject == this.question
+      case _ => false
+    }
+  }
+
   def userPrompt(state: CombatState) = {
     val eid = question
     val combatant = state.combatant(eid.combId)

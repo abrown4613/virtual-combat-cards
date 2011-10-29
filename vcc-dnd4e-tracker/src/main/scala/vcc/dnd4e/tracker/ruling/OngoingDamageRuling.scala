@@ -23,6 +23,13 @@ import vcc.dnd4e.tracker.transition.DamageCommand
 case class OngoingDamageRuling(question: EffectID, decision: Option[Int])
   extends Ruling[CombatState, EffectID, Int, OngoingDamageRuling] {
 
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+    otherRuling match {
+      case OngoingDamageRuling(otherSubject,_) => otherSubject == this.question
+      case _ => false
+    }
+  }
+
   def userPrompt(state: CombatState): String = {
     val eid = question
     val comb = state.roster.combatant(eid.combId)
