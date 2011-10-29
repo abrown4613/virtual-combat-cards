@@ -46,6 +46,13 @@ trait CommandStream[S, A] {
   def get(s: S): Option[(A, CommandStream[S, A])]
 }
 
+object CommandStream {
+  /**
+   * Build a command stream from a sequence of commands
+   */
+  def apply[S, A](elements: A*):CommandStream[S, A] = SeqCommandStream[S, A](elements)
+}
+
 /**
  * This is a wrapper to generates commands based on the a Seq. State is ignored for all method calls.
  * @param elem Sequence of elements this stream will return in order
