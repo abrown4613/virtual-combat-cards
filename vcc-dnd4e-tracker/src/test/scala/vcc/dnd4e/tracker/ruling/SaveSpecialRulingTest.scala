@@ -28,11 +28,12 @@ class SaveSpecialRulingTest extends SpecificationWithJUnit with EventSourceSampl
       "have answer" ! e1 ^
       "produce on saved" ! e2 ^
       "produce on changed" ! e3 ^
+      "create ruling from effect" ! e5 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val savedRuling = SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Saved))
-  private val changedRuling = SaveSpecialRuling(SaveSpecial.Against(eid, "bad -> worst"), Some(SaveSpecial.Changed("worst")))
+  private val savedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Saved))
+  private val changedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Changed("worst")))
 
   private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad -> worst")))
 
@@ -50,5 +51,12 @@ class SaveSpecialRulingTest extends SpecificationWithJUnit with EventSourceSampl
 
   private def e3 = {
     changedRuling.generateCommands(state) must_== List(UpdateEffectConditionCommand(eid, Effect.Condition.Generic("worst", false)))
+  }
+
+  private def e5 = {
+    val eid = EffectID(combA, 1)
+    val effect = state.combatant(combA).effects.find(eid).get
+
+    SaveSpecialRuling.rulingFromEffect(effect) must_== SaveSpecialRuling(eid, None)
   }
 }

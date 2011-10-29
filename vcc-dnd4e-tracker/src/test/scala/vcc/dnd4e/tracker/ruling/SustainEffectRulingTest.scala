@@ -31,8 +31,8 @@ class SustainEffectRulingTest extends SpecificationWithJUnit with EventSourceSam
       end
 
   private val eid = EffectID(combA, 1)
-  private val cancelRulings = SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Cancel))
-  private val sustainRuling =   SustainEffectRuling(SustainEffect.ToSustain(eid), Some(SustainEffect.Sustain))
+  private val cancelRulings = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Cancel))
+  private val sustainRuling = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Sustain))
   private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "effect")))
 
   private def e0 = {

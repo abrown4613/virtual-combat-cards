@@ -17,9 +17,9 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.transition.{HealCommand, FailDeathSaveCommand}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, EventSourceSampleEvents}
+import vcc.dnd4e.tracker.common.{CombatState}
 
 class SaveVersusDeathRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
@@ -31,9 +31,9 @@ class SaveVersusDeathRulingTest extends SpecificationWithJUnit with EventSourceS
       "produce produce death thick on failed" ! e4 ^
       end
 
-  private val savedRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Saved))
-  private val savedAndHealRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.SaveAndHeal))
-  private val failedRuling = SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), Some(SaveVersusDeath.Result.Failed))
+  private val savedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Saved))
+  private val savedAndHealRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.SaveAndHeal))
+  private val failedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Failed))
 
   private val state = CombatState.empty.transitionWith(List(evtAddCombA, ApplyDamageEvent(combA, 41)))
 

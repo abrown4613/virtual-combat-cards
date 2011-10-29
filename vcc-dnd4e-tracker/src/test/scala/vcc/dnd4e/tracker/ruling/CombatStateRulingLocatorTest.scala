@@ -53,37 +53,37 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
   "CombatStateRulingLocator" should {
     "Detect Save on end of round" in {
       (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
-        must contain(SaveRuling(Save.Against(eidA1, "bad"), None)))
+        must contain(SaveRuling(eidA1, None)))
     }
     "Detect Save Special on end of round" in {
       (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
-        must contain(SaveSpecialRuling(SaveSpecial.Against(eidA2, "bad -> worst"), None)))
+        must contain(SaveSpecialRuling(eidA2, None)))
     }
     "Detect all sustains on end of round" in {
       (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
-        must contain(SustainEffectRuling(SustainEffect.ToSustain(eidA3), None),
-        SustainEffectRuling(SustainEffect.ToSustain(eid1_1), None)))
+        must contain(SustainEffectRuling(eidA3, None),
+        SustainEffectRuling(eid1_1, None)))
     }
     "Detect save versus death when appropriate" in {
       val nState = state.transitionWith(List(ApplyDamageEvent(combA, 41)))
       (CombatStateRulingLocator.rulingsFromStateWithCommand(nState, EndRoundCommand(ioA0))
-        must contain(SaveVersusDeathRuling(SaveVersusDeath.Dying(combA), None)))
+        must contain(SaveVersusDeathRuling(combA, None)))
     }
 
     "Detect Ongoing damage" in {
       (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
-        must contain(OngoingDamageRuling(OngoingDamage.CausedBy(eidA4), None)))
+        must contain(OngoingDamageRuling(eidA4, None)))
     }
 
     "Detect Regeneration damage" in {
       (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
-        must contain(RegenerationRuling(CausedBy(eidA5), None)))
+        must contain(RegenerationRuling(eidA5, None)))
     }
 
     "Detect regeneration first" in {
       type R = Ruling[CombatState, _, _, _]
-      val regen: List[R] = List(RegenerationRuling(CausedBy(eidA5), None),
-        OngoingDamageRuling(OngoingDamage.CausedBy(eidA4), None))
+      val regen: List[R] = List(RegenerationRuling(eidA5, None),
+        OngoingDamageRuling(eidA4, None))
       val detected: List[R] = CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
       detected must contain(regen(0))
       detected must contain(regen(1))

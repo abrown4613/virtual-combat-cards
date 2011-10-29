@@ -16,34 +16,22 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.tracker.{StateCommand, Question, Ruling}
+import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{SustainEffectCommand}
-import vcc.dnd4e.tracker.common.{Effect, EffectID, CombatState}
+import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 
-object SustainEffect {
-
-  sealed trait Result
-
-  case object Sustain extends Result
-
-  case object Cancel extends Result
-
-  case class ToSustain(eid: EffectID) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = null
-  }
-
-  def fromEffect(effect: Effect): SustainEffectRuling = {
-    SustainEffectRuling(ToSustain(effect.effectId), None)
-  }
+object SustainEffectRulingResult extends Enumeration {
+  val Sustain = Value("Sustain")
+  val Cancel = Value("Cancel")
 }
 
-case class SustainEffectRuling(question: SustainEffect.ToSustain, decision: Option[SustainEffect.Result])
-  extends Ruling[CombatState, SustainEffect.ToSustain, SustainEffect.Result, SustainEffectRuling] {
+case class SustainEffectRuling(question: EffectID, decision: Option[SustainEffectRulingResult.Value])
+  extends Ruling[CombatState, EffectID, SustainEffectRulingResult.Value, SustainEffectRuling] {
 
-  import SustainEffect._
+  import SustainEffectRulingResult._
 
   def userPrompt(state: CombatState) = {
-    val eid = question.eid
+    val eid = question
     val combatant = state.combatant(eid.combId)
     val effect = combatant.effects.find(eid).get
     "Sustain \"" + effect.condition.description + "\" (from " + combatant.name + " " + eid.combId.simpleNotation + ")"
@@ -52,9 +40,9 @@ case class SustainEffectRuling(question: SustainEffect.ToSustain, decision: Opti
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
       case Cancel => Nil
-      case Sustain => List(SustainEffectCommand(question.eid))
+      case Sustain => List(SustainEffectCommand(question))
     }
   }
 
-  def withDecision(value: Result): SustainEffectRuling = copy(decision = Option(value))
+  def withDecision(value: SustainEffectRulingResult.Value): SustainEffectRuling = copy(decision = Option(value))
 }

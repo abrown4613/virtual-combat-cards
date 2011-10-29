@@ -31,8 +31,8 @@ class SaveRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents
       end
 
   private val eid = EffectID(combA, 1)
-  private val savedRuling = SaveRuling(Save.Against(eid, "death"), Some(Save.Saved))
-  private val failedRuling = SaveRuling(Save.Against(eid, "death"), Some(Save.Failed))
+  private val savedRuling = SaveRuling(eid, Some(SaveRulingResult.Saved))
+  private val failedRuling = SaveRuling(eid, Some(SaveRulingResult.Failed))
   private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "bad")))
 
   private def e0 = {

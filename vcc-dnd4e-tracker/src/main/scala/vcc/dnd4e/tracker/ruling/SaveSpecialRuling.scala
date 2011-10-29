@@ -16,40 +16,31 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.tracker.{StateCommand, Ruling, Question}
+import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.CancelEffectCommand
 import vcc.dnd4e.tracker.transition.UpdateEffectConditionCommand
 import vcc.dnd4e.tracker.common.{Effect, CombatState, EffectID}
 
-object SaveSpecial {
+sealed trait SaveSpecialRulingResult
 
-  sealed trait Result
+object SaveSpecialRulingResult {
+  case class Changed(newCondition: String) extends SaveSpecialRulingResult
+  case object Saved extends SaveSpecialRulingResult
+}
 
-  case class Changed(newCondition: String) extends Result
-
-  case object Saved extends Result
-
-  //TODO This is duplicate for make
-  case class Against(eid: EffectID, what: String) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = {
-      val combatant = state.combatant(eid.combId)
-      combatant.name + " " + eid.combId.simpleNotation +
-        " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
-    }
-  }
-
-  def rulingFromEffect(effect:Effect): SaveSpecialRuling = {
-    SaveSpecialRuling(Against(effect.effectId, effect.condition.description),None)
+object SaveSpecialRuling {
+  def rulingFromEffect(effect: Effect): SaveSpecialRuling = {
+    SaveSpecialRuling(effect.effectId, None)
   }
 }
 
-case class SaveSpecialRuling(question: SaveSpecial.Against, decision: Option[SaveSpecial.Result])
-  extends Ruling[CombatState, SaveSpecial.Against, SaveSpecial.Result, SaveSpecialRuling] {
+case class SaveSpecialRuling(question: EffectID, decision: Option[SaveSpecialRulingResult])
+  extends Ruling[CombatState, EffectID, SaveSpecialRulingResult, SaveSpecialRuling] {
 
-  import SaveSpecial._
+  import SaveSpecialRulingResult._
 
-  def userPrompt(state: CombatState):String = {
-    val eid = question.eid
+  def userPrompt(state: CombatState): String = {
+    val eid = question
     val combatant = state.combatant(eid.combId)
     combatant.name + " " + eid.combId.simpleNotation +
       " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
@@ -57,10 +48,10 @@ case class SaveSpecialRuling(question: SaveSpecial.Against, decision: Option[Sav
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
-      case Saved => List(CancelEffectCommand(question.eid))
-      case Changed(newCondition)=> List(UpdateEffectConditionCommand(question.eid, Effect.Condition.Generic(newCondition, false)))
+      case Saved => List(CancelEffectCommand(question))
+      case Changed(newCondition) => List(UpdateEffectConditionCommand(question, Effect.Condition.Generic(newCondition, false)))
     }
   }
 
-  def withDecision(decision: Result): SaveSpecialRuling = copy(decision = Some(decision))
+  def withDecision(decision: SaveSpecialRulingResult): SaveSpecialRuling = copy(decision = Some(decision))
 }
