@@ -20,18 +20,18 @@ import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.DamageCommand
 
-case class OngoingDamageRuling(question: EffectID, decision: Option[Int])
-  extends Ruling[CombatState, EffectID, Int, OngoingDamageRuling] {
+case class OngoingDamageRuling(sourceEffect: EffectID, decision: Option[Int])
+  extends Ruling[CombatState, Int, OngoingDamageRuling] {
 
-  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
     otherRuling match {
-      case OngoingDamageRuling(otherSubject,_) => otherSubject == this.question
+      case OngoingDamageRuling(otherSourceEffect,_) => otherSourceEffect == this.sourceEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState): String = {
-    val eid = question
+    val eid = sourceEffect
     val comb = state.roster.combatant(eid.combId)
     val effect = comb.effects.find(eid).get
     comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
@@ -40,7 +40,7 @@ case class OngoingDamageRuling(question: EffectID, decision: Option[Int])
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     val amount = decision.get
     if(amount > 0 )
-      DamageCommand(question.combId, amount) :: Nil
+      DamageCommand(sourceEffect.combId, amount) :: Nil
     else
       Nil
   }

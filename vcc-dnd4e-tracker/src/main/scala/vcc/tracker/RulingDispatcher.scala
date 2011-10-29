@@ -17,19 +17,19 @@
 package vcc.tracker
 
 trait RulingPeer[S] {
-  def provideDecisionForRuling(state: S, rulings: List[Ruling[S, _, _, _]]): List[Ruling[S, _, _, _]]
+  def provideDecisionForRuling(state: S, rulings: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
 }
 
 trait RulingLocationService[S] {
-  def rulingsFromStateWithCommand(state: S, command: StateCommand[S]): List[Ruling[S, _, _, _]]
+  def rulingsFromStateWithCommand(state: S, command: StateCommand[S]): List[Ruling[S, _, _]]
 }
 
 class RulingDispatcher[S](peer: RulingPeer[S], rls: RulingLocationService[S]) {
   def dispatch(state: S, command: StateCommand[S]): List[StateCommand[S]] = {
-    val rulings: List[Ruling[S, _, _, _]] = rls.rulingsFromStateWithCommand(state, command)
+    val rulings: List[Ruling[S, _, _]] = rls.rulingsFromStateWithCommand(state, command)
     val decisions = peer.provideDecisionForRuling(state, rulings)
 
-    if (!rulings.zip(decisions).forall(p => p._1.question == p._2.question && p._2.hasDecision))
+    if (!rulings.zip(decisions).forall(p => p._1.isRulingSameSubject(p._2) && p._2.hasDecision))
       throw new Exception("Fail")
     decisions.flatMap(d => d.generateCommands(state)) ::: List(command)
   }

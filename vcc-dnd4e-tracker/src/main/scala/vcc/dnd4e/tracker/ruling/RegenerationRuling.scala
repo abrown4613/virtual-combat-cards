@@ -20,25 +20,25 @@ import vcc.dnd4e.tracker.common.{CombatState, EffectID}
 import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.HealCommand
 
-case class RegenerationRuling(question: EffectID, decision: Option[Int])
-  extends Ruling[CombatState, EffectID, Int, RegenerationRuling] {
+case class RegenerationRuling(sourceEffect: EffectID, decision: Option[Int])
+  extends Ruling[CombatState, Int, RegenerationRuling] {
 
-  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
     otherRuling match {
-      case RegenerationRuling(otherSubject,_) => this.question == otherSubject
+      case RegenerationRuling(otherSourceEffect, _) => this.sourceEffect == otherSourceEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState): String = {
-    val eid = question
+    val eid = sourceEffect
     val comb = state.roster.combatant(eid.combId)
     val effect = comb.effects.find(eid).get
     comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
   }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
-    if (decision.get > 0) HealCommand(question.combId, decision.get) :: Nil
+    if (decision.get > 0) HealCommand(sourceEffect.combId, decision.get) :: Nil
     else Nil
   }
 

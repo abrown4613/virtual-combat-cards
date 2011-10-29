@@ -25,27 +25,27 @@ object SaveRulingResult extends Enumeration {
   val Failed = Value("Failed")
 }
 
-case class SaveRuling(question: EffectID, decision: Option[SaveRulingResult.Value])
-  extends Ruling[CombatState, EffectID, SaveRulingResult.Value, SaveRuling] {
+case class SaveRuling(sourceEffect: EffectID, decision: Option[SaveRulingResult.Value])
+  extends Ruling[CombatState, SaveRulingResult.Value, SaveRuling] {
 
   import SaveRulingResult._
 
-  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
     otherRuling match {
-      case SaveRuling(otherSubject, _) => this.question == otherSubject
+      case SaveRuling(otherSourceEffect, _) => this.sourceEffect == otherSourceEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState): String = {
-    val eid = question
+    val eid = sourceEffect
     val combatant = state.combatant(eid.combId)
     combatant.name + " " + eid.combId.simpleNotation + " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
   }
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
-      case Saved => List(CancelEffectCommand(question))
+      case Saved => List(CancelEffectCommand(sourceEffect))
       case Failed => Nil
     }
   }

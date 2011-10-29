@@ -24,8 +24,11 @@ import vcc.dnd4e.tracker.common.{Effect, CombatState, EffectID}
 sealed trait SaveSpecialRulingResult
 
 object SaveSpecialRulingResult {
+
   case class Changed(newCondition: String) extends SaveSpecialRulingResult
+
   case object Saved extends SaveSpecialRulingResult
+
 }
 
 object SaveSpecialRuling {
@@ -34,20 +37,20 @@ object SaveSpecialRuling {
   }
 }
 
-case class SaveSpecialRuling(question: EffectID, decision: Option[SaveSpecialRulingResult])
-  extends Ruling[CombatState, EffectID, SaveSpecialRulingResult, SaveSpecialRuling] {
+case class SaveSpecialRuling(sourceEffect: EffectID, decision: Option[SaveSpecialRulingResult])
+  extends Ruling[CombatState, SaveSpecialRulingResult, SaveSpecialRuling] {
 
   import SaveSpecialRulingResult._
 
-  def isRulingSameSubject(other: Ruling[CombatState, _, _, _]): Boolean = {
+  def isRulingSameSubject(other: Ruling[CombatState, _, _]): Boolean = {
     other match {
-      case SaveSpecialRuling(otherQuestion,_) => this.question == otherQuestion
+      case SaveSpecialRuling(otherSourceEffect, _) => this.sourceEffect == otherSourceEffect
       case _ => false
     }
   }
 
   def userPrompt(state: CombatState): String = {
-    val eid = question
+    val eid = sourceEffect
     val combatant = state.combatant(eid.combId)
     combatant.name + " " + eid.combId.simpleNotation +
       " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
@@ -55,8 +58,8 @@ case class SaveSpecialRuling(question: EffectID, decision: Option[SaveSpecialRul
 
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
-      case Saved => List(CancelEffectCommand(question))
-      case Changed(newCondition) => List(UpdateEffectConditionCommand(question, Effect.Condition.Generic(newCondition, false)))
+      case Saved => List(CancelEffectCommand(sourceEffect))
+      case Changed(newCondition) => List(UpdateEffectConditionCommand(sourceEffect, Effect.Condition.Generic(newCondition, false)))
     }
   }
 

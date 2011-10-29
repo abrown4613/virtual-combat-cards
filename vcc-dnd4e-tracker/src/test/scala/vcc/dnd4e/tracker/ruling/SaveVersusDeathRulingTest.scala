@@ -27,8 +27,8 @@ class SaveVersusDeathRulingTest extends RulingAcceptance("SaveVersusDeathRuling"
   private val failedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Failed))
 
   protected val state = CombatState.empty.transitionWith(List(evtAddCombA, ApplyDamageEvent(combA, 41)))
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = savedRuling
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SaveVersusDeathRuling(combA, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = savedRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = SaveVersusDeathRuling(combA, None)
   protected val userPromptMessage: String = "Save versus death for Fighter [A]"
 
   def buildCases =

@@ -29,8 +29,8 @@ class SustainEffectRulingTest extends RulingAcceptance("SustainEffectRuling") wi
   private val sustainRuling = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Sustain))
 
   protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "effect")))
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = cancelRulings
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = SustainEffectRuling(eid, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = cancelRulings
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = SustainEffectRuling(eid, None)
   protected val userPromptMessage: String = "Sustain \"effect\" (from Fighter [A])"
 
   def buildCases: Fragments =

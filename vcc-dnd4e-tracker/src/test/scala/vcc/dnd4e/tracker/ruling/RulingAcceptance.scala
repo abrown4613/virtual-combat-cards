@@ -23,20 +23,18 @@ import vcc.tracker.{StateCommand, Ruling}
 
 abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUnit {
 
-  private case class DummyRuling(decision: Option[Int]) extends Ruling[CombatState, String, Int, DummyRuling] {
+  private case class DummyRuling(decision: Option[Int]) extends Ruling[CombatState, Int, DummyRuling] {
     def withDecision(decision: Int): DummyRuling = copy(decision = Some(decision))
 
-    val question: String = "arg"
-
-    def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _, _]): Boolean = false
+    def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = false
 
     def userPrompt(state: CombatState): String = null
 
     protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = Nil
   }
 
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _]
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _]
+  protected val rulingWithAnswer: Ruling[CombatState, _, _]
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _]
   protected val userPromptMessage: String
   protected val state: CombatState
 

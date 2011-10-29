@@ -16,8 +16,6 @@
  */
 package vcc.tracker
 
-import vcc.dnd4e.tracker.common.CombatState
-
 /**
  * Indicates that a specified decision is not valid.
  */
@@ -26,15 +24,14 @@ class IllegalDecisionException(msg: String) extends Exception(msg)
 /**
  * A request for a ruling or a completed ruling.
  */
-abstract class Ruling[S, Q, D, R <: Ruling[S, Q, D, R]] {
-  val question: Q
+abstract class Ruling[S, D, R <: Ruling[S, D, R]] {
   val decision: Option[D]
 
   /**
-   * Check to see if ruling refer to the same subject. This MUST consider the class and the parameter
-   * to avoid mixing subjects form different classes with similar parameters.
+   * Check to see if ruling refer to the same subject. This MUST consider the class and the argument
+   * to avoid mixing subjects form different classes with similar arguments.
    */
-  def isRulingSameSubject(otherRuling: Ruling[S, _, _, _]):Boolean
+  def isRulingSameSubject(otherRuling: Ruling[S, _, _]):Boolean
 
   def userPrompt(state: S): String
 
@@ -57,7 +54,7 @@ abstract class Ruling[S, Q, D, R <: Ruling[S, Q, D, R]] {
    */
   def generateCommands(state: S): List[StateCommand[S]] = {
     if (hasDecision) commandsFromDecision(state)
-    else throw new IllegalDecisionException("No answer for ruling " + question)
+    else throw new IllegalDecisionException("No answer for ruling " + this)
   }
 
   /**

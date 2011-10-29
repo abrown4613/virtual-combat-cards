@@ -27,8 +27,8 @@ class RegenerationRulingTest extends RulingAcceptance("OngoingDamageRuling") wit
   private val realRegenRuling = RegenerationRuling(eid, Some(7))
 
   protected val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "regenerate 5")))
-  protected val rulingWithAnswer: Ruling[CombatState, _, _, _] = zeroRegenRuling
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _, _] = RegenerationRuling(eid, None)
+  protected val rulingWithAnswer: Ruling[CombatState, _, _] = zeroRegenRuling
+  protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = RegenerationRuling(eid, None)
   protected val userPromptMessage: String = "Fighter [A] affected by: regenerate 5"
 
   def buildCases =

@@ -29,10 +29,10 @@ class Dispatcher private(log: Logger) {
   private val commandDispatcher: StateCommandDispatcher[CombatState] = new StateCommandDispatcher[CombatState](
     new RulingDispatcher[CombatState](
       new RulingPeer[CombatState] {
-        def provideDecisionForRuling(state: CombatState, rulings: List[Ruling[CombatState, _, _, _]]): List[Ruling[CombatState, _, _, _]] = {
+        def provideDecisionForRuling(state: CombatState, rulings: List[Ruling[CombatState, _, _]]): List[Ruling[CombatState, _, _]] = {
           for (ruling <- rulings) yield {
             ruling match {
-              case r: NextUpRuling => r.withDecision(r.question.next)
+              case r: NextUpRuling => r.withDecision(r.candidates.next)
               case r: SaveRuling => r.withDecision(SaveRulingResult.Saved)
               case r: SaveSpecialRuling => r.withDecision(SaveSpecialRulingResult.Saved)
               case r: SaveVersusDeathRuling => r.withDecision(SaveVersusDeathResult.Failed)
