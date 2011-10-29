@@ -17,43 +17,37 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.transition.HealCommand
-import vcc.dnd4e.tracker.event.{AddEffectEvent, EventSourceSampleEvents}
-import vcc.dnd4e.tracker.common.{Duration, Effect, CombatState, EffectID}
+import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
+import vcc.dnd4e.tracker.common.{EffectID}
 
 class RegenerationRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "OngoingDamageRuling".title ^
-      "have answer " ! e1 ^
+      "have answer" ! e1 ^
       "have a user prompt" ! e4 ^
       "produce command no command when zero" ! e2 ^
       "produce heal command when set to greater than 0" ! e3 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    RegenerationRuling(CausedBy(eid), Some(0)),
-    RegenerationRuling(CausedBy(eid), Some(7))
-  )
-  private val state = CombatState.empty
+  private val zeroRegenRuling = RegenerationRuling(CausedBy(eid), Some(0))
+  private val realRegenRuling = RegenerationRuling(CausedBy(eid), Some(7))
+  private val state = emptyState.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "regenerate 5")))
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    zeroRegenRuling.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== Nil
+    zeroRegenRuling.generateCommands(state) must_== Nil
   }
 
   private def e3 = {
-    rulings(1).generateCommands(state) must_== List(HealCommand(combA, 7))
+    realRegenRuling.generateCommands(state) must_== List(HealCommand(combA, 7))
   }
 
   private def e4 = {
-    val ongoingCondition = Effect.Condition.Generic("regenerate 5", false)
-    val addEffect = AddEffectEvent(combA, combA, ongoingCondition, Duration.EndOfEncounter)
-    val state = CombatState.empty.transitionWith(List(evtAddCombA, addEffect))
-    rulings(0).userPrompt(state) must_== "Fighter [A] affected by: regenerate 5"
+    zeroRegenRuling.userPrompt(state) must_== "Fighter [A] affected by: regenerate 5"
   }
 }

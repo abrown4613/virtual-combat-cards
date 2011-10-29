@@ -24,18 +24,23 @@ import vcc.dnd4e.tracker.transition.DamageCommand
 object OngoingDamage {
 
   case class CausedBy(eid: EffectID) extends Question[CombatState] {
-    def userPrompt(state: CombatState): String = {
-      val comb = state.roster.combatant(eid.combId)
-      val effect = comb.effects.find(eid).get
-      comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
-    }
+    def userPrompt(state: CombatState): String = null
   }
 
   case class DamageToApply(amount: Int)
+
 }
 
 case class OngoingDamageRuling(question: OngoingDamage.CausedBy, decision: Option[OngoingDamage.DamageToApply])
   extends Ruling[CombatState, OngoingDamage.CausedBy, OngoingDamage.DamageToApply, OngoingDamageRuling] {
+
+  def userPrompt(state: CombatState): String = {
+    val eid = question.eid
+    val comb = state.roster.combatant(eid.combId)
+    val effect = comb.effects.find(eid).get
+    comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
+  }
+
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
       case DamageToApply(amount) if (amount > 0) => DamageCommand(question.eid.combId, amount) :: Nil

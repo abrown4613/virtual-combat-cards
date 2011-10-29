@@ -21,18 +21,21 @@ import vcc.tracker.{StateCommand, Ruling, Question}
 import vcc.dnd4e.tracker.transition.HealCommand
 
 case class CausedBy(eid: EffectID) extends Question[CombatState] {
-  def userPrompt(state: CombatState): String = {
-    val comb = state.roster.combatant(eid.combId)
-    val effect = comb.effects.find(eid).get
-    comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
-  }
+  def userPrompt(state: CombatState): String = null
 }
 
 case class RegenerationRuling(question: CausedBy, decision: Option[Int])
   extends Ruling[CombatState, CausedBy, Int, RegenerationRuling] {
 
+  def userPrompt(state: CombatState): String = {
+    val eid = question.eid
+    val comb = state.roster.combatant(eid.combId)
+    val effect = comb.effects.find(eid).get
+    comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
+  }
+
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
-    if(decision.get > 0) HealCommand(question.eid.combId, decision.get) :: Nil
+    if (decision.get > 0) HealCommand(question.eid.combId, decision.get) :: Nil
     else Nil
   }
 

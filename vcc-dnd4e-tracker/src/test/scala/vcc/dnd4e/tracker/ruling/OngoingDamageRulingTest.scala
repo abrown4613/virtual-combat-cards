@@ -17,43 +17,38 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.transition.DamageCommand
-import vcc.dnd4e.tracker.event.{AddEffectEvent, EventSourceSampleEvents}
-import vcc.dnd4e.tracker.common.{Duration, Effect, EffectID, CombatState}
+import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
+import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 
 class OngoingDamageRulingTest extends SpecificationWithJUnit with EventSourceSampleEvents {
   def is =
     "OngoingDamageRuling".title ^
-      "have answer " ! e1 ^
+      "have answer" ! e1 ^
       "have a user prompt" ! e4 ^
       "produce command no command when zero" ! e2 ^
       "produce damage command when set to greater than 0" ! e3 ^
       end
 
   private val eid = EffectID(combA, 1)
-  private val rulings: List[Ruling[CombatState, _, _, _]] = List(
-    OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(0))),
-    OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(7)))
-  )
-  private val state = CombatState.empty
+  private val noDamageOngoingRuling = OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(0)))
+  private val damageOngoingRuling = OngoingDamageRuling(OngoingDamage.CausedBy(eid), Some(OngoingDamage.DamageToApply(7)))
+
+  val state = CombatState.empty.transitionWith(List(evtAddCombA, makeBadEndOfEncounterEffect(combA, combB, "ongoing 5 fire")))
 
   private def e1 = {
-    rulings(0).hasDecision must beTrue
+    noDamageOngoingRuling.hasDecision must beTrue
   }
 
   private def e2 = {
-    rulings(0).generateCommands(state) must_== Nil
+    noDamageOngoingRuling.generateCommands(state) must_== Nil
   }
 
   private def e3 = {
-    rulings(1).generateCommands(state) must_== List(DamageCommand(combA, 7))
+    damageOngoingRuling.generateCommands(state) must_== List(DamageCommand(combA, 7))
   }
 
   private def e4 = {
-    val ongoingCondition = Effect.Condition.Generic("ongoing 5 fire", false)
-    val addEffect = AddEffectEvent(combA, combA, ongoingCondition, Duration.EndOfEncounter)
-    val state = CombatState.empty.transitionWith(List(evtAddCombA, addEffect))
-    rulings(0).userPrompt(state) must_== "Fighter [A] affected by: ongoing 5 fire"
+    noDamageOngoingRuling.userPrompt(state) must_== "Fighter [A] affected by: ongoing 5 fire"
   }
 }

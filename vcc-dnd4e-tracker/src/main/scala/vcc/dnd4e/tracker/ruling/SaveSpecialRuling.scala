@@ -32,7 +32,9 @@ object SaveSpecial {
   //TODO This is duplicate for make
   case class Against(eid: EffectID, what: String) extends Question[CombatState] {
     def userPrompt(state: CombatState): String = {
-      state.roster.combatant(eid.combId).name + " must make a saving throws against " + what
+      val combatant = state.combatant(eid.combId)
+      combatant.name + " " + eid.combId.simpleNotation +
+        " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
     }
   }
 
@@ -45,6 +47,14 @@ case class SaveSpecialRuling(question: SaveSpecial.Against, decision: Option[Sav
   extends Ruling[CombatState, SaveSpecial.Against, SaveSpecial.Result, SaveSpecialRuling] {
 
   import SaveSpecial._
+
+  def userPrompt(state: CombatState):String = {
+    val eid = question.eid
+    val combatant = state.combatant(eid.combId)
+    combatant.name + " " + eid.combId.simpleNotation +
+      " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
+  }
+
   protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
     decision.get match {
       case Saved => List(CancelEffectCommand(question.eid))
