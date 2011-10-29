@@ -59,10 +59,6 @@ object Command {
   case class MoveBefore(who: InitiativeOrderID, before: InitiativeOrderID)
     extends TransactionalActionWithMessage(who + " moving before " + before + " in the sequence")
 
-  @deprecated("Should move to InitiativeTranstion")
-  case class InternalInitiativeAction(who: InitiativeOrderID, action: InitiativeAction.Value)
-    extends TransactionalActionWithMessage(who + " executed initiative action " + action)
-
   // Effect Actions
   case class AddEffect(target: CombatantID, source: CombatantID, condition: Condition, duration: Duration)
     extends TransactionalActionWithMessage("Add effect: " + condition + " to " + target)

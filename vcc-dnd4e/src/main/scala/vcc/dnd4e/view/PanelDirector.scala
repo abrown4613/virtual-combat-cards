@@ -18,7 +18,7 @@
 
 package vcc.dnd4e.view
 
-import helper.{ActionTranslator, RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
+import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
@@ -177,6 +177,6 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
    */
   def provideDecisionsForRulings(context: TransactionalAction, rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
     if (rulings.isEmpty) Nil
-    else rulingBroker.promptRuling(ActionTranslator.fullActionMessage(csm.getSnapshot.state, context), rulings)
+    else rulingBroker.promptRuling("NO-MESSAGE-MIGRATING", rulings)
   }
 }
