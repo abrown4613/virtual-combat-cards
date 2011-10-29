@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e.tracker.event
 
-import vcc.dnd4e.tracker.common.{CombatantID, CombatState, SampleStateData, InitiativeDefinition}
+import vcc.dnd4e.tracker.common._
 
 /**
  * Library of Event-Sourcing events to help build behaviour test
@@ -44,4 +44,8 @@ trait EventSourceSampleEvents extends SampleStateData {
     def transition(iState: CombatState): CombatState = mod(iState)
   }
 
+  protected def makeBadEndOfEncounterEffect(target: CombatantID, source: CombatantID, conditionText: String):CombatStateEvent = {
+    val condition = Effect.Condition.Generic(conditionText, false)
+    AddEffectEvent(target, source, condition, Duration.EndOfEncounter)
+  }
 }
