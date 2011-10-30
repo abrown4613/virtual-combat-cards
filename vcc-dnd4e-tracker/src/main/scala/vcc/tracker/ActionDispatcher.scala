@@ -19,19 +19,36 @@ package vcc.tracker
 class InfiniteLoopException extends RuntimeException
 
 class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A]) {
+
+  private var returnState:S = null.asInstanceOf[S]
+  private var cs:CommandStream[S, StateCommand[S]] = null
+
   def handle(state:S, action: A):S = {
-    var cs = translator.translateToCommandStream(action)
-    var nextStep = cs.get(state)
-    var returnState = state
-    while(nextStep.isDefined) {
-      val (command,nextCommandStream) = nextStep.get
-      val lastStateStream = (returnState, nextCommandStream)
-      returnState = command.generateTransitions(returnState)(0).transition(returnState)
-      cs = nextCommandStream
-      nextStep = cs.get(returnState)
-      if(nextStep.isDefined && lastStateStream == (returnState, nextStep.get._2))
-        throw new InfiniteLoopException
-    }
+    cs = translator.translateToCommandStream(action)
+    returnState = state
+    loopThroughCommandStream()
     returnState
+  }
+
+  private def loopThroughCommandStream() {
+     var nextStep = cs.get(returnState)
+     while (nextStep.isDefined) {
+       val lastStateStream = (returnState, nextStep.get._2)
+       executeStep(nextStep.get)
+       checkForInfiniteLoop(lastStateStream)
+       nextStep = cs.get(returnState)
+     }
+   }
+
+   private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
+    val (command,nextCommandStream) = step
+    returnState = command.generateTransitions(returnState)(0).transition(returnState)
+    cs = nextCommandStream
+  }
+
+  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, StateCommand[S]])) {
+    val nextStep = cs.get(returnState)
+    if (nextStep.isDefined && lastStateStream ==(returnState, nextStep.get._2))
+      throw new InfiniteLoopException
   }
 }
