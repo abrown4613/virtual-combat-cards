@@ -26,7 +26,8 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
 
   trait context extends Scope {
     val mockTranslator = spy(new Translator)
-    val dispatcher = new ActionDispatcher[State, Action](mockTranslator)
+    val mockRulingLocator = spy(new SimpleRulingLocatorService)
+    val dispatcher = new ActionDispatcher[State, Action](mockTranslator, mockRulingLocator)
     val startState = State(0)
   }
 
@@ -53,6 +54,12 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
 
   "dectect infinite loop in dispath" in new context {
     dispatcher.handle(startState, LoopTo(10, 0)) must throwA[InfiniteLoopException]
+  }
+
+  "ask for possible ruling on every message" in new context {
+    dispatcher.handle(startState, LoopTo(4, 2))
+    there was one(mockRulingLocator).rulingsFromStateWithCommand(startState, AlterCommand(2)) then
+      one(mockRulingLocator).rulingsFromStateWithCommand(State(1), AlterCommand(2))
   }
 
 }
