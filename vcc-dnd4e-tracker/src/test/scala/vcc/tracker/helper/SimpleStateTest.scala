@@ -33,6 +33,9 @@ case class Repeat(time: Int, action: Int) extends Action
 
 case class Ask(prompt: String) extends Action
 
+case class Multiply(times: Int) extends Action
+
+
 case class ResetCommand(newStateValue: Int) extends StateCommand[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = List(SetStateEvent(newStateValue))
 }
@@ -42,7 +45,13 @@ case class AlterCommand(delta: Int) extends StateCommand[State] {
 }
 
 case class AskCommand(whatToAsk: String) extends StateCommand[State] {
-  def generateTransitions(iState: State): List[StateTransition[State]] = null
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+}
+
+case class MultiplyCommand(time: Int) extends StateCommand[State] {
+  def generateTransitions(iState: State): List[StateTransition[State]] = {
+    (1 to time).map(i => SetStateEvent(i * iState.value)).toList
+  }
 }
 
 case class SetStateEvent(value: Int) extends StateTransition[State] {
@@ -61,7 +70,10 @@ case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[
   def userPrompt(state: State): String = prompt + " (Current " + state.value + ")"
 
   protected def commandsFromDecision(state: State): List[StateCommand[State]] = {
-    List(ResetCommand(decision.get))
+    if (prompt == "double")
+      List(ResetCommand(decision.get), AlterCommand(decision.get))
+    else
+      List(ResetCommand(decision.get))
   }
 
   def withDecision(decision: Int): AskValueRuling = copy(decision = Some(decision))
@@ -77,6 +89,7 @@ class Translator extends ActionStreamTranslator[State, Action] {
         case State(current) if (current < limit) => AlterCommand(step)
       })
       case Ask(prompt) => CommandStream(AskCommand(prompt))
+      case Multiply(times) => CommandStream(MultiplyCommand(times))
     }
   }
 }
@@ -108,8 +121,12 @@ class SimpleStateTest extends SpecificationWithJUnit {
         AlterCommand(2), AlterCommand(2), AlterCommand(2))
     }
 
-    "tranlate Ask to AskCommand" in {
+    "translate Ask to AskCommand" in {
       new Translator().translateToCommandStream(Ask("something")) must_== CommandStream(AskCommand("something"))
+    }
+
+    "translate NTimeEvent to MultipleTimeCommand" in {
+      new Translator().translateToCommandStream(Multiply(2)) must_== CommandStream(MultiplyCommand(2))
     }
 
     "translate LoopTo to Sequence builde" in {
@@ -127,18 +144,23 @@ class SimpleStateTest extends SpecificationWithJUnit {
     }
 
     "ruling must match" in {
-      AskValueRuling("some",None).isRulingSameSubject(AskValueRuling("some", Some(10))) must beTrue
-      AskValueRuling("some",None).isRulingSameSubject(AskValueRuling("other", None)) must beFalse
+      AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("some", Some(10))) must beTrue
+      AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("other", None)) must beFalse
     }
 
     "ruling must have prompt" in {
-      AskValueRuling("Prompt",None).userPrompt(State(11)) must_== "Prompt (Current 11)"
+      AskValueRuling("Prompt", None).userPrompt(State(11)) must_== "Prompt (Current 11)"
     }
 
     "provide and anwer and generate events" in {
       val ruling = AskValueRuling("Prompt", None).withDecision(10)
       ruling must_== AskValueRuling("Prompt", Some(10))
       ruling.generateCommands(State(1)) must_== List(ResetCommand(10))
+    }
+
+    "provide and anwer and tow generate events on double" in {
+      val ruling = AskValueRuling("double", None).withDecision(10)
+      ruling.generateCommands(State(1)) must_== List(ResetCommand(10), AlterCommand(10))
     }
   }
 
@@ -150,6 +172,16 @@ class SimpleStateTest extends SpecificationWithJUnit {
     "ResetCommand make a proper set" in {
       ResetCommand(10).generateTransitions(State(123)) must_== List(SetStateEvent(10))
     }
+
+    "when generate AskCommand return Nil" in {
+      AskCommand("some").generateTransitions(State(0)) must_== Nil
+    }
+
+    "when generate MultipleCommand return Set of actions" in {
+      MultiplyCommand(0).generateTransitions(State(10)) must_== Nil
+      MultiplyCommand(3).generateTransitions(State(5)) must_==
+        List(SetStateEvent(5), SetStateEvent(10), SetStateEvent(15))
+    }
   }
 
   "SetStateEvent" should {
@@ -158,9 +190,3 @@ class SimpleStateTest extends SpecificationWithJUnit {
     }
   }
 }
-
-
-
-
-
-
