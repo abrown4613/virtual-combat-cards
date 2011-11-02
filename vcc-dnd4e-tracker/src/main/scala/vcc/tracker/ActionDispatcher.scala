@@ -18,7 +18,7 @@ package vcc.tracker
 
 class InfiniteLoopException extends RuntimeException
 
-class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A]) {
+class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLocator: RulingLocationService[S]) {
 
   private var returnState:S = null.asInstanceOf[S]
   private var cs:CommandStream[S, StateCommand[S]] = null
@@ -42,6 +42,7 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A]) {
 
    private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
     val (command,nextCommandStream) = step
+    rulingLocator.rulingsFromStateWithCommand(returnState, command)
     returnState = command.generateTransitions(returnState)(0).transition(returnState)
     cs = nextCommandStream
   }
