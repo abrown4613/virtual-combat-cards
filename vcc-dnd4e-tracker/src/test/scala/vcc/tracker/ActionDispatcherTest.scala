@@ -27,8 +27,12 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   trait context extends Scope {
     val mockTranslator = spy(new Translator)
     val mockRulingLocator = spy(new SimpleRulingLocatorService)
+    val mockRulingProvider = mock[RulingProvider[State]]
     val dispatcher = new ActionDispatcher[State, Action](mockTranslator, mockRulingLocator)
     val startState = State(0)
+
+    mockRulingProvider.provideRulingFor(Nil) returns Nil
+    dispatcher.setRulingProvider(mockRulingProvider);
   }
 
   "create handler" in new context {
@@ -52,14 +56,35 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
     dispatcher.handle(startState, LoopTo(10, 3)) must_== State(12)
   }
 
-  "dectect infinite loop in dispath" in new context {
+  "process all events generated from a Multiply action" in new context {
+    dispatcher.handle(State(10), Multiply(3)) must_== State(30)
+  }
+
+  "dectect infinite loop in dispath and commandSteam loop" in new context {
     dispatcher.handle(startState, LoopTo(10, 0)) must throwA[InfiniteLoopException]
   }
 
   "ask for possible ruling on every message" in new context {
     dispatcher.handle(startState, LoopTo(4, 2))
     there was one(mockRulingLocator).rulingsFromStateWithCommand(startState, AlterCommand(2)) then
-      one(mockRulingLocator).rulingsFromStateWithCommand(State(1), AlterCommand(2))
+      one(mockRulingLocator).rulingsFromStateWithCommand(State(2), AlterCommand(2))
+  }
+
+  "ask RulingProvider for ruling if a ruling is needed" in new context {
+    mockRulingProvider.provideRulingFor(List(AskValueRuling("some", None))) returns List(AskValueRuling("some", Some(14)))
+
+    dispatcher.handle(startState, Ask("some"))
+    there was one(mockRulingProvider).provideRulingFor(List(AskValueRuling("some", None)))
+  }
+
+  "handle Rulings provided" in new context {
+    mockRulingProvider.provideRulingFor(List(AskValueRuling("some", None))) returns List(AskValueRuling("some", Some(14)))
+    dispatcher.handle(startState, Ask("some")) must_== State(14)
+  }
+
+  "handle all Rulings provided" in new context {
+    mockRulingProvider.provideRulingFor(List(AskValueRuling("double", None))) returns List(AskValueRuling("double", Some(14)))
+    dispatcher.handle(startState, Ask("double")) must_== State(28)
   }
 
 }
