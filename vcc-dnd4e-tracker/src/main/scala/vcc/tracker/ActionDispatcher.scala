@@ -18,37 +18,59 @@ package vcc.tracker
 
 class InfiniteLoopException extends RuntimeException
 
+trait RulingProvider[S] {
+  def provideRulingFor(rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
+}
+
 class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLocator: RulingLocationService[S]) {
 
-  private var returnState:S = null.asInstanceOf[S]
-  private var cs:CommandStream[S, StateCommand[S]] = null
+  private var rulingProvider:RulingProvider[S] = null
 
-  def handle(state:S, action: A):S = {
-    cs = translator.translateToCommandStream(action)
+  def setRulingProvider(rulingProvider: RulingProvider[S]) {
+    this.rulingProvider = rulingProvider
+  }
+
+  private var returnState: S = null.asInstanceOf[S]
+  private var commandStream: CommandStream[S, StateCommand[S]] = null
+
+  def handle(state: S, action: A): S = {
+    commandStream = translator.translateToCommandStream(action)
     returnState = state
     loopThroughCommandStream()
     returnState
   }
 
   private def loopThroughCommandStream() {
-     var nextStep = cs.get(returnState)
-     while (nextStep.isDefined) {
-       val lastStateStream = (returnState, nextStep.get._2)
-       executeStep(nextStep.get)
-       checkForInfiniteLoop(lastStateStream)
-       nextStep = cs.get(returnState)
-     }
-   }
+    var nextStep = commandStream.get(returnState)
+    while (nextStep.isDefined) {
+      val lastStateStream = (returnState, nextStep.get._2)
+      executeStep(nextStep.get)
+      checkForInfiniteLoop(lastStateStream)
+      nextStep = commandStream.get(returnState)
+    }
+  }
 
-   private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
-    val (command,nextCommandStream) = step
-    rulingLocator.rulingsFromStateWithCommand(returnState, command)
-    returnState = command.generateTransitions(returnState)(0).transition(returnState)
-    cs = nextCommandStream
+  def processCommandEvents(command: StateCommand[S]) {
+    val transitions = command.generateTransitions(returnState)
+    returnState = transitions.foldLeft(returnState)((s, t) => t.transition(s))
+  }
+
+  private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
+    val (command, nextCommandStream) = step
+    val rulings = rulingLocator.rulingsFromStateWithCommand(returnState, command)
+    if (!rulings.isEmpty) {
+      val decisions = rulingProvider.provideRulingFor(rulings)
+      val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
+      for( rulingCommand <- rulingCommands) {
+        returnState = rulingCommand.generateTransitions(returnState)(0).transition(returnState)
+      }
+    }
+    processCommandEvents(command)
+    commandStream = nextCommandStream
   }
 
   private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, StateCommand[S]])) {
-    val nextStep = cs.get(returnState)
+    val nextStep = commandStream.get(returnState)
     if (nextStep.isDefined && lastStateStream ==(returnState, nextStep.get._2))
       throw new InfiniteLoopException
   }
