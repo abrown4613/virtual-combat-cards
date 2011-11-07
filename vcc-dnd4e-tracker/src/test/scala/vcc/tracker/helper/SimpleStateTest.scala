@@ -50,12 +50,24 @@ case class AskCommand(whatToAsk: String) extends StateCommand[State] {
 
 case class MultiplyCommand(time: Int) extends StateCommand[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = {
-    (1 to time).map(i => SetStateEvent(i * iState.value)).toList
+    time match {
+      case 0 => List(SetStateEvent(0))
+      case i if (i < 0) => makeIncrementList(-time, -iState.value)
+      case i => makeIncrementList(time - 2, iState.value)
+    }
+  }
+
+  private def makeIncrementList(n: Int, factor: Int): scala.List[IncrementEvent] = {
+    (0 to n).map(i => IncrementEvent(factor)).toList
   }
 }
 
 case class SetStateEvent(value: Int) extends StateTransition[State] {
   def transition(iState: State): State = State(value)
+}
+
+case class IncrementEvent(inc: Int) extends StateTransition[State] {
+  def transition(iState: State): State = State(iState.value + inc)
 }
 
 case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[State, Int, AskValueRuling] {
@@ -177,16 +189,26 @@ class SimpleStateTest extends SpecificationWithJUnit {
       AskCommand("some").generateTransitions(State(0)) must_== Nil
     }
 
-    "when generate MultipleCommand return Set of actions" in {
-      MultiplyCommand(0).generateTransitions(State(10)) must_== Nil
+    "when generate MultipleCommand return Increment of actions" in {
+      MultiplyCommand(0).generateTransitions(State(10)) must_== List(SetStateEvent(0))
+      MultiplyCommand(1).generateTransitions(State(10)) must_== Nil
       MultiplyCommand(3).generateTransitions(State(5)) must_==
-        List(SetStateEvent(5), SetStateEvent(10), SetStateEvent(15))
+        List(IncrementEvent(5), IncrementEvent(5))
+      MultiplyCommand(-2).generateTransitions(State(10)) must_==
+        List(IncrementEvent(-10), IncrementEvent(-10), IncrementEvent(-10))
     }
   }
 
   "SetStateEvent" should {
     "set the value of state" in {
       SetStateEvent(456).transition(State(123)) must_== State(456)
+    }
+  }
+
+  "IncrementEvent" should {
+    "increment the value of the state" in {
+      IncrementEvent(2).transition(State(123)) must_== State(125);
+      IncrementEvent(-23).transition(State(123)) must_== State(100);
     }
   }
 }
