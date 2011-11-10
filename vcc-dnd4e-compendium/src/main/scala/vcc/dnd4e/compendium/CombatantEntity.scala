@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.domain.compendium
+package vcc.dnd4e.compendium
 
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dnd4e.compendium.CombatantType
 
 case class EntityClassID(uri: java.net.URI) {
   def shortClassName() = uri.getSchemeSpecificPart()

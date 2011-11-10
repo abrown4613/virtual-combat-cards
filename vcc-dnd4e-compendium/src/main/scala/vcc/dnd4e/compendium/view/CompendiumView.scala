@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view.compendium
+package vcc.dnd4e.compendium.view
 
 import scala.swing._
 import vcc.util.swing.{MigPanel, SwingHelper}
-import vcc.dnd4e.domain.compendium._
+import vcc.dnd4e.compendium._
 import vcc.infra.xtemplate.Template
 
 trait TemplateProvider {

@@ -14,25 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view.compendium
+package vcc.dnd4e.compendium.view
 
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing.{MigPanel, XHTMLEditorPane}
 import vcc.util.swing.forms._
 
-import vcc.dnd4e.domain.compendium._
+import vcc.dnd4e.compendium._
 import vcc.infra.fields.Field
 import vcc.infra.xtemplate.{MapDataSource}
 
-class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templateProvider: TemplateProvider)
-  extends Frame {
+class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templateProvider: TemplateProvider) extends Frame {
+
   title = "Edit Combatant: " + (if (combatant.name.isValid) combatant.name.storageString else "")
-
   iconImage = icon
-
   peer.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE)
   listenTo(this)
+
   reactions += {
     case WindowClosing(win) =>
       if (Dialog.showConfirmation(tabPane, "Are you sure you want to exit without saving the changes to the combatant?", "Exit without saving?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
