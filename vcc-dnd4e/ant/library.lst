@@ -1,0 +1,15 @@
+#$Id$
+scala-swing.jar
+scala-library.jar
+miglayout.jar
+jetty.jar
+jetty-util.jar
+servlet-api.jar
+log4j.jar
+slf4j-api.jar
+slf4j-log4j12.jar
+core-renderer.jar
+idw-gpl.jar
+vcc-infra.jar
+vcc-dnd4e-tracker.jar
+vcc-dnd4e.jar
