@@ -22,7 +22,7 @@ trait RulingProvider[S] {
   def provideRulingFor(rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
 }
 
-class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLocator: RulingLocationService[S]) {
+class ActionDispatcher[S]() {
 
   private var rulingProvider:RulingProvider[S] = null
 
@@ -31,10 +31,10 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLoc
   }
 
   private var returnState: S = null.asInstanceOf[S]
-  private var commandStream: CommandStream[S, StateCommand[S]] = null
+  private var commandStream: CommandStream[S, Command[S]] = null
 
-  def handle(state: S, action: A): S = {
-    commandStream = translator.translateToCommandStream(action)
+  def handle(state: S, action: Action[S]): S = {
+    commandStream = action.createCommandStream()
     returnState = state
     loopThroughCommandStream()
     returnState
@@ -55,9 +55,9 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLoc
     returnState = transitions.foldLeft(returnState)((s, t) => t.transition(s))
   }
 
-  private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
+  private def executeStep(step: (Command[S], CommandStream[S, Command[S]])) {
     val (command, nextCommandStream) = step
-    val rulings = rulingLocator.rulingsFromStateWithCommand(returnState, command)
+    val rulings = command.requiredRulings(returnState)
     if (!rulings.isEmpty) {
       val decisions = rulingProvider.provideRulingFor(rulings)
       val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
@@ -69,7 +69,7 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLoc
     commandStream = nextCommandStream
   }
 
-  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, StateCommand[S]])) {
+  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, Command[S]])) {
     val nextStep = commandStream.get(returnState)
     if (nextStep.isDefined && lastStateStream ==(returnState, nextStep.get._2))
       throw new InfiniteLoopException

@@ -20,34 +20,51 @@ import vcc.tracker._
 
 case class State(value: Int)
 
-sealed trait Action
+case class Init(v: Int) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(ResetCommand(v))
+}
 
-case class Init(v: Int) extends Action
+case class Increment(by: Int) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(AlterCommand(by))
+}
 
-case class Increment(by: Int) extends Action
+case class LoopTo(limit: Int, step: Int) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = {
+     new PartialFunctionCommandStream[State, Command[State]]({
+            case State(current) if (current < limit) => AlterCommand(step)
+          })
+  }
+}
 
-case class LoopTo(limit: Int, step: Int) extends Action
+case class Repeat(times: Int, amount: Int) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = {
+     SeqCommandStream(Seq.fill(times)(AlterCommand(amount)))
+  }
+}
 
-case class Repeat(time: Int, action: Int) extends Action
+case class Ask(prompt: String) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(AskCommand(prompt))
+}
 
-case class Ask(prompt: String) extends Action
+case class Multiply(times: Int) extends Action[State] {
+  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(MultiplyCommand(times))
+}
 
-case class Multiply(times: Int) extends Action
-
-
-case class ResetCommand(newStateValue: Int) extends StateCommand[State] {
+case class ResetCommand(newStateValue: Int) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = List(SetStateEvent(newStateValue))
 }
 
-case class AlterCommand(delta: Int) extends StateCommand[State] {
+case class AlterCommand(delta: Int) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = List(SetStateEvent(iState.value + delta))
 }
 
-case class AskCommand(whatToAsk: String) extends StateCommand[State] {
+case class AskCommand(whatToAsk: String) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def requiredRulings(state: State): List[Ruling[State, _, _]] = List(AskValueRuling(whatToAsk, None))
 }
 
-case class MultiplyCommand(time: Int) extends StateCommand[State] {
+case class MultiplyCommand(time: Int) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = {
     time match {
       case 0 => List(SetStateEvent(0))
@@ -88,21 +105,6 @@ case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[
   }
 
   def withDecision(decision: Int): AskValueRuling = copy(decision = Some(decision))
-}
-
-class Translator extends ActionStreamTranslator[State, Action] {
-  def translateToCommandStream(action: Action): CommandStream[State, StateCommand[State]] = {
-    action match {
-      case Init(v) => CommandStream(ResetCommand(v))
-      case Increment(by) => CommandStream(AlterCommand(by))
-      case Repeat(times, amount) => SeqCommandStream(Seq.fill(times)(AlterCommand(amount)))
-      case LoopTo(limit, step) => new PartialFunctionCommandStream[State, StateCommand[State]]({
-        case State(current) if (current < limit) => AlterCommand(step)
-      })
-      case Ask(prompt) => CommandStream(AskCommand(prompt))
-      case Multiply(times) => CommandStream(MultiplyCommand(times))
-    }
-  }
 }
 
 class SimpleRulingLocatorService extends RulingLocationService[State] {
