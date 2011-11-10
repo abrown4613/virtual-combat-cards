@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view.compendium
+package vcc.dnd4e.compendium.view
 
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
-import vcc.dnd4e.domain.compendium.{TrapEntity, CombatantEntity, CharacterEntity, MonsterEntity}
+import vcc.dnd4e.compendium.{TrapEntity, CombatantEntity, CharacterEntity, MonsterEntity}
 
 class NewCombatantDialog(owner: Frame) extends ModalPromptDialog[CombatantEntity](owner, "New Compendium Entry") {
 
