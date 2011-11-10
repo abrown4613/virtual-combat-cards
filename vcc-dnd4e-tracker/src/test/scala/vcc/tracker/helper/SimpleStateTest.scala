@@ -23,42 +23,47 @@ class SimpleStateTest extends SpecificationWithJUnit {
 
   type C = StateCommand[State]
 
-  "the translator" should {
+  "actions" should {
     "transalate Init to ResetCommand" in {
-      new Translator().translateToCommandStream(Init(10)) must_== CommandStream(ResetCommand(10))
+      Init(10).createCommandStream() must_== CommandStream(ResetCommand(10))
     }
 
     "translate Increment to AlterCommand" in {
-      new Translator().translateToCommandStream(Increment(10)) must_== CommandStream(AlterCommand(10))
+      Increment(10).createCommandStream() must_== CommandStream(AlterCommand(10))
     }
 
     "translate Increment to AlterCommand" in {
-      new Translator().translateToCommandStream(Repeat(3, 2)) must_== CommandStream(
-        AlterCommand(2), AlterCommand(2), AlterCommand(2))
+      Repeat(3, 2).createCommandStream() must_== CommandStream(AlterCommand(2), AlterCommand(2), AlterCommand(2))
     }
 
     "translate Ask to AskCommand" in {
-      new Translator().translateToCommandStream(Ask("something")) must_== CommandStream(AskCommand("something"))
+      Ask("something").createCommandStream() must_== CommandStream(AskCommand("something"))
     }
 
     "translate NTimeEvent to MultipleTimeCommand" in {
-      new Translator().translateToCommandStream(Multiply(2)) must_== CommandStream(MultiplyCommand(2))
+      Multiply(2).createCommandStream() must_== CommandStream(MultiplyCommand(2))
     }
 
     "translate LoopTo to Sequence builde" in {
-      val x = new Translator().translateToCommandStream(LoopTo(10, 2))
+      val x = LoopTo(10, 2).createCommandStream()
       x.get(State(9)) must_== Some((AlterCommand(2), x))
       x.get(State(10)) must_== None
       x.get(State(11)) must_== None
     }
   }
 
-  "our ruling" should {
+  "our AskCommand" should {
     "the ruling locator" in {
       new SimpleRulingLocatorService().
         rulingsFromStateWithCommand(State(0), AskCommand("Prompt")) must_== List(AskValueRuling("Prompt", None))
     }
 
+    "provide ruling" in {
+      AskCommand("Prompt").requiredRulings(State(0)) must_== List(AskValueRuling("Prompt", None))
+    }
+  }
+
+  "our ruling" should {
     "ruling must match" in {
       AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("some", Some(10))) must beTrue
       AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("other", None)) must beFalse

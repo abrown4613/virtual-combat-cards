@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.tracker
 
 import org.specs2.SpecificationWithJUnit
@@ -22,6 +21,16 @@ import org.specs2.mock.Mockito
 
 class CommandStreamTest extends SpecificationWithJUnit {
   def randomInt(): Int = scala.util.Random.nextInt()
+
+  case class ICommand(value: Int) extends Command[Int] {
+    def requiredRulings(state: Int): List[Ruling[Int, _, _]] = Nil
+
+    override def generateEvents(state: Int): List[Event[Int]] = Nil
+
+    def generateTransitions(iState: Int): List[StateTransition[Int]] = Nil
+  }
+
+  implicit def int2ICommand(v: Int):Command[Int] = ICommand(v)
 
   def streamDrainerIterator[S, A](stream: CommandStream[S, A], states: Seq[S]): Seq[A] = {
     var collect = List.empty[A]
@@ -56,48 +65,48 @@ class CommandStreamTest extends SpecificationWithJUnit {
       "all together - variant" ! all2 ^
       end
 
-  def scs2 = SeqCommandStream[Int, Int](List(1, 2)).get(randomInt()).isDefined must beTrue
+  def scs2 = CommandStream[Int, Command[Int]](1, 2).get(randomInt()).isDefined must beTrue
 
-  def scs3 = SeqCommandStream[Int, Int](List(1, 2)).get(randomInt()) must_== Some((1, SeqCommandStream(List(2))))
+  def scs3 = CommandStream[Int, Command[Int]](1, 2).get(randomInt()) must_== Some((ICommand(1), CommandStream[Int, Command[Int]](2)))
 
   def scs4 = {
-    val s = SeqCommandStream[Int, Int](List(1, 2, 3))
-    streamDrainerIterator(s, (0 to 4).map(x => randomInt())) must_== Seq(1, 2, 3)
+    val s = CommandStream[Int, Command[Int]](1, 2, 3)
+    streamDrainerIterator(s, (0 to 4).map(x => randomInt())) must_== Seq[Command[Int]](1, 2, 3)
   }
 
-  def scs5 = SeqCommandStream[Int, Int](Nil).get(randomInt()) must_== None
+  def scs5 = SeqCommandStream[Int, Command[Int]](Nil).get(randomInt()) must_== None
 
   def all1 = {
-    val s = SeqCommandStream[Int, Int](List(1, 2, 3))
-    val p = new PartialFunctionCommandStream[Int, Int]({
+    val s = CommandStream[Int, Command[Int]](1, 2, 3)
+    val p = new PartialFunctionCommandStream[Int, Command[Int]]({
       case 4 => 13
       case 5 => 17
       case 8 => 311
     })
-    streamDrainerIterator(s followedBy p, (1 to 10)) must_== Seq(1, 2, 3, 13, 17)
+    streamDrainerIterator(s followedBy p, (1 to 10)) must_== Seq[Command[Int]](1, 2, 3, 13, 17)
   }
 
   def all2 = {
-    val s = SeqCommandStream[Int, Int](List(1, 2, 3))
-    val s2 = SeqCommandStream[Int, Int](List(4, 5, 6, 7))
-    val p = new PartialFunctionCommandStream[Int, Int]({
+    val s = CommandStream[Int, Command[Int]](1, 2, 3)
+    val s2 = CommandStream[Int, Command[Int]](4, 5, 6, 7)
+    val p = new PartialFunctionCommandStream[Int, Command[Int]]({
       case 4 => 13
       case 5 => 17
       case 8 => 311
     })
-    val c: CommandStream[Int, Int] = s followedBy s2 followedBy p
-    (1 to 10).foldLeft((Option(c), List.empty[Int]))((sp, s) => sp._1.map(stream => stream.get(s) match {
+    val c: CommandStream[Int, Command[Int]] = s followedBy s2 followedBy p
+    (1 to 10).foldLeft((Option(c), List.empty[Command[Int]]))((sp, s) => sp._1.map(stream => stream.get(s) match {
       case Some((v, str)) => (Some(str), v :: sp._2)
       case None => (None, sp._2.reverse)
-    }).getOrElse((None, sp._2)))._2 must_== Seq(1, 2, 3, 4, 5, 6, 7, 311)
+    }).getOrElse((None, sp._2)))._2 must_== Seq[Command[Int]](1, 2, 3, 4, 5, 6, 7, 311)
   }
 
   case class chainedStream() extends Mockito {
-    val s1 = mock[CommandStream[Int, Int]]
-    val s2 = mock[CommandStream[Int, Int]]
+    val s1 = mock[CommandStream[Int, Command[Int]]]
+    val s2 = mock[CommandStream[Int, Command[Int]]]
 
-    val s1n = mock[CommandStream[Int, Int]]
-    val s2n = mock[CommandStream[Int, Int]]
+    val s1n = mock[CommandStream[Int, Command[Int]]]
+    val s2n = mock[CommandStream[Int, Command[Int]]]
     s1.get(any) returns (Some((123, s1n)))
     s2.get(any) returns (Some((456, s2n)))
 
@@ -105,13 +114,13 @@ class CommandStreamTest extends SpecificationWithJUnit {
 
     def e1 = {
       s2.get(any) returns (None)
-      (composed.get(randomInt()) must_== Some((123, ChainedCommandStream(s1n, s2)))) and
+      (composed.get(randomInt()) must_== Some((ICommand(123), ChainedCommandStream(s1n, s2)))) and
         (there was one(s1).get(any))
     }
 
     def e2 = {
       s1.get(any) returns (None)
-      (composed.get(randomInt()) must_== Some((456, s2n))) and
+      (composed.get(randomInt()) must_== Some((ICommand(456), s2n))) and
         (there was one(s1).get(any))
     }
 
@@ -124,17 +133,16 @@ class CommandStreamTest extends SpecificationWithJUnit {
   }
 
   case class partialStream() {
-    val pf = new PartialFunctionCommandStream[Int, Int]({
+    val pf = new PartialFunctionCommandStream[Int, Command[Int]]({
       case 123 => 321
     })
 
     def e1 = {
-      (pf.get(123) must_== Some((321, pf)))
+      (pf.get(123) must_== Some((ICommand(321), pf)))
     }
 
     def e2 = {
       pf.get(10) must_== None
     }
   }
-
 }
