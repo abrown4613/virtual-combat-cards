@@ -16,10 +16,11 @@
  */
 package vcc.dnd4e.model
 
-import vcc.dnd4e.domain.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
+import vcc.dnd4e.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
 import vcc.dndi.app.CaptureTemplateEngine
 import vcc.infra.xtemplate.{MapDataSource}
-import vcc.dnd4e.tracker.common.{CharacterHealthDefinition, MonsterHealthDefinition, HealthDefinition, CombatantEntity}
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.compendium.{CombatantType => CompendiumCombatantType}
 
 //TODO: Migrate to service in compendium interface
 object CombatantEntityBuilder {
@@ -40,6 +41,10 @@ object CombatantEntityBuilder {
       val dse = comp.asDataStoreEntity()
       template.render(new MapDataSource(dse.data, Map(), Map())).toString()
     }
-    CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, comp.combatantType, statBlock)
+    CombatantEntity(comp.eid, comp.name.value, healthDef, comp.initiative.value, mapCombatantType(comp.combatantType), statBlock)
+  }
+
+  private def mapCombatantType(compendiumType: CompendiumCombatantType.Value): CombatantType.Value = {
+    CombatantType.withName(compendiumType.toString)
   }
 }

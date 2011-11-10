@@ -20,13 +20,19 @@ import scala.swing._
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import java.io.FileInputStream
-import vcc.dnd4e.domain.compendium.{CombatantEntityBuilder, Compendium}
-import vcc.dnd4e.view.PanelDirector
+import vcc.dnd4e.compendium.{CombatantEntityBuilder, Compendium}
 import vcc.dndi.reader.CharacterBuilderImporter
+import vcc.dnd4e.view.{IconLibrary, PanelDirector}
+import vcc.dnd4e.compendium.view.{TemplateProvider, CompendiumView}
+import vcc.infra.xtemplate.Template
+import vcc.dndi.app.CaptureTemplateEngine
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
-  val logger = org.slf4j.LoggerFactory.getLogger("user")
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
+  private val compendiumView = new CompendiumView(IconLibrary.MetalD20.getImage, new TemplateProvider {
+    def fetchClassTemplate(clazz: String): Template = CaptureTemplateEngine.fetchClassTemplate(clazz)
+  })
 
   this.contents += new MenuItem(Action("Import Character Builder File..."){
     val file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)
@@ -44,11 +50,11 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
   })
 
   this.contents += new MenuItem(Action("View Entries ...") {
-    SwingHelper.centerFrameOnScreen(CompendiumView)
-    CompendiumView.visible = true
+    SwingHelper.centerFrameOnScreen(compendiumView)
+    compendiumView.visible = true
   })
 
-  this.contents += new MenuItem(CompendiumView.newEntryAction)
+  this.contents += new MenuItem(compendiumView.newEntryAction)
 
   this.contents += new MenuItem(Action("Edit Parties ...") {
     val partyEditor = new PartyEditor(director)

@@ -44,6 +44,11 @@
             <artifactId>vcc-dndi</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
+            <artifactId>vcc-dnd4e-compendium</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@ package vcc.dndi.app
 
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
-import vcc.dnd4e.domain.compendium.{TrapEntity, Compendium, MonsterEntity}
+import vcc.dnd4e.compendium.{TrapEntity, Compendium, MonsterEntity}
 import vcc.dndi.reader.{Trap, Monster, DNDIObject}
 
 /**

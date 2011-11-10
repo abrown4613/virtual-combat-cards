@@ -19,7 +19,7 @@ package vcc.dndi.app
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import java.io.InputStream
-import vcc.dnd4e.domain.compendium.{CharacterEntity, CombatantEntityBuilder}
+import vcc.dnd4e.compendium.{CharacterEntity, CombatantEntityBuilder}
 import vcc.dndi.reader.CharacterBuilderImporter
 
 class CharacterBuilderImportServiceTest extends SpecificationWithJUnit {
@@ -35,5 +35,4 @@ class CharacterBuilderImportServiceTest extends SpecificationWithJUnit {
     ent.isInstanceOf[CharacterEntity] must beTrue
     ent.asInstanceOf[CharacterEntity].name.value must_== "Fionn"
   }
-
 }

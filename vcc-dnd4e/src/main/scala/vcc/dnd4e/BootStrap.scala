@@ -18,8 +18,7 @@ package vcc.dnd4e
 
 import vcc.util.{UpdateManager, PackageUtil}
 import vcc.model.Registry
-import vcc.dnd4e.domain.compendium.Compendium
-
+import vcc.dnd4e.compendium.Compendium
 import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
@@ -109,7 +108,7 @@ object BootStrap extends StartupRoutine {
     }
     callStartupSimpleBlock(srw, "Load Compendium") {
       import vcc.infra.datastore.naming.DataStoreURI
-      import vcc.dnd4e.domain.compendium.CompendiumRepository
+      import vcc.dnd4e.compendium.CompendiumRepository
       import javax.swing.JOptionPane
 
       val compendiumID = Configuration.compendiumStoreID.value
