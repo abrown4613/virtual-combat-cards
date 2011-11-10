@@ -22,6 +22,7 @@
         <module>vcc-dnd4e-tracker</module>
         <module>vcc-dnd4e</module>
         <module>vcc-dndi</module>
+        <module>vcc-dnd4e-compendium</module>
         <module>distribution</module>
     </modules>
 
