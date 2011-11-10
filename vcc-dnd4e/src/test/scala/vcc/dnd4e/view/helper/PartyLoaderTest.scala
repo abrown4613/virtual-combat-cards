@@ -20,7 +20,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.domain.compendium.{MonsterEntity, CompendiumRepository}
+import vcc.dnd4e.compendium.{MonsterEntity, CompendiumRepository}
 import vcc.dnd4e.model.{CombatantEntityBuilder, PartyMember}
 import vcc.dnd4e.tracker.common.{CombatantID, CombatantRosterDefinition}
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.compendium
 
 import scala.swing._
@@ -22,7 +21,7 @@ import scala.swing.event._
 import vcc.util.swing._
 import vcc.infra.datastore.naming.{EntityID, DataStoreURI}
 
-import vcc.dnd4e.domain.compendium._
+import vcc.dnd4e.compendium._
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.{PartyMember, PartyFile}
 import vcc.model.Registry
@@ -31,6 +30,7 @@ import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 import annotation.tailrec
 import java.io.FileInputStream
+import view.CompendiumEntitySelectionPanel
 
 /**
  * Helper methods for XP operations.

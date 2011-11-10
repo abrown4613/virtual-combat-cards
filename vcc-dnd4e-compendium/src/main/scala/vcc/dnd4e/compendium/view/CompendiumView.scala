@@ -27,12 +27,11 @@ trait TemplateProvider {
 
 class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Frame {
 
+  private val window = this
+  private val entListPanel = new CompendiumEntitySelectionPanel()
+
   title = "Compendium Entries"
   iconImage = icon
-
-  val window = this
-
-  private val entListPanel = new CompendiumEntitySelectionPanel()
 
   val newEntryAction = Action("New Entry ...") {
     val diag = new NewCombatantDialog(window)
@@ -59,6 +58,7 @@ class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Fr
         Compendium.activeRepository.delete(entListPanel.currentSelection.get.eid)
       }
     }), "")
+
     add(new Button(Action("Copy") {
       if (entListPanel.currentSelection.isDefined) {
         val ent = Compendium.activeRepository.load(entListPanel.currentSelection.get.eid, false)
@@ -66,16 +66,15 @@ class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Fr
         Compendium.activeRepository.store(newCopy)
       }
     }), "")
+
     add(new Button(Action("Close") {
-      this.visible = false
+      window.visible = false
     }), "tag right, gap 0")
   }
-
 
   def doEditEntry(ent: CombatantEntity) {
     val nd = new CombatantEditorDialog(ent, icon, templateProvider)
     SwingHelper.centerFrameOnScreen(nd)
     nd.visible = true
-
   }
 }
