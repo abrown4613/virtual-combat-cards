@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.infra.datastore.directory
 
 import vcc.infra.datastore.naming._
 import java.io._
-import vcc.util.DirectoryIterator
 import vcc.infra.datastore.{DataStoreIOException, DataStore, DataStoreEntity}
 
 class DirectoryDataStore(baseDir:File) extends DataStore {
@@ -102,14 +99,24 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   }
    
   def entityTimestamp(eid:EntityID):Long = getFile(eid).lastModified
-   
+
   def enumerateEntities():Seq[EntityID] = {
-    val diter = new DirectoryIterator(baseDir,false)
-    diter.map {
-      file => 
-        if(file.getName.endsWith(".dsxml")) EntityID.fromStorageString("vcc-ent:"+file.getName.substring(0,file.getName.length-6))
-        else null.asInstanceOf[EntityID]
-    }.filter(x=> x != null).toList
+    def recursiveListFiles(f: File): Array[File] = {
+      val these = f.listFiles
+      these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
+    }
+
+    def entityIDFromFileName(file: File): EntityID = {
+      EntityID.fromStorageString("vcc-ent:" + file.getName.substring(0, file.getName.length - 6))
+    }
+
+    def isFileEntityFile(file: File): Boolean = {
+      file.getName.endsWith(".dsxml")
+    }
+
+    recursiveListFiles(baseDir).
+      filter(isFileEntityFile).
+      map(file => entityIDFromFileName(file)).toList
   }
    
   def extractEntityData(keys:Set[String]):Seq[(EntityID,Map[String,String])] = {
