@@ -16,9 +16,9 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{SustainEffectCommand}
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
+import vcc.tracker.{Command, Ruling}
 
 object SustainEffectRulingResult extends Enumeration {
   val Sustain = Value("Sustain")
@@ -44,7 +44,7 @@ case class SustainEffectRuling(sustainableEffect: EffectID, decision: Option[Sus
     "Sustain \"" + effect.condition.description + "\" (from " + combatant.name + " " + eid.combId.simpleNotation + ")"
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     decision.get match {
       case Cancel => Nil
       case Sustain => List(SustainEffectCommand(sustainableEffect))

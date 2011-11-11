@@ -17,8 +17,8 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, EffectID}
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.HealCommand
+import vcc.tracker.{Command, Ruling}
 
 case class RegenerationRuling(sourceEffect: EffectID, decision: Option[Int])
   extends Ruling[CombatState, Int, RegenerationRuling] {
@@ -37,7 +37,7 @@ case class RegenerationRuling(sourceEffect: EffectID, decision: Option[Int])
     comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     if (decision.get > 0) HealCommand(sourceEffect.combId, decision.get) :: Nil
     else Nil
   }
