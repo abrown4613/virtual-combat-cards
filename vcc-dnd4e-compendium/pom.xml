@@ -21,6 +21,11 @@
             <artifactId>vcc-infra</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
+            <artifactId>vcc-datastore</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

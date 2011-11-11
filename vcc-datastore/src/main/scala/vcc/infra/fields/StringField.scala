@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,33 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.infra.fields
 
-abstract class Field[T](val fieldSet:FieldSet, val id:String, val validator:FieldValidator[T]) {
-  
-  protected var _value:FieldValue[T] = validator.validate(null)
-  
-  //Must add to FieldSet
-  fieldSet.addField(this)
-  
-  def value:T = _value.get
-  
-  def isDefined:Boolean = _value.isDefined
-  
-  def value_=(v:T) { _value = Defined(v)}
-  
-  def fieldValue = _value
-  
-  def clear() { _value = Undefined }
-  
-  def fromStorageString(str:String) {
-    _value = validator.validate(str)
-  }
-  
-  def storageString:String = _value.storageString
+class StringField(val fset:FieldSet, override val id:String,override val validator:FieldValidator[String])
+        extends Field[String](fset,id,validator)  {
+  override def toString:String = "StringField("+id+ ":="+ value +")"
+}
 
-  def isValid:Boolean = _value.isValid
-  
+class DefaultStringFieldValidator(rules:ValidationRule[String]*) extends FieldValidator[String](rules: _*) {
+  def fromString(str:String):FieldValue[String] = if(str == null || str == "") Undefined else Defined(str)
 }

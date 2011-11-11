@@ -14,10 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
-
-import vcc.infra.datastore.naming.EntityID
 
 /**
  * This trait defined a set of CombatEntity to be used in testing.
@@ -27,7 +24,7 @@ trait DemoCompendium {
 
   def makeDefinition(name: String, init: Int, hp: Int, ctype: CombatantType.Value) = {
     CombatantEntity(
-      eid = EntityID.fromName("dummy:" + name),
+      eid = "dummy:" + name,
       name = name,
       healthDef = ctype match {
         case CombatantType.Monster => MonsterHealthDefinition(hp)
