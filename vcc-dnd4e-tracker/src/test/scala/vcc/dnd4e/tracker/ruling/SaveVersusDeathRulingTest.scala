@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.event.{ApplyDamageEvent, EventSourceSampleEvents}
 import vcc.dnd4e.tracker.common.{CombatState}
 import vcc.tracker.Ruling
 
-class SaveVersusDeathRulingTest extends RulingAcceptance("SaveVersusDeathRuling") with EventSourceSampleEvents {
+class SaveVersusDeathRulingTest extends RulingAcceptance[CombatState]("SaveVersusDeathRuling") with EventSourceSampleEvents {
   private val savedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Saved))
   private val savedAndHealRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.SaveAndHeal))
   private val failedRuling = SaveVersusDeathRuling(combA, Some(SaveVersusDeathResult.Failed))

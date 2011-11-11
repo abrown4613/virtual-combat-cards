@@ -22,7 +22,7 @@ import org.specs2.specification.Fragments
 import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.{CombatState, EffectID}
 
-class SustainEffectRulingTest extends RulingAcceptance("SustainEffectRuling") with EventSourceSampleEvents {
+class SustainEffectRulingTest extends RulingAcceptance[CombatState]("SustainEffectRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val cancelRulings = SustainEffectRuling(eid, Some(SustainEffectRulingResult.Cancel))
