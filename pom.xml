@@ -23,6 +23,7 @@
         <module>vcc-dnd4e</module>
         <module>vcc-dndi</module>
         <module>vcc-dnd4e-compendium</module>
+        <module>vcc-datastore</module>
         <module>distribution</module>
     </modules>
 

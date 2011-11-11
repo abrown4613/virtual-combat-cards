@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.infra.datastore.naming
 
 import java.util.UUID
@@ -44,7 +42,7 @@ object EntityID {
 
 case class DataStoreURI(uri:URI) {
   
-  def asStorateString = uri.toString
+  def asStorageString = uri.toString
 
   private val subURI = new URI(uri.getRawSchemeSpecificPart)
   
@@ -61,7 +59,7 @@ object DataStoreURI {
   def validateURI(uri:String,scheme:String):java.net.URI = {
 	try {
 	  val u = new java.net.URI(uri)
-	  if(u.isOpaque() && u.getScheme() == scheme) {
+	  if(u.isOpaque && u.getScheme == scheme) {
 	    u
 	  } else {
 	    null
@@ -75,5 +73,4 @@ object DataStoreURI {
     val vuri = validateURI(str,"vcc-store")
     if(vuri != null) DataStoreURI(vuri) else null
   }
-
 }

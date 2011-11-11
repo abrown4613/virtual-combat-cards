@@ -23,19 +23,18 @@ import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
 import vcc.dnd4e.BootStrap
 import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
-import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
 
 class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
 with CombatStateObserver with ContextObserver with ScalaDockableComponent {
-  private val memory = scala.collection.mutable.Map.empty[EntityID, List[EffectEditor.StateMemento]]
-  private var lastActiveKey: EntityID = null
+  private val memory = scala.collection.mutable.Map.empty[String, List[EffectEditor.StateMemento]]
+  private var lastActiveKey: String = null
   private var _changing: Boolean = false
 
   private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
 
-  val terrainDefinition = CombatantEntity(EntityID.fromName("terrain"), "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
+  val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
 
   private val otherId = CombatantID("?")
   private val otherCombatant = new UnifiedCombatant(otherId, null, CombatantState(CombatantRosterDefinition(otherId, null, terrainDefinition), null, null, null))
@@ -131,7 +130,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   /**
    * Store data on the effect memory
    */
-  def switchActive(nkey: EntityID) {
+  def switchActive(nkey: String) {
     // If we have a key store it
     if (lastActiveKey != null) {
       memory(lastActiveKey) = efpl.map(epl => epl.saveMemento())

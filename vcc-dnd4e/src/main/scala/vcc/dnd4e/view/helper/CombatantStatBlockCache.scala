@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view.helper
 
-import vcc.infra.datastore.naming.EntityID
 import org.w3c.dom.Document
 import vcc.util.swing.XHTMLPane
 
@@ -28,9 +25,9 @@ import vcc.util.swing.XHTMLPane
  * not have a StatBlock or parse an return a valid DOM Document if it does.
  */
 object CombatantStatBlockCache {
-  private var cache = Map.empty[EntityID, Document]
+  private var cache = Map.empty[String, Document]
 
-  def getStatBlockDocumentForCombatant(eid: EntityID, statBlock: String): Document = {
+  def getStatBlockDocumentForCombatant(eid: String, statBlock: String): Document = {
     if (!cache.isDefinedAt(eid)) {
       val doc = XHTMLPane.parsePanelDocument(statBlock)
       if (doc != null) {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.infra.datastore.naming.EntityID
-
-case class CombatantEntity(eid: EntityID, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
-  override def toString(): String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
+case class CombatantEntity(eid: String, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
+  override def toString: String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
 }
 
