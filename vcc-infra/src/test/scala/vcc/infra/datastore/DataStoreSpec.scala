@@ -22,6 +22,7 @@ import org.specs2.mutable.{After, SpecificationWithJUnit}
 
 abstract class DataStoreSpec extends SpecificationWithJUnit {
 
+  args(sequential = true)
   val eid1 = EntityID.fromName("eid:1")
   val eid2 = EntityID.fromName("eid:2")
   val eid3 = EntityID.fromName("eid:3")
@@ -182,4 +183,3 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
     }
   }
 }
-
