@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.transition.{UpdateEffectConditionCommand, CancelEffectC
 import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.{CombatState, Effect, EffectID}
 
-class SaveSpecialRulingTest extends RulingAcceptance("SaveSpecialRuling") with EventSourceSampleEvents {
+class SaveSpecialRulingTest extends RulingAcceptance[CombatState]("SaveSpecialRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val savedRuling = SaveSpecialRuling(eid, Some(SaveSpecialRulingResult.Saved))

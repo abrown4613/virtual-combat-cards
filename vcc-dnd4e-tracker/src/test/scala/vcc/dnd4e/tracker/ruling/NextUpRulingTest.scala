@@ -20,7 +20,7 @@ import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
 import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 import vcc.tracker.{Ruling, IllegalDecisionException}
 
-class NextUpRulingTest extends RulingAcceptance("NextUpRuling") with SampleStateData {
+class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") with SampleStateData {
 
   private val ruling = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
 
