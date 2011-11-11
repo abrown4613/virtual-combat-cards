@@ -20,7 +20,7 @@ import vcc.dnd4e.tracker.common.{InitiativeOrderID, HealthStatus, InitiativeStat
 import vcc.dnd4e.tracker.common.InitiativeState._
 import vcc.dnd4e.tracker.common.HealthStatus._
 import vcc.dnd4e.tracker.StateLensFactory
-import vcc.tracker.{StateCommand, PartialFunctionCommandStream}
+import vcc.tracker.{Command, PartialFunctionCommandStream}
 
 object AutomationCommandSource {
 
@@ -37,7 +37,7 @@ object AutomationCommandSource {
     }
   }
 
-  val autoStartDead = new PartialFunctionCommandStream[CombatState, StateCommand[CombatState]]({
+  val autoStartDead = new PartialFunctionCommandStream[CombatState, Command[CombatState]]({
     case HeadStateAndHealth(ioi, Delaying, Dead) => EndRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundCommand(ioi)
@@ -52,7 +52,7 @@ object AutomationCommandSource {
     else NextUpCommand(next, eligible)
   }
 
-  val autoStartNext = new PartialFunctionCommandStream[CombatState, StateCommand[CombatState]]({
+  val autoStartNext = new PartialFunctionCommandStream[CombatState, Command[CombatState]]({
     case s@HeadStateAndHealth(ioi, Waiting, health) if (health != Dead) => makeNextUpCommand(s, ioi)
     case s@HeadStateAndHealth(ioi, Ready, health) if (health != Dead) => makeNextUpCommand(s, ioi)
     case HeadStateAndHealth(ioi, Delaying, health) if (health != Dead) => EndRoundCommand(ioi)

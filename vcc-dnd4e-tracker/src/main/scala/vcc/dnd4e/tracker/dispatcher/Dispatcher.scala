@@ -16,15 +16,15 @@
  */
 package vcc.dnd4e.tracker.dispatcher
 
-import vcc.controller.message.TransactionalAction
 import vcc.tracker._
 import org.slf4j.Logger
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.ruling._
+import vcc.dnd4e.tracker.common.Command.TransactionalActionWithMessage
 
 class Dispatcher private(log: Logger) {
 
-  private val translator: ActionStreamTranslator[CombatState, TransactionalAction] = ActionTranslator
+  private val translator: ActionStreamTranslator[CombatState, TransactionalActionWithMessage] = ActionTranslator
 
   private val commandDispatcher: StateCommandDispatcher[CombatState] = new StateCommandDispatcher[CombatState](
     new RulingDispatcher[CombatState](
@@ -46,19 +46,19 @@ class Dispatcher private(log: Logger) {
       },
       CombatStateRulingLocator))
 
-  private def regularDispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
-          val builder = new AccumulatorTransitionBuilder[CombatState, TransactionalAction]()
+  private def regularDispatch(state: CombatState, action: TransactionalActionWithMessage): Transaction[CombatState, TransactionalActionWithMessage] = {
+          val builder = new AccumulatorTransitionBuilder[CombatState, TransactionalActionWithMessage]()
           val executor = new ActionExecutor(translator, commandDispatcher, builder)
           executor.executeCommand(state, action)
         }
 
-        private def debugDispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
-          val builder = new DebugTransitionBuilder(new AccumulatorTransitionBuilder[CombatState, TransactionalAction], log)
+        private def debugDispatch(state: CombatState, action: TransactionalActionWithMessage): Transaction[CombatState, TransactionalActionWithMessage] = {
+          val builder = new DebugTransitionBuilder(new AccumulatorTransitionBuilder[CombatState, TransactionalActionWithMessage], log)
           val debugExecutor = new ActionExecutor(translator, commandDispatcher, builder)
           debugExecutor.executeCommand(state, action)
         }
 
-        def dispatch(state: CombatState, action: TransactionalAction): Transaction[CombatState, TransactionalAction] = {
+        def dispatch(state: CombatState, action: TransactionalActionWithMessage): Transaction[CombatState, TransactionalActionWithMessage] = {
           try {
             regularDispatch(state, action)
           } catch {

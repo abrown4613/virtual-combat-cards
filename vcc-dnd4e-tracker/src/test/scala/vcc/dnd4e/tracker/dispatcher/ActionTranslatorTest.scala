@@ -17,13 +17,12 @@
 package vcc.dnd4e.tracker.dispatcher
 
 import org.specs2.SpecificationWithJUnit
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.transition.AutomationCommandSource._
-import vcc.tracker.{SeqCommandStream, StateCommand}
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Effect.Condition
+import vcc.tracker.{Command, SeqCommandStream, StateCommand}
 
 class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
   private val eid = EffectID(combA, 0)
@@ -34,7 +33,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
   private val iDef1 = InitiativeDefinition(combA, 0, List(10))
   private val iDef2 = InitiativeDefinition(comb1, 1, List(11))
 
-  private case class SimpleCase(action: TransactionalAction, commands: StateCommand[CombatState]*) {
+  private case class SimpleCase(action: TransactionalActionWithMessage, commands: StateCommand[CombatState]*) {
     def getTestName = (action.getClass.getSimpleName + " to " + commands.map(x => x.getClass.getSimpleName).mkString(", "))
   }
 
@@ -83,7 +82,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
     endp ^
     end
 
-  private def actionWithAutoStart(action: TransactionalAction, commands: StateCommand[CombatState]*) = {
+  private def actionWithAutoStart(action: TransactionalActionWithMessage, commands: Command[CombatState]*) = {
     ActionTranslator.translateToCommandStream(action) must_== (SeqCommandStream(commands) followedBy autoStartDead followedBy autoStartNext)
   }
 
@@ -95,7 +94,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
     }
   }
 
-  def directTranslation(action: TransactionalAction, commands: StateCommand[CombatState]*) = {
+  def directTranslation(action: TransactionalActionWithMessage, commands: StateCommand[CombatState]*) = {
     ActionTranslator.translateToCommandStream(action) must_== SeqCommandStream(commands)
   }
 }

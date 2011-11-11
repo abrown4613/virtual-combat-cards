@@ -21,7 +21,7 @@ import org.specs2.mock.Mockito
 import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import vcc.dnd4e.tracker.event.{CombatStateEvent, AddCombatantEvent, EventSourceSampleEvents}
-import vcc.tracker.{StateCommand, CommandStream}
+import vcc.tracker.{Command, CommandStream}
 
 class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -149,8 +149,8 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     ns.get(state) must_== Some(NextUpCommand(ioB0, List(io1_0)), ns)
   }
 
-  def miniDispatcher(cs: CommandStream[CombatState, StateCommand[CombatState]], state: CombatState): (CombatState, List[StateCommand[CombatState]]) = {
-    var trans = List.empty[StateCommand[CombatState]]
+  def miniDispatcher(cs: CommandStream[CombatState, Command[CombatState]], state: CombatState): (CombatState, List[Command[CombatState]]) = {
+    var trans = List.empty[Command[CombatState]]
     var step = cs.get(state)
     var nState = state
     while (step.isDefined) {
