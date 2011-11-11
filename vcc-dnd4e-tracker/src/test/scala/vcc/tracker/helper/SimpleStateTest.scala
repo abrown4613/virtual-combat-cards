@@ -53,11 +53,6 @@ class SimpleStateTest extends SpecificationWithJUnit {
   }
 
   "our AskCommand" should {
-    "the ruling locator" in {
-      new SimpleRulingLocatorService().
-        rulingsFromStateWithCommand(State(0), AskCommand("Prompt")) must_== List(AskValueRuling("Prompt", None))
-    }
-
     "provide ruling" in {
       AskCommand("Prompt").requiredRulings(State(0)) must_== List(AskValueRuling("Prompt", None))
     }
@@ -87,23 +82,31 @@ class SimpleStateTest extends SpecificationWithJUnit {
 
   "the commands" should {
     "AlterCommand make a proper set" in {
-      AlterCommand(2).generateTransitions(State(12)) must_== List(SetStateEvent(14))
+      AlterCommand(2).generateTransitions(State(12)) must_== Nil
+      AlterCommand(2).generateEvents(State(12)) must_== List(IncrementEvent(2))
     }
 
     "ResetCommand make a proper set" in {
-      ResetCommand(10).generateTransitions(State(123)) must_== List(SetStateEvent(10))
+      ResetCommand(10).generateTransitions(State(123)) must_== Nil
+      ResetCommand(10).generateEvents(State(123)) must_== List(SetStateEvent(10))
     }
 
     "when generate AskCommand return Nil" in {
       AskCommand("some").generateTransitions(State(0)) must_== Nil
+      AskCommand("some").generateEvents(State(0)) must_== Nil
     }
 
     "when generate MultipleCommand return Increment of actions" in {
-      MultiplyCommand(0).generateTransitions(State(10)) must_== List(SetStateEvent(0))
+      MultiplyCommand(0).generateTransitions(State(10)) must_== Nil
       MultiplyCommand(1).generateTransitions(State(10)) must_== Nil
-      MultiplyCommand(3).generateTransitions(State(5)) must_==
+      MultiplyCommand(3).generateTransitions(State(5)) must_== Nil
+      MultiplyCommand(-2).generateTransitions(State(10)) must_== Nil
+
+      MultiplyCommand(0).generateEvents(State(10)) must_== List(SetStateEvent(0))
+      MultiplyCommand(1).generateEvents(State(10)) must_== Nil
+      MultiplyCommand(3).generateEvents(State(5)) must_==
         List(IncrementEvent(5), IncrementEvent(5))
-      MultiplyCommand(-2).generateTransitions(State(10)) must_==
+      MultiplyCommand(-2).generateEvents(State(10)) must_==
         List(IncrementEvent(-10), IncrementEvent(-10), IncrementEvent(-10))
     }
   }

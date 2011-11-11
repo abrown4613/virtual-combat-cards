@@ -50,8 +50,8 @@ class ActionDispatcher[S]() {
     }
   }
 
-  def processCommandEvents(command: StateCommand[S]) {
-    val transitions = command.generateTransitions(returnState)
+  def processCommandEvents(command: Command[S]) {
+    val transitions = command.generateEvents(returnState)
     returnState = transitions.foldLeft(returnState)((s, t) => t.transition(s))
   }
 
@@ -62,7 +62,7 @@ class ActionDispatcher[S]() {
       val decisions = rulingProvider.provideRulingFor(rulings)
       val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
       for( rulingCommand <- rulingCommands) {
-        returnState = rulingCommand.generateTransitions(returnState)(0).transition(returnState)
+        returnState = rulingCommand.generateEvents(returnState)(0).transition(returnState)
       }
     }
     processCommandEvents(command)

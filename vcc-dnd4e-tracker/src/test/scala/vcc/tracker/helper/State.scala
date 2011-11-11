@@ -51,11 +51,15 @@ case class Multiply(times: Int) extends Action[State] {
 }
 
 case class ResetCommand(newStateValue: Int) extends Command[State] {
-  def generateTransitions(iState: State): List[StateTransition[State]] = List(SetStateEvent(newStateValue))
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def generateEvents(state:State):List[Event[State]] = List(SetStateEvent(newStateValue))
 }
 
 case class AlterCommand(delta: Int) extends Command[State] {
-  def generateTransitions(iState: State): List[StateTransition[State]] = List(SetStateEvent(iState.value + delta))
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def generateEvents(state: State): List[Event[State]] = List(IncrementEvent(delta))
 }
 
 case class AskCommand(whatToAsk: String) extends Command[State] {
@@ -65,7 +69,9 @@ case class AskCommand(whatToAsk: String) extends Command[State] {
 }
 
 case class MultiplyCommand(time: Int) extends Command[State] {
-  def generateTransitions(iState: State): List[StateTransition[State]] = {
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def generateEvents(iState: State): List[Event[State]] = {
     time match {
       case 0 => List(SetStateEvent(0))
       case i if (i < 0) => makeIncrementList(-time, -iState.value)
@@ -78,11 +84,11 @@ case class MultiplyCommand(time: Int) extends Command[State] {
   }
 }
 
-case class SetStateEvent(value: Int) extends StateTransition[State] {
+case class SetStateEvent(value: Int) extends StateTransition[State] with Event[State] {
   def transition(iState: State): State = State(value)
 }
 
-case class IncrementEvent(inc: Int) extends StateTransition[State] {
+case class IncrementEvent(inc: Int) extends StateTransition[State] with Event[State] {
   def transition(iState: State): State = State(iState.value + inc)
 }
 
@@ -97,7 +103,7 @@ case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[
 
   def userPrompt(state: State): String = prompt + " (Current " + state.value + ")"
 
-  protected def commandsFromDecision(state: State): List[StateCommand[State]] = {
+  protected def commandsFromDecision(state: State): List[Command[State]] = {
     if (prompt == "double")
       List(ResetCommand(decision.get), AlterCommand(decision.get))
     else
@@ -105,13 +111,4 @@ case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[
   }
 
   def withDecision(decision: Int): AskValueRuling = copy(decision = Some(decision))
-}
-
-class SimpleRulingLocatorService extends RulingLocationService[State] {
-  def rulingsFromStateWithCommand(state: State, command: StateCommand[State]): List[Ruling[State, _, _]] = {
-    command match {
-      case AskCommand(prompt) => List(AskValueRuling(prompt, None))
-      case _ => Nil
-    }
-  }
 }

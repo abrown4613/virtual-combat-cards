@@ -18,11 +18,11 @@ package vcc.dnd4e.tracker.transition
 
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.event.CombatStateEvent
-import vcc.tracker.{StateCommand}
+import vcc.tracker.{Command, StateCommand}
 
 /**
  * Base trait for commands or operations that transition some state to a new state.
  */
-trait CombatStateCommand extends StateCommand[CombatState] {
+trait CombatStateCommand extends StateCommand[CombatState] with Command[CombatState] {
   def generateTransitions(iState: CombatState): List[CombatStateEvent]
 }

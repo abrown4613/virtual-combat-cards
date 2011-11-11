@@ -17,8 +17,8 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{FailDeathSaveCommand, HealCommand}
+import vcc.tracker.{Command, Ruling}
 
 object SaveVersusDeathResult extends Enumeration {
   val Saved = Value("Saved")
@@ -41,7 +41,7 @@ case class SaveVersusDeathRuling(sourceEffect: CombatantID, decision: Option[Sav
     "Save versus death for " + combatant.name + " " + sourceEffect.simpleNotation
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     import SaveVersusDeathResult._
     decision.get match {
       case Saved => Nil
