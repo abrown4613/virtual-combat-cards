@@ -17,8 +17,8 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.DamageCommand
+import vcc.tracker.{Command, Ruling}
 
 case class OngoingDamageRuling(sourceEffect: EffectID, decision: Option[Int])
   extends Ruling[CombatState, Int, OngoingDamageRuling] {
@@ -37,7 +37,7 @@ case class OngoingDamageRuling(sourceEffect: EffectID, decision: Option[Int])
     comb.name + " " + eid.combId.simpleNotation + " affected by: " + effect.condition.description
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     val amount = decision.get
     if(amount > 0 )
       DamageCommand(sourceEffect.combId, amount) :: Nil

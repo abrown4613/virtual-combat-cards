@@ -45,14 +45,14 @@ abstract class Ruling[S, D, R <: Ruling[S, D, R]] {
    * the ruling has a valid decision.
    * @param state Current state
    */
-  protected def commandsFromDecision(state: S): List[StateCommand[S]]
+  protected def commandsFromDecision(state: S): List[Command[S]]
 
   /**
    * Give a ruling with a decision, generates all the commands that are a result of the ruling with that decision on
    * that state.
    * @param state Base state to generate the commands to.
    */
-  def generateCommands(state: S): List[StateCommand[S]] = {
+  def generateCommands(state: S): List[Command[S]] = {
     if (hasDecision) commandsFromDecision(state)
     else throw new IllegalDecisionException("No answer for ruling " + this)
   }

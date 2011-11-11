@@ -16,10 +16,10 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.CancelEffectCommand
 import vcc.dnd4e.tracker.transition.UpdateEffectConditionCommand
 import vcc.dnd4e.tracker.common.{Effect, CombatState, EffectID}
+import vcc.tracker.{Command, Ruling}
 
 sealed trait SaveSpecialRulingResult
 
@@ -56,7 +56,7 @@ case class SaveSpecialRuling(sourceEffect: EffectID, decision: Option[SaveSpecia
       " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     decision.get match {
       case Saved => List(CancelEffectCommand(sourceEffect))
       case Changed(newCondition) => List(UpdateEffectConditionCommand(sourceEffect, Effect.Condition.Generic(newCondition, false)))

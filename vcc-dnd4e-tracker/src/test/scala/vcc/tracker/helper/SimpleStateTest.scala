@@ -23,42 +23,42 @@ class SimpleStateTest extends SpecificationWithJUnit {
 
   type C = StateCommand[State]
 
-  "the translator" should {
+  "actions" should {
     "transalate Init to ResetCommand" in {
-      new Translator().translateToCommandStream(Init(10)) must_== CommandStream(ResetCommand(10))
+      Init(10).createCommandStream() must_== CommandStream(ResetCommand(10))
     }
 
     "translate Increment to AlterCommand" in {
-      new Translator().translateToCommandStream(Increment(10)) must_== CommandStream(AlterCommand(10))
+      Increment(10).createCommandStream() must_== CommandStream(AlterCommand(10))
     }
 
     "translate Increment to AlterCommand" in {
-      new Translator().translateToCommandStream(Repeat(3, 2)) must_== CommandStream(
-        AlterCommand(2), AlterCommand(2), AlterCommand(2))
+      Repeat(3, 2).createCommandStream() must_== CommandStream(AlterCommand(2), AlterCommand(2), AlterCommand(2))
     }
 
     "translate Ask to AskCommand" in {
-      new Translator().translateToCommandStream(Ask("something")) must_== CommandStream(AskCommand("something"))
+      Ask("something").createCommandStream() must_== CommandStream(AskCommand("something"))
     }
 
     "translate NTimeEvent to MultipleTimeCommand" in {
-      new Translator().translateToCommandStream(Multiply(2)) must_== CommandStream(MultiplyCommand(2))
+      Multiply(2).createCommandStream() must_== CommandStream(MultiplyCommand(2))
     }
 
     "translate LoopTo to Sequence builde" in {
-      val x = new Translator().translateToCommandStream(LoopTo(10, 2))
+      val x = LoopTo(10, 2).createCommandStream()
       x.get(State(9)) must_== Some((AlterCommand(2), x))
       x.get(State(10)) must_== None
       x.get(State(11)) must_== None
     }
   }
 
-  "our ruling" should {
-    "the ruling locator" in {
-      new SimpleRulingLocatorService().
-        rulingsFromStateWithCommand(State(0), AskCommand("Prompt")) must_== List(AskValueRuling("Prompt", None))
+  "our AskCommand" should {
+    "provide ruling" in {
+      AskCommand("Prompt").requiredRulings(State(0)) must_== List(AskValueRuling("Prompt", None))
     }
+  }
 
+  "our ruling" should {
     "ruling must match" in {
       AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("some", Some(10))) must beTrue
       AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("other", None)) must beFalse
@@ -82,23 +82,31 @@ class SimpleStateTest extends SpecificationWithJUnit {
 
   "the commands" should {
     "AlterCommand make a proper set" in {
-      AlterCommand(2).generateTransitions(State(12)) must_== List(SetStateEvent(14))
+      AlterCommand(2).generateTransitions(State(12)) must_== Nil
+      AlterCommand(2).generateEvents(State(12)) must_== List(IncrementEvent(2))
     }
 
     "ResetCommand make a proper set" in {
-      ResetCommand(10).generateTransitions(State(123)) must_== List(SetStateEvent(10))
+      ResetCommand(10).generateTransitions(State(123)) must_== Nil
+      ResetCommand(10).generateEvents(State(123)) must_== List(SetStateEvent(10))
     }
 
     "when generate AskCommand return Nil" in {
       AskCommand("some").generateTransitions(State(0)) must_== Nil
+      AskCommand("some").generateEvents(State(0)) must_== Nil
     }
 
     "when generate MultipleCommand return Increment of actions" in {
-      MultiplyCommand(0).generateTransitions(State(10)) must_== List(SetStateEvent(0))
+      MultiplyCommand(0).generateTransitions(State(10)) must_== Nil
       MultiplyCommand(1).generateTransitions(State(10)) must_== Nil
-      MultiplyCommand(3).generateTransitions(State(5)) must_==
+      MultiplyCommand(3).generateTransitions(State(5)) must_== Nil
+      MultiplyCommand(-2).generateTransitions(State(10)) must_== Nil
+
+      MultiplyCommand(0).generateEvents(State(10)) must_== List(SetStateEvent(0))
+      MultiplyCommand(1).generateEvents(State(10)) must_== Nil
+      MultiplyCommand(3).generateEvents(State(5)) must_==
         List(IncrementEvent(5), IncrementEvent(5))
-      MultiplyCommand(-2).generateTransitions(State(10)) must_==
+      MultiplyCommand(-2).generateEvents(State(10)) must_==
         List(IncrementEvent(-10), IncrementEvent(-10), IncrementEvent(-10))
     }
   }
