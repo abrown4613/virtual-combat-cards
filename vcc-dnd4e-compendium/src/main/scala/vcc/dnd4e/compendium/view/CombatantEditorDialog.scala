@@ -27,6 +27,14 @@ import vcc.infra.xtemplate.{MapDataSource}
 
 class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templateProvider: TemplateProvider) extends Frame {
 
+  private class MigPanelFormContainer(colLayout: String) extends MigPanel("ins 0", colLayout, "") with FormFieldContainer {
+    def addFormField(comp: FormField[_]) {
+      add(comp.headerLabel, "gap rel,align right")
+      add(comp.field, "gap rel")
+      add(comp.errorLabel, "wrap")
+    }
+  }
+
   title = "Edit Combatant: " + (if (combatant.name.isValid) combatant.name.storageString else "")
   iconImage = icon
   peer.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE)
@@ -111,7 +119,7 @@ class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templatePro
     }
   }
   private val statBlock: XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
-  private val fc = new MigPanelFormContainter("[50][200,fill][250]")
+  private val fc = new MigPanelFormContainer("[50][200,fill][250]")
 
   form.layout(fc)
   generateAction.enabled = form.isValid

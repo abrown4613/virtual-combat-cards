@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,16 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.util.swing.forms
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.swing.MigPanel
-
 import vcc.infra.fields._
-
 
 trait FormFieldContainer {
   def addFormField(comp:FormField[_])
@@ -58,14 +53,15 @@ class Form(val prefix:String) {
 trait FormField[T] extends TextComponent {
   private val _errorLabel = new Label("")
   private val _headerLabel = new Label("")
-  
-  protected[forms] def errorLabel = _errorLabel
-  protected[forms] def headerLabel = _headerLabel
-  protected val form:Form
-  protected val validator:FieldValidator[T]
-  protected[forms] val field:TextComponent
-  protected val key:String
-  
+
+  protected def form:Form
+  protected def validator:FieldValidator[T]
+  protected def key:String
+
+  def errorLabel = _errorLabel
+  def headerLabel = _headerLabel
+  def field:TextComponent
+
   def id:String = if(form.prefix != null) form.prefix + key else key
   
   private var fvalue:FieldValue[T] = Undefined
@@ -113,12 +109,4 @@ class FormTextArea[T](header:String, val key:String, fv:FieldValue[T], val form:
     this(label,f.id,f.fieldValue,form,f.validator)
   }
   setup(header,fv)
-}
-
-class MigPanelFormContainter(colLayout:String) extends MigPanel("ins 0",colLayout,"") with FormFieldContainer {
-  def addFormField(comp:FormField[_]) {
-    add(comp.headerLabel,"gap rel,align right")
-    add(comp.field,"gap rel")
-    add(comp.errorLabel,"wrap")
-  }
 }
