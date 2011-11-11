@@ -20,11 +20,10 @@ import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.common.{CombatState, InitiativeAction}
-import vcc.tracker.{StateCommand, CommandStream, ActionStreamTranslator}
-import vcc.tracker.SeqCommandStream
 import vcc.dnd4e.tracker.transition.AutomationCommandSource._
+import vcc.tracker._
 
-object ActionTranslator extends ActionStreamTranslator[CombatState, TransactionalAction] {
+object ActionTranslator extends ActionStreamTranslator[CombatState, TransactionalActionWithMessage] {
   implicit def transition2TransitionList(t: CombatStateCommand) = List(t)
 
   def translate(action: TransactionalAction): List[CombatStateCommand] = {
@@ -69,11 +68,11 @@ object ActionTranslator extends ActionStreamTranslator[CombatState, Transactiona
     }
   }
 
-  private def seqStream(s: StateCommand[CombatState]*): CommandStream[CombatState, StateCommand[CombatState]] = {
+  private def seqStream(s: Command[CombatState]*): CommandStream[CombatState, Command[CombatState]] = {
     SeqCommandStream(s)
   }
 
-  def translateToCommandStream(action: TransactionalAction): CommandStream[CombatState, StateCommand[CombatState]] = {
+  def translateToCommandStream(action: TransactionalActionWithMessage): CommandStream[CombatState, Command[CombatState]] = {
     action match {
       case StartCombat() =>
         seqStream(StartCombatCommand) followedBy  autoStartDead followedBy autoStartNext
