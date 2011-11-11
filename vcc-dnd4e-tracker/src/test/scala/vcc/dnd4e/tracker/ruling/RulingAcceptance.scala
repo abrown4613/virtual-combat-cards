@@ -19,7 +19,7 @@ package vcc.dnd4e.tracker.ruling
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.CombatState
 import org.specs2.specification.Fragments
-import vcc.tracker.{StateCommand, Ruling}
+import vcc.tracker.{Command, Ruling}
 
 abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUnit {
 
@@ -30,7 +30,7 @@ abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUni
 
     def userPrompt(state: CombatState): String = null
 
-    protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = Nil
+    protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = Nil
   }
 
   protected val rulingWithAnswer: Ruling[CombatState, _, _]

@@ -18,7 +18,7 @@ package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 import vcc.dnd4e.tracker.transition.{CancelEffectCommand}
-import vcc.tracker.{StateCommand, Ruling}
+import vcc.tracker.{Command, Ruling}
 
 object SaveRulingResult extends Enumeration {
   val Saved = Value("Saved")
@@ -43,7 +43,7 @@ case class SaveRuling(sourceEffect: EffectID, decision: Option[SaveRulingResult.
     combatant.name + " " + eid.combId.simpleNotation + " must make a saving throws against: " + combatant.effects.find(eid).get.condition.description
   }
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     decision.get match {
       case Saved => List(CancelEffectCommand(sourceEffect))
       case Failed => Nil

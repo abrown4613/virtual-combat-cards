@@ -14,15 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.tracker.transition
+package vcc.tracker
 
-import vcc.dnd4e.tracker.common.CombatState
-import vcc.dnd4e.tracker.event.CombatStateEvent
-import vcc.tracker.{Command, StateCommand}
+trait Action[S] {
 
-/**
- * Base trait for commands or operations that transition some state to a new state.
- */
-trait CombatStateCommand extends StateCommand[CombatState] with Command[CombatState] {
-  def generateTransitions(iState: CombatState): List[CombatStateEvent]
+  protected def singleCommand(command: Command[S]):CommandStream[S] = CommandStream(command)
+
+  def createCommandStream(): CommandStream[S]
+}
+
+trait Command[S] extends StateCommand[S] {
+
+  def generateEvents(state: S): List[Event[S]] = Nil
+
+  def requiredRulings(state: S): List[Ruling[S, _, _]] = Nil
+}
+
+trait Event[S] {
+  def transition(iState: S): S
 }

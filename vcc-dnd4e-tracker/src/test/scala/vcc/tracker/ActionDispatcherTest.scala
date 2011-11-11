@@ -25,23 +25,16 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   import helper._
 
   trait context extends Scope {
-    val mockTranslator = spy(new Translator)
-    val mockRulingLocator = spy(new SimpleRulingLocatorService)
-    val mockRulingProvider = mock[RulingProvider[State]]
-    val dispatcher = new ActionDispatcher[State, Action](mockTranslator, mockRulingLocator)
+    val dispatcher = new ActionDispatcher[State]()
     val startState = State(0)
 
+    val mockRulingProvider = mock[RulingProvider[State]]
     mockRulingProvider.provideRulingFor(Nil) returns Nil
     dispatcher.setRulingProvider(mockRulingProvider);
   }
 
   "create handler" in new context {
     dispatcher must not beNull;
-  }
-
-  "translate action to command" in new context {
-    dispatcher.handle(startState, Init(10))
-    there was one(mockTranslator).translateToCommandStream(Init(10))
   }
 
   "accept a dispatch of a command" in new context {
@@ -65,10 +58,8 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   }
 
   "ask for possible ruling on every message" in new context {
-    dispatcher.handle(startState, LoopTo(4, 2))
-    there was one(mockRulingLocator).rulingsFromStateWithCommand(startState, AlterCommand(2)) then
-      one(mockRulingLocator).rulingsFromStateWithCommand(State(2), AlterCommand(2))
-  }
+    failure("This need to be improved")
+  }.pendingUntilFixed("temporary as we move ruling locator out")
 
   "ask RulingProvider for ruling if a ruling is needed" in new context {
     mockRulingProvider.provideRulingFor(List(AskValueRuling("some", None))) returns List(AskValueRuling("some", Some(14)))

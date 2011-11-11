@@ -17,8 +17,8 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatState}
-import vcc.tracker.{IllegalDecisionException, StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
+import vcc.tracker.{Command, IllegalDecisionException, Ruling}
 
 case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOrderID])
   extends Ruling[CombatState, InitiativeOrderID, NextUpRuling] {
@@ -32,7 +32,7 @@ case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOr
 
   def userPrompt(state: CombatState):String = "Select which combatant should act next"
 
-  protected def commandsFromDecision(state: CombatState): List[StateCommand[CombatState]] = {
+  protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     val ioi = decision.get
     (if (ioi == candidates.next) StartRoundCommand(ioi) else MoveUpCommand(ioi)) :: Nil
   }

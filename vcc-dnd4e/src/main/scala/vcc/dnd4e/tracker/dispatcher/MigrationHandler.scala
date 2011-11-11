@@ -17,6 +17,7 @@
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
+import vcc.dnd4e.tracker.common.Command.TransactionalActionWithMessage
 
 trait MigrationHandler {
   this: AbstractCombatController =>
@@ -26,7 +27,7 @@ trait MigrationHandler {
   addHandler {
     case action =>
       val d = Dispatcher.getInstance(migrationLogger)
-      val stateTransition = d.dispatch(context.iState.value, action)
+      val stateTransition = d.dispatch(context.iState.value, action.asInstanceOf[TransactionalActionWithMessage])
       context.iState.value = stateTransition.outState
   }
 }

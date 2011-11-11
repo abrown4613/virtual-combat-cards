@@ -22,7 +22,7 @@ trait RulingProvider[S] {
   def provideRulingFor(rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
 }
 
-class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLocator: RulingLocationService[S]) {
+class ActionDispatcher[S]() {
 
   private var rulingProvider:RulingProvider[S] = null
 
@@ -31,10 +31,10 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLoc
   }
 
   private var returnState: S = null.asInstanceOf[S]
-  private var commandStream: CommandStream[S, StateCommand[S]] = null
+  private var commandStream: CommandStream[S] = null
 
-  def handle(state: S, action: A): S = {
-    commandStream = translator.translateToCommandStream(action)
+  def handle(state: S, action: Action[S]): S = {
+    commandStream = action.createCommandStream()
     returnState = state
     loopThroughCommandStream()
     returnState
@@ -50,26 +50,26 @@ class ActionDispatcher[S, A](translator: ActionStreamTranslator[S, A], rulingLoc
     }
   }
 
-  def processCommandEvents(command: StateCommand[S]) {
-    val transitions = command.generateTransitions(returnState)
+  def processCommandEvents(command: Command[S]) {
+    val transitions = command.generateEvents(returnState)
     returnState = transitions.foldLeft(returnState)((s, t) => t.transition(s))
   }
 
-  private def executeStep(step: (StateCommand[S], CommandStream[S, StateCommand[S]])) {
+  private def executeStep(step: (Command[S], CommandStream[S])) {
     val (command, nextCommandStream) = step
-    val rulings = rulingLocator.rulingsFromStateWithCommand(returnState, command)
+    val rulings = command.requiredRulings(returnState)
     if (!rulings.isEmpty) {
       val decisions = rulingProvider.provideRulingFor(rulings)
       val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
       for( rulingCommand <- rulingCommands) {
-        returnState = rulingCommand.generateTransitions(returnState)(0).transition(returnState)
+        returnState = rulingCommand.generateEvents(returnState)(0).transition(returnState)
       }
     }
     processCommandEvents(command)
     commandStream = nextCommandStream
   }
 
-  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, StateCommand[S]])) {
+  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S])) {
     val nextStep = commandStream.get(returnState)
     if (nextStep.isDefined && lastStateStream ==(returnState, nextStep.get._2))
       throw new InfiniteLoopException
