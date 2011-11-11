@@ -18,9 +18,9 @@ package vcc.tracker
 
 trait Action[S] {
 
-  protected def singleCommand(command: Command[S]):CommandStream[S, Command[S]] = CommandStream(command)
+  protected def singleCommand(command: Command[S]):CommandStream[S] = CommandStream(command)
 
-  def createCommandStream(): CommandStream[S, Command[S]]
+  def createCommandStream(): CommandStream[S]
 }
 
 trait Command[S] extends StateCommand[S] {

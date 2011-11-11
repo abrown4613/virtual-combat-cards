@@ -17,11 +17,11 @@
 package vcc.tracker
 
 trait ActionStreamTranslator[S, A] {
-  def translateToCommandStream(action: A): CommandStream[S, Command[S]]
+  def translateToCommandStream(action: A): CommandStream[S]
 }
 
 class ActionExecutor[S, A](translator: ActionStreamTranslator[S, A], commandDispatcher: StateCommandDispatcher[S], builder: TransitionBuilder[S, A]) {
-  type CmdStream = CommandStream[S, Command[S]]
+  type CmdStream = CommandStream[S]
   type Cmd = StateCommand[S]
 
   protected def loopStream(state: S, stream: CmdStream): Either[(S, CmdStream), S] = {

@@ -31,7 +31,7 @@ class ActionDispatcher[S]() {
   }
 
   private var returnState: S = null.asInstanceOf[S]
-  private var commandStream: CommandStream[S, Command[S]] = null
+  private var commandStream: CommandStream[S] = null
 
   def handle(state: S, action: Action[S]): S = {
     commandStream = action.createCommandStream()
@@ -55,7 +55,7 @@ class ActionDispatcher[S]() {
     returnState = transitions.foldLeft(returnState)((s, t) => t.transition(s))
   }
 
-  private def executeStep(step: (Command[S], CommandStream[S, Command[S]])) {
+  private def executeStep(step: (Command[S], CommandStream[S])) {
     val (command, nextCommandStream) = step
     val rulings = command.requiredRulings(returnState)
     if (!rulings.isEmpty) {
@@ -69,7 +69,7 @@ class ActionDispatcher[S]() {
     commandStream = nextCommandStream
   }
 
-  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S, Command[S]])) {
+  private def checkForInfiniteLoop(lastStateStream: (S, CommandStream[S])) {
     val nextStep = commandStream.get(returnState)
     if (nextStep.isDefined && lastStateStream ==(returnState, nextStep.get._2))
       throw new InfiniteLoopException
