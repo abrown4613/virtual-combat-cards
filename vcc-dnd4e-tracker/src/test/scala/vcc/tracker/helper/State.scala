@@ -21,39 +21,39 @@ import vcc.tracker._
 case class State(value: Int)
 
 case class Init(v: Int) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(ResetCommand(v))
+  def createCommandStream(): CommandStream[State] = singleCommand(ResetCommand(v))
 }
 
 case class Increment(by: Int) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(AlterCommand(by))
+  def createCommandStream(): CommandStream[State] = singleCommand(AlterCommand(by))
 }
 
 case class LoopTo(limit: Int, step: Int) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = {
-     new PartialFunctionCommandStream[State, Command[State]]({
-            case State(current) if (current < limit) => AlterCommand(step)
-          })
+  def createCommandStream(): CommandStream[State] = {
+    new PartialFunctionCommandStream[State]({
+      case State(current) if (current < limit) => AlterCommand(step)
+    })
   }
 }
 
 case class Repeat(times: Int, amount: Int) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = {
-     SeqCommandStream(Seq.fill(times)(AlterCommand(amount)))
+  def createCommandStream(): CommandStream[State] = {
+    SeqCommandStream(Seq.fill(times)(AlterCommand(amount)))
   }
 }
 
 case class Ask(prompt: String) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(AskCommand(prompt))
+  def createCommandStream(): CommandStream[State] = singleCommand(AskCommand(prompt))
 }
 
 case class Multiply(times: Int) extends Action[State] {
-  def createCommandStream(): CommandStream[State,Command[State]] = singleCommand(MultiplyCommand(times))
+  def createCommandStream(): CommandStream[State] = singleCommand(MultiplyCommand(times))
 }
 
 case class ResetCommand(newStateValue: Int) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = Nil
 
-  override def generateEvents(state:State):List[Event[State]] = List(SetStateEvent(newStateValue))
+  override def generateEvents(state: State): List[Event[State]] = List(SetStateEvent(newStateValue))
 }
 
 case class AlterCommand(delta: Int) extends Command[State] {

@@ -30,8 +30,8 @@ class CommandStreamTest extends SpecificationWithJUnit {
 
   implicit def int2ICommand(v: Int):Command[Int] = ICommand(v)
 
-  def streamDrainerIterator[S, A](stream: CommandStream[S, A], states: Seq[S]): Seq[A] = {
-    var collect = List.empty[A]
+  def streamDrainerIterator[S](stream: CommandStream[S], states: Seq[S]): Seq[Command[S]] = {
+    var collect = List.empty[Command[S]]
     var rest = states
     var next = stream.get(rest.head)
     while (next.isDefined && !rest.tail.isEmpty) {
@@ -63,20 +63,20 @@ class CommandStreamTest extends SpecificationWithJUnit {
       "all together - variant" ! all2 ^
       end
 
-  def scs2 = CommandStream[Int, Command[Int]](1, 2).get(randomInt()).isDefined must beTrue
+  def scs2 = CommandStream[Int](1, 2).get(randomInt()).isDefined must beTrue
 
-  def scs3 = CommandStream[Int, Command[Int]](1, 2).get(randomInt()) must_== Some((ICommand(1), CommandStream[Int, Command[Int]](2)))
+  def scs3 = CommandStream[Int](1, 2).get(randomInt()) must_== Some((ICommand(1), CommandStream[Int](2)))
 
   def scs4 = {
-    val s = CommandStream[Int, Command[Int]](1, 2, 3)
+    val s = CommandStream[Int](1, 2, 3)
     streamDrainerIterator(s, (0 to 4).map(x => randomInt())) must_== Seq[Command[Int]](1, 2, 3)
   }
 
-  def scs5 = SeqCommandStream[Int, Command[Int]](Nil).get(randomInt()) must_== None
+  def scs5 = SeqCommandStream[Int](Nil).get(randomInt()) must_== None
 
   def all1 = {
-    val s = CommandStream[Int, Command[Int]](1, 2, 3)
-    val p = new PartialFunctionCommandStream[Int, Command[Int]]({
+    val s = CommandStream[Int](1, 2, 3)
+    val p = new PartialFunctionCommandStream[Int]({
       case 4 => 13
       case 5 => 17
       case 8 => 311
@@ -85,14 +85,14 @@ class CommandStreamTest extends SpecificationWithJUnit {
   }
 
   def all2 = {
-    val s = CommandStream[Int, Command[Int]](1, 2, 3)
-    val s2 = CommandStream[Int, Command[Int]](4, 5, 6, 7)
-    val p = new PartialFunctionCommandStream[Int, Command[Int]]({
+    val s = CommandStream[Int](1, 2, 3)
+    val s2 = CommandStream[Int](4, 5, 6, 7)
+    val p = new PartialFunctionCommandStream[Int]({
       case 4 => 13
       case 5 => 17
       case 8 => 311
     })
-    val c: CommandStream[Int, Command[Int]] = s followedBy s2 followedBy p
+    val c: CommandStream[Int] = s followedBy s2 followedBy p
     (1 to 10).foldLeft((Option(c), List.empty[Command[Int]]))((sp, s) => sp._1.map(stream => stream.get(s) match {
       case Some((v, str)) => (Some(str), v :: sp._2)
       case None => (None, sp._2.reverse)
@@ -100,11 +100,11 @@ class CommandStreamTest extends SpecificationWithJUnit {
   }
 
   case class chainedStream() extends Mockito {
-    val s1 = mock[CommandStream[Int, Command[Int]]]
-    val s2 = mock[CommandStream[Int, Command[Int]]]
+    val s1 = mock[CommandStream[Int]]
+    val s2 = mock[CommandStream[Int]]
 
-    val s1n = mock[CommandStream[Int, Command[Int]]]
-    val s2n = mock[CommandStream[Int, Command[Int]]]
+    val s1n = mock[CommandStream[Int]]
+    val s2n = mock[CommandStream[Int]]
     s1.get(any) returns (Some((123, s1n)))
     s2.get(any) returns (Some((456, s2n)))
 
@@ -131,7 +131,7 @@ class CommandStreamTest extends SpecificationWithJUnit {
   }
 
   case class partialStream() {
-    val pf = new PartialFunctionCommandStream[Int, Command[Int]]({
+    val pf = new PartialFunctionCommandStream[Int]({
       case 123 => 321
     })
 

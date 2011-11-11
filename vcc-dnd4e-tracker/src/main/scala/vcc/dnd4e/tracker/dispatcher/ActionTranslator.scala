@@ -68,11 +68,11 @@ object ActionTranslator extends ActionStreamTranslator[CombatState, Transactiona
     }
   }
 
-  private def seqStream(s: Command[CombatState]*): CommandStream[CombatState, Command[CombatState]] = {
+  private def seqStream(s: Command[CombatState]*): CommandStream[CombatState] = {
     SeqCommandStream(s)
   }
 
-  def translateToCommandStream(action: TransactionalActionWithMessage): CommandStream[CombatState, Command[CombatState]] = {
+  def translateToCommandStream(action: TransactionalActionWithMessage): CommandStream[CombatState] = {
     action match {
       case StartCombat() =>
         seqStream(StartCombatCommand) followedBy  autoStartDead followedBy autoStartNext

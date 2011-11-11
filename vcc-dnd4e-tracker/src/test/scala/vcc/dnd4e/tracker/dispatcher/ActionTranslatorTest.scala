@@ -22,7 +22,7 @@ import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.transition.AutomationCommandSource._
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Effect.Condition
-import vcc.tracker.{Command, SeqCommandStream, StateCommand}
+import vcc.tracker.{Command, SeqCommandStream}
 
 class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
   private val eid = EffectID(combA, 0)
@@ -33,7 +33,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
   private val iDef1 = InitiativeDefinition(combA, 0, List(10))
   private val iDef2 = InitiativeDefinition(comb1, 1, List(11))
 
-  private case class SimpleCase(action: TransactionalActionWithMessage, commands: StateCommand[CombatState]*) {
+  private case class SimpleCase(action: TransactionalActionWithMessage, commands: Command[CombatState]*) {
     def getTestName = (action.getClass.getSimpleName + " to " + commands.map(x => x.getClass.getSimpleName).mkString(", "))
   }
 
@@ -94,7 +94,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
     }
   }
 
-  def directTranslation(action: TransactionalActionWithMessage, commands: StateCommand[CombatState]*) = {
+  private def directTranslation(action: TransactionalActionWithMessage, commands: Command[CombatState]*) = {
     ActionTranslator.translateToCommandStream(action) must_== SeqCommandStream(commands)
   }
 }
