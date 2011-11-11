@@ -50,6 +50,10 @@ case class Multiply(times: Int) extends Action[State] {
   def createCommandStream(): CommandStream[State] = singleCommand(MultiplyCommand(times))
 }
 
+case class FlexAction(commands: Command[State]*) extends Action[State] {
+  def createCommandStream(): CommandStream[State] = CommandStream(commands: _*)
+}
+
 case class ResetCommand(newStateValue: Int) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = Nil
 
@@ -84,6 +88,22 @@ case class MultiplyCommand(time: Int) extends Command[State] {
   }
 }
 
+case class FlexCommand(rulingPrompts: List[String], events: List[Event[State]]) extends Command[State] {
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def generateEvents(state: State): List[Event[State]] = events
+
+  override def requiredRulings(state: State): List[Ruling[State, _, _]] = {
+    rulingPrompts.map(FlexRuling(_, None))
+  }
+}
+
+object FlexCommand {
+  def apply(events: Event[State]*) = new FlexCommand(Nil, events.toList)
+
+  def apply(rulingPrompt: String, events: Event[State]*) = new FlexCommand(rulingPrompt::Nil, events.toList)
+}
+
 case class SetStateEvent(value: Int) extends StateTransition[State] with Event[State] {
   def transition(iState: State): State = State(value)
 }
@@ -111,4 +131,21 @@ case class AskValueRuling(prompt: String, decision: Option[Int]) extends Ruling[
   }
 
   def withDecision(decision: Int): AskValueRuling = copy(decision = Some(decision))
+}
+
+case class FlexRuling(prompt: String, decision: Option[List[Command[State]]])
+  extends Ruling[State, List[Command[State]], FlexRuling] {
+
+  def isRulingSameSubject(otherRuling: Ruling[State, _, _]): Boolean = {
+    otherRuling match {
+      case FlexRuling(`prompt`, _) => true
+      case _ => false
+    }
+  }
+
+  def userPrompt(state: State): String = "%s [%d]".format(prompt, state.value)
+
+  protected def commandsFromDecision(state: State): List[Command[State]] = decision.get
+
+  def withDecision(decision: List[Command[State]]): FlexRuling = null
 }

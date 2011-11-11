@@ -50,11 +50,28 @@ class SimpleStateTest extends SpecificationWithJUnit {
       x.get(State(10)) must_== None
       x.get(State(11)) must_== None
     }
+
+    "FlexCommand translates to series of comamnds" in {
+      FlexAction(AlterCommand(1), ResetCommand(2)).createCommandStream() must_== CommandStream(AlterCommand(1), ResetCommand(2))
+    }
   }
 
   "our AskCommand" should {
     "provide ruling" in {
       AskCommand("Prompt").requiredRulings(State(0)) must_== List(AskValueRuling("Prompt", None))
+    }
+
+    "ask for ruling when FlexCommand has prompt parameter" in {
+      FlexCommand("what", IncrementEvent(1)).requiredRulings(State(10)) must_== List(FlexRuling("what", None))
+    }
+
+    "not ask for ruling when FlexCommand if prompt parameter is null" in {
+      FlexCommand(IncrementEvent(1)).requiredRulings(State(10)) must_== Nil
+    }
+
+    "ask for all rulings when FlexCommand has multiple prompts" in {
+      FlexCommand(List("what", "where"), List(IncrementEvent(1))).requiredRulings(State(10)) must_==
+        List(FlexRuling("what", None), FlexRuling("where", None))
     }
   }
 
@@ -108,6 +125,11 @@ class SimpleStateTest extends SpecificationWithJUnit {
         List(IncrementEvent(5), IncrementEvent(5))
       MultiplyCommand(-2).generateEvents(State(10)) must_==
         List(IncrementEvent(-10), IncrementEvent(-10), IncrementEvent(-10))
+    }
+
+    "when generate FlexCommand(a,b) generate events a, b" in {
+      FlexCommand(IncrementEvent(1), IncrementEvent(2)).generateEvents(State(1)) must_==
+        List(IncrementEvent(1), IncrementEvent(2))
     }
   }
 
