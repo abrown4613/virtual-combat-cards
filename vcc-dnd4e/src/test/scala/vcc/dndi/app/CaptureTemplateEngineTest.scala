@@ -17,12 +17,14 @@
 package vcc.dndi.app
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.Configuration
 import java.io.File
 import vcc.infra.xtemplate.Template
 import vcc.infra.diskcache.FileUpdateAwareLoader
 
 class CaptureTemplateEngineTest extends SpecificationWithJUnit {
+
+  private val dataDirectory: File = new File("../vcc-dnd4e/fs-wc")
+  CaptureTemplateEngine.initialize(dataDirectory)
 
   def is = e1 ^ e2 ^ e3 ^ end
 
@@ -50,7 +52,7 @@ class CaptureTemplateEngineTest extends SpecificationWithJUnit {
     "CaptureTemplateEngine" ^
       (for (fmt <- List("csv", "scsv", "modifier")) yield {
         "have formatter " + fmt ! {
-          CaptureTemplateEngine.engine.hasFormatter(fmt) must beTrue
+          CaptureTemplateEngine.getInstance.engine.hasFormatter(fmt) must beTrue
         }
       }) ^ endp
   }
@@ -58,14 +60,15 @@ class CaptureTemplateEngineTest extends SpecificationWithJUnit {
   def e3 = {
     "CaptureTemplateEngine as a TemplateStore" ^
       "get correct file from classname" ! {
-        val bo = CaptureTemplateEngine.getObjectUpdateAwareLoader("monster")
+        val bo = CaptureTemplateEngine.getInstance.getObjectUpdateAwareLoader("monster")
         bo match {
-          case fbo: FileUpdateAwareLoader[Template] => fbo.file must_== new File(new File(Configuration.dataDirectory, "template"), "monster.xtmpl")
+          case fbo: FileUpdateAwareLoader[Template] =>
+            fbo.file.getAbsolutePath must_== (new File(dataDirectory, "template/monster.xtmpl")).getAbsolutePath
           case _ => "" must_== "Should be a file backed object"
         }
       } ^
       "provide static template error template if something goes wrong" ! {
-        val bo = CaptureTemplateEngine.getObjectUpdateAwareLoader("no-there")
+        val bo = CaptureTemplateEngine.getInstance.getObjectUpdateAwareLoader("no-there")
         val to = bo.getCurrent()
         to.isDefined must beTrue
         to.get.render(null).toString().startsWith("<html><body>Failed to load template") must beTrue
