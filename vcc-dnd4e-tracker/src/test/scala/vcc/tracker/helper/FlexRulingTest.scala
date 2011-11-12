@@ -22,7 +22,7 @@ import vcc.tracker.Ruling
 
 class FlexRulingTest extends RulingAcceptance[State]("FlexRuling") {
 
-  protected val rulingWithAnswer: Ruling[State, _, _] = FlexRuling("what", Some(List(AlterCommand(1))))
+  protected val rulingWithAnswer: Ruling[State, _, _] = FlexRuling("what", Some(List(FlexCommand(IncrementEvent(1)))))
   protected val rulingWithoutAnswer: Ruling[State, _, _] = FlexRuling("what", None)
   protected val userPromptMessage: String = "what [11]"
   protected val state: State = State(11)
@@ -32,7 +32,8 @@ class FlexRulingTest extends RulingAcceptance[State]("FlexRuling") {
        FlexRuling("what", Some(Nil)).generateCommands(state) must_== Nil
     } ^
       "make a list of commands pass as argument" ! {
-        FlexRuling("what", Some(List(AlterCommand(1)))).generateCommands(state) must_== List(AlterCommand(1))
+        val incrementCommand: FlexCommand = FlexCommand(IncrementEvent(1))
+        FlexRuling("what", Some(List(incrementCommand))).generateCommands(state) must_== List(incrementCommand)
       }
     endp
 }
