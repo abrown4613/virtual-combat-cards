@@ -18,8 +18,6 @@ package vcc.dnd4e.view.helper
 
 import vcc.dnd4e.model.{PartyFile, PartyMember}
 import vcc.dnd4e.tracker.common.Command.AddCombatants
-import vcc.dnd4e.compendium.CompendiumRepository
-import vcc.model.Registry
 import vcc.infra.datastore.naming._
 import vcc.dnd4e.model.CombatantEntityBuilder
 
@@ -28,6 +26,7 @@ import vcc.dnd4e.view.PanelDirector
 import vcc.dnd4e.tracker.common.CombatantRosterDefinition
 import java.io.{FileInputStream, File}
 import vcc.dnd4e.tracker.common.CombatantEntity
+import vcc.dnd4e.compendium.{Compendium, CompendiumRepository}
 
 /**
  * Companion object to the PartyLoader.
@@ -42,8 +41,7 @@ object PartyLoader {
    * @return A PartyLoader
    */
   def getInstance(director: PanelDirector, owner: Component): PartyLoader = {
-    val esid = Registry.get[DataStoreURI]("Compendium").get
-    val es = Registry.get[CompendiumRepository](esid).get
+    val es = Compendium.activeRepository
 
     val loader = new PartyLoader(es, new ViewPeer {
       def showError(title: String, message: String) {

@@ -17,12 +17,9 @@
 package vcc.dnd4e.view
 
 import ruling.{TranslatorService, RulingDialog}
-import scala.actors.Actor
 import scala.swing._
 import event.{WindowOpened, WindowClosing}
-import vcc.model.Registry
 import vcc.infra.docking._
-import vcc.controller.TrackerChangeObserver
 import vcc.dnd4e.domain.tracker.snapshot.{CombatChangeAndStateSnapshotBuilder, CombatStateWithChanges}
 import vcc.infra.prompter.RulingBroker
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
@@ -30,14 +27,14 @@ import vcc.util.UpdateManager.Version
 import java.awt.Toolkit
 import java.io.File
 import java.net.URL
+import vcc.controller.{Tracker, TrackerChangeObserver}
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
-class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, configurationPanel: ConfigurationPanelCallback)
+class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: ReleaseInformation, configurationPanel: ConfigurationPanelCallback)
   extends Frame {
 
   private val docker = new CustomDockingAdapter(baseDirectory)
-  private val tracker = Registry.get[Actor]("tracker").get
 
   private val statusBar = new StatusBar(releaseInformation.currentVersion)
   private val csm = new TrackerChangeObserver[CombatStateWithChanges](new CombatChangeAndStateSnapshotBuilder(), tracker)

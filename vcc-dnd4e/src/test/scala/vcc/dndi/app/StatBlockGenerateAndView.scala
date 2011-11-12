@@ -19,7 +19,6 @@ package vcc.dndi.app
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
 import swing.{Button, Action, MainFrame}
 import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.model.Registry
 import vcc.infra.xtemplate.{TemplateDataSource}
 import java.io.{FileInputStream, File}
 import vcc.dndi.reader.{DNDInsiderCapture, DNDIObject}
@@ -53,7 +52,7 @@ object StatBlockGenerateAndView {
   def regenerateTemplate() {
     if(monster != null) {
       try {
-        val template = CaptureTemplateEngine.fetchClassTemplate(monster.clazz)
+        val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(monster.clazz)
         val xml = template.render(monster.asInstanceOf[TemplateDataSource])
         xhtmlPane.setDocumentFromText(xml.toString())
       } catch {
@@ -91,7 +90,7 @@ object StatBlockGenerateAndView {
     if (args.length > 0) {
       val file = new File(args(0))
       if (file.exists && file.isDirectory) {
-        Registry.register("lastDirectory", file.getParentFile)
+        FileChooserHelper.setLastDirectory(file.getParentFile)
       }
     }
 

@@ -19,12 +19,11 @@ package vcc.dnd4e.view.compendium
 import scala.swing._
 import scala.swing.event._
 import vcc.util.swing._
-import vcc.infra.datastore.naming.{EntityID, DataStoreURI}
+import vcc.infra.datastore.naming.{EntityID}
 
 import vcc.dnd4e.compendium._
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.model.{PartyMember, PartyFile}
-import vcc.model.Registry
 import vcc.dnd4e.view.helper.PartyLoader
 import vcc.dnd4e.tracker.common.CombatantID
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
@@ -219,7 +218,7 @@ class PartyEditor(director: PanelDirector) extends Frame {
   private def doLoad() {
     val file = FileChooserHelper.chooseOpenFile(table.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
-      val es = Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).get
+      val es = Compendium.activeRepository
       val combs = PartyLoader.getInstance(null, menuBar).validatePartyLoadAndWarn(PartyFile.loadFromStream(new FileInputStream(file.get)))
       val pml = compressEntries(combs.map(pm => {
         //Load summary, convert and copy extra data

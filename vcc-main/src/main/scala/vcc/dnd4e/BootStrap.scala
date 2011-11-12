@@ -16,9 +16,8 @@
  */
 package vcc.dnd4e
 
+import compendium.{CompendiumRepository, Compendium}
 import vcc.util.{UpdateManager, PackageUtil}
-import vcc.model.Registry
-import vcc.dnd4e.compendium.Compendium
 import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
@@ -26,9 +25,13 @@ import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
 import java.io.File
 import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
+import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
 import vcc.dndi.app.CaptureTemplateEngine
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
+import vcc.infra.webserver.WebServer
+import vcc.controller.Tracker
+import javax.swing.JOptionPane
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -41,6 +44,9 @@ object BootStrap extends StartupRoutine {
     if (fakeVersion != null) fakeVersion
     else UpdateManager.Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml"))
   }
+
+  private var webServer: WebServer = null
+  private var tracker: Tracker = null
 
   def start(srw: StartupReportWindow): scala.swing.Frame = {
     var createCompendium = false
@@ -105,9 +111,6 @@ object BootStrap extends StartupRoutine {
       }
     }
     callStartupSimpleBlock(srw, "Load Compendium") {
-      import vcc.infra.datastore.naming.DataStoreURI
-      import vcc.dnd4e.compendium.CompendiumRepository
-      import javax.swing.JOptionPane
 
       val compendiumID = Configuration.compendiumStoreID.value
       logger.info("Opening compendium: {}", compendiumID)
@@ -136,20 +139,16 @@ object BootStrap extends StartupRoutine {
         logger.warn("Failed to load compendium {}, will exit", compendiumID)
       } else {
         logger.info("Opened compendium {}", compendiumID)
-        Registry.register("Compendium", compendiumID)
-        Registry.register(compendiumID, compendium)
         Compendium.setActiveRepository(compendium)
       }
-      Registry.get[DataStoreURI]("Compendium").isDefined && Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).isDefined
+      Compendium.activeRepository != null
     }
 
     callStartupSimpleBlock(srw, "Web Server") {
-      import vcc.infra.webserver.WebServer
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
-      WebServer.initialize("webserver", 4143, Map(
+      webServer = WebServer.initialize("webserver", 4143, Map(
         "/capture" -> classOf[CaptureServlet]
       ))
-      Registry.get[WebServer]("webserver").get
       true
     }
 
@@ -157,16 +156,12 @@ object BootStrap extends StartupRoutine {
       import vcc.controller.Tracker
       import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatContext}
       import vcc.dnd4e.domain.tracker.common.CombatStateRules
-
-      Tracker.initialize(new CombatController(new CombatStateRules(), new CombatContext()))
-
-      //Make sure it got registered
-      Registry.get[scala.actors.Actor]("tracker")
+      tracker = Tracker.initialize(new CombatController(new CombatStateRules(), new CombatContext()))
       true
     }
 
     callStartupSimpleBlock(srw, "User Interface Elements") {
-      vcc.dnd4e.view.compendium.DNDICaptureMonitor
+      DNDICaptureMonitor.initialize(webServer)
       XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
       FileChooserHelper.setLastDirectory(Configuration.baseDirectory.value)
       CaptureTemplateEngine.initialize(Configuration.dataDirectory)
@@ -180,6 +175,6 @@ object BootStrap extends StartupRoutine {
         new ConfigurationDialog(null, false).promptUser()
       }
     }
-    new MasterFrame(Configuration.baseDirectory.value, releaseInformation, configurationCallback)
+    new MasterFrame(tracker, Configuration.baseDirectory.value, releaseInformation, configurationCallback)
   }
 }
