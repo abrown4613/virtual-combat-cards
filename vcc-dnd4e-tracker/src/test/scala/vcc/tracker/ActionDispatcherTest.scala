@@ -19,14 +19,16 @@ package vcc.tracker
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
+import helper._
+import collection.immutable.List
 
 class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
 
-  import helper._
+  private val actionWithSingleCommandAndEvent = FlexAction(FlexCommand(10))
 
   trait context extends Scope {
-    val dispatcher = new ActionDispatcher[State]()
     val startState = State(0)
+    val dispatcher = ActionDispatcher.getDispatcher(startState)
 
     val mockRulingProvider = mock[RulingProvider[State]]
     mockRulingProvider.provideRulingFor(Nil) returns Nil
@@ -37,45 +39,55 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
     dispatcher must not beNull;
   }
 
-  "accept a dispatch of a command" in new context {
-    dispatcher.handle(startState, Init(10)) must_== State(10)
+  "create new dispatcher from factory method" in {
+    val ad = ActionDispatcher.getDispatcher(State(10))
+    ad must not beNull;
   }
 
-  "dispatch action that generates multiple commands" in new context {
-    dispatcher.handle(startState, Repeat(3, 2)) must_== State(6)
+  "dispatcher should only handle a single dispatch" in new context {
+    dispatcher.handle(actionWithSingleCommandAndEvent) must_== State(10)
+    dispatcher.handle(actionWithSingleCommandAndEvent) must throwA[IllegalStateException]
+  }
+
+  "accept a dispatch of a command" in new context {
+    dispatcher.handle(actionWithSingleCommandAndEvent) must_== State(10)
   }
 
   "dispatch loop action that generates multiple commands" in new context {
-    dispatcher.handle(startState, LoopTo(10, 3)) must_== State(12)
-  }
-
-  "process all events generated from a Multiply action" in new context {
-    dispatcher.handle(State(10), Multiply(3)) must_== State(30)
+    dispatcher.handle(LoopTo(10, 3)) must_== State(12)
   }
 
   "dectect infinite loop in dispath and commandSteam loop" in new context {
-    dispatcher.handle(startState, LoopTo(10, 0)) must throwA[InfiniteLoopException]
+    dispatcher.handle(LoopTo(10, 0)) must throwA[InfiniteLoopException]
   }
 
-  "ask for possible ruling on every message" in new context {
-    failure("This need to be improved")
-  }.pendingUntilFixed("temporary as we move ruling locator out")
-
-  "ask RulingProvider for ruling if a ruling is needed" in new context {
-    mockRulingProvider.provideRulingFor(List(AskValueRuling("some", None))) returns List(AskValueRuling("some", Some(14)))
-
-    dispatcher.handle(startState, Ask("some"))
-    there was one(mockRulingProvider).provideRulingFor(List(AskValueRuling("some", None)))
+  "handle action with single Command and Single Event" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(1))) must_== State(1)
   }
 
-  "handle Rulings provided" in new context {
-    mockRulingProvider.provideRulingFor(List(AskValueRuling("some", None))) returns List(AskValueRuling("some", Some(14)))
-    dispatcher.handle(startState, Ask("some")) must_== State(14)
+  "handle action with single Command and multiple Event" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(1, 2, 3))) must_== State(6)
   }
 
-  "handle all Rulings provided" in new context {
-    mockRulingProvider.provideRulingFor(List(AskValueRuling("double", None))) returns List(AskValueRuling("double", Some(14)))
-    dispatcher.handle(startState, Ask("double")) must_== State(28)
+  "handle action with multiple Command each with single Event" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(2), FlexCommand(3))) must_== State(5)
   }
 
+  "handle action with multiple Command each with multiple Event" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(1, 2, 3), FlexCommand(4, 5))) must_== State(15)
+  }
+
+  "handle Action with single Command single Ruling that results int one Command" in new context {
+    mockRulingProvider.provideRulingFor(List(FlexRuling("what", None))) returns
+      List(FlexRuling("what", makeDecisionList(FlexCommand(14))))
+
+    dispatcher.handle(FlexAction(FlexCommand("what"))) must_== State(14)
+    there was one(mockRulingProvider).provideRulingFor(List(FlexRuling("what", None)))
+  }
+
+  private implicit def int2IncrementEvent(increment: Int): Event[State] = IncrementEvent(increment)
+
+  private def makeDecisionList(decisions: Command[State]*): Some[List[Command[State]]] = {
+    Some(decisions.toList)
+  }
 }

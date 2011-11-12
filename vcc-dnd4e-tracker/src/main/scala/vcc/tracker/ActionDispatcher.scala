@@ -16,26 +16,36 @@
  */
 package vcc.tracker
 
+import java.lang.IllegalStateException
+
 class InfiniteLoopException extends RuntimeException
 
 trait RulingProvider[S] {
   def provideRulingFor(rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
 }
 
-class ActionDispatcher[S]() {
 
-  private var rulingProvider:RulingProvider[S] = null
+object ActionDispatcher {
+  def getDispatcher[S](state: S): ActionDispatcher[S] = new ActionDispatcher[S](state)
+
+}
+
+class ActionDispatcher[S] private(initialState: S) {
+
+  private var rulingProvider: RulingProvider[S] = null
 
   def setRulingProvider(rulingProvider: RulingProvider[S]) {
     this.rulingProvider = rulingProvider
   }
 
-  private var returnState: S = null.asInstanceOf[S]
+  private var returnState: S = initialState
   private var commandStream: CommandStream[S] = null
 
-  def handle(state: S, action: Action[S]): S = {
+  def handle(action:Action[S]): S = {
+    if (commandStream != null)
+      throw new IllegalStateException("Cant do second dispatch")
+
     commandStream = action.createCommandStream()
-    returnState = state
     loopThroughCommandStream()
     returnState
   }
@@ -61,7 +71,7 @@ class ActionDispatcher[S]() {
     if (!rulings.isEmpty) {
       val decisions = rulingProvider.provideRulingFor(rulings)
       val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
-      for( rulingCommand <- rulingCommands) {
+      for (rulingCommand <- rulingCommands) {
         returnState = rulingCommand.generateEvents(returnState)(0).transition(returnState)
       }
     }
