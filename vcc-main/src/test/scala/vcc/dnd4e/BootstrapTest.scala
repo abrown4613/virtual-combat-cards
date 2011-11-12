@@ -17,7 +17,6 @@
 package vcc.dnd4e
 
 import vcc.util.swing.XHTMLPaneAgent
-import view.{EffectEditor, IconLibrary}
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dndi.app.CaptureTemplateEngine
 
@@ -27,7 +26,7 @@ import vcc.dndi.app.CaptureTemplateEngine
 class BootstrapTest extends SpecificationWithJUnit {
   "Load XHTMLPaneAgent configured properly" in {
     XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
-    XHTMLPaneAgent.isStartupComplete must beTrue
+    XHTMLPaneAgent.getInstance() must not beNull;
   }
 
   "Inititialize CaptureTemplateEngine" in {

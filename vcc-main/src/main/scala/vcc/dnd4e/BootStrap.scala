@@ -143,16 +143,17 @@ object BootStrap extends StartupRoutine {
       Registry.get[DataStoreURI]("Compendium").isDefined && Registry.get[CompendiumRepository](Registry.get[DataStoreURI]("Compendium").get).isDefined
     }
 
-    callStartupStep(srw, "Web Server") {
+    callStartupSimpleBlock(srw, "Web Server") {
       import vcc.infra.webserver.WebServer
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
       WebServer.initialize("webserver", 4143, Map(
         "/capture" -> classOf[CaptureServlet]
       ))
       Registry.get[WebServer]("webserver").get
+      true
     }
 
-    callStartupStep(srw, "Core Tracker") {
+    callStartupSimpleBlock(srw, "Core Tracker") {
       import vcc.controller.Tracker
       import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatContext}
       import vcc.dnd4e.domain.tracker.common.CombatStateRules
@@ -160,15 +161,16 @@ object BootStrap extends StartupRoutine {
       Tracker.initialize(new CombatController(new CombatStateRules(), new CombatContext()))
 
       //Make sure it got registered
-      Registry.get[scala.actors.Actor]("tracker").get.asInstanceOf[StartupStep]
+      Registry.get[scala.actors.Actor]("tracker")
+      true
     }
 
-    callStartupStep(srw, "User Interface Elements") {
+    callStartupSimpleBlock(srw, "User Interface Elements") {
       vcc.dnd4e.view.compendium.DNDICaptureMonitor
       XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
       FileChooserHelper.setLastDirectory(Configuration.baseDirectory.value)
       CaptureTemplateEngine.initialize(Configuration.dataDirectory)
-      XHTMLPaneAgent
+      XHTMLPaneAgent.getInstance() != null
     }
 
     srw.reportProgress(this, "Initialization complete.")

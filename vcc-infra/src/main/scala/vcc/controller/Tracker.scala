@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,15 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.controller
 
 import scala.actors.Actor
-import scala.actors.Actor.loop
-
 import vcc.controller.transaction._
 import vcc.model.Registry
-import vcc.infra.startup.StartupStep
 import vcc.controller.message.TransactionalAction
 
 /**
@@ -33,7 +29,8 @@ import vcc.controller.message.TransactionalAction
  * @param controller Action and query logic controller
  * @param _tlog The object to contain the Transaction
  */
-class Tracker(controller: TrackerController, _tlog: TransactionLog[TransactionalAction]) extends Actor with StartupStep with TransactionChangePublisher {
+class Tracker(controller: TrackerController, _tlog: TransactionLog[TransactionalAction])
+  extends Actor with TransactionChangePublisher {
   def this(controller: TrackerController) = this (controller, new TransactionLog[TransactionalAction]())
 
   private val logger = org.slf4j.LoggerFactory.getLogger("infra")
@@ -50,7 +47,7 @@ class Tracker(controller: TrackerController, _tlog: TransactionLog[Transactional
     for (obs <- observers) obs ! msg
   }
 
-  def act() = {
+  def act() {
     loop {
       react {
         case message.AddObserver(obs) =>
@@ -81,7 +78,7 @@ class Tracker(controller: TrackerController, _tlog: TransactionLog[Transactional
             _tlog.rollforward(this)
           } catch {case s: TransactionLogOutOfBounds =>}
         case message.ClearTransactionLog() =>
-          _tlog.clear
+          _tlog.clear()
 
         case s =>
           logger.warn("Error: Tracker can't handle this event: " + s)
@@ -94,7 +91,7 @@ object Tracker {
   def initialize(tc: TrackerController): Tracker = {
     val tracker = new Tracker(tc)
     Registry.register[Actor]("tracker", tracker)
-    tracker.start
+    tracker.start()
     tracker
   }
 

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,15 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
 import vcc.controller.SnapshotBuilder
 import vcc.controller.transaction.ChangeNotification
 import vcc.dnd4e.domain.tracker.common._
 import java.lang.Throwable
-import vcc.infra.AbnormalEnd
 import org.slf4j.LoggerFactory
+import vcc.util.swing.AbortApplication
 
 
 /**
@@ -35,7 +34,7 @@ trait SnapshotBuilderAborter[T] {
     val logger = LoggerFactory.getLogger("domain")
     logger.error("Failed to handle changes: {}", changes)
     logger.error("Causing exception: " + e.getMessage, e)
-    AbnormalEnd(this, "Internal error while updating state", e)
+    AbortApplication(this, "Internal error while updating state", e)
   }
 
 }
@@ -58,7 +57,7 @@ class CombatChangeAndStateSnapshotBuilder(subBuilder: CombatStateSnapshotBuilder
 
   def this() = this (new CombatStateSnapshotBuilder())
 
-  def processChange(change: ChangeNotification) = {
+  def processChange(change: ChangeNotification) {
     if (!change.isInstanceOf[CombatStateChange]) throw new IllegalArgumentException("Can't handle: " + change)
     change.asInstanceOf[CombatStateChange] match {
       case InitiativeOrderChange(newOrder) =>
