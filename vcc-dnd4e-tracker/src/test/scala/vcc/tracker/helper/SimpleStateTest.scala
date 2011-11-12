@@ -24,90 +24,39 @@ class SimpleStateTest extends SpecificationWithJUnit {
   type C = StateCommand[State]
 
   "actions" should {
-    "transalate Init to ResetCommand" in {
-      Init(10).createCommandStream() must_== CommandStream(ResetCommand(10))
-    }
-
-    "translate Increment to AlterCommand" in {
-      Increment(10).createCommandStream() must_== CommandStream(AlterCommand(10))
-    }
-
-    "translate Increment to AlterCommand" in {
-      Repeat(3, 2).createCommandStream() must_== CommandStream(AlterCommand(2), AlterCommand(2), AlterCommand(2))
-    }
-
-    "translate Ask to AskCommand" in {
-      Ask("something").createCommandStream() must_== CommandStream(AskCommand("something"))
-    }
-
-    "translate NTimeEvent to MultipleTimeCommand" in {
-      Multiply(2).createCommandStream() must_== CommandStream(MultiplyCommand(2))
-    }
-
     "translate LoopTo to Sequence builde" in {
       val x = LoopTo(10, 2).createCommandStream()
-      x.get(State(9)) must_== Some((AlterCommand(2), x))
+      x.get(State(9)) must_== Some((FlexCommand(IncrementEvent(2)), x))
       x.get(State(10)) must_== None
       x.get(State(11)) must_== None
+    }
+
+    "FlexCommand translates to series of comamnds" in {
+      val command1 = FlexCommand(IncrementEvent(1))
+      val command2 = FlexCommand(SetStateEvent(4))
+      FlexAction(command1, command2).createCommandStream() must_== CommandStream(command1, command2)
     }
   }
 
   "our AskCommand" should {
-    "provide ruling" in {
-      AskCommand("Prompt").requiredRulings(State(0)) must_== List(AskValueRuling("Prompt", None))
-    }
-  }
-
-  "our ruling" should {
-    "ruling must match" in {
-      AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("some", Some(10))) must beTrue
-      AskValueRuling("some", None).isRulingSameSubject(AskValueRuling("other", None)) must beFalse
+    "ask for ruling when FlexCommand has prompt parameter" in {
+      FlexCommand("what", IncrementEvent(1)).requiredRulings(State(10)) must_== List(FlexRuling("what", None))
     }
 
-    "ruling must have prompt" in {
-      AskValueRuling("Prompt", None).userPrompt(State(11)) must_== "Prompt (Current 11)"
+    "not ask for ruling when FlexCommand if prompt parameter is null" in {
+      FlexCommand(IncrementEvent(1)).requiredRulings(State(10)) must_== Nil
     }
 
-    "provide and anwer and generate events" in {
-      val ruling = AskValueRuling("Prompt", None).withDecision(10)
-      ruling must_== AskValueRuling("Prompt", Some(10))
-      ruling.generateCommands(State(1)) must_== List(ResetCommand(10))
-    }
-
-    "provide and anwer and tow generate events on double" in {
-      val ruling = AskValueRuling("double", None).withDecision(10)
-      ruling.generateCommands(State(1)) must_== List(ResetCommand(10), AlterCommand(10))
+    "ask for all rulings when FlexCommand has multiple prompts" in {
+      FlexCommand(List("what", "where"), List(IncrementEvent(1))).requiredRulings(State(10)) must_==
+        List(FlexRuling("what", None), FlexRuling("where", None))
     }
   }
 
   "the commands" should {
-    "AlterCommand make a proper set" in {
-      AlterCommand(2).generateTransitions(State(12)) must_== Nil
-      AlterCommand(2).generateEvents(State(12)) must_== List(IncrementEvent(2))
-    }
-
-    "ResetCommand make a proper set" in {
-      ResetCommand(10).generateTransitions(State(123)) must_== Nil
-      ResetCommand(10).generateEvents(State(123)) must_== List(SetStateEvent(10))
-    }
-
-    "when generate AskCommand return Nil" in {
-      AskCommand("some").generateTransitions(State(0)) must_== Nil
-      AskCommand("some").generateEvents(State(0)) must_== Nil
-    }
-
-    "when generate MultipleCommand return Increment of actions" in {
-      MultiplyCommand(0).generateTransitions(State(10)) must_== Nil
-      MultiplyCommand(1).generateTransitions(State(10)) must_== Nil
-      MultiplyCommand(3).generateTransitions(State(5)) must_== Nil
-      MultiplyCommand(-2).generateTransitions(State(10)) must_== Nil
-
-      MultiplyCommand(0).generateEvents(State(10)) must_== List(SetStateEvent(0))
-      MultiplyCommand(1).generateEvents(State(10)) must_== Nil
-      MultiplyCommand(3).generateEvents(State(5)) must_==
-        List(IncrementEvent(5), IncrementEvent(5))
-      MultiplyCommand(-2).generateEvents(State(10)) must_==
-        List(IncrementEvent(-10), IncrementEvent(-10), IncrementEvent(-10))
+    "when generate FlexCommand(a,b) generate events a, b" in {
+      FlexCommand(IncrementEvent(1), IncrementEvent(2)).generateEvents(State(1)) must_==
+        List(IncrementEvent(1), IncrementEvent(2))
     }
   }
 

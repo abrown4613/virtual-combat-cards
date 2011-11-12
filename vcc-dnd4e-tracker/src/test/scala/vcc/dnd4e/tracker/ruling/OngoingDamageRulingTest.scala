@@ -16,13 +16,12 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.transition.DamageCommand
 import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 import vcc.tracker.Ruling
 
-class OngoingDamageRulingTest extends RulingAcceptance("OngoingDamageRuling") with EventSourceSampleEvents {
+class OngoingDamageRulingTest extends RulingAcceptance[CombatState]("OngoingDamageRuling") with EventSourceSampleEvents {
 
   private val eid = EffectID(combA, 1)
   private val noDamageOngoingRuling = OngoingDamageRuling(eid, Some(0))
