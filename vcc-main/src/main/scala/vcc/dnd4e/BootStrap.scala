@@ -27,8 +27,8 @@ import vcc.util.swing.XHTMLPaneAgent
 import java.io.File
 import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
 import view.dialog.FileChooserHelper
-import view.{ReleaseInformation, MasterFrame}
 import vcc.dndi.app.CaptureTemplateEngine
+import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -172,6 +172,11 @@ object BootStrap extends StartupRoutine {
 
     srw.reportProgress(this, "Initialization complete.")
     val releaseInformation = ReleaseInformation(version, Configuration.getVersionReleaseURL, Configuration.getCheckAfterAge)
-    new MasterFrame(Configuration.baseDirectory.value, releaseInformation)
+    val configurationCallback = new ConfigurationPanelCallback {
+      def showConfiguration() {
+        new ConfigurationDialog(null, false).promptUser()
+      }
+    }
+    new MasterFrame(Configuration.baseDirectory.value, releaseInformation, configurationCallback)
   }
 }

@@ -33,7 +33,9 @@ import java.net.URL
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
-class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation) extends Frame {
+class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, configurationPanel: ConfigurationPanelCallback)
+  extends Frame {
+
   private val docker = new CustomDockingAdapter(baseDirectory)
   private val tracker = Registry.get[Actor]("tracker").get
 
@@ -43,7 +45,7 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation) e
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
   private val news = new NewsPanel(baseDirectory, releaseInformation)
   private val docks = createAllDockableComponents()
-  private val mainMenu = new MainMenu(director, docker, this, releaseInformation)
+  private val mainMenu = new MainMenu(director, docker, this, configurationPanel, releaseInformation)
 
   adjustPreferredSize()
   registerPanelsWithPanelDirector()
