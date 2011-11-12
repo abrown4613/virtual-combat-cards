@@ -19,18 +19,19 @@ package vcc.dnd4e
 import vcc.util.swing.XHTMLPaneAgent
 import view.{EffectEditor, IconLibrary}
 import org.specs2.mutable.SpecificationWithJUnit
+import vcc.dndi.app.CaptureTemplateEngine
 
 /**
  * Class to test singleton objects.
  */
 class BootstrapTest extends SpecificationWithJUnit {
-  "IconLibrary must startup" in {
-    (IconLibrary.MetalD20 must not beNull)
+  "Load XHTMLPaneAgent configured properly" in {
+    XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
+    XHTMLPaneAgent.isStartupComplete must beTrue
   }
 
-  "Load AutoComplete term" in {
-    EffectEditor.dictionary.findSuggestion("ong") must_== Some("ongoing")
-    EffectEditor.dictionary.findSuggestion("reg") must_== Some("regenerate")
+  "Inititialize CaptureTemplateEngine" in {
+    CaptureTemplateEngine.initialize(Configuration.dataDirectory)
+    CaptureTemplateEngine.getInstance must not beNull;
   }
-
 }

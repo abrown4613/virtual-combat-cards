@@ -18,7 +18,6 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.util.swing.SwingHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
 import vcc.controller.message.ClearTransactionLog
 import vcc.dnd4e.view.helper.PartyLoader
@@ -26,8 +25,7 @@ import vcc.util.UpdateManager
 import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
-import vcc.dnd4e.{ConfigurationDialog}
-import vcc.util.UpdateManager.Version
+import vcc.util.swing.SwingHelper
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties
@@ -47,7 +45,12 @@ object PropertyMenuItem {
   }
 }
 
-class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame, releaseInformation:ReleaseInformation)
+trait ConfigurationPanelCallback {
+  def showConfiguration()
+}
+
+class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame,
+               configurationPanel: ConfigurationPanelCallback, releaseInformation:ReleaseInformation)
   extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
@@ -60,8 +63,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   })
   fileMenu.contents += new Separator()
   fileMenu.contents += new MenuItem(Action("Preferences ...") {
-    val cdiag = new ConfigurationDialog(null, false)
-    cdiag.promptUser()
+    configurationPanel.showConfiguration()
   })
 
   private val combatMenu = new CombatMenu(director, parent)
