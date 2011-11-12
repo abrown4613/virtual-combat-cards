@@ -20,13 +20,23 @@ import scala.swing._
 import vcc.util.swing.MigPanel
 import vcc.dnd4e.view.IconLibrary
 import vcc.infra.webserver.WebServer
-import vcc.model.Registry
 import vcc.dndi.reader.DNDIObject
 import vcc.dndi.app.MonsterImportService
 import vcc.dndi.servlet.CaptureHoldingArea
 
-object DNDICaptureMonitor extends Frame {
-  private val webServer = Registry.get[WebServer]("webserver").get
+object DNDICaptureMonitor {
+  private var webServer:DNDICaptureMonitor = null
+
+  def initialize(webServer: WebServer) {
+    this.webServer = new DNDICaptureMonitor(webServer)
+  }
+
+  def getInstance() = webServer
+}
+
+class DNDICaptureMonitor(webServer: WebServer) extends Frame {
+
+  private val thisWindow = this
   private val stateMessage = new Label()
   private var entries: Seq[DNDIObject] = Nil
   private val entryList = new ListView[String](Nil)
@@ -45,7 +55,9 @@ object DNDICaptureMonitor extends Frame {
         }
       }
     }), "split 3")
-    add(new Button(Action("Close") {DNDICaptureMonitor.visible = false}))
+    add(new Button(Action("Close") {
+      thisWindow.visible = false
+    }))
   }
 
   private val startServerAction = Action("Start") {
@@ -94,5 +106,4 @@ object DNDICaptureMonitor extends Frame {
       }
     }
   })
-
 }

@@ -18,7 +18,6 @@ package vcc.controller
 
 import scala.actors.Actor
 import vcc.controller.transaction._
-import vcc.model.Registry
 import vcc.controller.message.TransactionalAction
 
 /**
@@ -90,7 +89,6 @@ class Tracker(controller: TrackerController, _tlog: TransactionLog[Transactional
 object Tracker {
   def initialize(tc: TrackerController): Tracker = {
     val tracker = new Tracker(tc)
-    Registry.register[Actor]("tracker", tracker)
     tracker.start()
     tracker
   }

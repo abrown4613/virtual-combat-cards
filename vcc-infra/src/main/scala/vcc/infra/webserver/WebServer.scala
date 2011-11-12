@@ -89,8 +89,6 @@ class WebServer(port: Int) {
 
 object WebServer {
 
-  import vcc.model.Registry
-
   /**
    * Create a WebServer
    * @param name Name of server in Registry
@@ -102,7 +100,6 @@ object WebServer {
     for((path,clazz)<-servletMap) {
       ws.registerServlet(clazz.getName,path)
     }
-    Registry.register(name, ws)
     try {
       ws.start()
     } catch {

@@ -31,7 +31,7 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
   private val compendiumView = new CompendiumView(IconLibrary.MetalD20.getImage, new TemplateProvider {
-    def fetchClassTemplate(clazz: String): Template = CaptureTemplateEngine.fetchClassTemplate(clazz)
+    def fetchClassTemplate(clazz: String): Template = CaptureTemplateEngine.getInstance.fetchClassTemplate(clazz)
   })
 
   this.contents += new MenuItem(Action("Import Character Builder File..."){
@@ -62,6 +62,6 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
     partyEditor.visible = true
   })
   this.contents += new MenuItem(Action("D&D Insider Capture ...") {
-    DNDICaptureMonitor.visible = true
+    DNDICaptureMonitor.getInstance().visible = true
   })
 }
