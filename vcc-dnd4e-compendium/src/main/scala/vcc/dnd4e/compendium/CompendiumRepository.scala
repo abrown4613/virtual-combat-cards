@@ -18,14 +18,13 @@ package vcc.dnd4e.compendium
 
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreFactory
-import vcc.infra.startup.StartupStep
 import scala.ref.WeakReference
 
 trait CompendiumRepositoryObserver {
   def compendiumChanged()
 }
 
-class CompendiumRepository(dsuri: DataStoreURI) extends StartupStep {
+class CompendiumRepository(dsuri: DataStoreURI) {
   val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
   val dataStore = DataStoreFactory.getDataStoreBuilder(dsuri).open(dsuri)

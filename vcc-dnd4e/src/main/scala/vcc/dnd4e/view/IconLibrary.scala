@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import javax.swing.ImageIcon
-import vcc.infra.AbnormalEnd
+import vcc.util.swing.AbortApplication
 
 /**
  * This is a collection of images loaded for the view components.
@@ -30,7 +29,7 @@ object IconLibrary {
       val icon = new ImageIcon(url)
       icon
     } else {
-      AbnormalEnd(this, "Failed to load resource: " + resource)
+      AbortApplication(this, "Failed to load resource: " + resource, null)
     }
   }
 

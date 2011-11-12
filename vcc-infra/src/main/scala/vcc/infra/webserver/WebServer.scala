@@ -16,14 +16,12 @@
  */
 package vcc.infra.webserver
 
-import vcc.infra.startup.StartupStep
-
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.bio.SocketConnector
 import org.mortbay.jetty.servlet.ServletHandler
 import org.mortbay.component._
 
-class WebServer(port: Int) extends StartupStep {
+class WebServer(port: Int) {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("infra")
 
@@ -65,8 +63,6 @@ class WebServer(port: Int) extends StartupStep {
   }
 
   initialize()
-
-  def isStartupComplete() = true
 
   def running = ServerStatus.running
 

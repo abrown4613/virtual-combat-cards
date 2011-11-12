@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,14 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing
 
 import javax.swing.ImageIcon
 import org.xhtmlrenderer.swing.AWTFSImage
 import java.io.File
 import org.xhtmlrenderer.resource.{CSSResource, ImageResource}
-import vcc.infra.startup.StartupStep
 
 /**
  * ContentCache is a simple caching mechanism used by the XHTMLPaneAgent to store images.
@@ -54,10 +52,10 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
     val url = this.getClass.getResource("/vcc/util/swing/missing.png")
     try {
       val icon = new javax.swing.ImageIcon(url)
-      if (icon == null) vcc.infra.AbnormalEnd(this, "Failed to read MissingIcon image", null)
+      if (icon == null) AbortApplication(this, "Failed to read MissingIcon image", null)
       icon
     } catch {
-      case s => vcc.infra.AbnormalEnd(this, "Failed to read MissingIcon image", s)
+      case s => AbortApplication(this, "Failed to read MissingIcon image", s)
     }
   }
 
@@ -110,13 +108,33 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
   }
 }
 
+object AbortApplication {
+
+  def apply(obj: AnyRef, msg: String, e: Throwable): Nothing = {
+
+    import java.io._
+
+    def outputMessage(os: PrintStream) {
+      os.println("VCC has ended abnormally, this is most likely due to a invalid build")
+      if (obj != null) os.println("Reporting object: " + obj.getClass.getCanonicalName)
+      os.println("Message: " + msg)
+      if (e != null) e.printStackTrace(os)
+    }
+    try {
+      val out = new PrintStream(new FileOutputStream(new File("abort.log")))
+      if (out != null) outputMessage(out)
+      out.close()
+    }
+    outputMessage(System.err)
+    sys.exit()
+  }
+}
+
 /**
  * Singleton to house a single Agent definition
  */
-object XHTMLPaneAgent extends StartupStep {
+object XHTMLPaneAgent {
   private var instance: XHTMLPaneAgent = null
-
-  def isStartupComplete() = (instance != null)
 
   def createInstance(baseDir: File) {
     synchronized {

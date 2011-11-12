@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.infra
 
 import org.apache.log4j._
-import org.slf4j.{Logger => SLogger}
 import vcc.infra.startup.StartupStep
 
 object LogService extends StartupStep {
@@ -51,7 +48,7 @@ object LogService extends StartupStep {
     val apdr = if (keep) {
       val lr = new RollingFileAppender(fmt, filename)
       lr.setMaxBackupIndex(10)
-      lr.rollOver
+      lr.rollOver()
       lr
     } else {
       new FileAppender(fmt, filename, false)
@@ -114,6 +111,6 @@ object AbnormalEnd {
       out.close()
     }
     outputMessage(System.err)
-    exit()
+    sys.exit()
   }
 }

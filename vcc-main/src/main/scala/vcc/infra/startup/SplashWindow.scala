@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.infra.startup
 
 import javax.swing._
@@ -66,7 +64,7 @@ trait StartupRoutine {
  * This is a helper trait to mark initialization
  */
 trait StartupStep {
-  def isStartupComplete():Boolean
+  def isStartupComplete:Boolean
 }
 
 /**
@@ -86,7 +84,7 @@ object SplashWindow extends JWindow with StartupReportWindow {
 	logger.info(cname + msg)
   }
   
-  def ownerWindow:Window = getOwner()
+  def ownerWindow:Window = getOwner
   
   protected def loadIcon(resource:String):ImageIcon = {
 	val url=this.getClass.getResource(resource)
@@ -99,7 +97,7 @@ object SplashWindow extends JWindow with StartupReportWindow {
   
   private val messageLabel = new JLabel()
   messageLabel setBorder BorderFactory.createLineBorder(Color.WHITE,2)
-  private val content = getContentPane().asInstanceOf[JPanel]
+  private val content = getContentPane.asInstanceOf[JPanel]
   content.add(new JLabel(loadIcon("/vcc/infra/startup/vcc-splash.png")),BorderLayout.NORTH)
   content.add(messageLabel,BorderLayout.CENTER)
   content.setBackground(Color.WHITE)
