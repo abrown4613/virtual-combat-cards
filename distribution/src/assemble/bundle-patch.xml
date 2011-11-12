@@ -13,14 +13,8 @@
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
-                <!-- include all dependencies manually -->
-                <include>org.exnebula:vcc-datastore</include>
-                <include>org.exnebula:vcc-dnd4e</include>
-                <include>org.exnebula:vcc-dnd4e-compendium</include>
-                <include>org.exnebula:vcc-dnd4e-tracker</include>
-                <include>org.exnebula:vcc-dndi</include>
-                <include>org.exnebula:vcc-infra</include>
-                <include>org.exnebula:vcc-main</include>
+                <!-- include all vcc modules -->
+                <include>org.exnebula:*</include>
             </includes>
             <binaries>
                 <outputDirectory>lib</outputDirectory>
