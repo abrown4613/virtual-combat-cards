@@ -11,10 +11,10 @@
     </componentDescriptors>
     <moduleSets>
         <moduleSet>
-            <!-- need to assemble before install -->
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
-                <include>org.exnebula:vcc-dnd4e</include>
+                <!-- include only main module -->
+                <include>org.exnebula:vcc-main</include>
             </includes>
             <binaries>
                 <outputDirectory>lib</outputDirectory>
