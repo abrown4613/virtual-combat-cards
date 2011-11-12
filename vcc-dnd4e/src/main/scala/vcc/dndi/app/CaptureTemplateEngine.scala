@@ -17,20 +17,33 @@
 package vcc.dndi.app
 
 import org.xml.sax.InputSource
-import vcc.dnd4e.Configuration
 import vcc.infra.xtemplate.{Template, FunctionTemplateFormatter, TemplateLoader, TemplateEngine}
 import org.slf4j.LoggerFactory
 import java.io.{StringReader, FileInputStream, File}
 import vcc.infra.diskcache.{UpdateableObjectStore, FileUpdateAwareLoader, UpdateAwareLoader, UpdateableObjectStoreResolver}
 
-object CaptureTemplateEngine extends UpdateableObjectStoreResolver[String, Template] {
-  private[dndi] val engine = new TemplateEngine()
-  private val loader = new TemplateLoader("t", engine)
-  private val logger = LoggerFactory.getLogger("domain")
+object CaptureTemplateEngine  {
+  private var instance:CaptureTemplateEngine = null
 
   val formatterCSV = new FunctionTemplateFormatter("csv", s => s.formatted("%s, "))
   val formatterSemiCSV = new FunctionTemplateFormatter("scsv", s => s.formatted("%s; "))
   val formatterModifier = new FunctionTemplateFormatter("modifier", s => try {Integer.parseInt(s).formatted("%+d")} catch {case _ => s})
+
+  def initialize(dataDirectory: File) {
+    instance = new CaptureTemplateEngine(dataDirectory)
+  }
+
+  def getInstance: CaptureTemplateEngine = instance
+
+  @deprecated("Should user CaptureTemplateEngine.getInstance.fetchClassTemplate")
+  def fetchClassTemplate(clazz: String) = getInstance.fetchClassTemplate(clazz)
+}
+
+class CaptureTemplateEngine(dataDirectory: File) extends UpdateableObjectStoreResolver[String, Template] {
+  import CaptureTemplateEngine._
+  private[dndi] val engine = new TemplateEngine()
+  private val loader = new TemplateLoader("t", engine)
+  private val logger = LoggerFactory.getLogger("domain")
 
   engine.registerDefaultDirectives()
   engine.registerFormatter(formatterCSV)
@@ -57,7 +70,7 @@ object CaptureTemplateEngine extends UpdateableObjectStoreResolver[String, Templ
     if(t != null) Some(t) else None
   }
 
-  private val templateDirectory: File = new File(Configuration.dataDirectory, "template")
+  private val templateDirectory: File = new File(dataDirectory, "template")
 
   private val store = new UpdateableObjectStore[String,Template](this)
 

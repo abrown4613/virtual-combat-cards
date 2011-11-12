@@ -21,12 +21,13 @@ import swing.{Button, Action, MainFrame}
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.model.Registry
 import vcc.infra.xtemplate.{TemplateDataSource}
-import vcc.dnd4e.Configuration
 import java.io.{FileInputStream, File}
 import vcc.dndi.reader.{DNDInsiderCapture, DNDIObject}
 
 object StatBlockGenerateAndView {
-  val baseDir = Configuration.dataDirectory
+  private val baseDir: File = new File("../vcc-dnd4e/fs-wc")
+
+  CaptureTemplateEngine.initialize(baseDir)
   XHTMLPaneAgent.createInstance(baseDir)
   println("File exists: " + (baseDir.getAbsolutePath) + (if (baseDir.exists) " exists" else " not exists"))
 

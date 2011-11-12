@@ -28,6 +28,7 @@ import java.io.File
 import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
 import view.dialog.FileChooserHelper
 import view.{ReleaseInformation, MasterFrame}
+import vcc.dndi.app.CaptureTemplateEngine
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -165,6 +166,7 @@ object BootStrap extends StartupRoutine {
       vcc.dnd4e.view.compendium.DNDICaptureMonitor
       XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
       FileChooserHelper.setLastDirectory(Configuration.baseDirectory.value)
+      CaptureTemplateEngine.initialize(Configuration.dataDirectory)
       XHTMLPaneAgent
     }
 
