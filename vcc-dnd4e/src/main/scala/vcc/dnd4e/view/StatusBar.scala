@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view
 
 import vcc.util.swing.MigPanel
-import vcc.dnd4e.BootStrap
 import scala.swing._
 import javax.swing.{Timer}
 import java.awt.event.{ActionEvent, ActionListener}
 import java.awt.Font
+import vcc.util.UpdateManager.Version
 
-class StatusBar() extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
+class StatusBar(currentVersion: Version) extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
 
   // Simple class for separator
   private class StatusBarSeparator() extends Component {
@@ -33,8 +31,8 @@ class StatusBar() extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
   }
 
   private val separatorLayout = "growy, w 3!, gp 0, growx 0"
-  private val versionLabel = new Label("Version: " + BootStrap.version.versionString)
-  private val baseFont = new Font(versionLabel.font.getFamily(), Font.PLAIN, versionLabel.font.getSize)
+  private val versionLabel = new Label("Version: " + currentVersion.versionString)
+  private val baseFont = new Font(versionLabel.font.getFamily, Font.PLAIN, versionLabel.font.getSize)
 
   versionLabel.font = baseFont
   versionLabel.tooltip = "Version of Virtual Combat Cards"
@@ -70,8 +68,8 @@ class StatusBar() extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
         updateUsage()
       }
     })
-    timer.start
-    updateUsage
+    timer.start()
+    updateUsage()
   }
 
   private def updateUsage() {

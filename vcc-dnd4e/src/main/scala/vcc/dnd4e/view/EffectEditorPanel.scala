@@ -21,12 +21,12 @@ import vcc.util.swing._
 import vcc.dnd4e.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
-import vcc.dnd4e.BootStrap
 import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
 import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
 
-class EffectEditorPanel(director: PanelDirector) extends MigPanel("fillx,hidemode 3")
-with CombatStateObserver with ContextObserver with ScalaDockableComponent {
+class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel:Int) extends MigPanel("fillx,hidemode 3")
+  with CombatStateObserver with ContextObserver with ScalaDockableComponent {
+
   private val memory = scala.collection.mutable.Map.empty[String, List[EffectEditor.StateMemento]]
   private var lastActiveKey: String = null
   private var _changing: Boolean = false
@@ -44,20 +44,13 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
     (if (cmb.isInOrder) cmb.orderId.toLabelString else cmb.combId.id) + " - " + cmb.name
   }))
 
-  private val efpl = if (
-    java.awt.Toolkit.getDefaultToolkit.getScreenSize.getHeight > 700 &&
-      BootStrap.getPropertyAsInt("vcc.view.efp.max", 3) > 2
-  ) {
-    List(new EffectEditor(this), new EffectEditor(this), new EffectEditor(this))
-  } else {
-    List(new EffectEditor(this), new EffectEditor(this))
-  }
+  private val effectEditorPanels = (1 to numberOfEffectPanel).map(x => new EffectEditor(this)).toList
 
   private var active: Option[UnifiedCombatantID] = Some(otherCombatant.unifiedId)
 
   add(new Label("Source:"), "span,split 2")
   add(activeCombo, "wrap,growx")
-  for (efp <- efpl) {
+  for (efp <- effectEditorPanels) {
     addSeparator("Effect")
     add(efp, "span 2,wrap,grow x")
   }
@@ -70,7 +63,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
         director.setActiveCombatant(Some(activeCombo.selection.item.unifiedId))
         if (activeCombo.selection.item.unifiedId.combId == otherId) {
           // This is used to reset target for Terrain
-          for (efp <- efpl) efp.setContext(Some(activeCombo.selection.item), false)
+          for (efp <- effectEditorPanels) efp.setContext(Some(activeCombo.selection.item), false)
         }
       }
       switchActive(activeCombo.selection.item.definition.entity.eid)
@@ -82,7 +75,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
       //Sequence changed time to update ActiveCombo
       activeModel.contents = state.elements ++ Seq(otherCombatant)
       setActiveComboSelection(active)
-      for (efp <- efpl) efp.setSequence(state.elements.map(c => c.combId))
+      for (efp <- effectEditorPanels) efp.setSequence(state.elements.map(c => c.combId))
     }
   }
 
@@ -104,10 +97,10 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
 
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
     if (isTarget) {
-      for (efp <- efpl) efp.setContext(state.combatantOption(nctx), true)
+      for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(nctx), true)
       target = nctx
     } else {
-      for (efp <- efpl) efp.setContext(state.combatantOption(nctx), false)
+      for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(nctx), false)
       _changing = true
       active = nctx
       setActiveComboSelection(active)
@@ -133,14 +126,14 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   def switchActive(nkey: String) {
     // If we have a key store it
     if (lastActiveKey != null) {
-      memory(lastActiveKey) = efpl.map(epl => epl.saveMemento())
+      memory(lastActiveKey) = effectEditorPanels.map(epl => epl.saveMemento())
     }
     lastActiveKey = nkey
     // Restore the previous mementos if they exit
     if (memory.contains(nkey)) {
-      efpl.zip(memory(nkey)).map(x => x._1.restoreMemento(x._2))
+      effectEditorPanels.zip(memory(nkey)).map(x => x._1.restoreMemento(x._2))
     } else {
-      efpl.foreach(ep => ep.clearPanel())
+      effectEditorPanels.foreach(ep => ep.clearPanel())
     }
   }
 
