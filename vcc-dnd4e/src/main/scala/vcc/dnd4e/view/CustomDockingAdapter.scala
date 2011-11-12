@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,19 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view
 
 import vcc.infra.docking.idw.InfoNodeDockAdapter
-import net.infonode.docking.util.DockingUtil
 import net.infonode.docking._
 import net.infonode.util.Direction
-import scala.swing.Dialog
+import util.{DeveloperUtil, DockingUtil}
 import vcc.util.swing.SwingHelper
+import java.awt.Window
+import javax.swing.JComponent
+import java.io.{File, FileInputStream, FileOutputStream}
+import swing.{Component, Dialog}
 
-class CustomDockingAdapter extends InfoNodeDockAdapter() {
-  def setup(owner: java.awt.Window): javax.swing.JComponent = {
+class CustomDockingAdapter(layoutBaseDirectory: File) extends InfoNodeDockAdapter() {
+  def setup(owner: Window): JComponent = {
     root = DockingUtil.createRootWindow(vm, true)
     val theme = new net.infonode.docking.theme.SlimFlatDockingTheme()
     root.getRootWindowProperties.addSuperObject(theme.getRootWindowProperties)
@@ -36,9 +37,11 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
     root.getWindowBar(Direction.RIGHT).setEnabled(true)
     root.getRootWindowProperties.getWindowAreaProperties.setBackgroundColor(root.getWindowBar(Direction.DOWN).getWindowBarProperties.getComponentProperties.getBackgroundColor)
     root.getRootWindowProperties.getSplitWindowProperties.setDividerSize(2)
-    //USE THIS TO VIEW LAYOUT:
-    //util.DeveloperUtil.createWindowLayoutFrame("My Main RootWindow", root).setVisible(true)
     root
+  }
+
+  def showWindowLayoutFrame() {
+    DeveloperUtil.createWindowLayoutFrame("My Main RootWindow", root).setVisible(true)
   }
 
   def restoreDefaultLayout() {
@@ -58,19 +61,19 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
             vm.getView("tgt-effects"),
             vm.getView("tgt-notes")
           )))))
-    root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-block"))
-    root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-effects"))
-    root.getWindowBar(net.infonode.util.Direction.LEFT).addTab(vm.getView("src-notes"))
+    root.getWindowBar(Direction.LEFT).addTab(vm.getView("src-block"))
+    root.getWindowBar(Direction.LEFT).addTab(vm.getView("src-effects"))
+    root.getWindowBar(Direction.LEFT).addTab(vm.getView("src-notes"))
   }
 
   //Helper functions to handle layout
   //These are all custom methods (not part of API)
 
-  def getDockLayoutFile: java.io.File = {
-    new java.io.File(vcc.dnd4e.Configuration.baseDirectory.value, "layout.dat")
+  private def getDockLayoutFile: File = {
+    new File(layoutBaseDirectory, "layout.dat")
   }
 
-  def restoreLayoutFromFile(owner: scala.swing.Component) {
+  def restoreLayoutFromFile(owner: Component) {
     val file = getDockLayoutFile
     if (file.exists) {
       try {
@@ -85,13 +88,13 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
     }
   }
 
-  def storeLayoutToFile(owner: scala.swing.Component) {
+  def storeLayoutToFile(owner: Component) {
     val file = getDockLayoutFile
     if (!file.exists ||
       Dialog.showConfirmation(owner, "A layout file already exists, overwrite?", "Overwrite layout file?", Dialog.Options.YesNo) == Dialog.Result.Yes
     ) {
       try {
-        storeLayout(new java.io.FileOutputStream(file))
+        storeLayout(new FileOutputStream(file))
       } catch {
         case s =>
           Dialog.showMessage(owner, "Failed to save " + file + ".\nReason: " + s.getMessage, "Failed to save Layout", Dialog.Message.Error, null)
@@ -104,7 +107,7 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
       val file = getDockLayoutFile
       if (file.exists) {
         try {
-          restoreLayout(new java.io.FileInputStream(file))
+          restoreLayout(new FileInputStream(file))
         } catch {
           case _ => this.restoreDefaultLayout()
         }
@@ -112,5 +115,4 @@ class CustomDockingAdapter extends InfoNodeDockAdapter() {
         this.restoreDefaultLayout()
     }
   }
-
 }

@@ -26,6 +26,8 @@ import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
 import java.io.File
 import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
+import view.dialog.FileChooserHelper
+import view.{ReleaseInformation, MasterFrame}
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -162,10 +164,12 @@ object BootStrap extends StartupRoutine {
     callStartupStep(srw, "User Interface Elements") {
       vcc.dnd4e.view.compendium.DNDICaptureMonitor
       XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
+      FileChooserHelper.setLastDirectory(Configuration.baseDirectory.value)
       XHTMLPaneAgent
     }
 
     srw.reportProgress(this, "Initialization complete.")
-    new vcc.dnd4e.view.MasterFrame(version)
+    val releaseInformation = ReleaseInformation(version, Configuration.getVersionReleaseURL, Configuration.getCheckAfterAge)
+    new MasterFrame(Configuration.baseDirectory.value, releaseInformation)
   }
 }

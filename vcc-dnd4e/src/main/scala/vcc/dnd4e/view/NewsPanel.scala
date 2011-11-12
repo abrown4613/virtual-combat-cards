@@ -26,14 +26,12 @@ import java.awt.{Desktop, Dimension}
 import vcc.util.UpdateManager
 import swing._
 import vcc.util.swing.{SwingHelper, XHTMLPane, MigPanel}
-import vcc.dnd4e.{Configuration}
 import org.slf4j.LoggerFactory
-import vcc.util.UpdateManager.Version
 
 /**
  * Visual area for displaying news and informing of version updates.
  */
-class NewsPanel(currentVersion: Version) extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDockableComponent {
+class NewsPanel(baseDirectory: File, releaseInformation: ReleaseInformation) extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDockableComponent {
   def dockFocusComponent: JComponent = null
 
   def dockID: DockID = DockID("project-news")
@@ -44,7 +42,7 @@ class NewsPanel(currentVersion: Version) extends MigPanel("fill", "", "[grow 0]5
   xhtml.removeLinkListener()
 
   private val remoteFile = new RemoteFile(
-    new File(Configuration.baseDirectory.value, "feed.rss"),
+    new File(baseDirectory, "feed.rss"),
     new URL("http://www.exnebula.org/taxonomy/term/17/0/feed"))
 
   xhtml.addMouseTrackingListener(new LinkListener {
@@ -64,7 +62,7 @@ class NewsPanel(currentVersion: Version) extends MigPanel("fill", "", "[grow 0]5
   private val upgradeButton = new Button(Action("Upgrade...") {
     SwingHelper.invokeInOtherThread {
       // We provide one hour cache duration to avoid double fetch.
-      UpdateManager.runUpgradeProcess(Configuration.getVersionReleaseURL, currentVersion, IconLibrary.MetalD20.getImage, 3600 * 1000)
+      UpdateManager.runUpgradeProcess(releaseInformation.versionReleaseURL, releaseInformation.currentVersion, IconLibrary.MetalD20.getImage, 3600 * 1000)
     }
   })
   upgradeButton.enabled = false
@@ -118,7 +116,7 @@ class NewsPanel(currentVersion: Version) extends MigPanel("fill", "", "[grow 0]5
           val oldList = readFeed(remoteFile.getLocalCopy)
           val list = readFeed(remoteFile.fetchIfOlder(age))
 
-          val needsUpgrade = UpdateManager.checkForUpgrade(Configuration.getVersionReleaseURL, currentVersion, Configuration.getCheckAfterAge)
+          val needsUpgrade = UpdateManager.checkForUpgrade(releaseInformation.versionReleaseURL, releaseInformation.currentVersion, releaseInformation.checkAfterAge)
 
           val hasNewNews = list.map(_.guid) != oldList.map(_.guid)
           Some((list, hasNewNews, needsUpgrade))

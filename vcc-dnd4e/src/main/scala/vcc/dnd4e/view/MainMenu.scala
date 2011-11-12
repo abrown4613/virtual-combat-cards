@@ -26,7 +26,7 @@ import vcc.util.UpdateManager
 import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
-import vcc.dnd4e.{Configuration, ConfigurationDialog}
+import vcc.dnd4e.{ConfigurationDialog}
 import vcc.util.UpdateManager.Version
 
 /**
@@ -47,7 +47,8 @@ object PropertyMenuItem {
   }
 }
 
-class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame, currentVersion: Version) extends MenuBar {
+class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame, releaseInformation:ReleaseInformation)
+  extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
   private val fileMenu = new Menu("File");
@@ -132,9 +133,8 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   helpMenu.contents += new MenuItem(Action("Check for Updates ...") {
     SwingHelper.invokeInOtherThread {
       logger.info("Update manager: Starting update")
-      val url = Configuration.getVersionReleaseURL
-      logger.info("Update manager: Fetch version from URL: " + url)
-      UpdateManager.runUpgradeProcess(url, currentVersion, IconLibrary.MetalD20.getImage, 0)
+      logger.info("Update manager: Fetch version from URL: " + releaseInformation.versionReleaseURL)
+      UpdateManager.runUpgradeProcess(releaseInformation.versionReleaseURL, releaseInformation.currentVersion, IconLibrary.MetalD20.getImage, 0)
       logger.info("Update manager: End update")
     }
   })
@@ -143,7 +143,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   helpMenu.contents += new MenuItem(Action("About") {
     Dialog.showMessage(
       Component.wrap(parent.peer.getRootPane),
-      "This is Virtual Combant Cards version: " + currentVersion.versionString +
+      "This is Virtual Combant Cards version: " + releaseInformation.currentVersion.versionString +
         "\nDesigned at: www.exnebula.org",
       "About Virtual Combat Cards",
       Dialog.Message.Info, IconLibrary.MetalD20
