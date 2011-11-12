@@ -21,22 +21,22 @@ import vcc.dnd4e.tracker.common.CombatState
 import org.specs2.specification.Fragments
 import vcc.tracker.{Command, Ruling}
 
-abstract class RulingAcceptance(testTitle: String) extends SpecificationWithJUnit {
+abstract class RulingAcceptance[S](testTitle: String) extends SpecificationWithJUnit {
 
-  private case class DummyRuling(decision: Option[Int]) extends Ruling[CombatState, Int, DummyRuling] {
+  private case class DummyRuling(decision: Option[Int]) extends Ruling[S, Int, DummyRuling] {
     def withDecision(decision: Int): DummyRuling = copy(decision = Some(decision))
 
-    def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = false
+    def isRulingSameSubject(otherRuling: Ruling[S, _, _]): Boolean = false
 
-    def userPrompt(state: CombatState): String = null
+    def userPrompt(state: S): String = null
 
-    protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = Nil
+    protected def commandsFromDecision(state: S): List[Command[S]] = Nil
   }
 
-  protected val rulingWithAnswer: Ruling[CombatState, _, _]
-  protected val rulingWithoutAnswer: Ruling[CombatState, _, _]
+  protected val rulingWithAnswer: Ruling[S, _, _]
+  protected val rulingWithoutAnswer: Ruling[S, _, _]
   protected val userPromptMessage: String
-  protected val state: CombatState
+  protected val state: S
 
   def is = testTitle.title ^
     baseCases ^

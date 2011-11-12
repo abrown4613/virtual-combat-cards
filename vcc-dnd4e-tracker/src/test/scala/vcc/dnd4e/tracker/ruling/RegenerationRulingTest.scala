@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.event.{EventSourceSampleEvents}
 import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.{CombatState, EffectID}
 
-class RegenerationRulingTest extends RulingAcceptance("OngoingDamageRuling") with EventSourceSampleEvents {
+class RegenerationRulingTest extends RulingAcceptance[CombatState]("OngoingDamageRuling") with EventSourceSampleEvents {
   private val eid = EffectID(combA, 1)
   private val zeroRegenRuling = RegenerationRuling(eid, Some(0))
   private val realRegenRuling = RegenerationRuling(eid, Some(7))
