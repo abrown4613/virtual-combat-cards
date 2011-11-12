@@ -25,6 +25,7 @@
         <module>vcc-dnd4e-compendium</module>
         <module>vcc-datastore</module>
         <module>distribution</module>
+        <module>vcc-main</module>
     </modules>
 
     <scm>

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,30 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc
 
-
 import vcc.infra.startup._
-import scala.swing.Frame
 import vcc.infra.LogService
 import vcc.util.swing.SwingHelper
+import javax.swing.JOptionPane
+import org.slf4j.LoggerFactory
 
 object Main {
 
   def warnFailure(win: java.awt.Window) {
-    import javax.swing.JOptionPane
-    
     JOptionPane.showMessageDialog(win,"Virtual Combat Cards initialization failed. Please check launch.log for clues.\n"+
                                   "Check http://www.exnebula.org/vcc to look for help or report an issue.",
                                   "Initialization failed",JOptionPane.ERROR_MESSAGE)
   }
   
-  def main(args : Array[String]) : Unit = {
+  def main(args : Array[String]) {
 
     LogService.initializeStartupLog()
     
-    val logger = org.slf4j.LoggerFactory.getLogger("startup")
+    val logger = LoggerFactory.getLogger("startup")
 
     val frame = SplashWindow.showSplash(vcc.dnd4e.BootStrap)
     if(frame != null) {
@@ -46,7 +43,7 @@ object Main {
     } else {
       warnFailure(SplashWindow)
       logger.error("Initialization failed.")
-      exit(1)
+      sys.exit(1)
     }
   }
 }
