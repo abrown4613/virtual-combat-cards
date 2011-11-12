@@ -26,21 +26,24 @@ import vcc.controller.TrackerChangeObserver
 import vcc.dnd4e.domain.tracker.snapshot.{CombatChangeAndStateSnapshotBuilder, CombatStateWithChanges}
 import vcc.infra.prompter.RulingBroker
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
-import vcc.dnd4e.Configuration
 import vcc.util.UpdateManager.Version
 import java.awt.Toolkit
+import java.io.File
+import java.net.URL
 
-class MasterFrame(currentVersion: Version) extends Frame {
-  private val docker = new CustomDockingAdapter()
+case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
+
+class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation) extends Frame {
+  private val docker = new CustomDockingAdapter(baseDirectory)
   private val tracker = Registry.get[Actor]("tracker").get
 
-  private val statusBar = new StatusBar(currentVersion)
+  private val statusBar = new StatusBar(releaseInformation.currentVersion)
   private val csm = new TrackerChangeObserver[CombatStateWithChanges](new CombatChangeAndStateSnapshotBuilder(), tracker)
   private val director = new PanelDirector(tracker, csm, statusBar,
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
-  private val news = new NewsPanel(currentVersion)
+  private val news = new NewsPanel(baseDirectory, releaseInformation)
   private val docks = createAllDockableComponents()
-  private val mainMenu = new MainMenu(director, docker, this, currentVersion)
+  private val mainMenu = new MainMenu(director, docker, this, releaseInformation)
 
   adjustPreferredSize()
   registerPanelsWithPanelDirector()
@@ -142,7 +145,7 @@ class MasterFrame(currentVersion: Version) extends Frame {
         }
       case WindowOpened(win) =>
         //Go fetch new and updates if needed
-        news.updateIfOld(Configuration.getCheckAfterAge, docker);
+        news.updateIfOld(releaseInformation.checkAfterAge, docker);
     }
   }
 }

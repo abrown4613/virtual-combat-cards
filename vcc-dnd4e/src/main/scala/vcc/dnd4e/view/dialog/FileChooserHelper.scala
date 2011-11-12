@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,19 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.dialog
 
 import javax.swing.{JComponent, JFileChooser, JOptionPane}
 import javax.swing.filechooser.{FileFilter, FileNameExtensionFilter}
 import java.io.File
-import vcc.model.Registry
-import vcc.dnd4e.{Configuration => SystemConfiguration}
 
 /**
  * Series of utility methods for creating File dialogs.
  */
 object FileChooserHelper {
+
+  private var lastDirectory = new File(System.getProperty("user.dir"))
+
+  def setLastDirectory(newDirectory: File) {
+    synchronized {
+      lastDirectory = newDirectory
+    }
+  }
 
   /**
    * Filter files that are party. 
@@ -50,7 +55,7 @@ object FileChooserHelper {
 
   protected def confirmOverwrite(file: File): Option[File] = {
     if (file.exists) {
-      var res = JOptionPane.showConfirmDialog(
+      val res = JOptionPane.showConfirmDialog(
         null, "Are you sure you want to overwrite " + file.getAbsolutePath + "?",
         "Overwrite File?", JOptionPane.YES_NO_OPTION)
       if (res == JOptionPane.YES_OPTION) Some(file)
@@ -59,11 +64,7 @@ object FileChooserHelper {
       Some(file)
   }
 
-  private def getWorkDirectory(): File = {
-    val lastDir = Registry.get[File]("lastDirectory")
-    if (lastDir.isDefined) lastDir.get
-    else SystemConfiguration.baseDirectory.value
-  }
+  private def getWorkDirectory: File = lastDirectory
 
   /**
    * Open a Save Dialog, get file, and normalize name to add extension.
@@ -71,14 +72,14 @@ object FileChooserHelper {
    * @param filter Optional file filter.
    * @return Return None on a cancel, Some(file) otherwise
    */
-  def chooseSaveFile(over: JComponent, filter: FileFilter): Option[java.io.File] = {
-    val fileDiag = new JFileChooser(getWorkDirectory)
-    if (filter != null) fileDiag.setFileFilter(filter)
+  def chooseSaveFile(over: JComponent, filter: FileFilter): Option[File] = {
+    val fileDialog = new JFileChooser(getWorkDirectory)
+    if (filter != null) fileDialog.setFileFilter(filter)
 
-    val result = fileDiag.showSaveDialog(over)
+    val result = fileDialog.showSaveDialog(over)
     if (result == JFileChooser.APPROVE_OPTION) {
-      val file = normalizeFileName(fileDiag.getSelectedFile, filter)
-      Registry.register("lastDirectory", fileDiag.getSelectedFile.getParentFile)
+      val file = normalizeFileName(fileDialog.getSelectedFile, filter)
+      setLastDirectory(fileDialog.getSelectedFile.getParentFile)
       confirmOverwrite(file)
     } else
       None
@@ -90,16 +91,15 @@ object FileChooserHelper {
    * @param filter Optional file filter.
    * @return Return None on a cancel, Some(file) otherwise
    */
-  def chooseOpenFile(over: JComponent, filter: FileFilter): Option[java.io.File] = {
-    val fileDiag = new JFileChooser(getWorkDirectory)
-    if (filter != null) fileDiag.setFileFilter(filter)
+  def chooseOpenFile(over: JComponent, filter: FileFilter): Option[File] = {
+    val fileDialog = new JFileChooser(getWorkDirectory)
+    if (filter != null) fileDialog.setFileFilter(filter)
 
-    val result = fileDiag.showOpenDialog(over)
+    val result = fileDialog.showOpenDialog(over)
     if (result == JFileChooser.APPROVE_OPTION) {
-      Registry.register("lastDirectory", fileDiag.getSelectedFile.getParentFile)
-      Some(fileDiag.getSelectedFile)
+      setLastDirectory(fileDialog.getSelectedFile.getParentFile)
+      Some(fileDialog.getSelectedFile)
     } else
       None
   }
-
 }
