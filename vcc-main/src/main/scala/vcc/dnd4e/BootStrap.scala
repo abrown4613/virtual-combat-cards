@@ -73,8 +73,9 @@ object BootStrap extends StartupRoutine {
       LogService
     }
     // Compendium depends on active Compendium settings
-    callStartupStep(srw, "Compendium components") {
-      Compendium
+    callStartupSimpleBlock(srw, "Compendium components") {
+      Compendium.activeRepository
+      true
     }
 
     if (createCompendium) {
