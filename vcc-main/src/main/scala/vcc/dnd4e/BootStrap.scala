@@ -30,12 +30,6 @@ import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
 
-  def getPropertyAsInt(name: String, default: Int): Int = try {
-    System.getProperty(name).toInt
-  } catch {
-    case _ => default
-  }
-
   /**
    * Return current version that is being used, can be faked by setting System property. vcc.fake.version
    */
@@ -172,6 +166,6 @@ object BootStrap extends StartupRoutine {
     }
 
     srw.reportProgress(this, "Initialization complete.")
-    new vcc.dnd4e.view.MasterFrame()
+    new vcc.dnd4e.view.MasterFrame(version)
   }
 }

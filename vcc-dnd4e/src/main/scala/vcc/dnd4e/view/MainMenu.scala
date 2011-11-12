@@ -1,4 +1,4 @@
-/**
+/*
  *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import scala.swing._
@@ -27,7 +26,8 @@ import vcc.util.UpdateManager
 import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
-import vcc.dnd4e.{Configuration, ConfigurationDialog, BootStrap}
+import vcc.dnd4e.{Configuration, ConfigurationDialog}
+import vcc.util.UpdateManager.Version
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties
@@ -47,7 +47,7 @@ object PropertyMenuItem {
   }
 }
 
-class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame) extends MenuBar {
+class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame, currentVersion: Version) extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
   private val fileMenu = new Menu("File");
@@ -134,7 +134,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
       logger.info("Update manager: Starting update")
       val url = Configuration.getVersionReleaseURL
       logger.info("Update manager: Fetch version from URL: " + url)
-      UpdateManager.runUpgradeProcess(url, BootStrap.version, IconLibrary.MetalD20.getImage, 0)
+      UpdateManager.runUpgradeProcess(url, currentVersion, IconLibrary.MetalD20.getImage, 0)
       logger.info("Update manager: End update")
     }
   })
@@ -143,7 +143,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   helpMenu.contents += new MenuItem(Action("About") {
     Dialog.showMessage(
       Component.wrap(parent.peer.getRootPane),
-      "This is Virtual Combant Cards version: " + vcc.dnd4e.BootStrap.version.versionString +
+      "This is Virtual Combant Cards version: " + currentVersion.versionString +
         "\nDesigned at: www.exnebula.org",
       "About Virtual Combat Cards",
       Dialog.Message.Info, IconLibrary.MetalD20

@@ -21,6 +21,7 @@ import vcc.infra.LogService
 import vcc.util.swing.SwingHelper
 import javax.swing.JOptionPane
 import org.slf4j.LoggerFactory
+import vcc.dnd4e.BootStrap
 
 object Main {
 
@@ -36,7 +37,7 @@ object Main {
     
     val logger = LoggerFactory.getLogger("startup")
 
-    val frame = SplashWindow.showSplash(vcc.dnd4e.BootStrap)
+    val frame = SplashWindow.showSplash(BootStrap)
     if(frame != null) {
       SwingHelper.invokeLater{frame.visible = true}
       logger.info("Initialization complete.")

@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import vcc.infra.docking.{DockID, ScalaDockableComponent}
@@ -27,13 +26,14 @@ import java.awt.{Desktop, Dimension}
 import vcc.util.UpdateManager
 import swing._
 import vcc.util.swing.{SwingHelper, XHTMLPane, MigPanel}
-import vcc.dnd4e.{BootStrap, Configuration}
+import vcc.dnd4e.{Configuration}
 import org.slf4j.LoggerFactory
+import vcc.util.UpdateManager.Version
 
 /**
  * Visual area for displaying news and informing of version updates.
  */
-class NewsPanel extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDockableComponent {
+class NewsPanel(currentVersion: Version) extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDockableComponent {
   def dockFocusComponent: JComponent = null
 
   def dockID: DockID = DockID("project-news")
@@ -64,7 +64,7 @@ class NewsPanel extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDo
   private val upgradeButton = new Button(Action("Upgrade...") {
     SwingHelper.invokeInOtherThread {
       // We provide one hour cache duration to avoid double fetch.
-      UpdateManager.runUpgradeProcess(Configuration.getVersionReleaseURL, BootStrap.version, IconLibrary.MetalD20.getImage, 3600 * 1000)
+      UpdateManager.runUpgradeProcess(Configuration.getVersionReleaseURL, currentVersion, IconLibrary.MetalD20.getImage, 3600 * 1000)
     }
   })
   upgradeButton.enabled = false
@@ -118,7 +118,7 @@ class NewsPanel extends MigPanel("fill", "", "[grow 0]5[grow 100]") with ScalaDo
           val oldList = readFeed(remoteFile.getLocalCopy)
           val list = readFeed(remoteFile.fetchIfOlder(age))
 
-          val needsUpgrade = UpdateManager.checkForUpgrade(Configuration.getVersionReleaseURL, BootStrap.version, Configuration.getCheckAfterAge)
+          val needsUpgrade = UpdateManager.checkForUpgrade(Configuration.getVersionReleaseURL, currentVersion, Configuration.getCheckAfterAge)
 
           val hasNewNews = list.map(_.guid) != oldList.map(_.guid)
           Some((list, hasNewNews, needsUpgrade))
