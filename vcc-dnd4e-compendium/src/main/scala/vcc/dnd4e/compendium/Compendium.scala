@@ -16,9 +16,7 @@
  */
 package vcc.dnd4e.compendium
 
-import vcc.infra.startup.StartupStep
-
-object Compendium extends StartupStep {
+object Compendium {
   val monsterClassID = EntityClassID(new java.net.URI("vcc-class:monster"))
   val monsterClassIDStorageString = monsterClassID.uri.toString
   val characterClassID = EntityClassID(new java.net.URI("vcc-class:character"))
