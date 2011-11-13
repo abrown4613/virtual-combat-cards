@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatState}
-import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
+import vcc.dnd4e.tracker.command.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 import vcc.tracker.{Command, InvalidDecisionException, Ruling}
 
 case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOrderID])

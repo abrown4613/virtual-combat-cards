@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
-import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
+import vcc.dnd4e.tracker.command.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 import vcc.tracker.{InvalidDecisionException, Ruling}
 
 class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") with SampleStateData {

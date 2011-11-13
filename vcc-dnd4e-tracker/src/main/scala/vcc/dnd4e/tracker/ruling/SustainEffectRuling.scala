@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.dnd4e.tracker.transition.{SustainEffectCommand}
+import vcc.dnd4e.tracker.command.{SustainEffectCommand}
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
 import vcc.tracker.{Command, Ruling}
 

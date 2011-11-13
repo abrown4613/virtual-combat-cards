@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, EffectID}
-import vcc.dnd4e.tracker.transition.HealCommand
+import vcc.dnd4e.tracker.command.HealCommand
 import vcc.tracker.{Command, Ruling}
 
 case class RegenerationRuling(sourceEffect: EffectID, decision: Option[Int])

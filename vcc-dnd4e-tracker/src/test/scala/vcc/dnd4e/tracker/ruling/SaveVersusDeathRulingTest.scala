@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.dnd4e.tracker.transition.{HealCommand, FailDeathSaveCommand}
+import vcc.dnd4e.tracker.command.{HealCommand, FailDeathSaveCommand}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, EventSourceSampleEvents}
 import vcc.dnd4e.tracker.common.{CombatState}
 import vcc.tracker.Ruling

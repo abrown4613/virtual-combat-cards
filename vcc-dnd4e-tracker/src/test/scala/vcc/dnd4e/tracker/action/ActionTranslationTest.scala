@@ -18,8 +18,8 @@ package vcc.dnd4e.tracker.action
  */
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Command._
-import vcc.dnd4e.tracker.transition._
-import vcc.dnd4e.tracker.transition.AutomationCommandSource._
+import vcc.dnd4e.tracker.command._
+import vcc.dnd4e.tracker.command.AutomationCommandSource._
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.tracker.{Action, Command, SeqCommandStream}

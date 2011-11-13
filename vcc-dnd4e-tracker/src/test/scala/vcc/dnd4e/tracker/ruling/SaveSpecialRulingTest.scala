@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.dnd4e.tracker.transition.{UpdateEffectConditionCommand, CancelEffectCommand}
+import vcc.dnd4e.tracker.command.{UpdateEffectConditionCommand, CancelEffectCommand}
 import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.{CombatState, Effect, EffectID}
 
