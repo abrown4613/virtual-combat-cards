@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.event.EventSourceSampleEvents
-import vcc.dnd4e.tracker.transition.SustainEffectCommand
+import vcc.dnd4e.tracker.command.SustainEffectCommand
 import org.specs2.specification.Fragments
 import vcc.tracker.Ruling
 import vcc.dnd4e.tracker.common.{CombatState, EffectID}

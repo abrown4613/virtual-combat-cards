@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
-import vcc.dnd4e.tracker.transition.{FailDeathSaveCommand, HealCommand}
+import vcc.dnd4e.tracker.command.{FailDeathSaveCommand, HealCommand}
 import vcc.tracker.{Command, Ruling}
 
 object SaveVersusDeathResult extends Enumeration {

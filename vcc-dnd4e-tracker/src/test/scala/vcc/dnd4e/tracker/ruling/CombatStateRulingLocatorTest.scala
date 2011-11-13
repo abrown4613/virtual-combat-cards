@@ -20,7 +20,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common.{EffectID, Duration, CombatState}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, AddEffectEvent, EventSourceSampleEvents}
-import vcc.dnd4e.tracker.transition.{StartRoundCommand, EndRoundCommand}
+import vcc.dnd4e.tracker.command.{StartRoundCommand, EndRoundCommand}
 import vcc.tracker.Ruling
 
 class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSourceSampleEvents {

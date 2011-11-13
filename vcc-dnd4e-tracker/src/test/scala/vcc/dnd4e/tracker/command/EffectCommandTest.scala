@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.tracker.transition
+package vcc.dnd4e.tracker.command
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition

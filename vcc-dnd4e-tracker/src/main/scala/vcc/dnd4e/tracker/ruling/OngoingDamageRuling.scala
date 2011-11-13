@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
-import vcc.dnd4e.tracker.transition.DamageCommand
+import vcc.dnd4e.tracker.command.DamageCommand
 import vcc.tracker.{Command, Ruling}
 
 case class OngoingDamageRuling(sourceEffect: EffectID, decision: Option[Int])

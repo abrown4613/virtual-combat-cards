@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{EffectID, CombatState}
-import vcc.dnd4e.tracker.transition.{CancelEffectCommand}
+import vcc.dnd4e.tracker.command.{CancelEffectCommand}
 import vcc.tracker.{Command, Ruling}
 
 object SaveRulingResult extends Enumeration {

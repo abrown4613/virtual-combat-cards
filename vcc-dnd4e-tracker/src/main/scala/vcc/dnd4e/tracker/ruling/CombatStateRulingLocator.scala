@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.tracker.transition.{EndRoundCommand, StartRoundCommand, NextUpCommand}
+import vcc.dnd4e.tracker.command.{EndRoundCommand, StartRoundCommand, NextUpCommand}
 import vcc.dnd4e.tracker.common.ConditionMatcher
 import vcc.tracker.{Command, Ruling}
 
