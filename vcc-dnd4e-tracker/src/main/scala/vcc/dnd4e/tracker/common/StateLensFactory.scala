@@ -14,15 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.dnd4e.tracker
+package vcc.dnd4e.tracker.common
 
-import common._
 import vcc.scalaz.Lens
 
-trait LensFactory[S]
-
-trait StateLensFactory extends LensFactory[CombatState] {
+abstract class StateLensFactory {
   val rosterLens: Lens[CombatState, Roster[Combatant]]
   val orderLens: Lens[CombatState, InitiativeOrder]
   protected val combatantHealthLens: Lens[Combatant, HealthTracker]

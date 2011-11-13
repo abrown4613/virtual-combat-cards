@@ -16,7 +16,6 @@
  */
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.tracker.{Event}
 
 case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {

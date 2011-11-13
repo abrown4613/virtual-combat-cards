@@ -19,7 +19,6 @@ package vcc.dnd4e.tracker.event
 import org.specs2.mock.Mockito
 import org.specs2.{SpecificationWithJUnit}
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.scalaz.Lens
 import java.lang.Exception
 import vcc.controller.IllegalActionException
