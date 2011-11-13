@@ -36,7 +36,7 @@ case class FlexAction(commands: Command[State]*) extends Action[State] {
 case class FlexCommand(rulingPrompts: List[String], events: List[Event[State]]) extends Command[State] {
   def generateTransitions(iState: State): List[StateTransition[State]] = Nil
 
-  override def generateEvents(state: State): List[Event[State]] = events
+  def generateEvents(state: State): List[Event[State]] = events
 
   override def requiredRulings(state: State): List[Ruling[State, _, _]] = {
     rulingPrompts.map(FlexRuling(_, None))
