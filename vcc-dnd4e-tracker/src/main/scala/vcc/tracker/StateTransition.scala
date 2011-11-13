@@ -27,16 +27,3 @@ trait StateTransition[S] {
    */
   def transition(iState: S): S
 }
-
-/**
- * A StateCommand will generate a list of StateTransition based on the current state S of the system
- */
-trait StateCommand[S] {
-  /**
-   * Given a state iState generate the list of StateTransition to move the system from the current
-   * @param iState State to use to generate the events
-   * @return List of StateTransition
-   */
-  def generateTransitions(iState: S): List[StateTransition[S]]
-}
-

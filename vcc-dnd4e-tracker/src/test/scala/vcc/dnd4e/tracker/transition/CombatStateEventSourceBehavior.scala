@@ -20,16 +20,17 @@ import vcc.specs2.EventSourceBehavior
 import org.specs2.Specification
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.event.CombatStateEvent
+import vcc.tracker.{Event, Command}
 
-trait CombatStateEventSourceBehavior extends EventSourceBehavior[CombatState, CombatStateEvent, CombatStateCommand] {
+trait CombatStateEventSourceBehavior extends EventSourceBehavior[CombatState, Event[CombatState], Command[CombatState]] {
   self: Specification =>
 
-  implicit val whenCommandRunner: (CombatState, CombatStateCommand) => Seq[CombatStateEvent] = {
-    (s, c) => c.generateTransitions(s)
+  implicit val whenCommandRunner: (CombatState, Command[CombatState]) => Seq[Event[CombatState]] = {
+    (s, c) => c.generateEvents(s)
   }
 
-  implicit val stateBuilderFromEvents: (CombatState, Seq[CombatStateEvent]) => CombatState = {
-    (s, evts) => s.transitionWith(evts.toList)
+  implicit val stateBuilderFromEvents: (CombatState, Seq[Event[CombatState]]) => CombatState = {
+    (s, events) => s.transitionWith(events.toList)
   }
 
 }

@@ -112,7 +112,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
   }
 
   private def runCommands(iState: CombatState, cmds: CombatStateCommand*): CombatState = {
-    cmds.foldLeft(iState)((state, cmd) => state.transitionWith(cmd.generateTransitions(state)))
+    cmds.foldLeft(iState)((state, cmd) => state.transitionWith(cmd.generateEvents(state)))
   }
 
   private def testStartNextUpWithOneDelaying = {

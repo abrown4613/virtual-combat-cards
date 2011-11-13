@@ -17,15 +17,15 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common._
-import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{EndRoundCommand, StartRoundCommand, NextUpCommand}
 import vcc.dnd4e.tracker.common.ConditionMatcher
+import vcc.tracker.{Command, Ruling}
 
 object CombatStateRulingLocator {
 
   type R = Ruling[CombatState, _, _]
 
-  def rulingsFromStateWithCommand(state: CombatState, command: StateCommand[CombatState]): List[R] = {
+  def rulingsFromStateWithCommand(state: CombatState, command: Command[CombatState]): List[R] = {
     command match {
       case nextUp@NextUpCommand(first, eligible) => List(NextUpRuling(nextUp, None))
       case EndRoundCommand(who) => searchEndRound(state, who.combId)
