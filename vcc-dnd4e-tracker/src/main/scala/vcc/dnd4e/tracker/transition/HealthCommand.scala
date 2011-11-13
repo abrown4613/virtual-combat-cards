@@ -19,6 +19,7 @@ package vcc.dnd4e.tracker.transition
 import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
 import vcc.dnd4e.tracker.event._
 import vcc.controller.IllegalActionException
+import vcc.tracker.Event
 
 /**
  * Base health modification transition.
@@ -27,20 +28,11 @@ abstract class HealthCommand(target: CombatantID) extends CombatStateCommand {
   /**
    * Override this one
    */
-  /*
- protected def transitionHealth(ht: HealthTracker): HealthTracker
-
- override def transition(iState: CombatState): CombatState = {
-   if (!iState.roster.isDefinedAt(target))
-     throw new IllegalActionException("Combatant " + target + " not in combat")
-   iState.lensFactory.combatantHealth(target).modIfChanged(iState, ht => transitionHealth(ht))
- }
-  */
 
   protected def makeTransitionEvent(): CombatStateEvent
 
-  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
-    if (!iState.roster.isDefinedAt(target))
+  def generateEvents(state: CombatState): List[Event[CombatState]] = {
+    if (!state.roster.isDefinedAt(target))
       throw new IllegalActionException("Combatant " + target + " not in combat")
 
     makeTransitionEvent() :: Nil
@@ -54,7 +46,7 @@ abstract class HealthCommand(target: CombatantID) extends CombatStateCommand {
  */
 case class DamageCommand(target: CombatantID, amount: Int) extends CombatStateCommand {
 
-  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
+  def generateEvents(iState: CombatState): List[Event[CombatState]] = {
     if (!iState.roster.isDefinedAt(target))
       throw new IllegalActionException("Combatant " + target + " not in combat")
 

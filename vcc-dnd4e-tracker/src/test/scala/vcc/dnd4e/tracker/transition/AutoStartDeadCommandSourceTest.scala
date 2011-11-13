@@ -154,7 +154,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     var step = cs.get(state)
     var nState = state
     while (step.isDefined) {
-      nState = nState.transitionWith(step.get._1.generateTransitions(nState))
+      nState = nState.transitionWith(step.get._1.generateEvents(nState))
       trans = step.get._1 :: trans
       step = (step.get._2).get(nState)
     }

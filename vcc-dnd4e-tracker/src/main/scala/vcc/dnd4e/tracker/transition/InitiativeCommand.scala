@@ -19,13 +19,14 @@ package vcc.dnd4e.tracker.transition
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
+import vcc.tracker.Event
 
 abstract class InitiativeCommand extends CombatStateCommand {
   val ioi: InitiativeOrderID
 
-  protected def getTransitions(combatState: CombatState): List[CombatStateEvent]
+  protected def getTransitions(combatState: CombatState): List[Event[CombatState]]
 
-  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
+  def generateEvents(iState: CombatState): List[Event[CombatState]] = {
     if (!iState.order.tracker.isDefinedAt(ioi))
       throw new IllegalActionException(ioi + " is not in sequence")
     getTransitions(iState)
@@ -79,7 +80,7 @@ case class MoveUpCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
 }
 
 case class MoveBeforeCommand(who: InitiativeOrderID, whom: InitiativeOrderID) extends CombatStateCommand {
-  def generateTransitions(iState: CombatState): List[CombatStateEvent] = {
+  def generateEvents(iState: CombatState): List[Event[CombatState]] = {
     def moveOutFirst: List[CombatStateEvent] = List(RotateRobinEvent, MoveBeforeOtherEvent(who, whom))
     def moveOtherOut: List[CombatStateEvent] = List(MoveBeforeOtherEvent(who, whom))
 
@@ -100,5 +101,5 @@ case class MoveBeforeCommand(who: InitiativeOrderID, whom: InitiativeOrderID) ex
 }
 
 case class NextUpCommand(next: InitiativeOrderID, delaying: List[InitiativeOrderID]) extends CombatStateCommand {
-  def generateTransitions(iState: CombatState): List[CombatStateEvent] = Nil
+  def generateEvents(state: CombatState): List[Event[CombatState]] = Nil
 }

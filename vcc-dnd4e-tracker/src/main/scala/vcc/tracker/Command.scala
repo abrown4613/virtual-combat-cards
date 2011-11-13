@@ -23,9 +23,9 @@ trait Action[S] {
   def createCommandStream(): CommandStream[S]
 }
 
-trait Command[S] extends StateCommand[S] {
+trait Command[S] {
 
-  def generateEvents(state: S): List[Event[S]] = Nil
+  def generateEvents(state: S): List[Event[S]]
 
   def requiredRulings(state: S): List[Ruling[S, _, _]] = Nil
 }
