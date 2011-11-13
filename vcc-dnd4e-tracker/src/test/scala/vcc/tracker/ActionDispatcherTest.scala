@@ -73,12 +73,12 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   }
 
   "dispatch loop action that generates multiple commands" in new context {
-    dispatcher.handle(LoopTo(10, 3))
+    dispatcher.handle(LoopToAction(10, 3))
     dispatcher.resultState.get must_== State(12)
   }
 
   "detect infinite loop in dispath and commandSteam loop" in new context {
-    dispatcher.handle(LoopTo(10, 0)) must throwA[InfiniteLoopException]
+    dispatcher.handle(LoopToAction(10, 0)) must throwA[InfiniteLoopException]
   }
 
   "handle action with single Command and Single Event" in new context {
@@ -165,8 +165,16 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
     dispatcher.handle(FlexAction(commandWithWhatRuling)) must throwA[TooManyDecisionsException]
   }
 
-  private def makeRuling(prompt: String): FlexRuling = {
-    FlexRuling(prompt, None)
+  "throw exception and not provide state when Event transition fails" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(CrashEvent("no good")))) must
+      throwA(new IllegalEventException(CrashEvent("no good"), null))
+    dispatcher.resultState must_== None
+  }
+
+  "throw exception and not provide state when Commant fails to generate Events" in new context {
+    dispatcher.handle(FlexAction(CrashCommand("no good"))) must
+      throwA(new IllegalCommandException(CrashCommand("no good"), null))
+    dispatcher.resultState must_== None
   }
 
   private def makeDecision(prompt: String, commands: Command[State]*): FlexRuling = {
