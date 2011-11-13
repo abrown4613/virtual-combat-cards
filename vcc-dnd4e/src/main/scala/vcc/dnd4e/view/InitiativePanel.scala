@@ -21,7 +21,6 @@ import scala.swing.event._
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Command._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.StateChange
 import vcc.util.swing._
 
 class InitiativePanel(director: PanelDirector) extends MigPanel("flowx,ins 2,hidemode 3", "[19%,fill][27%,fill][27%,fill][27%,fill]", "")
@@ -90,7 +89,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
     if (newContext.isDefined && isTarget) updatePanel()
   }
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     _first = newState.orderFirst()
     combatState = newState
     target = combatState.combatantOption(target.map(o => o.unifiedId))

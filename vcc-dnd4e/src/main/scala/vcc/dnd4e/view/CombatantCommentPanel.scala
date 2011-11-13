@@ -18,7 +18,6 @@ package vcc.dnd4e.view
 
 import vcc.infra.docking.DockID
 import vcc.dnd4e.tracker.common.Command.SetComment
-import vcc.dnd4e.domain.tracker.snapshot.StateChange
 
 class CombatantCommentPanel(director: PanelDirector, isTarget: Boolean) extends CommentPanel with ContextObserver with CombatStateObserver {
   val dockTitle = if (isTarget) "Target Notes" else "Source Notes"
@@ -49,7 +48,7 @@ class CombatantCommentPanel(director: PanelDirector, isTarget: Boolean) extends 
     updateText(if (comb.isDefined) comb.get.comment else "")
   }
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
     updateCombatant(context)
   }

@@ -22,7 +22,7 @@ import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
 import scala.actors.Actor
 import vcc.controller.message.Command
-import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatStateWithChanges}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatStateWithChanges}
 import vcc.controller._
 import vcc.infra.prompter.RulingBroker
 
@@ -40,11 +40,10 @@ object PanelDirector {
     val HideDead = Value("Hide Dead")
     val RobinView = Value("Robin View")
   }
-
 }
 
 trait CombatStateObserver {
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange)
+  def combatStateChanged(newState: UnifiedSequenceTable)
 }
 
 /**
@@ -56,7 +55,7 @@ trait CombatStateObserver {
 trait SimpleCombatStateObserver extends CombatStateObserver {
   protected var combatState: UnifiedSequenceTable = null
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     combatState = newState
   }
 }
@@ -89,7 +88,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
       unifiedTable = UnifiedSequenceTable.buildList(newState.state,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
         SortedIDReserveViewBuilder)
-      combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable, newState.changes))
+      combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
     }
   }
 

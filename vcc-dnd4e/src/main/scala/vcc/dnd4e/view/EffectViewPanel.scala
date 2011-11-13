@@ -22,7 +22,6 @@ import vcc.util.swing._
 import vcc.dnd4e.tracker.common.{Effect}
 import vcc.dnd4e.tracker.common.Command._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{StateChange}
 
 class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel("fill,ins 2")
 with ContextObserver with ScalaDockableComponent with CombatStateObserver {
@@ -104,7 +103,7 @@ with ContextObserver with ScalaDockableComponent with CombatStateObserver {
     }
   }
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
     updateTable()
   }

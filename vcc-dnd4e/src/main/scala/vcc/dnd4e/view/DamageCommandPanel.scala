@@ -137,7 +137,6 @@ class DamageCommandPanel(val director: PanelDirector)
     makeAction("Set " + damage.text + " temporary hit points ", damageEquation, (cid, hp) => SetTemporaryHP(cid, hp)).toTransferable
   }))
 
-
   def enableDamageControls(enable: Boolean) {
     damage.background = if (enable) java.awt.Color.white else badColor
     for (x <- damageRelButton) x.enabled = enable
