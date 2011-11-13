@@ -17,13 +17,12 @@
 package vcc.dnd4e.view
 
 import vcc.infra.docking.DockID
-import vcc.dnd4e.domain.tracker.snapshot.StateChange
 import vcc.dnd4e.tracker.common.Command.SetCombatComment
 
 class CombatCommentPanel(director: PanelDirector) extends CommentPanel with CombatStateObserver {
   editorEnabled = true
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     updateText(newState.state.combatComment)
   }
 

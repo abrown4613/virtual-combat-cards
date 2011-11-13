@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import dialog.InitiativeDialog
 import scala.swing._
 import vcc.dnd4e.tracker.common.Command._
-import vcc.dnd4e.domain.tracker.snapshot.StateChange
 
 class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") with CombatStateObserver {
   private val menuStartCombat = createActionRequestMenuItem("Start Combat",StartCombat())
@@ -33,7 +32,7 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
   contents ++= Seq(menuRollInitiative, menuStartCombat, menuEndCombat, new Separator, menuShortRest, menuExtendedRest, new Separator, menuClearNPC, menuClearAll)
   director.registerStateObserver(this)
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     menuStartCombat.enabled = !newState.state.isCombatStarted && director.rules.hasActingCombatant(newState.state)
     menuEndCombat.enabled = newState.state.isCombatStarted
     menuShortRest.enabled = !menuEndCombat.enabled

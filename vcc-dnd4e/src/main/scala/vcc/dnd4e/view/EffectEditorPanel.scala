@@ -21,7 +21,7 @@ import vcc.util.swing._
 import vcc.dnd4e.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatantState}
 import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
 
 class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel: Int) extends MigPanel("fillx,hidemode 3")
@@ -69,7 +69,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
       switchActive(activeCombo.selection.item.definition.entity.eid)
   }
 
-  def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
+  def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
 
     activeModel.contents = state.elements ++ Seq(otherCombatant)
