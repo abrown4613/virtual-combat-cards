@@ -17,11 +17,11 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common._
-import vcc.tracker.{StateCommand, Ruling, RulingLocationService}
+import vcc.tracker.{StateCommand, Ruling}
 import vcc.dnd4e.tracker.transition.{EndRoundCommand, StartRoundCommand, NextUpCommand}
 import vcc.dnd4e.tracker.common.ConditionMatcher
 
-object CombatStateRulingLocator extends RulingLocationService[CombatState] {
+object CombatStateRulingLocator {
 
   type R = Ruling[CombatState, _, _]
 

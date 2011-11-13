@@ -23,7 +23,7 @@ import vcc.dnd4e.tracker.common.{CombatState, InitiativeAction}
 import vcc.dnd4e.tracker.transition.AutomationCommandSource._
 import vcc.tracker._
 
-object ActionTranslator extends ActionStreamTranslator[CombatState, TransactionalActionWithMessage] {
+object ActionTranslator {
   implicit def transition2TransitionList(t: CombatStateCommand) = List(t)
 
   def translate(action: TransactionalAction): List[CombatStateCommand] = {
