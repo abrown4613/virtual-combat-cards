@@ -21,8 +21,8 @@ import vcc.util.swing._
 import vcc.dnd4e.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{CombatantState}
 import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
+import vcc.dnd4e.domain.tracker.common.CombatantStateView
 
 class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel: Int) extends MigPanel("fillx,hidemode 3")
 with CombatStateObserver with ContextObserver with ScalaDockableComponent {
@@ -34,10 +34,21 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
 
-  val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
+  private object TerrainCombatantStateView extends CombatantStateView {
+    private val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
+
+    def definition: CombatantRosterDefinition = CombatantRosterDefinition(otherId, null, terrainDefinition)
+
+    def healthTracker: HealthTracker = null
+
+    def effects: EffectList = null
+
+    def comment: String = null
+  }
 
   private val otherId = CombatantID("?")
-  private val otherCombatant = new UnifiedCombatant(otherId, null, CombatantState(CombatantRosterDefinition(otherId, null, terrainDefinition), null, null, null))
+  private val otherCombatant = new UnifiedCombatant(otherId, null, TerrainCombatantStateView)
+
   val activeModel = new ContainerComboBoxModel[UnifiedCombatant](List(otherCombatant))
   val activeCombo = new ExplicitModelComboBox[UnifiedCombatant](activeModel)
   activeCombo.setFormatRenderer(new StringFormatListCellRenderer[UnifiedCombatant](cmb => {
