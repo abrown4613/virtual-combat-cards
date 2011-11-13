@@ -26,35 +26,35 @@ object AutomationCommandSource {
 
   object HeadStateAndHealth {
     def unapply(state: CombatState): Option[(InitiativeOrderID, InitiativeState.Value, HealthStatus.Value)] = {
-      if (state.isCombatStarted) {
-        val ioi = state.order.nextUp.get
-        val initState = StateLensFactory.initiativeTrackerLens(ioi).get(state).state
-        val health = StateLensFactory.combatantHealth(ioi.combId).get(state).status
-        Some((ioi, initState, health))
-      } else {
+      if (state.isCombatStarted)
+        get_HeadIOI_InitiativeState_HeathStatus(state)
+      else
         None
-      }
+    }
+
+    private def get_HeadIOI_InitiativeState_HeathStatus(state: CombatState): Some[(InitiativeOrderID, InitiativeState.Value, HealthStatus.Value)] = {
+      val ioi = state.order.nextUp.get
+      val initState = StateLensFactory.initiativeTrackerLens(ioi).get(state).state
+      val health = StateLensFactory.combatantHealth(ioi.combId).get(state).status
+      Some((ioi, initState, health))
     }
   }
 
-  val autoStartDead = new PartialFunctionCommandStream[CombatState]({
+  val startNextCommandStream = new PartialFunctionCommandStream[CombatState]({
     case HeadStateAndHealth(ioi, Delaying, Dead) => EndRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Acting, Dead) => EndRoundCommand(ioi)
+    case s@HeadStateAndHealth(ioi, Waiting, _) => makeNextUpCommand(s, ioi)
+    case s@HeadStateAndHealth(ioi, Ready, _) => makeNextUpCommand(s, ioi)
+    case HeadStateAndHealth(ioi, Delaying, _) => EndRoundCommand(ioi)
   })
 
-  private def makeNextUpCommand(state: CombatState, next: InitiativeOrderID): CombatStateCommand = {
+  private def makeNextUpCommand(state: CombatState, next: InitiativeOrderID): Command[CombatState] = {
     val eligible = state.order.sequence.filter(ioi =>
       state.order.tracker(ioi).state == InitiativeState.Delaying &&
         state.roster.combatant(ioi.combId).health.status != HealthStatus.Dead)
     if (eligible.isEmpty) StartRoundCommand(next)
     else NextUpCommand(next, eligible)
   }
-
-  val autoStartNext = new PartialFunctionCommandStream[CombatState]({
-    case s@HeadStateAndHealth(ioi, Waiting, health) if (health != Dead) => makeNextUpCommand(s, ioi)
-    case s@HeadStateAndHealth(ioi, Ready, health) if (health != Dead) => makeNextUpCommand(s, ioi)
-    case HeadStateAndHealth(ioi, Delaying, health) if (health != Dead) => EndRoundCommand(ioi)
-  })
 }

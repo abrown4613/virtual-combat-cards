@@ -1,3 +1,5 @@
+package vcc.dnd4e.tracker.action
+
 /*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
@@ -14,17 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.tracker.dispatcher
-
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.transition.AutomationCommandSource._
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Effect.Condition
-import vcc.tracker.{Command, SeqCommandStream}
+import vcc.tracker.{Action, Command, SeqCommandStream}
 
-class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
+class ActionTranslationTest extends SpecificationWithJUnit with SampleStateData {
   private val eid = EffectID(combA, 0)
   private val someCondition = Condition.Generic("good", true)
   private val someDuration = Duration.EndOfEncounter
@@ -33,7 +33,7 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
   private val iDef1 = InitiativeDefinition(combA, 0, List(10))
   private val iDef2 = InitiativeDefinition(comb1, 1, List(11))
 
-  private case class SimpleCase(action: TransactionalActionWithMessage, commands: Command[CombatState]*) {
+  private case class SimpleCase(action: Action[CombatState], commands: Command[CombatState]*) {
     def getTestName = (action.getClass.getSimpleName + " to " + commands.map(x => x.getClass.getSimpleName).mkString(", "))
   }
 
@@ -82,19 +82,19 @@ class ActionTranslatorTest extends SpecificationWithJUnit with SampleStateData {
     endp ^
     end
 
-  private def actionWithAutoStart(action: TransactionalActionWithMessage, commands: Command[CombatState]*) = {
-    ActionTranslator.translateToCommandStream(action) must_== (SeqCommandStream(commands) followedBy autoStartDead followedBy autoStartNext)
+  private def actionWithAutoStart(action: Action[CombatState], commands: Command[CombatState]*) = {
+    action.createCommandStream() must_== (SeqCommandStream(commands) followedBy startNextCommandStream)
   }
 
   private def allSimpleCases(cases: List[SimpleCase]) = {
     for (c <- cases) yield {
       c.getTestName ! {
-        ActionTranslator.translateToCommandStream(c.action) must_== SeqCommandStream(c.commands)
+        c.action.createCommandStream() must_== SeqCommandStream(c.commands)
       }
     }
   }
 
-  private def directTranslation(action: TransactionalActionWithMessage, commands: Command[CombatState]*) = {
-    ActionTranslator.translateToCommandStream(action) must_== SeqCommandStream(commands)
+  private def directTranslation(action: Action[CombatState], commands: Command[CombatState]*) = {
+    action.createCommandStream() must_== SeqCommandStream(commands)
   }
 }
