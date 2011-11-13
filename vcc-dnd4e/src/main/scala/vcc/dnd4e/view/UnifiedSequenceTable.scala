@@ -1,6 +1,6 @@
-/**
+/*
  *
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,19 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import helper.{ReserveViewBuilder, InitiativeOrderViewBuilder}
 import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
-import vcc.dnd4e.domain.tracker.snapshot.CombatState
+import vcc.dnd4e.domain.tracker.snapshot.SnapshotCombatState
 
 /**
  * Provides a single linear and random access table with all combatants.
  * @param elements The list of UnifiedCombatant in the order
  * @param state The state that was used to build the sequence
  */
-class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: CombatState) {
+class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: SnapshotCombatState) {
 
   /**
    * Get UnifiedCombatant at position idx
@@ -80,7 +79,7 @@ object UnifiedSequenceTable {
    * This service object will used a ReserveViewBuilder and a InitiativeOrderViewBuilder to build a unified array with all
    * the combatant in a single Array.
    */
-  def buildList(combatState: CombatState, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): UnifiedSequenceTable = {
+  def buildList(combatState: SnapshotCombatState, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): UnifiedSequenceTable = {
     val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
     val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
     new UnifiedSequenceTable((order ++ reserve).toArray, combatState)

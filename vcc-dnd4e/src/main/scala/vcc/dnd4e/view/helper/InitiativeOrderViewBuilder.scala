@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,28 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.helper
 
-import vcc.dnd4e.domain.tracker.snapshot.CombatState
+import vcc.dnd4e.domain.tracker.snapshot.SnapshotCombatState
 import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
 
 trait InitiativeOrderViewBuilder {
-  def buildOrder(combatState: CombatState): Seq[InitiativeOrderID]
+  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID]
 }
 
 trait ReserveViewBuilder {
-  def buildReserve(combatState: CombatState): Seq[CombatantID]
+  def buildReserve(combatState: SnapshotCombatState): Seq[CombatantID]
 }
 
 object SortedIDReserverViewBuilder extends ReserveViewBuilder {
-  def buildReserve(combatState: CombatState): Seq[CombatantID] = {
+  def buildReserve(combatState: SnapshotCombatState): Seq[CombatantID] = {
     combatState.combatantsNotInOrder().toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
   }
 }
 
 object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-  def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
+  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID] = {
     combatState.getInitiativeOrder
   }
 }
@@ -44,7 +43,7 @@ object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
  * Build an order with the robin head always on the top.
  */
 object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-  def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
+  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID] = {
     val order = combatState.getInitiativeOrder
     val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
     order.drop(idx) ++ order.take(idx)

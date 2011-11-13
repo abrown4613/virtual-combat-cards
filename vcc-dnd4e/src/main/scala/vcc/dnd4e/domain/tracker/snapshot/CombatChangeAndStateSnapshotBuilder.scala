@@ -44,7 +44,7 @@ trait SnapshotBuilderAborter[T] {
  * @param state CombatState
  * @param changes Changes since last begin/end cycle
  */
-case class CombatStateWithChanges(state: CombatState, changes: StateChange)
+case class CombatStateWithChanges(state: SnapshotCombatState, changes: StateChange)
 
 /**
  * This SnapshotBuilder will wrap a CombatStateSnapshotBuilder and keep track of changes in the last interaction of
