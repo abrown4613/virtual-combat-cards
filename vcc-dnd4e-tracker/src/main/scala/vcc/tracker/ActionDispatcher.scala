@@ -17,8 +17,16 @@
 package vcc.tracker
 
 import java.lang.IllegalStateException
+import annotation.tailrec
 
 class InfiniteLoopException extends RuntimeException
+
+class RulingDecisionMismatchException(ruling: Ruling[_, _, _], decision: Ruling[_, _, _])
+  extends RuntimeException("Ruling and decision mismatch: %s, %s".format(ruling, decision))
+
+class MissingDecisionException(ruling: Ruling[_, _, _]) extends RuntimeException("Missing decision for ruling: " + ruling)
+
+class TooManyDecisionsException() extends RuntimeException
 
 trait RulingProvider[S] {
   def provideRulingFor(state: S, rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
@@ -60,11 +68,24 @@ class ActionDispatcher[S] private(initialState: S) {
     }
   }
 
+  private def validateDecisions(rulings: List[Ruling[S, _, _]], decisions: List[Ruling[S, _, _]]) {
+    (rulings, decisions) match {
+      case (r :: rs, d :: ds) =>
+        if (!r.isRulingSameSubject(d))
+          throw new RulingDecisionMismatchException(r, d)
+        validateDecisions(rs, ds)
+      case (r :: rs, Nil) => throw new MissingDecisionException(r)
+      case (Nil, d :: ds) => throw new TooManyDecisionsException
+      case (Nil, Nil) =>
+    }
+  }
+
   private def executeStep(step: (Command[S], CommandStream[S])) {
     val (command, nextCommandStream) = step
     val rulings = command.requiredRulings(returnState)
     if (!rulings.isEmpty) {
       val decisions = rulingProvider.provideRulingFor(returnState, rulings)
+      validateDecisions(rulings, decisions)
       val rulingCommands = decisions.flatMap(r => r.generateCommands(returnState))
       for (rulingCommand <- rulingCommands) {
         processCommandEvents(rulingCommand)
