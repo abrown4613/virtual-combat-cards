@@ -24,8 +24,8 @@ import vcc.infra.docking._
 import vcc.dnd4e.domain.tracker.snapshot.{CombatantState, StateChange}
 import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
 
-class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel:Int) extends MigPanel("fillx,hidemode 3")
-  with CombatStateObserver with ContextObserver with ScalaDockableComponent {
+class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel: Int) extends MigPanel("fillx,hidemode 3")
+with CombatStateObserver with ContextObserver with ScalaDockableComponent {
 
   private val memory = scala.collection.mutable.Map.empty[String, List[EffectEditor.StateMemento]]
   private var lastActiveKey: String = null
@@ -71,12 +71,10 @@ class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel:Int) extend
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    if (StateChange.hasSequenceChange(changes.changes)) {
-      //Sequence changed time to update ActiveCombo
-      activeModel.contents = state.elements ++ Seq(otherCombatant)
-      setActiveComboSelection(active)
-      for (efp <- effectEditorPanels) efp.setSequence(state.elements.map(c => c.combId))
-    }
+
+    activeModel.contents = state.elements ++ Seq(otherCombatant)
+    setActiveComboSelection(active)
+    for (efp <- effectEditorPanels) efp.setSequence(state.elements.map(c => c.combId))
   }
 
   /**

@@ -51,9 +51,6 @@ class CombatantCommentPanel(director: PanelDirector, isTarget: Boolean) extends 
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    if (context.isDefined && changes.changesTo(context.get.combId).contains(StateChange.combatant.Comment)) {
-      updateCombatant(context)
-    }
+    updateCombatant(context)
   }
-
 }

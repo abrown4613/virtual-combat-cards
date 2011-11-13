@@ -98,21 +98,10 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
     state = newState
-    if (StateChange.hasAnySequenceChange(changes.changes) ||
-      !changes.combatantsThatChanged(StateChange.combatant.Health).isEmpty ||
-      !changes.combatantsThatChanged(StateChange.combatant.Initiative).isEmpty
-    ) {
-      updateContent()
-      //On a sequence change
-      if (StateChange.hasSequenceChange(changes.changes)) {
-        val newFirst = if (table.content.isEmpty) None else Some(table.content(0).unifiedId)
-        if (newFirst != source) director.setActiveCombatant(newFirst)
-      }
-      if (changes.changes.contains(StateChange.combat.OrderFirst)) {
-        SwingHelper.invokeLater {
-          director.setActiveCombatant(state.orderFirstId)
-        }
-      }
+    updateContent()
+
+    SwingHelper.invokeLater {
+      director.setActiveCombatant(state.orderFirstId)
     }
   }
 

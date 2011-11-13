@@ -22,52 +22,47 @@ import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.domain.tracker.snapshot.StateChange
 
 class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") with CombatStateObserver {
-  private val menuStartCombat = new MenuItem(Action("Start Combat") {
-    director requestAction StartCombat()
-  })
+  private val menuStartCombat = createActionRequestMenuItem("Start Combat",StartCombat())
+  private val menuRollInitiative = createInitiativeDialogMenuItem()
+  private val menuEndCombat = createActionRequestMenuItem("End Combat", EndCombat())
+  private val menuShortRest = createActionRequestMenuItem("Short Rest", ApplyRest(false))
+  private val menuExtendedRest = createActionRequestMenuItem("Extended Rest", ApplyRest(true))
+  private val menuClearNPC = createActionRequestMenuItem("Clear Monsters", ClearRoster(false))
+  private val menuClearAll =createActionRequestMenuItem("Clear All", ClearRoster(true))
 
-  private val menuRollInitiative = new MenuItem(Action("Roll Initiative...") {
-    val dlg = new InitiativeDialog(parent, director)
-    //Result is Pair (Boolean, List[InitiativeDefinition])
-    val res = dlg.promptUser()
-    if (res.isDefined) {
-      val (startCombat, initiative) = res.get
-      director requestAction SetInitiative(initiative)
-      if (startCombat && !initiative.isEmpty) director requestAction StartCombat()
-    }
-  })
-
-  private val menuEndCombat = new MenuItem(Action("End Combat") {
-    director requestAction EndCombat()
-  })
-  private val menuShortRest = new MenuItem(Action("Short Rest") {
-    director requestAction ApplyRest(false)
-  })
-  private val menuExtendedRest = new MenuItem(Action("Extended Rest") {
-    director requestAction ApplyRest(true)
-  })
-
-  private val menuClearNPC = new MenuItem(Action("Clear Monsters") {
-    director requestAction ClearRoster(false)
-  })
-  private val menuClearAll = new MenuItem(Action("Clear All") {
-    director requestAction ClearRoster(true)
-  })
-
-  //Initialization
-  private val allItems = Seq(menuStartCombat, menuEndCombat, menuShortRest, menuExtendedRest, menuClearNPC, menuClearAll)
   contents ++= Seq(menuRollInitiative, menuStartCombat, menuEndCombat, new Separator, menuShortRest, menuExtendedRest, new Separator, menuClearNPC, menuClearAll)
-  allItems.foreach(mi => mi.enabled = false)
   director.registerStateObserver(this)
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
-    if (StateChange.hasSequenceChange(changes.changes) || changes.changes.contains(StateChange.combat.MetaData)) {
-      menuStartCombat.enabled = !newState.state.isCombatStarted && director.rules.hasActingCombatant(newState.state)
-      menuEndCombat.enabled = newState.state.isCombatStarted
-      menuShortRest.enabled = !menuEndCombat.enabled
-      menuExtendedRest.enabled = !menuEndCombat.enabled
-      menuClearAll.enabled = !menuEndCombat.enabled
-      menuClearNPC.enabled = !menuEndCombat.enabled
-    }
+    menuStartCombat.enabled = !newState.state.isCombatStarted && director.rules.hasActingCombatant(newState.state)
+    menuEndCombat.enabled = newState.state.isCombatStarted
+    menuShortRest.enabled = !menuEndCombat.enabled
+    menuExtendedRest.enabled = !menuEndCombat.enabled
+    menuClearAll.enabled = !menuEndCombat.enabled
+    menuClearNPC.enabled = !menuEndCombat.enabled
+    menuRollInitiative.enabled = !newState.state.allCombatantIDs.isEmpty
+  }
+
+  private def createActionRequestMenuItem(label:String, action: TransactionalActionWithMessage):MenuItem = {
+    val menuItem = new MenuItem(Action(label){
+      director requestAction action
+    })
+    menuItem.enabled = false
+    menuItem
+  }
+
+  private def createInitiativeDialogMenuItem(): MenuItem = {
+    val menuItem = new MenuItem(Action("Roll Initiative...") {
+      val dlg = new InitiativeDialog(parent, director)
+      //Result is Pair (Boolean, List[InitiativeDefinition])
+      val res = dlg.promptUser()
+      if (res.isDefined) {
+        val (startCombat, initiative) = res.get
+        director requestAction SetInitiative(initiative)
+        if (startCombat && !initiative.isEmpty) director requestAction StartCombat()
+      }
+    })
+    menuItem.enabled = false
+    menuItem
   }
 }
