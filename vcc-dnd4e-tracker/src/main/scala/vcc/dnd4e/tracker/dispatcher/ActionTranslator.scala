@@ -16,7 +16,6 @@
  */
 package vcc.dnd4e.tracker.dispatcher
 
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.transition._
 import vcc.dnd4e.tracker.common.{CombatState, InitiativeAction}
@@ -26,7 +25,7 @@ import vcc.tracker._
 object ActionTranslator {
   implicit def transition2TransitionList(t: CombatStateCommand) = List(t)
 
-  def translate(action: TransactionalAction): List[CombatStateCommand] = {
+  def translate(action: Action[CombatState]): List[CombatStateCommand] = {
     action match {
 
       //Damage action
@@ -72,16 +71,16 @@ object ActionTranslator {
     SeqCommandStream(s)
   }
 
-  def translateToCommandStream(action: TransactionalActionWithMessage): CommandStream[CombatState] = {
+  def translateToCommandStream(action: Action[CombatState]): CommandStream[CombatState] = {
     action match {
       case StartCombat() =>
-        seqStream(StartCombatCommand) followedBy  autoStartDead followedBy autoStartNext
+        seqStream(StartCombatCommand) followedBy  startNextCommandStream
       case ExecuteInitiativeAction(who, InitiativeAction.EndRound) =>
-        seqStream(EndRoundCommand(who)) followedBy autoStartDead followedBy autoStartNext
+        seqStream(EndRoundCommand(who)) followedBy startNextCommandStream
       case ExecuteInitiativeAction(who, InitiativeAction.ReadyAction) =>
-        seqStream(ReadyActionCommand(who), EndRoundCommand(who)) followedBy autoStartDead followedBy autoStartNext
+        seqStream(ReadyActionCommand(who), EndRoundCommand(who)) followedBy startNextCommandStream
       case ExecuteInitiativeAction(who, InitiativeAction.DelayAction) =>
-        seqStream(DelayCommand(who)) followedBy autoStartDead followedBy autoStartNext
+        seqStream(DelayCommand(who)) followedBy startNextCommandStream
       case s => SeqCommandStream(ActionTranslator.translate(action))
     }
   }
