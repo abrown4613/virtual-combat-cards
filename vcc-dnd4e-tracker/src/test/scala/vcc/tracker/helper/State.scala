@@ -17,10 +17,11 @@
 package vcc.tracker.helper
 
 import vcc.tracker._
+import java.lang.IllegalStateException
 
 case class State(value: Int)
 
-case class LoopTo(limit: Int, step: Int) extends Action[State] {
+case class LoopToAction(limit: Int, step: Int) extends Action[State] {
   def createCommandStream(): CommandStream[State] = {
     new PartialFunctionCommandStream[State]({
       case State(current) if (current < limit) => FlexCommand(IncrementEvent(step))
@@ -48,12 +49,22 @@ object FlexCommand {
   def apply(rulingPrompt: String, events: Event[State]*) = new FlexCommand(rulingPrompt::Nil, events.toList)
 }
 
-case class SetStateEvent(value: Int) extends StateTransition[State] with Event[State] {
+case class CrashCommand(identifier:String) extends Command[State] {
+  def generateTransitions(iState: State): List[StateTransition[State]] = Nil
+
+  override def generateEvents(state: State): List[Event[State]] = throw new IllegalStateException(identifier)
+}
+
+case class SetStateEvent(value: Int) extends Event[State] {
   def transition(iState: State): State = State(value)
 }
 
-case class IncrementEvent(inc: Int) extends StateTransition[State] with Event[State] {
+case class IncrementEvent(inc: Int) extends Event[State] {
   def transition(iState: State): State = State(iState.value + inc)
+}
+
+case class CrashEvent(identifier: String) extends Event[State] {
+  def transition(iState: State): State = throw new IllegalStateException(identifier)
 }
 
 case class FlexRuling(prompt: String, decision: Option[List[Command[State]]])

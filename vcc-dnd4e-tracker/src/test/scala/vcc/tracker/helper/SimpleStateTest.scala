@@ -17,46 +17,41 @@
 package vcc.tracker.helper
 
 import org.specs2.mutable.SpecificationWithJUnit
-import vcc.tracker._
 
 class SimpleStateTest extends SpecificationWithJUnit {
 
-  type C = StateCommand[State]
-
-  "actions" should {
-    "translate LoopTo to Sequence builde" in {
-      val x = LoopTo(10, 2).createCommandStream()
-      x.get(State(9)) must_== Some((FlexCommand(IncrementEvent(2)), x))
-      x.get(State(10)) must_== None
-      x.get(State(11)) must_== None
-    }
-
-    "FlexCommand translates to series of comamnds" in {
-      val command1 = FlexCommand(IncrementEvent(1))
-      val command2 = FlexCommand(SetStateEvent(4))
-      FlexAction(command1, command2).createCommandStream() must_== CommandStream(command1, command2)
+  "LoopToAction" should {
+    "translate LoopTo to conditional CommandStream" in {
+      val commandStream = LoopToAction(10, 2).createCommandStream()
+      commandStream.get(State(9)) must_== Some((FlexCommand(IncrementEvent(2)), commandStream))
+      commandStream.get(State(10)) must_== None
+      commandStream.get(State(11)) must_== None
     }
   }
 
-  "our AskCommand" should {
-    "ask for ruling when FlexCommand has prompt parameter" in {
+  "FlexCommand" should {
+    "ask for ruling when it has prompt parameter" in {
       FlexCommand("what", IncrementEvent(1)).requiredRulings(State(10)) must_== List(FlexRuling("what", None))
     }
 
-    "not ask for ruling when FlexCommand if prompt parameter is null" in {
+    "not ask for ruling when it has no prompt" in {
       FlexCommand(IncrementEvent(1)).requiredRulings(State(10)) must_== Nil
     }
 
-    "ask for all rulings when FlexCommand has multiple prompts" in {
+    "ask for all rulings it has multiple prompts" in {
       FlexCommand(List("what", "where"), List(IncrementEvent(1))).requiredRulings(State(10)) must_==
         List(FlexRuling("what", None), FlexRuling("where", None))
     }
-  }
 
-  "the commands" should {
-    "when generate FlexCommand(a,b) generate events a, b" in {
+    "generate events for each of parameters" in {
       FlexCommand(IncrementEvent(1), IncrementEvent(2)).generateEvents(State(1)) must_==
         List(IncrementEvent(1), IncrementEvent(2))
+    }
+  }
+
+  "CrashCommand" should {
+    "throw exception when generating Event" in {
+      CrashCommand("boom").generateEvents(State(7)) must throwA[Exception]
     }
   }
 
@@ -70,6 +65,12 @@ class SimpleStateTest extends SpecificationWithJUnit {
     "increment the value of the state" in {
       IncrementEvent(2).transition(State(123)) must_== State(125);
       IncrementEvent(-23).transition(State(123)) must_== State(100);
+    }
+  }
+
+  "CrashEvent" should {
+    "throw exception when executing transitions" in {
+      CrashEvent("some").transition(State(32)) must throwA[IllegalStateException]
     }
   }
 }
