@@ -20,12 +20,14 @@ import vcc.controller.SnapshotBuilder
 import vcc.controller.transaction.ChangeNotification
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
+import org.slf4j.LoggerFactory
+import vcc.util.swing.AbortApplication
 
 /**
  * This class is used to collect CombatStateChanges and keep a version of the transactional tracker state.
  * It will generate snapshot.CombatState as snapshot.
  */
-class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] with SnapshotBuilderAborter[SnapshotCombatState] {
+class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] {
 
   /**
    * Internal representation of the combatant.
@@ -84,7 +86,6 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] wi
 
       case InitiativeOrderFirstChange(who) =>
         toBeFirst = Some(who)
-
     }
   }
 
@@ -104,4 +105,11 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] wi
     inCombat, comment,
     order, Map(initiatives.toSeq: _*), first,
     Map(roster.map(x => x._1 -> x._2.toView).toSeq: _*))
+
+  def handleFailure(e: Throwable, changes: List[ChangeNotification]) {
+    val logger = LoggerFactory.getLogger("domain")
+    logger.error("Failed to handle changes: {}", changes)
+    logger.error("Causing exception: " + e.getMessage, e)
+    AbortApplication(this, "Internal error while updating state", e)
+  }
 }

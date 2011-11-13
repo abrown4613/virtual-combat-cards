@@ -22,9 +22,9 @@ import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
 import scala.actors.Actor
 import vcc.controller.message.Command
-import vcc.dnd4e.domain.tracker.snapshot.{CombatStateWithChanges}
 import vcc.controller._
 import vcc.infra.prompter.RulingBroker
+import vcc.dnd4e.domain.tracker.snapshot.{SnapshotCombatState}
 
 trait ContextObserver {
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
@@ -63,7 +63,8 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithChanges], statusBar: StatusBar, rulingBroker: RulingBroker) extends TrackerChangeAware[CombatStateWithChanges] with CommandSource {
+class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[SnapshotCombatState], statusBar: StatusBar, rulingBroker: RulingBroker)
+  extends TrackerChangeAware[SnapshotCombatState] with CommandSource {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
   private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
@@ -72,7 +73,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
 
   private var propRobinView = true
 
-  private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot().state)
+  private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot())
 
   val rules = new CombatStateRules()
 
@@ -83,9 +84,9 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   //Init code
   csm.addChangeObserver(this)
 
-  def snapshotChanged(newState: CombatStateWithChanges) {
+  def snapshotChanged(newState: SnapshotCombatState) {
     SwingHelper.invokeInEventDispatchThread{
-      unifiedTable = UnifiedSequenceTable.buildList(newState.state,
+      unifiedTable = UnifiedSequenceTable.buildList(newState,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
         SortedIDReserveViewBuilder)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))

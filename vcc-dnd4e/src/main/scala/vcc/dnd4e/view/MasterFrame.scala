@@ -20,7 +20,6 @@ import ruling.{TranslatorService, RulingDialog}
 import scala.swing._
 import event.{WindowOpened, WindowClosing}
 import vcc.infra.docking._
-import vcc.dnd4e.domain.tracker.snapshot.{CombatChangeAndStateSnapshotBuilder, CombatStateWithChanges}
 import vcc.infra.prompter.RulingBroker
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
 import vcc.util.UpdateManager.Version
@@ -28,6 +27,7 @@ import java.awt.Toolkit
 import java.io.File
 import java.net.URL
 import vcc.controller.{Tracker, TrackerChangeObserver}
+import vcc.dnd4e.domain.tracker.snapshot.{CombatStateSnapshotBuilder, SnapshotCombatState}
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
@@ -37,7 +37,7 @@ class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: Rel
   private val docker = new CustomDockingAdapter(baseDirectory)
 
   private val statusBar = new StatusBar(releaseInformation.currentVersion)
-  private val csm = new TrackerChangeObserver[CombatStateWithChanges](new CombatChangeAndStateSnapshotBuilder(), tracker)
+  private val csm = new TrackerChangeObserver[SnapshotCombatState](new CombatStateSnapshotBuilder(), tracker)
   private val director = new PanelDirector(tracker, csm, statusBar,
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
   private val news = new NewsPanel(baseDirectory, releaseInformation)
