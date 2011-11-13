@@ -22,6 +22,7 @@ import org.specs2.mock.Mockito
 import helper._
 import collection.immutable.List
 import java.lang.String
+import vcc.tracker.ActionDispatcher.{IllegalCommandException, IllegalEventException, RulingsAndDecisionsMismatchException}
 
 class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
 
@@ -147,7 +148,7 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   "throw exception if not all Ruling have Decision" in new context {
     mockRulingProvider.provideRulingFor(startState, List(rulingWhat, rulingWhere)) returns List(decisionWhat)
     dispatcher.handle(FlexAction(commandWithWhatWhereRuling)) must
-      throwA(new MissingDecisionException(rulingWhere))
+      throwA(new RulingsAndDecisionsMismatchException(List(rulingWhat, rulingWhere), List(decisionWhat)))
 
   }
 
@@ -156,13 +157,14 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
       List(makeDecision("what"), decisionSorry)
 
     dispatcher.handle(FlexAction(commandWithWhatWhereRuling)) must
-      throwA(new RulingDecisionMismatchException(rulingWhere, decisionSorry))
+      throwA(new RulingsAndDecisionsMismatchException(List(rulingWhat, rulingWhere), List(decisionWhat, decisionSorry)))
   }
 
   "throw exception if too many Decisions are provided" in new context {
     mockRulingProvider.provideRulingFor(startState, List(rulingWhat)) returns List(decisionWhat, decisionSorry)
 
-    dispatcher.handle(FlexAction(commandWithWhatRuling)) must throwA[TooManyDecisionsException]
+    dispatcher.handle(FlexAction(commandWithWhatRuling)) must
+      throwA(new RulingsAndDecisionsMismatchException(List(rulingWhat), List(decisionWhat, decisionSorry)))
   }
 
   "throw exception and not provide state when Event transition fails" in new context {

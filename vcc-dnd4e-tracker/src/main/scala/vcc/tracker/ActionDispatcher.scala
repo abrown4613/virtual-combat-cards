@@ -20,24 +20,21 @@ import java.lang.IllegalStateException
 
 class InfiniteLoopException extends RuntimeException
 
-class RulingDecisionMismatchException(ruling: Ruling[_, _, _], decision: Ruling[_, _, _])
-  extends RuntimeException("Ruling and decision mismatch: %s, %s".format(ruling, decision))
-
-class MissingDecisionException(ruling: Ruling[_, _, _]) extends RuntimeException("Missing decision for ruling: " + ruling)
-
-class TooManyDecisionsException() extends RuntimeException()
-
-class IllegalEventException(event: Event[_], causingException: Throwable)
-  extends RuntimeException("Event could not be processed: " + event, causingException)
-
-class IllegalCommandException(command: Command[_], causingException: Throwable)
-  extends RuntimeException("Event could not be processed: " + command, causingException)
-
 trait RulingProvider[S] {
   def provideRulingFor(state: S, rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
 }
 
 object ActionDispatcher {
+  class RulingsAndDecisionsMismatchException(rulings: List[Ruling[_, _, _]], decisions: List[Ruling[_, _, _]])
+    extends RuntimeException(
+      "Ruling and decision mismatch: %s <-> %s".format(rulings.mkString(", "), decisions.mkString(", ")))
+
+  class IllegalEventException(event: Event[_], causingException: Throwable)
+    extends RuntimeException("Event could not be processed: " + event, causingException)
+
+  class IllegalCommandException(command: Command[_], causingException: Throwable)
+    extends RuntimeException("Event could not be processed: " + command, causingException)
+
   def getDispatcher[S](state: S): ActionDispatcher[S] = new ActionDispatcher[S](state)
 }
 
@@ -104,15 +101,12 @@ class ActionDispatcher[S] private(initialState: S) {
   }
 
   private def validateDecisions(rulings: List[Ruling[S, _, _]], decisions: List[Ruling[S, _, _]]) {
-    (rulings, decisions) match {
-      case (r :: rs, d :: ds) =>
-        if (!r.isRulingSameSubject(d))
-          throw new RulingDecisionMismatchException(r, d)
-        validateDecisions(rs, ds)
-      case (r :: rs, Nil) => throw new MissingDecisionException(r)
-      case (Nil, d :: ds) => throw new TooManyDecisionsException
-      case (Nil, Nil) =>
-    }
+    if(rulings.length != decisions.length)
+      throw new ActionDispatcher.RulingsAndDecisionsMismatchException(rulings, decisions)
+
+    for((ruling,decision) <- rulings zip decisions)
+      if( !ruling.isRulingSameSubject(decision))
+        throw new ActionDispatcher.RulingsAndDecisionsMismatchException(rulings, decisions)
   }
 
   private def checkForInfiniteLoop(previousState: S, previousCommandStream: CommandStream[S]) {
@@ -134,7 +128,7 @@ class ActionDispatcher[S] private(initialState: S) {
       try {
         currentState = event.transition(currentState)
       } catch {
-        case e => throw new IllegalEventException(event, e)
+        case e => throw new ActionDispatcher.IllegalEventException(event, e)
       }
     }
   }
@@ -143,7 +137,7 @@ class ActionDispatcher[S] private(initialState: S) {
     try {
       command.generateEvents(currentState)
     } catch {
-      case e => throw new IllegalCommandException(command, e)
+      case e => throw new ActionDispatcher.IllegalCommandException(command, e)
     }
   }
 }
