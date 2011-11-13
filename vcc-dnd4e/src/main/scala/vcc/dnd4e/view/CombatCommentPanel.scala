@@ -24,9 +24,7 @@ class CombatCommentPanel(director: PanelDirector) extends CommentPanel with Comb
   editorEnabled = true
 
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange) {
-    if (changes.changes.contains(StateChange.combat.MetaData)) {
-      updateText(newState.state.combatComment)
-    }
+    updateText(newState.state.combatComment)
   }
 
   def sendChangeMessage(text: String) {
