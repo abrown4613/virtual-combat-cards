@@ -17,9 +17,8 @@
 package vcc.dnd4e.tracker.ruling
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.common.CombatState
 import org.specs2.specification.Fragments
-import vcc.tracker.{Command, Ruling}
+import vcc.tracker.{UndecidedRulingException, Command, Ruling}
 
 abstract class RulingAcceptance[S](testTitle: String) extends SpecificationWithJUnit {
 
@@ -50,6 +49,7 @@ abstract class RulingAcceptance[S](testTitle: String) extends SpecificationWithJ
     "  not match some other ruling" ! notMatchRuling ^
     "  have answer when it has" ! answeredHasDecision ^
     "  not have answer when it doesn't" ! unansweredHasNoDecision ^
+    "  throw exception on commands from Ruling without decision" ! unansweredCantGenerateCommand ^
     endp
   }
 
@@ -67,6 +67,10 @@ abstract class RulingAcceptance[S](testTitle: String) extends SpecificationWithJ
 
   private def unansweredHasNoDecision = {
     rulingWithoutAnswer.hasDecision must beFalse
+  }
+
+  private def unansweredCantGenerateCommand = {
+    rulingWithoutAnswer.generateCommands(state) must throwA[UndecidedRulingException]
   }
 
   private def answeredHasDecision = {

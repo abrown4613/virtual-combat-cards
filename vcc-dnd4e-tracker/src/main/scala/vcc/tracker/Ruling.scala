@@ -19,7 +19,9 @@ package vcc.tracker
 /**
  * Indicates that a specified decision is not valid.
  */
-class IllegalDecisionException(msg: String) extends Exception(msg)
+class InvalidDecisionException(msg: String) extends Exception(msg)
+
+class UndecidedRulingException(msg: String) extends Exception(msg)
 
 /**
  * A request for a ruling or a completed ruling.
@@ -54,7 +56,7 @@ abstract class Ruling[S, D, R <: Ruling[S, D, R]] {
    */
   def generateCommands(state: S): List[Command[S]] = {
     if (hasDecision) commandsFromDecision(state)
-    else throw new IllegalDecisionException("No answer for ruling " + this)
+    else throw new UndecidedRulingException("No answer for ruling " + this)
   }
 
   /**

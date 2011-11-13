@@ -18,7 +18,7 @@ package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatState}
 import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
-import vcc.tracker.{Command, IllegalDecisionException, Ruling}
+import vcc.tracker.{Command, InvalidDecisionException, Ruling}
 
 case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOrderID])
   extends Ruling[CombatState, InitiativeOrderID, NextUpRuling] {
@@ -39,7 +39,7 @@ case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOr
 
   def withDecision(value: InitiativeOrderID): NextUpRuling = {
     if (value != candidates.next && !candidates.delaying.contains(value))
-      throw new IllegalDecisionException(value + " is not eligible to act")
+      throw new InvalidDecisionException(value + " is not eligible to act")
     copy(decision = Some(value))
   }
 }

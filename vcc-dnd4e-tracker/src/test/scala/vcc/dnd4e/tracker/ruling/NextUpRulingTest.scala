@@ -18,7 +18,7 @@ package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
 import vcc.dnd4e.tracker.transition.{NextUpCommand, MoveUpCommand, StartRoundCommand}
-import vcc.tracker.{Ruling, IllegalDecisionException}
+import vcc.tracker.{InvalidDecisionException, Ruling}
 
 class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") with SampleStateData {
 
@@ -37,5 +37,5 @@ class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") wit
       "generate moveUp if delaying is selected " !
         (ruling.withDecision(ioB0).generateCommands(state) must_== List(MoveUpCommand(ioB0))) ^
       "not allow answers " !
-        (ruling.withDecision(io2_0) must throwA(new IllegalDecisionException(io2_0 + " is not eligible to act")))
+        (ruling.withDecision(io2_0) must throwA(new InvalidDecisionException(io2_0 + " is not eligible to act")))
 }
