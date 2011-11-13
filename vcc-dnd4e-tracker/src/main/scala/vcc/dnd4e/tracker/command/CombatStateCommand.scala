@@ -18,14 +18,8 @@ package vcc.dnd4e.tracker.command
 
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.tracker._
-import vcc.dnd4e.tracker.ruling.CombatStateRulingLocator
 
 /**
  * Base trait for commands or operations that transition some state to a new state.
  */
-trait CombatStateCommand extends Command[CombatState] {
-
-  override def requiredRulings(state: CombatState): List[Ruling[CombatState, _, _]] = {
-    CombatStateRulingLocator.rulingsFromStateWithCommand(state, this)
-  }
-}
+trait CombatStateCommand extends Command[CombatState]

@@ -20,8 +20,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common.{EffectID, Duration, CombatState}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, AddEffectEvent, EventSourceSampleEvents}
-import vcc.dnd4e.tracker.command.{StartRoundCommand, EndRoundCommand}
-import vcc.tracker.Ruling
+import vcc.dnd4e.tracker.command.{NextUpCommand, StartRoundCommand, EndRoundCommand}
 
 class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -50,44 +49,49 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
   private val eidA5 = EffectID(combA, 5)
   private val eid1_1 = EffectID(comb1, 1)
 
-  "CombatStateRulingLocator" should {
-    "Detect Save on end of round" in {
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
-        must contain(SaveRuling(eidA1, None)))
+  "EndRoundCommand" should {
+    "detect Save on end of round" in {
+      EndRoundCommand(ioA0).requiredRulings(state) must contain(SaveRuling(eidA1, None))
     }
-    "Detect Save Special on end of round" in {
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
-        must contain(SaveSpecialRuling(eidA2, None)))
+    "detect Save Special on end of round" in {
+      EndRoundCommand(ioA0).requiredRulings(state) must contain(SaveSpecialRuling(eidA2, None))
     }
-    "Detect all sustains on end of round" in {
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, EndRoundCommand(ioA0))
+    "detect all sustains on end of round" in {
+      (EndRoundCommand(ioA0).requiredRulings(state)
         must contain(SustainEffectRuling(eidA3, None),
         SustainEffectRuling(eid1_1, None)))
     }
-    "Detect save versus death when appropriate" in {
+    "detect save versus death when appropriate" in {
       val nState = state.transitionWith(List(ApplyDamageEvent(combA, 41)))
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(nState, EndRoundCommand(ioA0))
+      (EndRoundCommand(ioA0).requiredRulings(nState)
         must contain(SaveVersusDeathRuling(combA, None)))
     }
+  }
 
-    "Detect Ongoing damage" in {
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+  "StartRoundCommand" should {
+    "detect Ongoing damage" in {
+      (StartRoundCommand(ioA0).requiredRulings(state)
         must contain(OngoingDamageRuling(eidA4, None)))
     }
 
-    "Detect Regeneration damage" in {
-      (CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+    "detect Regeneration damage" in {
+      (StartRoundCommand(ioA0).requiredRulings(state)
         must contain(RegenerationRuling(eidA5, None)))
     }
 
-    "Detect regeneration first" in {
-      type R = Ruling[CombatState, _, _]
-      val regen: List[R] = List(RegenerationRuling(eidA5, None),
-        OngoingDamageRuling(eidA4, None))
-      val detected: List[R] = CombatStateRulingLocator.rulingsFromStateWithCommand(state, StartRoundCommand(ioA0))
+    "detect regeneration first" in {
+      val regen = List(RegenerationRuling(eidA5, None), OngoingDamageRuling(eidA4, None))
+      val detected = StartRoundCommand(ioA0).requiredRulings(state)
       detected must contain(regen(0))
       detected must contain(regen(1))
-      (detected.indexOf(regen(0)) must  beLessThan(detected.indexOf(regen(1))))
+      (detected.indexOf(regen(0)) must beLessThan(detected.indexOf(regen(1))))
+    }
+  }
+
+  "NextUpCommand" should {
+    "ask for a decision on what to put first" in {
+      val nextUpCommand = NextUpCommand(io1_0, List(io2_0, ioA0))
+      nextUpCommand.requiredRulings(state) must_== List(NextUpRuling(nextUpCommand, None))
     }
   }
 }
