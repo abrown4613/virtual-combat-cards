@@ -19,7 +19,6 @@ package vcc.dnd4e.tracker.command
 import vcc.dnd4e.tracker.common.{InitiativeOrderID, HealthStatus, InitiativeState, CombatState}
 import vcc.dnd4e.tracker.common.InitiativeState._
 import vcc.dnd4e.tracker.common.HealthStatus._
-import vcc.dnd4e.tracker.StateLensFactory
 import vcc.tracker.{Command, PartialFunctionCommandStream}
 
 object AutomationCommandSource {
@@ -34,8 +33,8 @@ object AutomationCommandSource {
 
     private def get_HeadIOI_InitiativeState_HeathStatus(state: CombatState): Some[(InitiativeOrderID, InitiativeState.Value, HealthStatus.Value)] = {
       val ioi = state.order.nextUp.get
-      val initState = StateLensFactory.initiativeTrackerLens(ioi).get(state).state
-      val health = StateLensFactory.combatantHealth(ioi.combId).get(state).status
+      val initState = state.lensFactory.initiativeTrackerLens(ioi).get(state).state
+      val health = state.lensFactory.combatantHealth(ioi.combId).get(state).status
       Some((ioi, initState, health))
     }
   }
