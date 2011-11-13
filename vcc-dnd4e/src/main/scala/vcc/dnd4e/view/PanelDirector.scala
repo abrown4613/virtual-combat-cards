@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id: PanelDirector.scala 716 2011-01-18 20:24:18Z mailleux@gmail.com $
-
 package vcc.dnd4e.view
 
-import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserverViewBuilder, DirectInitiativeOrderViewBuilder}
+import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserveViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
@@ -47,7 +45,6 @@ object PanelDirector {
 
 trait CombatStateObserver {
   def combatStateChanged(newState: UnifiedSequenceTable, changes: StateChange)
-
 }
 
 /**
@@ -88,11 +85,10 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateWithCh
   csm.addChangeObserver(this)
 
   def snapshotChanged(newState: CombatStateWithChanges) {
-    //newState.prettyPrint()
     SwingHelper.invokeInEventDispatchThread{
       unifiedTable = UnifiedSequenceTable.buildList(newState.state,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
-        SortedIDReserverViewBuilder)
+        SortedIDReserveViewBuilder)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable, newState.changes))
     }
   }

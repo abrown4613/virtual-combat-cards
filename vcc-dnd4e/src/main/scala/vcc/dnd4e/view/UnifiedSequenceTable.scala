@@ -19,14 +19,14 @@ package vcc.dnd4e.view
 
 import helper.{ReserveViewBuilder, InitiativeOrderViewBuilder}
 import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
-import vcc.dnd4e.domain.tracker.snapshot.SnapshotCombatState
+import vcc.dnd4e.domain.tracker.common.CombatStateView
 
 /**
  * Provides a single linear and random access table with all combatants.
  * @param elements The list of UnifiedCombatant in the order
  * @param state The state that was used to build the sequence
  */
-class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: SnapshotCombatState) {
+class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: CombatStateView) {
 
   /**
    * Get UnifiedCombatant at position idx
@@ -79,11 +79,9 @@ object UnifiedSequenceTable {
    * This service object will used a ReserveViewBuilder and a InitiativeOrderViewBuilder to build a unified array with all
    * the combatant in a single Array.
    */
-  def buildList(combatState: SnapshotCombatState, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): UnifiedSequenceTable = {
+  def buildList(combatState: CombatStateView, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): UnifiedSequenceTable = {
     val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
     val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
     new UnifiedSequenceTable((order ++ reserve).toArray, combatState)
   }
-
-
 }

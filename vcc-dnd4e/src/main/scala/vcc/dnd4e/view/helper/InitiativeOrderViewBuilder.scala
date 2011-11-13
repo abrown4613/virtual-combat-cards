@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,25 +16,26 @@
  */
 package vcc.dnd4e.view.helper
 
-import vcc.dnd4e.domain.tracker.snapshot.SnapshotCombatState
 import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
+import vcc.dnd4e.domain.tracker.common.CombatStateView
 
 trait InitiativeOrderViewBuilder {
-  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID]
+  def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID]
 }
 
 trait ReserveViewBuilder {
-  def buildReserve(combatState: SnapshotCombatState): Seq[CombatantID]
+  def buildReserve(combatState: CombatStateView): Seq[CombatantID]
 }
 
-object SortedIDReserverViewBuilder extends ReserveViewBuilder {
-  def buildReserve(combatState: SnapshotCombatState): Seq[CombatantID] = {
-    combatState.combatantsNotInOrder().toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
+object SortedIDReserveViewBuilder extends ReserveViewBuilder {
+  def buildReserve(combatState: CombatStateView): Seq[CombatantID] = {
+    val notInOrder = Set[CombatantID]((combatState.allCombatantIDs filterNot (combatState.getInitiativeOrder.map(_.combId) contains)): _*)
+    notInOrder.toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
   }
 }
 
 object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID] = {
+  def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
     combatState.getInitiativeOrder
   }
 }
@@ -43,7 +44,7 @@ object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
  * Build an order with the robin head always on the top.
  */
 object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-  def buildOrder(combatState: SnapshotCombatState): Seq[InitiativeOrderID] = {
+  def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
     val order = combatState.getInitiativeOrder
     val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
     order.drop(idx) ++ order.take(idx)
