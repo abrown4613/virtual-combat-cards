@@ -19,63 +19,102 @@ package vcc.dnd4e.tracker.command
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
-import vcc.tracker.Event
+import vcc.tracker.{Ruling, Event}
+import vcc.dnd4e.tracker.ruling._
 
 abstract class InitiativeCommand extends CombatStateCommand {
-  val ioi: InitiativeOrderID
+  val who: InitiativeOrderID
 
   protected def getTransitions(combatState: CombatState): List[Event[CombatState]]
 
   def generateEvents(iState: CombatState): List[Event[CombatState]] = {
-    if (!iState.order.tracker.isDefinedAt(ioi))
-      throw new IllegalActionException(ioi + " is not in sequence")
+    if (!iState.order.tracker.isDefinedAt(who))
+      throw new IllegalActionException(who + " is not in sequence")
     getTransitions(iState)
   }
 }
 
-case class StartRoundCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class StartRoundCommand(who: InitiativeOrderID) extends InitiativeCommand {
   def getTransitions(iState: CombatState): List[CombatStateEvent] = List(
-    InitiativeTrackerUpdateEvent(ioi, InitiativeAction.StartRound),
-    EffectListTransformEvent(EffectTransformation.startRound(ioi)))
+    InitiativeTrackerUpdateEvent(who, InitiativeAction.StartRound),
+    EffectListTransformEvent(EffectTransformation.startRound(who)))
+
+  override def requiredRulings(state: CombatState) = searchStartRound(state, who.combId)
+
+  private def startRoundMatcher(who: CombatantID): PartialFunction[Effect, Ruling[CombatState, _, _]] = {
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstOngoing(full, hint), _), _) =>
+      (OngoingDamageRuling(eid, None))
+    case Effect(eid@EffectID(`who`, n), _, Effect.Condition.Generic(ConditionMatcher.FirstRegenerate(full, hint), _), _) =>
+      (RegenerationRuling(eid, None))
+  }
+
+  private def searchStartRound(state: CombatState, who: CombatantID): List[Ruling[CombatState, _, _]] = {
+    val whoMatcher = startRoundMatcher(who)
+    val (regen, rest) = state.getAllEffects.flatMap(whoMatcher.lift(_)).toList.partition(x => x.isInstanceOf[RegenerationRuling])
+    (regen ::: rest)
+  }
 }
 
-case class EndRoundCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class EndRoundCommand(who: InitiativeOrderID) extends InitiativeCommand {
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
-    val iat = InitiativeTrackerUpdateEvent(ioi, InitiativeAction.EndRound)
-    val et = EffectListTransformEvent(EffectTransformation.endRound(ioi))
-    if (combatState.lensFactory.initiativeTrackerLens(ioi).get(combatState).state == InitiativeState.Delaying)
+    val iat = InitiativeTrackerUpdateEvent(who, InitiativeAction.EndRound)
+    val et = EffectListTransformEvent(EffectTransformation.endRound(who))
+    if (combatState.lensFactory.initiativeTrackerLens(who).get(combatState).state == InitiativeState.Delaying)
       List(iat, et)
     else
       List(iat, RotateRobinEvent, et)
   }
+
+  override def requiredRulings(state: CombatState): List[Ruling[CombatState, _, _]] = searchEndRound(state, who.combId)
+
+  private def endRoundMatcher(who:  CombatantID): PartialFunction[Effect, Ruling[CombatState, _, _]] = {
+    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEnd) =>
+      (SaveRuling(effect.effectId, None))
+    case effect@Effect(EffectID(`who`, n), _, _, Duration.SaveEndSpecial) =>
+      SaveSpecialRuling.rulingFromEffect(effect)
+    case effect@Effect(eid, _, condition, Duration.RoundBound(InitiativeOrderID(`who`, _), Duration.Limit.EndOfTurnSustain)) =>
+      SustainEffectRuling(effect.effectId, None)
+  }
+
+  private def searchEndRound(state: CombatState, who: CombatantID): List[Ruling[CombatState, _, _]] = {
+    val whoMatcher = endRoundMatcher(who)
+    state.getAllEffects.flatMap(whoMatcher.lift(_)) ::: dyingRuling(state, who)
+  }
+
+
+  private def dyingRuling(state: CombatState, who: CombatantID): List[Ruling[CombatState, _, _]] = {
+    if (state.combatant(who).health.status == HealthStatus.Dying)
+      List(SaveVersusDeathRuling(who, None))
+    else Nil
+  }
 }
 
-case class DelayCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class DelayCommand(who: InitiativeOrderID) extends InitiativeCommand {
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
-    val iat = InitiativeTrackerUpdateEvent(ioi, InitiativeAction.DelayAction)
-    val et = DelayEffectListTransformEvent(ioi)
+    val iat = InitiativeTrackerUpdateEvent(who, InitiativeAction.DelayAction)
+    val et = DelayEffectListTransformEvent(who)
     List(iat, RotateRobinEvent, et)
   }
 }
 
-case class ReadyActionCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class ReadyActionCommand(who: InitiativeOrderID) extends InitiativeCommand {
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
-    List(InitiativeTrackerUpdateEvent(ioi, InitiativeAction.ReadyAction))
+    List(InitiativeTrackerUpdateEvent(who, InitiativeAction.ReadyAction))
   }
 }
 
-case class ExecuteReadyCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class ExecuteReadyCommand(who: InitiativeOrderID) extends InitiativeCommand {
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
-    List(InitiativeTrackerUpdateEvent(ioi, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioi))
+    List(InitiativeTrackerUpdateEvent(who, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(who))
   }
 }
 
-case class MoveUpCommand(ioi: InitiativeOrderID) extends InitiativeCommand {
+case class MoveUpCommand(who: InitiativeOrderID) extends InitiativeCommand {
   protected def getTransitions(combatState: CombatState): List[CombatStateEvent] = {
     List(
-      InitiativeTrackerUpdateEvent(ioi, InitiativeAction.MoveUp),
-      MoveBeforeFirstEvent(ioi),
-      SetRobinEvent(ioi))
+      InitiativeTrackerUpdateEvent(who, InitiativeAction.MoveUp),
+      MoveBeforeFirstEvent(who),
+      SetRobinEvent(who))
   }
 }
 
@@ -102,4 +141,8 @@ case class MoveBeforeCommand(who: InitiativeOrderID, whom: InitiativeOrderID) ex
 
 case class NextUpCommand(next: InitiativeOrderID, delaying: List[InitiativeOrderID]) extends CombatStateCommand {
   def generateEvents(state: CombatState): List[Event[CombatState]] = Nil
+
+  override def requiredRulings(state: CombatState): List[Ruling[CombatState, _, _]] = {
+    List(NextUpRuling(this, None))
+  }
 }
