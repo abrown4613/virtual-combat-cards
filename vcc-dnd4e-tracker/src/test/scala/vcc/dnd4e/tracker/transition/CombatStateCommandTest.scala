@@ -20,6 +20,7 @@ import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
 import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
+import vcc.tracker.Event
 
 class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSampleEvents with CombatStateEventSourceBehavior {
 
@@ -50,7 +51,6 @@ class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSamp
       endp
   }
 
-  //TODO Move this to some other file
   private def combatantComments = {
     val cmd = SetCombatantCommentCommand(combA, "message")
     val exception = new IllegalActionException("Cant set comment: Combatant " + combA + " does not exist")
@@ -113,9 +113,10 @@ class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSamp
 
   def clearRoster = {
     val exception = new IllegalActionException("Can not clear while in combat")
-    val rA: CombatStateEvent = RemoveCombatantFromRosterEvent(combA)
-    val r1: CombatStateEvent = RemoveCombatantFromRosterEvent(comb1)
-    val r2: CombatStateEvent = RemoveCombatantFromRosterEvent(comb2)
+    val rA: Event[CombatState] = RemoveCombatantFromRosterEvent(combA)
+    val r1: Event[CombatState] = RemoveCombatantFromRosterEvent(comb1)
+    val r2: Event[CombatState] = RemoveCombatantFromRosterEvent(comb2)
+
     "Clear combat" ^
       "clear monster on started combat must fail" !
         (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (ClearRosterCommand(true)) failWith exception) ^
@@ -132,10 +133,10 @@ class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSamp
     val exception = new IllegalActionException("Can not rest during combat")
     val shortRest = RestCommand(false)
     val extendedRest = RestCommand(true)
-    val sRest1: CombatStateEvent = RestCombatantEvent(comb1, false)
-    val sRestA: CombatStateEvent = RestCombatantEvent(combA, false)
-    val eRest1: CombatStateEvent = RestCombatantEvent(comb1, true)
-    val eRestA: CombatStateEvent = RestCombatantEvent(combA, true)
+    val sRest1: Event[CombatState] = RestCombatantEvent(comb1, false)
+    val sRestA: Event[CombatState] = RestCombatantEvent(combA, false)
+    val eRest1: Event[CombatState] = RestCombatantEvent(comb1, true)
+    val eRestA: Event[CombatState] = RestCombatantEvent(combA, true)
     "Resting combatant" ^
       "rest should fail if combat is started" !
         (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (shortRest) failWith exception) ^
