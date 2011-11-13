@@ -17,6 +17,8 @@
 package vcc.dnd4e.tracker.common
 
 import vcc.controller.message.TransactionalAction
+import vcc.tracker.{CommandStream, Action}
+import vcc.dnd4e.tracker.dispatcher.ActionTranslator
 
 /**
  * This object contains all TransactionalActions for the transactional tracker.
@@ -24,7 +26,9 @@ import vcc.controller.message.TransactionalAction
 object Command {
 
   // Combat MetaData Actions
-  abstract class TransactionalActionWithMessage(val description: String) extends TransactionalAction
+  abstract class TransactionalActionWithMessage(val description: String) extends TransactionalAction with Action[CombatState] {
+    def createCommandStream(): CommandStream[CombatState] = ActionTranslator.translateToCommandStream(this)
+  }
 
   case class StartCombat() extends TransactionalActionWithMessage("Start combat")
 
