@@ -23,9 +23,7 @@ class CommandStreamTest extends SpecificationWithJUnit {
   def randomInt(): Int = scala.util.Random.nextInt()
 
   case class ICommand(value: Int) extends Command[Int] {
-    override def generateEvents(state: Int): List[Event[Int]] = Nil
-
-    def generateTransitions(iState: Int): List[StateTransition[Int]] = Nil
+    def generateEvents(state: Int): List[Event[Int]] = Nil
   }
 
   implicit def int2ICommand(v: Int):Command[Int] = ICommand(v)

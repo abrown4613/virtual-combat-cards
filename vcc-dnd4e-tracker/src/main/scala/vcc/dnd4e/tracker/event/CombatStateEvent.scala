@@ -17,6 +17,6 @@
 package vcc.dnd4e.tracker.event
 
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.tracker.{Event, StateTransition}
+import vcc.tracker.Event
 
-trait CombatStateEvent extends StateTransition[CombatState] with Event[CombatState]
+trait CombatStateEvent extends Event[CombatState]
