@@ -18,12 +18,12 @@ package vcc.dnd4e.view.helper
 
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
-import vcc.dnd4e.domain.tracker.snapshot.{CombatState, CombatStateSnapshotHelper}
+import vcc.dnd4e.domain.tracker.snapshot.{SnapshotCombatState, CombatStateSnapshotHelper}
 import vcc.dnd4e.domain.tracker.common.CombatantStateView
 import vcc.dnd4e.view.UnifiedSequenceTable
 
 class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mockito with CombatStateSnapshotHelper[String] {
-  val cs = CombatState(
+  val cs = SnapshotCombatState(
     false,
     null,
     List(ioa0), Map(ioa0 -> ita0),
@@ -35,11 +35,11 @@ class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mocki
     "call reserve builder with CombatantID that are not in order" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[CombatState]) answers {
-        cs => cs.asInstanceOf[CombatState].getInitiativeOrder
+      mOrderBuilder.buildOrder(any[SnapshotCombatState]) answers {
+        cs => cs.asInstanceOf[SnapshotCombatState].getInitiativeOrder
       }
-      mReserve.buildReserve(any[CombatState]) answers {
-        cs => cs.asInstanceOf[CombatState].combatantsNotInOrder().toSeq
+      mReserve.buildReserve(any[SnapshotCombatState]) answers {
+        cs => cs.asInstanceOf[SnapshotCombatState].combatantsNotInOrder().toSeq
       }
 
       UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
@@ -49,8 +49,8 @@ class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mocki
     "call order builder with item in the initative order" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[CombatState]) returns Seq(ioa0)
-      mReserve.buildReserve(any[CombatState]) returns Seq(combC, combB)
+      mOrderBuilder.buildOrder(any[SnapshotCombatState]) returns Seq(ioa0)
+      mReserve.buildReserve(any[SnapshotCombatState]) returns Seq(combC, combB)
 
       UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       there was one(mOrderBuilder).buildOrder(cs)
@@ -59,8 +59,8 @@ class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mocki
     "build an order with what was returned" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[CombatState]) returns Seq(ioa0)
-      mReserve.buildReserve(any[CombatState]) returns Seq(combC, combB)
+      mOrderBuilder.buildOrder(any[SnapshotCombatState]) returns Seq(ioa0)
+      mReserve.buildReserve(any[SnapshotCombatState]) returns Seq(combC, combB)
 
       val ret = UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
       ret.elements.length must_== 3

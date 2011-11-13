@@ -21,7 +21,7 @@ import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
 import actors.Actor
 import vcc.controller.{Decision, Ruling, TrackerChangeObserver}
-import vcc.dnd4e.domain.tracker.snapshot.{StateChange, CombatState, CombatStateWithChanges}
+import vcc.dnd4e.domain.tracker.snapshot.{StateChange, SnapshotCombatState, CombatStateWithChanges}
 import vcc.infra.prompter.{RulingBroker}
 import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.Command.ExecuteInitiativeAction
@@ -53,7 +53,7 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
     mCombA.definition returns combADef
     val mockRuleBroker = mock[RulingBroker]
     val csm = mock[TrackerChangeObserver[CombatStateWithChanges]]
-    csm.getSnapshot() returns CombatStateWithChanges(CombatState(false, "", Nil, Map(), None, Map()), new StateChange())
+    csm.getSnapshot() returns CombatStateWithChanges(SnapshotCombatState(false, "", Nil, Map(), None, Map()), new StateChange())
     val pd = new PanelDirector(mock[Actor], csm, mock[StatusBar], mockRuleBroker)
   }
 
@@ -74,7 +74,7 @@ class PanelDirectorDialogFlowTest extends SpecificationWithJUnit with Mockito {
     }
 
     "provide correct message for the end round" in new context {
-      csm.getSnapshot() returns CombatStateWithChanges(CombatState(false, "", Nil, Map(), None, Map(combA -> mCombA)), new StateChange())
+      csm.getSnapshot() returns CombatStateWithChanges(SnapshotCombatState(false, "", Nil, Map(), None, Map(combA -> mCombA)), new StateChange())
       val action = ExecuteInitiativeAction(ioiA, InitiativeAction.EndRound)
       val msg = "NO-MESSAGE-MIGRATING"
       mockRuleBroker.promptRuling(msg, rulings) returns mDecisions

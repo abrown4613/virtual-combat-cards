@@ -24,7 +24,7 @@ import vcc.dnd4e.domain.tracker.common._
 class CombatStateTest extends SpecificationWithJUnit with Mockito with CombatStateSnapshotHelper[String] {
   "a CombatState" should {
     "provide the correct list of combatantsNotInOrder" in {
-      val cs = CombatState(
+      val cs = SnapshotCombatState(
         false,
         null,
         List(ioa0), Map(ioa0 -> ita0),
@@ -45,7 +45,7 @@ class CombatStateTest extends SpecificationWithJUnit with Mockito with CombatSta
       val eff3 = Effect(EffectID(combB, 2), combA, badCondition, Duration.Rage)
       val aBigList = EffectList(combA, List(eff1, eff2))
       val aShortList = EffectList(combB, List(eff3))
-      val cs = CombatState(
+      val cs = SnapshotCombatState(
         false,
         null,
         List(ioa0), Map(ioa0 -> ita0),

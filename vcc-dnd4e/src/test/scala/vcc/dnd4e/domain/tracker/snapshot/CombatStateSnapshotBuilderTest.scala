@@ -21,7 +21,7 @@ import org.specs2.specification.Scope
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.domain.tracker.common._
 
-class CombatStateSnapshotBuilderTest extends SpecificationWithJUnit with CombatStateSnapshotHelper[CombatState] {
+class CombatStateSnapshotBuilderTest extends SpecificationWithJUnit with CombatStateSnapshotHelper[SnapshotCombatState] {
 
   trait emptyContext extends Scope {
     val aBuilder = new CombatStateSnapshotBuilder()

@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.snapshot
 
 import vcc.controller.SnapshotBuilder
@@ -26,7 +25,7 @@ import vcc.dnd4e.domain.tracker.common._
  * This class is used to collect CombatStateChanges and keep a version of the transactional tracker state.
  * It will generate snapshot.CombatState as snapshot.
  */
-class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] with SnapshotBuilderAborter[CombatState] {
+class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] with SnapshotBuilderAborter[SnapshotCombatState] {
 
   /**
    * Internal representation of the combatant.
@@ -101,7 +100,7 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[CombatState] with Snaps
 
   def beginChanges() {}
 
-  def getSnapshot(): CombatState = new CombatState(
+  def getSnapshot(): SnapshotCombatState = new SnapshotCombatState(
     inCombat, comment,
     order, Map(initiatives.toSeq: _*), first,
     Map(roster.map(x => x._1 -> x._2.toView).toSeq: _*))
