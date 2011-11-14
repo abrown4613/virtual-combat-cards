@@ -86,6 +86,8 @@ class CombatStateSnapshotBuilder extends SnapshotBuilder[SnapshotCombatState] {
 
       case InitiativeOrderFirstChange(who) =>
         toBeFirst = Some(who)
+
+      case CombatStateChangeNotification(newState) => println("Ignoring: " + newState)
     }
   }
 
