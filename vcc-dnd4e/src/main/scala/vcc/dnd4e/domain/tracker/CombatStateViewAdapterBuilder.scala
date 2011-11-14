@@ -36,7 +36,7 @@ class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
   private class CombatStateViewAdapter(combatState: CombatState) extends CombatStateView {
     private val combatantViewMap = combatState.roster.entries.map(e => (e._1, new CombatantStateViewAdapter(e._2)))
 
-    def combatantViewFromID(id: CombatantID): CombatantStateView = combatantViewFromID(id)
+    def combatantViewFromID(id: CombatantID): CombatantStateView = combatantViewMap(id)
 
     def allCombatantIDs: List[CombatantID] = combatState.roster.allCombatantIDs
 
@@ -57,7 +57,8 @@ class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
 
   def processChange(change: ChangeNotification) {
     change match {
-      case CombatStateChangeNotification(newState) => combatState = newState
+      case CombatStateChangeNotification(newState) =>
+        combatState = newState
       case s =>
         println("***Ignoring : " + s)
     }
@@ -69,5 +70,6 @@ class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
     new CombatStateViewAdapter(combatState)
   }
 
-  def handleFailure(e: Throwable, change: List[ChangeNotification]) {}
+  def handleFailure(e: Throwable, change: List[ChangeNotification]) {
+  }
 }

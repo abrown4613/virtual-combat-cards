@@ -27,7 +27,8 @@ import java.awt.Toolkit
 import java.io.File
 import java.net.URL
 import vcc.controller.{Tracker, TrackerChangeObserver}
-import vcc.dnd4e.domain.tracker.snapshot.{CombatStateSnapshotBuilder, SnapshotCombatState}
+import vcc.dnd4e.domain.tracker.CombatStateViewAdapterBuilder
+import vcc.dnd4e.domain.tracker.common.CombatStateView
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
@@ -37,7 +38,7 @@ class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: Rel
   private val docker = new CustomDockingAdapter(baseDirectory)
 
   private val statusBar = new StatusBar(releaseInformation.currentVersion)
-  private val csm = new TrackerChangeObserver[SnapshotCombatState](new CombatStateSnapshotBuilder(), tracker)
+  private val csm = new TrackerChangeObserver[CombatStateView](new CombatStateViewAdapterBuilder(), tracker)
   private val director = new PanelDirector(tracker, csm, statusBar,
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
   private val news = new NewsPanel(baseDirectory, releaseInformation)
