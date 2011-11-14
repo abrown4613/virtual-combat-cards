@@ -24,7 +24,6 @@ import scala.actors.Actor
 import vcc.controller.message.Command
 import vcc.controller._
 import vcc.infra.prompter.RulingBroker
-import vcc.dnd4e.domain.tracker.snapshot.{SnapshotCombatState}
 
 trait ContextObserver {
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
@@ -63,8 +62,8 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[SnapshotCombatState], statusBar: StatusBar, rulingBroker: RulingBroker)
-  extends TrackerChangeAware[SnapshotCombatState] with CommandSource {
+class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView], statusBar: StatusBar, rulingBroker: RulingBroker)
+  extends TrackerChangeAware[CombatStateView] with CommandSource {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
   private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
@@ -84,7 +83,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[SnapshotCombatSta
   //Init code
   csm.addChangeObserver(this)
 
-  def snapshotChanged(newState: SnapshotCombatState) {
+  def snapshotChanged(newState: CombatStateView) {
     SwingHelper.invokeInEventDispatchThread{
       unifiedTable = UnifiedSequenceTable.buildList(newState,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
