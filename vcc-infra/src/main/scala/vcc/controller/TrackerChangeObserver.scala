@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.controller
 
 import scala.actors.Actor
@@ -88,10 +87,8 @@ private[controller] class TrackerChangeObserverActor[S](builder: SnapshotBuilder
           }
           callbacks.foreach(cb => cb.snapshotChanged(builder.getSnapshot()))
 
-        case TrackerChangeObserver.RegisterCallback(cb, manif) if (manif <:< manifest) =>
+        case TrackerChangeObserver.RegisterCallback(cb, manif) =>
           callbacks = cb.asInstanceOf[TrackerChangeAware[S]] :: callbacks
-
-        case TrackerChangeObserver.RegisterCallback(cb, manif) if (!(manif <:< manifest)) =>
       }
     }
   }
