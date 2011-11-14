@@ -18,51 +18,57 @@ package vcc.dnd4e.view.helper
 
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
-import vcc.dnd4e.domain.tracker.snapshot.{SnapshotCombatState, CombatStateSnapshotHelper}
-import vcc.dnd4e.domain.tracker.common.CombatantStateView
 import vcc.dnd4e.view.UnifiedSequenceTable
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatStateView}
 
-class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mockito with CombatStateSnapshotHelper[String] {
-  val cs = SnapshotCombatState(
-    false,
-    null,
-    List(ioa0), Map(ioa0 -> ita0),
-    Some(ioa0),
-    Map(combA -> mock[CombatantStateView], combB -> mock[CombatantStateView], combC -> mock[CombatantStateView]))
+class UnifiedCombatantArrayBuilderTest extends SpecificationWithJUnit with Mockito {
 
+  private val combA = CombatantID("A")
+  private val combB = CombatantID("B")
+  private val combC = CombatantID("C")
+  private val ioa0 = InitiativeOrderID(combA, 0)
+  private val ita0 = InitiativeTracker(ioa0, 1, 0, InitiativeState.Waiting)
+
+  private val mockCombatant = Map(combA -> mock[CombatantStateView], combB -> mock[CombatantStateView], combC -> mock[CombatantStateView])
+  private val combatState = mock[CombatStateView]
+
+  combatState.getInitiativeOrder returns List(ioa0)
+  combatState.initiativeTrackerFromID(ioa0) returns ita0
+  combatState.allCombatantIDs returns mockCombatant.keys.toList
+  for ((k, v) <- mockCombatant) {
+    combatState.combatantViewFromID(k) returns v
+  }
 
   "the UnifiedCombatantArrayBuilder" should {
     "call reserve builder with CombatantID that are not in order" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[SnapshotCombatState]) answers {
-        cs => cs.asInstanceOf[SnapshotCombatState].getInitiativeOrder
+      mOrderBuilder.buildOrder(any[CombatStateView]) answers {
+        cs => cs.asInstanceOf[CombatStateView].getInitiativeOrder
       }
-      mReserve.buildReserve(any[SnapshotCombatState]) answers {
-        cs => cs.asInstanceOf[SnapshotCombatState].combatantsNotInOrder().toSeq
-      }
-
-      UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
-      there was one(mReserve).buildReserve(cs)
+      mReserve.buildReserve(any[CombatStateView]) returns Seq()
+      UnifiedSequenceTable.buildList(combatState, mOrderBuilder, mReserve)
+      there was one(mReserve).buildReserve(combatState)
     }
 
     "call order builder with item in the initative order" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[SnapshotCombatState]) returns Seq(ioa0)
-      mReserve.buildReserve(any[SnapshotCombatState]) returns Seq(combC, combB)
+      mOrderBuilder.buildOrder(any[CombatStateView]) returns Seq(ioa0)
+      mReserve.buildReserve(any[CombatStateView]) returns Seq(combC, combB)
 
-      UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
-      there was one(mOrderBuilder).buildOrder(cs)
+      UnifiedSequenceTable.buildList(combatState, mOrderBuilder, mReserve)
+      there was one(mOrderBuilder).buildOrder(combatState)
     }
 
     "build an order with what was returned" in {
       val mOrderBuilder = mock[InitiativeOrderViewBuilder]
       val mReserve = mock[ReserveViewBuilder]
-      mOrderBuilder.buildOrder(any[SnapshotCombatState]) returns Seq(ioa0)
-      mReserve.buildReserve(any[SnapshotCombatState]) returns Seq(combC, combB)
+      mOrderBuilder.buildOrder(any[CombatStateView]) returns Seq(ioa0)
+      mReserve.buildReserve(any[CombatStateView]) returns Seq(combC, combB)
 
-      val ret = UnifiedSequenceTable.buildList(cs, mOrderBuilder, mReserve)
+      val ret = UnifiedSequenceTable.buildList(combatState, mOrderBuilder, mReserve)
       ret.elements.length must_== 3
       ret(0).initiative must_== ita0
       ret(1).initiative must_== null
