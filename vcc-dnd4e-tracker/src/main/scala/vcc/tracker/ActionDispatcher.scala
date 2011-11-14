@@ -75,7 +75,7 @@ class ActionDispatcher[S] private(initialState: S) {
   private def processStep(command: Command[S], nextStream: CommandStream[S]) {
     val previousState = currentState
     executeCommand(command)
-    checkForInfiniteLoop(previousState, nextStream)
+    checkForInfiniteLoop(previousState, commandStream)
     commandStream = nextStream
   }
 

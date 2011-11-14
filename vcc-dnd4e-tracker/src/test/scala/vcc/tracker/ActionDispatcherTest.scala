@@ -82,6 +82,11 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
     dispatcher.handle(LoopToAction(10, 0)) must throwA[InfiniteLoopException]
   }
 
+  "not detect infinite loop on action that does not change state but changes stream" in new context {
+    dispatcher.handle(FlexAction(FlexCommand(0)))
+    dispatcher.resultState must_== Some(startState)
+  }
+
   "handle action with single Command and Single Event" in new context {
     dispatcher.handle(FlexAction(FlexCommand(1)))
     dispatcher.resultState.get must_== State(1)
