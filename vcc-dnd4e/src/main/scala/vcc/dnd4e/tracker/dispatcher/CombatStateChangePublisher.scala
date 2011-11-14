@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.tracker.common._
@@ -68,6 +67,6 @@ object CombatStateChangePublisher {
         } else Nil) :::
         Nil
     }
-    initChanges ::: changes.reverse
+    CombatStateChangeNotification(current) :: initChanges ::: changes.reverse
   }
 }

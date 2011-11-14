@@ -33,6 +33,8 @@ case class CombatantRosterDefinitionOld(cid: CombatantID, alias: String, entity:
 //Change Notifications
 abstract sealed class CombatStateChange extends ChangeNotification
 
+//Temporary Home
+case class CombatStateChangeNotification(combatState:CombatState) extends  CombatStateChange
 
 /**
  * Indicates the change of a single CombatantAspect 
