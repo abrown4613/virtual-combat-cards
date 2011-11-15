@@ -60,14 +60,14 @@ class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: Rel
       new EffectEditorPanel(director, getNumberOfEditorPanel),
       new CombatCommentPanel(director),
       new SequenceTable(director),
-      //Target panels
-      new CombatantCard(director, true),
-      new EffectViewPanel(director, true),
-      new CombatantCommentPanel(director, true),
-      // Source Panel
-      new CombatantCard(director, false),
-      new EffectViewPanel(director, false),
-      new CombatantCommentPanel(director, false),
+
+      new TargetCombatantCard(director),
+      new TargetEffectViewPanel(director),
+      new TargetCombatantCommentPanel(director),
+
+      new SourceCombatantCard(director),
+      new SourceEffectViewPanel(director),
+      new SourceCombatantCommentPanel(director),
       news
     )
   }

@@ -26,6 +26,15 @@ import vcc.controller._
 import vcc.infra.prompter.RulingBroker
 
 trait ContextObserver {
+  def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    changeContext(newContext, true)
+  }
+
+  def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    changeContext(newContext, false)
+  }
+
+  @deprecated("use polimorfic dispatch")
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
 }
 
@@ -39,6 +48,7 @@ object PanelDirector {
     val HideDead = Value("Hide Dead")
     val RobinView = Value("Robin View")
   }
+
 }
 
 trait CombatStateObserver {
@@ -84,7 +94,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
   csm.addChangeObserver(this)
 
   def snapshotChanged(newState: CombatStateView) {
-    SwingHelper.invokeInEventDispatchThread{
+    SwingHelper.invokeInEventDispatchThread {
       unifiedTable = UnifiedSequenceTable.buildList(newState,
         if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
         SortedIDReserveViewBuilder)
@@ -105,15 +115,11 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
   }
 
   def setActiveCombatant(id: Option[UnifiedCombatantID]) {
-    publishContextChange(id, false)
-  }
-
-  private def publishContextChange(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    contextObserver.foreach(obs => obs.changeContext(nctx, isTarget))
+    contextObserver.foreach(obs => obs.changeSourceContext(id))
   }
 
   def setTargetCombatant(id: Option[UnifiedCombatantID]) {
-    publishContextChange(id, true)
+    contextObserver.foreach(obs => obs.changeTargetContext(id))
   }
 
   def setStatusBarMessage(text: String) {

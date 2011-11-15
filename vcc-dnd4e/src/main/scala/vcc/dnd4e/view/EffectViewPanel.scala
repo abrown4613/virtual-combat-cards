@@ -23,8 +23,9 @@ import vcc.dnd4e.tracker.common.{Effect}
 import vcc.dnd4e.tracker.common.Command._
 import vcc.infra.docking._
 
-class EffectViewPanel(director: PanelDirector, isTarget: Boolean) extends MigPanel("fill,ins 2")
-with ContextObserver with ScalaDockableComponent with CombatStateObserver {
+abstract class EffectViewPanel(director: PanelDirector)
+  extends MigPanel("fill,ins 2") with ContextObserver with ScalaDockableComponent with CombatStateObserver {
+
   private val sustainButton = new Button("Sustain")
   sustainButton.enabled = false
 
@@ -34,10 +35,6 @@ with ContextObserver with ScalaDockableComponent with CombatStateObserver {
   private var context: Option[UnifiedCombatantID] = None
 
   private var state = director.currentState
-
-  val dockTitle = if (isTarget) "Effect on Target" else "Effect on Source"
-
-  val dockID = DockID(if (isTarget) "tgt-effects" else "src-effects")
 
   val effectTable = new RowProjectionTable[Effect]() with CustomRenderedRowProjectionTable[Effect] {
     val labelFormatter = tabular.EffectTableColorer
@@ -59,7 +56,7 @@ with ContextObserver with ScalaDockableComponent with CombatStateObserver {
   listenTo(sustainButton, cancelButton)
   KeystrokeBinder.bindKeystrokeAction(effectTable, false, KeystrokeBinder.FocusCondition.WhenFocused, javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0),
     Action(dockID.name + ".cancel") {
-      cancelButton.doClick
+      cancelButton.doClick()
       effectTable.requestFocus()
     })
   KeystrokeBinder.unbindKeystroke(effectTable, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
@@ -82,29 +79,42 @@ with ContextObserver with ScalaDockableComponent with CombatStateObserver {
       }
   }
 
-  private def selectedEffectID() = effectTable.content(effectTable.selection.rows.toSeq(0)).effectId
+  private def selectedEffectID = effectTable.content(effectTable.selection.rows.toSeq(0)).effectId
 
-  /**
-   * Update table according to context
-   */
+  protected def updateContextAndTable(newContext: Option[UnifiedCombatantID]) {
+    context = newContext
+    updateTable()
+  }
+
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (this.isTarget == isTarget) {
-      context = nctx
-      updateTable()
-    }
   }
 
   private def updateTable() {
-    state.combatantOption(context) match {
-      case Some(cmb) =>
-        effectTable.content = cmb.effects.effects
-      case None =>
-        effectTable.content = Nil
-    }
+    effectTable.content = state.combatantOption(context).map(_.effects.effects).getOrElse(Nil)
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
     updateTable()
+  }
+}
+
+class SourceEffectViewPanel(director:PanelDirector) extends EffectViewPanel(director) {
+  def dockTitle = "Effects on Source"
+
+  def dockID = DockID("src-effects")
+
+  override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    updateContextAndTable(newContext)
+  }
+}
+
+class TargetEffectViewPanel(director:PanelDirector) extends EffectViewPanel(director) {
+  def dockTitle = "Effects on Target"
+
+  def dockID = DockID("tgt-effects")
+
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    updateContextAndTable(newContext)
   }
 }

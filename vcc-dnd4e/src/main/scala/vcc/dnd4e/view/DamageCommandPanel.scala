@@ -94,7 +94,7 @@ class DamageCommandPanel(val director: PanelDirector)
   xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
   for (x <- controls) listenTo(x)
   listenTo(damage)
-  changeContext(None, true)
+  changeTargetContext(None)
 
   reactions += {
     case ValueChanged(this.damage) =>
@@ -142,12 +142,14 @@ class DamageCommandPanel(val director: PanelDirector)
     for (x <- damageRelButton) x.enabled = enable
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (isTarget) {
-      target = nctx
-      controls map (x => x.enabled = (target != None))
-      enableDamageControls(damageEquation != null)
-    }
+
+  @deprecated("use polimorfic dispatch")
+  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {}
+
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    target = newContext
+    controls map (x => x.enabled = (target != None))
+    enableDamageControls(damageEquation != null)
   }
 
   def getRootPane = this.peer.getRootPane

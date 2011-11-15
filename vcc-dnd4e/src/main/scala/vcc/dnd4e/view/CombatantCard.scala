@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,33 +14,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import scala.swing._
 import vcc.util.swing._
 import helper.CombatantStatBlockCache
 import vcc.infra.docking._
+import java.awt.Dimension
 
-class CombatantCard(diretor: PanelDirector, isTarget: Boolean) extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
+abstract class CombatantCard(director: PanelDirector)
+  extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
+
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (this.isTarget == isTarget) {
-      val cmb = combatState.combatantOption(nctx)
-      if (cmb.isDefined) {
-        statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.get.definition.entity.eid, cmb.get.definition.entity.statBlock))
-      }
-      else statBlock.setDocumentFromText("")
-    }
   }
 
-  minimumSize = new java.awt.Dimension(300, 400)
-
   private val statBlock = new XHTMLPane
-  statBlock.minimumSize = new java.awt.Dimension(200, 200)
+  statBlock.minimumSize = new Dimension(200, 200)
   contents += statBlock
 
-  val dockID = DockID(if (isTarget) "tgt-block" else "src-block")
-  val dockTitle = if (isTarget) "Target" else "Source"
+  minimumSize = new Dimension(300, 400)
+
   val dockFocusComponent = statBlock.peer
 
+  protected def updateStatBlock(context: Option[UnifiedCombatantID]) {
+    val cmb = combatState.combatantOption(context)
+    if (cmb.isDefined) {
+      statBlock.setDocument(CombatantStatBlockCache.getStatBlockDocumentForCombatant(cmb.get.definition.entity.eid, cmb.get.definition.entity.statBlock))
+    }
+    else statBlock.setDocumentFromText("")
+  }
+}
+
+class TargetCombatantCard(director: PanelDirector) extends CombatantCard(director) {
+  val dockTitle = "Target"
+
+  val dockID = DockID("tgt-block")
+
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    updateStatBlock(newContext)
+  }
+}
+
+class SourceCombatantCard(director: PanelDirector) extends CombatantCard(director) {
+  val dockTitle = "Source"
+
+  val dockID = DockID("src-block")
+
+  override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    updateStatBlock(newContext)
+  }
 }

@@ -105,16 +105,19 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   }
 
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (isTarget) {
-      for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(nctx), true)
-      target = nctx
-    } else {
-      for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(nctx), false)
-      _changing = true
-      active = nctx
-      setActiveComboSelection(active)
-      _changing = false
-    }
+  }
+
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(newContext), true)
+    target = newContext
+  }
+
+  override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(newContext), false)
+    _changing = true
+    active = newContext
+    setActiveComboSelection(active)
+    _changing = false
   }
 
   /**
@@ -133,16 +136,20 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
    * Store data on the effect memory
    */
   def switchActive(nkey: String) {
-    // If we have a key store it
-    if (lastActiveKey != null) {
-      memory(lastActiveKey) = effectEditorPanels.map(epl => epl.saveMemento())
+    storeEffectsAndLastActive()
+    restorePreviousExistentMementos()
+
+    def storeEffectsAndLastActive() {
+      if (lastActiveKey != null)
+        memory(lastActiveKey) = effectEditorPanels.map(epl => epl.saveMemento())
+      lastActiveKey = nkey
     }
-    lastActiveKey = nkey
-    // Restore the previous mementos if they exit
-    if (memory.contains(nkey)) {
-      effectEditorPanels.zip(memory(nkey)).map(x => x._1.restoreMemento(x._2))
-    } else {
-      effectEditorPanels.foreach(ep => ep.clearPanel())
+
+    def restorePreviousExistentMementos() {
+      if (memory.contains(nkey))
+        effectEditorPanels.zip(memory(nkey)).map(x => x._1.restoreMemento(x._2))
+      else
+        effectEditorPanels.foreach(ep => ep.clearPanel())
     }
   }
 

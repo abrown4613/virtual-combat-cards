@@ -19,28 +19,22 @@ package vcc.dnd4e.view
 import vcc.infra.docking.DockID
 import vcc.dnd4e.tracker.common.Command.SetComment
 
-class CombatantCommentPanel(director: PanelDirector, isTarget: Boolean) extends CommentPanel with ContextObserver with CombatStateObserver {
-  val dockTitle = if (isTarget) "Target Notes" else "Source Notes"
-
-  val dockID = if (isTarget) DockID("tgt-notes") else DockID("src-notes")
-
+abstract class CombatantCommentPanel(director: PanelDirector) extends CommentPanel with ContextObserver with CombatStateObserver {
   private var context: Option[UnifiedCombatantID] = None
-
   private var state = director.currentState
-
 
   def sendChangeMessage(text: String) {
     director requestAction SetComment(context.get.combId, text)
   }
 
   def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (this.isTarget == isTarget) {
-      if (hasChanged) sendChange()
-      context = nctx
-      updateCombatant(nctx)
-      editorEnabled = context != None
-    }
+  }
 
+  protected def sendChangeAndUpdateControl(nctx: Option[UnifiedCombatantID]) {
+    if (hasChanged) sendChange()
+    context = nctx
+    updateCombatant(nctx)
+    editorEnabled = context != None
   }
 
   private def updateCombatant(nctx: Option[UnifiedCombatantID]) {
@@ -51,5 +45,26 @@ class CombatantCommentPanel(director: PanelDirector, isTarget: Boolean) extends 
   def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
     updateCombatant(context)
+  }
+}
+
+class SourceCombatantCommentPanel(panelDirector:PanelDirector) extends CombatantCommentPanel(panelDirector) {
+
+  val dockTitle = "Source Notes"
+
+  val dockID = DockID("src-notes")
+
+  override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    sendChangeAndUpdateControl(newContext)
+  }
+}
+
+class TargetCombatantCommentPanel(panelDirector:PanelDirector) extends CombatantCommentPanel(panelDirector) {
+  val dockTitle = "Target Notes"
+
+  val dockID = DockID("tgt-notes")
+
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    sendChangeAndUpdateControl(newContext)
   }
 }
