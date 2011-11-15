@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.exnebula</groupId>
+    <artifactId>vcc-datastore</artifactId>
+    <parent>
+        <groupId>org.exnebula</groupId>
+        <artifactId>vcc</artifactId>
+        <version>1.7.0-SNAPSHOT</version>
+    </parent>
+    <description>VCC Datastore</description>
+    <name>Virtual Combat Cards DataStore</name>
+
+    <repositories>
+        <repository>
+            <id>maven2-repository.dev.java.net</id>
+            <name>JavaNet Repository</name>
+            <url>http://download.java.net/maven/2</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-swing</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/scala</directory>
+                <includes>
+                    <include>**/*.png</include>
+                    <include>**/*.gif</include>
+                </includes>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/scala</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+        </testResources>
+        <plugins>
+        </plugins>
+    </build>
+</project>
