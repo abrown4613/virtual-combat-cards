@@ -27,7 +27,7 @@ import vcc.dnd4e.tracker.common._
 import vcc.util.swing.dnd.{CellDrop, TableCellDropTransferHandler}
 
 class SequenceTable(director: PanelDirector) extends ScrollPane
-with ContextObserver with CombatStateObserver with ScalaDockableComponent with PaneDirectorPropertyObserver {
+  with ContextObserver with CombatStateObserver with ScalaDockableComponent {
   //Init
   val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer()
@@ -100,35 +100,36 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
     updateContent()
 
     SwingHelper.invokeLater {
-      director.setActiveCombatant(state.orderFirstId)
+      if (state.orderFirstId.isDefined)
+        director.setActiveCombatant(state.orderFirstId)
     }
   }
 
   private def updateContent() {
     _changingState = true
     val hideDead = director.getBooleanProperty(PanelDirector.property.HideDead)
-    val ncontent = if (hideDead && !state.elements.isEmpty) {
+    val filteredContent = if (hideDead) {
       state.elements.filter(c => c.health.status != HealthStatus.Dead || (state.orderFirst.isDefined && c.matches(state.orderFirst.get)))
     } else state.elements
 
-    table.content = ncontent
+    table.content = filteredContent
 
     table.labelFormatter.updateNextUp(state.orderFirst)
     //Adjust selection
-    if (!ncontent.isEmpty) {
+    if (!filteredContent.isEmpty) {
       val idx: Int = {
         // -1 means not found
-        val obj = if (target.isDefined) ncontent.find(x => x.matches(target.get)) else None
-        if (obj.isDefined) ncontent.indexOf(obj.get) else -1
+        val obj = if (target.isDefined) filteredContent.find(x => x.matches(target.get)) else None
+        if (obj.isDefined) filteredContent.indexOf(obj.get) else -1
       }
       if (idx == -1) {
         //Select first as active and second, if present as target
-        val defaultRow = if (ncontent.length > 1) 1 else 0
+        val defaultRow = if (filteredContent.length > 1) 1 else 0
         table.selection.rows += defaultRow
 
         //This has to fire later to make sure everyone gets the state update first.
         SwingHelper.invokeLater {
-          director.setTargetCombatant(Some(ncontent(defaultRow).unifiedId))
+          director.setTargetCombatant(Some(filteredContent(defaultRow).unifiedId))
         }
       } else {
         //Just show the correct selection
@@ -144,17 +145,12 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
   override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
     target = newContext
   }
+
   override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
     val oldContext = source
     source = newContext
     table.labelFormatter.updateActing(newContext)
     if (oldContext != newContext) table.repaint()
-  }
-
-  def propertyChanged(which: PanelDirector.property.Value) {
-    if (which == PanelDirector.property.HideDead) {
-      updateContent()
-    }
   }
 
   val dockID = DockID("sequence")

@@ -31,10 +31,6 @@ trait ContextObserver {
   def changeSourceContext(newContext: Option[UnifiedCombatantID]) {}
 }
 
-trait PaneDirectorPropertyObserver {
-  def propertyChanged(which: PanelDirector.property.Value)
-}
-
 object PanelDirector {
 
   object property extends Enumeration {
@@ -68,7 +64,6 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
   extends TrackerChangeAware[CombatStateView] with CommandSource {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
-  private var propertyObserver: List[PaneDirectorPropertyObserver] = Nil
 
   private var propHideDead = false
 
@@ -102,10 +97,6 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
     combatStateObserver = obs :: combatStateObserver
   }
 
-  def registerPropertyObserver(obs: PaneDirectorPropertyObserver) {
-    propertyObserver = obs :: propertyObserver
-  }
-
   def setActiveCombatant(id: Option[UnifiedCombatantID]) {
     contextObserver.foreach(obs => obs.changeSourceContext(id))
   }
@@ -122,14 +113,13 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
     prop match {
       case PanelDirector.property.HideDead =>
         propHideDead = value
+        snapshotChanged(csm.getSnapshot())
       case PanelDirector.property.RobinView =>
         propRobinView = value
-        //Need to update sequence
         snapshotChanged(csm.getSnapshot())
       case _ =>
         throw new Exception("Unknown property: " + prop)
     }
-    for (obs <- propertyObserver) obs.propertyChanged(prop)
   }
 
   def getBooleanProperty(prop: PanelDirector.property.Value): Boolean = {

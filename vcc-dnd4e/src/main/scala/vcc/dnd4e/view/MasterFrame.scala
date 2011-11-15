@@ -110,7 +110,6 @@ class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: Rel
     for (dock <- docks) {
       if (dock.isInstanceOf[ContextObserver]) director.registerContextObserver(dock.asInstanceOf[ContextObserver])
       if (dock.isInstanceOf[CombatStateObserver]) director.registerStateObserver(dock.asInstanceOf[CombatStateObserver])
-      if (dock.isInstanceOf[PaneDirectorPropertyObserver]) director.registerPropertyObserver(dock.asInstanceOf[PaneDirectorPropertyObserver])
     }
   }
 
