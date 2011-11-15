@@ -128,6 +128,7 @@ class UnifiedSequenceTableTest extends SpecificationWithJUnit {
 
     private def setup() {
       combatState.getInitiativeOrder returns List(ioa1, ioa0, iod0)
+      combatState.initiativeTrackerFromID(null).throws(new NoSuchElementException())
       combatState.initiativeTrackerFromID(ioa0) returns ita0
       combatState.initiativeTrackerFromID(ioa1) returns ita1
       combatState.initiativeTrackerFromID(iod0) returns itd0

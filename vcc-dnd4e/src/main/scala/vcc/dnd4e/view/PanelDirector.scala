@@ -16,7 +16,6 @@
  */
 package vcc.dnd4e.view
 
-import helper.{RobinHeadFirstInitiativeOrderViewBuilder, SortedIDReserveViewBuilder, DirectInitiativeOrderViewBuilder}
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
@@ -70,6 +69,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
   private var propRobinView = true
 
   private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot())
+  private val sequenceBuilder = new UnifiedSequenceTable.Builder()
 
   val rules = new CombatStateRules()
 
@@ -82,9 +82,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
 
   def snapshotChanged(newState: CombatStateView) {
     SwingHelper.invokeInEventDispatchThread {
-      unifiedTable = UnifiedSequenceTable.buildList(newState,
-        if (propRobinView) RobinHeadFirstInitiativeOrderViewBuilder else DirectInitiativeOrderViewBuilder,
-        SortedIDReserveViewBuilder)
+      unifiedTable = sequenceBuilder.build(newState)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
     }
   }
@@ -109,17 +107,20 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
     statusBar.setTipText(text)
   }
 
-  def setProperty(prop: PanelDirector.property.Value, value: Boolean) {
-    prop match {
+  def setProperty(property: PanelDirector.property.Value, value: Boolean) {
+    property match {
       case PanelDirector.property.HideDead =>
         propHideDead = value
-        snapshotChanged(csm.getSnapshot())
+        if (value) sequenceBuilder.hideDead()
+        else sequenceBuilder.showDead()
       case PanelDirector.property.RobinView =>
         propRobinView = value
-        snapshotChanged(csm.getSnapshot())
+        if (value) sequenceBuilder.useRobinOrder()
+        else sequenceBuilder.useDirectOrder()
       case _ =>
-        throw new Exception("Unknown property: " + prop)
+        throw new Exception("Unknown property: " + property)
     }
+    snapshotChanged(unifiedTable.state)
   }
 
   def getBooleanProperty(prop: PanelDirector.property.Value): Boolean = {
