@@ -17,7 +17,6 @@
  */
 package vcc.dnd4e.view
 
-import helper._
 import vcc.dnd4e.domain.tracker.common.CombatStateView
 import vcc.dnd4e.tracker.common._
 
@@ -80,14 +79,23 @@ class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: Com
  */
 object UnifiedSequenceTable {
 
-  /**
-   * This service object will used a ReserveViewBuilder and a InitiativeOrderViewBuilder to build a unified array with all
-   * the combatant in a single Array.
-   */
-  def buildList(combatState: CombatStateView, orderBuilder: InitiativeOrderViewBuilder, reserveBuilder: ReserveViewBuilder): UnifiedSequenceTable = {
-    val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
-    val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
-    new UnifiedSequenceTable((order ++ reserve).toArray, combatState)
+
+  private trait InitiativeOrderViewBuilder {
+    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID]
+  }
+
+  private object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
+    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
+      combatState.getInitiativeOrder
+    }
+  }
+
+  private object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
+    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
+      val order = combatState.getInitiativeOrder
+      val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
+      order.drop(idx) ++ order.take(idx)
+    }
   }
 
   class Builder {
@@ -125,7 +133,8 @@ object UnifiedSequenceTable {
 
     private def makeList(combatState: CombatStateView): Array[UnifiedCombatant] = {
       def makeUnifiedCombatant(combId: CombatantID, orderId: InitiativeOrderID): UnifiedCombatant = {
-        new UnifiedCombatant(combId, combatState.initiativeTrackerFromID(orderId), combatState.combatantViewFromID(combId))
+        val initiativeTracker = if (orderId != null) combatState.initiativeTrackerFromID(orderId) else null
+        new UnifiedCombatant(combId, initiativeTracker, combatState.combatantViewFromID(combId))
       }
 
       val order = orderBuilder.buildOrder(combatState).map(e => makeUnifiedCombatant(e.combId, e))
@@ -138,4 +147,5 @@ object UnifiedSequenceTable {
       notInOrder.toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
     }
   }
+
 }

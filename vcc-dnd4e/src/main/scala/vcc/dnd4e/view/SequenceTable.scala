@@ -27,9 +27,9 @@ import vcc.dnd4e.tracker.common._
 import vcc.util.swing.dnd.{CellDrop, TableCellDropTransferHandler}
 
 class SequenceTable(director: PanelDirector) extends ScrollPane
-  with ContextObserver with CombatStateObserver with ScalaDockableComponent {
-  //Init
-  val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
+with ContextObserver with CombatStateObserver with ScalaDockableComponent {
+
+  private val table = new RowProjectionTable[UnifiedCombatant] with CustomRenderedRowProjectionTable[UnifiedCombatant] {
     val labelFormatter = new CombatantStateTableColorer()
     projection = new ProjectionTableModel[UnifiedCombatant](tabular.CombatantStateProjection)
     autoResizeMode = Table.AutoResizeMode.Off
@@ -43,35 +43,30 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     peer.setRowHeight(24)
   }
 
+  val dockID = DockID("sequence")
+  val dockTitle = "Initiative Order"
+  val dockFocusComponent = table.peer
+
   private var source: Option[UnifiedCombatantID] = None
   private var target: Option[UnifiedCombatantID] = None
   private var state = director.currentState
-  // This variable is used to block target updates by table.seletion listener
-  private var _changingState = false
+  private var mustPreventUpdateOfSelection = false
+
+  private val setAction = Action("sequence.setacting") {
+    updateActingCombatantLater(target)
+  }
 
   this.contents = table
-  val setAction = Action("sequence.setacting") {
-    director.setActiveCombatant(target)
-  }
-  KeystrokeBinder.bindKeystrokeAction(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "alt A", setAction)
-  KeystrokeBinder.bindKeystrokeAction(table, false, "alt M", Action("sequence.mark") {
-    if (target.isDefined && source.isDefined && source.get.orderId != null) {
-      director.requestAction(AddEffect(target.get.combId, source.get.combId,
-        Effect.Condition.Mark(source.get.combId, false),
-        Duration.RoundBound(source.get.orderId, Duration.Limit.EndOfNextTurn)))
-    }
-  })
-  KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
-  KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F8")
-
+  initializeKeyBindings()
+  initializeDragAndDrop()
   listenTo(table.selection, table)
 
   reactions += {
-    case TableRowsSelected(t, rng, false) if (!_changingState) =>
+    case TableRowsSelected(t, rng, false) if (!mustPreventUpdateOfSelection) =>
       val l = table.selection.rows.toSeq
       if (!l.isEmpty) {
         val c = table.content(l(0))
-        director.setTargetCombatant(Some(c.unifiedId))
+        updateTargetSelectionLater(Some(c.unifiedId))
       }
     case FocusGained(this.table, other, temp) =>
       director.setStatusBarMessage("Alt+A to set source on effect panel; Alt+M mark selected combatant")
@@ -79,67 +74,18 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
       director.setStatusBarMessage("")
   }
 
-  //Enable drag and drop
   protected object CombatantAtCellDrop {
-    def unapply(d: CellDrop): Option[(UnifiedCombatant, AnyRef)] = {
-      Some(table.content(d.row), d.data)
+    def unapply(cell: CellDrop): Option[(UnifiedCombatant, AnyRef)] = {
+      Some(table.content(cell.row), cell.data)
     }
-  }
-
-  val cellDrop = new TableCellDropTransferHandler()
-
-  cellDrop.decorateTable(table)
-  cellDrop.interestedIn(UnifiedCombatantActionTransfer.UnifiedCombatantDataFlavor) {
-    case CombatantAtCellDrop(uc, UnifiedCombatantActionTransfer(_, pf)) if (pf.isDefinedAt(uc)) =>
-      pf.apply(uc)
-      true
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable) {
     state = newState
     updateContent()
 
-    SwingHelper.invokeLater {
-      if (state.orderFirstId.isDefined)
-        director.setActiveCombatant(state.orderFirstId)
-    }
-  }
-
-  private def updateContent() {
-    _changingState = true
-    val hideDead = director.getBooleanProperty(PanelDirector.property.HideDead)
-    val filteredContent = if (hideDead) {
-      state.elements.filter(c => c.health.status != HealthStatus.Dead || (state.orderFirst.isDefined && c.matches(state.orderFirst.get)))
-    } else state.elements
-
-    table.content = filteredContent
-
-    table.labelFormatter.updateNextUp(state.orderFirst)
-    //Adjust selection
-    if (!filteredContent.isEmpty) {
-      val idx: Int = {
-        // -1 means not found
-        val obj = if (target.isDefined) filteredContent.find(x => x.matches(target.get)) else None
-        if (obj.isDefined) filteredContent.indexOf(obj.get) else -1
-      }
-      if (idx == -1) {
-        //Select first as active and second, if present as target
-        val defaultRow = if (filteredContent.length > 1) 1 else 0
-        table.selection.rows += defaultRow
-
-        //This has to fire later to make sure everyone gets the state update first.
-        SwingHelper.invokeLater {
-          director.setTargetCombatant(Some(filteredContent(defaultRow).unifiedId))
-        }
-      } else {
-        //Just show the correct selection
-        table.selection.rows += (idx)
-      }
-    } else {
-      //Nothing to show set context accordingly
-      director.setTargetCombatant(None)
-    }
-    _changingState = false
+    if (state.orderFirstId.isDefined)
+      updateActingCombatantLater(state.orderFirstId)
   }
 
   override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
@@ -153,7 +99,70 @@ class SequenceTable(director: PanelDirector) extends ScrollPane
     if (oldContext != newContext) table.repaint()
   }
 
-  val dockID = DockID("sequence")
-  val dockTitle = "Initiative Order"
-  val dockFocusComponent = table.peer
+  private def updateTargetSelectionLater(some: Option[UnifiedCombatantID]) {
+    SwingHelper.invokeLater {
+      director.setTargetCombatant(some)
+    }
+  }
+
+  private def updateActingCombatantLater(combatant: Option[UnifiedCombatantID]) {
+    SwingHelper.invokeLater {
+      director.setActiveCombatant(combatant)
+    }
+  }
+
+  private def updateContent() {
+    mustPreventUpdateOfSelection = true
+    table.content = state.elements
+    table.labelFormatter.updateNextUp(state.orderFirst)
+    updateTableRowSelection(state.elements)
+    mustPreventUpdateOfSelection = false
+
+    def updateTableRowSelection(content: Array[UnifiedCombatant]) {
+      if (content.isEmpty)
+        updateTargetSelectionLater(None)
+      else
+        updateRowAndTargetSelection(getTargetTableIndexIfDefined, content)
+    }
+
+    def updateRowAndTargetSelection(targetIndex: Option[Int], content: Array[UnifiedCombatant]): Any = {
+      if (targetIndex.isDefined)
+        table.selection.rows += (targetIndex.get)
+      else {
+        selectDefaultRowAndUpdateTrackerSelection(if (content.length > 1) 1 else 0)
+      }
+    }
+
+    def selectDefaultRowAndUpdateTrackerSelection(defaultRow: Int) {
+      table.selection.rows += defaultRow
+      updateTargetSelectionLater(Some(state.elements(defaultRow).unifiedId))
+    }
+
+    def getTargetTableIndexIfDefined: Option[Int] = {
+      target.flatMap(state.indexOf)
+    }
+  }
+
+  private def initializeKeyBindings(): Boolean = {
+    KeystrokeBinder.bindKeystrokeAction(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "alt A", setAction)
+    KeystrokeBinder.bindKeystrokeAction(table, false, "alt M", Action("sequence.mark") {
+      if (target.isDefined && source.isDefined && source.get.orderId != null) {
+        director.requestAction(AddEffect(target.get.combId, source.get.combId,
+          Effect.Condition.Mark(source.get.combId, false),
+          Duration.RoundBound(source.get.orderId, Duration.Limit.EndOfNextTurn)))
+      }
+    })
+    KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F2")
+    KeystrokeBinder.unbindKeystroke(table, false, KeystrokeBinder.FocusCondition.WhenAncestorFocused, "F8")
+  }
+
+  private def initializeDragAndDrop() {
+    val drop = new TableCellDropTransferHandler()
+    drop.decorateTable(table)
+    drop.interestedIn(UnifiedCombatantActionTransfer.UnifiedCombatantDataFlavor) {
+      case CombatantAtCellDrop(uc, UnifiedCombatantActionTransfer(_, pf)) if (pf.isDefinedAt(uc)) =>
+        pf.apply(uc)
+        true
+    }
+  }
 }
