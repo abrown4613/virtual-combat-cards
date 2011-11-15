@@ -26,16 +26,9 @@ import vcc.controller._
 import vcc.infra.prompter.RulingBroker
 
 trait ContextObserver {
-  def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
-    changeContext(newContext, true)
-  }
+  def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
 
-  def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
-    changeContext(newContext, false)
-  }
-
-  @deprecated("use polimorfic dispatch")
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean)
+  def changeSourceContext(newContext: Option[UnifiedCombatantID]) {}
 }
 
 trait PaneDirectorPropertyObserver {
@@ -48,7 +41,6 @@ object PanelDirector {
     val HideDead = Value("Hide Dead")
     val RobinView = Value("Robin View")
   }
-
 }
 
 trait CombatStateObserver {

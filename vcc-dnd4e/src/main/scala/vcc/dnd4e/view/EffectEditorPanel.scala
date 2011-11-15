@@ -104,9 +104,6 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
     switchActive(cmb.definition.entity.eid)
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-  }
-
   override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
     for (efp <- effectEditorPanels) efp.setContext(state.combatantOption(newContext), true)
     target = newContext

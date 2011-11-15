@@ -27,9 +27,6 @@ abstract class CombatantCommentPanel(director: PanelDirector) extends CommentPan
     director requestAction SetComment(context.get.combId, text)
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-  }
-
   protected def sendChangeAndUpdateControl(nctx: Option[UnifiedCombatantID]) {
     if (hasChanged) sendChange()
     context = nctx

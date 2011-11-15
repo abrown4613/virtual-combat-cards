@@ -82,8 +82,6 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
     null
   }
 
-  def changeContext(newContext: Option[UnifiedCombatantID], isTarget: Boolean) {}
-
   override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
     target = combatState.combatantOption(newContext)
     if (newContext.isDefined)

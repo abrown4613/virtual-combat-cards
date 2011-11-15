@@ -143,9 +143,6 @@ class DamageCommandPanel(val director: PanelDirector)
   }
 
 
-  @deprecated("use polimorfic dispatch")
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {}
-
   override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
     target = newContext
     controls map (x => x.enabled = (target != None))

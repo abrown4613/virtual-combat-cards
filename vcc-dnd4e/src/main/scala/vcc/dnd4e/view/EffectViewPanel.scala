@@ -86,9 +86,6 @@ abstract class EffectViewPanel(director: PanelDirector)
     updateTable()
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-  }
-
   private def updateTable() {
     effectTable.content = state.combatantOption(context).map(_.effects.effects).getOrElse(Nil)
   }
