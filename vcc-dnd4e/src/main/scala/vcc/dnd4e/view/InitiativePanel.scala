@@ -89,7 +89,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable) {
-    _first = newState.orderFirst()
+    _first = newState.orderFirst
     combatState = newState
     target = combatState.combatantOption(target.map(o => o.unifiedId))
     updatePanel()

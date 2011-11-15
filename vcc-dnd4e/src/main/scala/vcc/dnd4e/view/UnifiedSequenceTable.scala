@@ -62,12 +62,12 @@ class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: Com
   /**
    * Return the first UnifiedCombatant in the robin.
    */
-  def orderFirst(): Option[UnifiedCombatant] = state.nextUp.map(orderId => this(orderId.combId, orderId))
+  def orderFirst: Option[UnifiedCombatant] = state.nextUp.map(orderId => this(orderId.combId, orderId))
 
   /**
    * Return the UnifiedCombatantID of the first combatant in the robin.
    */
-  def orderFirstId(): Option[UnifiedCombatantID] = state.nextUp.map(orderId => UnifiedCombatantID(orderId.combId, orderId))
+  def orderFirstId: Option[UnifiedCombatantID] = state.nextUp.map(orderId => UnifiedCombatantID(orderId.combId, orderId))
 }
 
 /**
