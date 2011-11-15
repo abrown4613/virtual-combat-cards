@@ -17,9 +17,9 @@
  */
 package vcc.dnd4e.view
 
-import helper.{ReserveViewBuilder, InitiativeOrderViewBuilder}
-import vcc.dnd4e.tracker.common.{CombatantID, InitiativeOrderID}
+import helper._
 import vcc.dnd4e.domain.tracker.common.CombatStateView
+import vcc.dnd4e.tracker.common._
 
 /**
  * Provides a single linear and random access table with all combatants.
@@ -68,6 +68,11 @@ class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: Com
    * Return the UnifiedCombatantID of the first combatant in the robin.
    */
   def orderFirstId: Option[UnifiedCombatantID] = state.nextUp.map(orderId => UnifiedCombatantID(orderId.combId, orderId))
+
+  def indexOf(id: UnifiedCombatantID): Option[Int] = {
+    val index = elements.indexWhere(_.matches(id))
+    if (index < 0) None else Some(index)
+  }
 }
 
 /**
@@ -83,5 +88,54 @@ object UnifiedSequenceTable {
     val order = orderBuilder.buildOrder(combatState).map(e => new UnifiedCombatant(e.combId, combatState.initiativeTrackerFromID(e), combatState.combatantViewFromID(e.combId)))
     val reserve = reserveBuilder.buildReserve(combatState).map(e => new UnifiedCombatant(e, null, combatState.combatantViewFromID(e)))
     new UnifiedSequenceTable((order ++ reserve).toArray, combatState)
+  }
+
+  class Builder {
+    private var orderBuilder: InitiativeOrderViewBuilder = RobinHeadFirstInitiativeOrderViewBuilder
+    private var filterDead = false
+
+    def showDead() {
+      filterDead = false
+    }
+
+    def hideDead() {
+      filterDead = true
+    }
+
+    def useRobinOrder() {
+      orderBuilder = RobinHeadFirstInitiativeOrderViewBuilder
+    }
+
+    def useDirectOrder() {
+      orderBuilder = DirectInitiativeOrderViewBuilder
+    }
+
+    def build(combatState: CombatStateView): UnifiedSequenceTable = {
+      def isAliveOrActing(combatant: UnifiedCombatant): Boolean = {
+        (combatant.health.status != HealthStatus.Dead) ||
+          (combatant.initiative != null && combatant.initiative.state == InitiativeState.Acting)
+      }
+
+      var elements = makeList(combatState)
+      if (filterDead)
+        elements = elements.filter(isAliveOrActing)
+
+      new UnifiedSequenceTable(elements, combatState)
+    }
+
+    private def makeList(combatState: CombatStateView): Array[UnifiedCombatant] = {
+      def makeUnifiedCombatant(combId: CombatantID, orderId: InitiativeOrderID): UnifiedCombatant = {
+        new UnifiedCombatant(combId, combatState.initiativeTrackerFromID(orderId), combatState.combatantViewFromID(combId))
+      }
+
+      val order = orderBuilder.buildOrder(combatState).map(e => makeUnifiedCombatant(e.combId, e))
+      val reserve = combatantNotInOrderSortedById(combatState).map(e => makeUnifiedCombatant(e, null))
+      (order ++ reserve).toArray
+    }
+
+    private def combatantNotInOrderSortedById(combatState: CombatStateView): Seq[CombatantID] = {
+      val notInOrder = Set[CombatantID]((combatState.allCombatantIDs filterNot (combatState.getInitiativeOrder.map(_.combId) contains)): _*)
+      notInOrder.toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
+    }
   }
 }
