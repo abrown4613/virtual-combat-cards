@@ -141,15 +141,14 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent with P
     _changingState = false
   }
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-    if (isTarget) {
-      target = nctx
-    } else {
-      val oldCtx = source
-      source = nctx
-      table.labelFormatter.updateActing(nctx)
-      if (oldCtx != nctx) table.repaint()
-    }
+  override def changeTargetContext(newContext: Option[UnifiedCombatantID]) {
+    target = newContext
+  }
+  override def changeSourceContext(newContext: Option[UnifiedCombatantID]) {
+    val oldContext = source
+    source = newContext
+    table.labelFormatter.updateActing(newContext)
+    if (oldContext != newContext) table.repaint()
   }
 
   def propertyChanged(which: PanelDirector.property.Value) {

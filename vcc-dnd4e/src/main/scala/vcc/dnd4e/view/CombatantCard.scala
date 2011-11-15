@@ -25,9 +25,6 @@ import java.awt.Dimension
 abstract class CombatantCard(director: PanelDirector)
   extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {
 
-  def changeContext(nctx: Option[UnifiedCombatantID], isTarget: Boolean) {
-  }
-
   private val statBlock = new XHTMLPane
   statBlock.minimumSize = new Dimension(200, 200)
   contents += statBlock
