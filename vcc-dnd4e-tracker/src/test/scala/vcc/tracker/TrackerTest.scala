@@ -16,33 +16,54 @@
  */
 package vcc.tracker
 
+import helper.State
 import org.specs2.SpecificationWithJUnit
 import util.Random
 import java.lang.Thread
 import concurrent.SyncVar
+import org.specs2.mock.Mockito
 
 class TrackerTest extends SpecificationWithJUnit {
 
   private class ThreadedObserver[S] extends Tracker.Observer[S] {
-    private val value = new SyncVar[S]
+    private val state = new SyncVar[S]
 
-    def getPing: Option[S] = value.get(70)
+    def getObservedState: Option[S] = state.get(70)
 
     def stateUpdated(newState: S) {
-      value.set(newState)
+      state.set(newState)
     }
   }
+
+  private class CrashObserver[S] extends Tracker.Observer[S] {
+    def stateUpdated(n: S) {
+      throw new Exception("Boom!")
+    }
+  }
+
+  println("Current threads: " + Thread.activeCount())
 
   def is =
     "ThreadedObserver" ^
       "get and answer in time out range" ! threadObserver().answerComeWithinTimeLimit ^
       "fails if anwer does not come quick enough" ! threadObserver().answerDoesNotComeWithTimeLimit ^
       endp ^
-      "Tracker" ^
+      "Tracker notification" ^
       "  notify single observer" ! notificationCases().roundTripToSingleObserver ^
       "  nofify two observer" ! notificationCases().roundTripToTwoObserver ^
+      "  should not crash on misbehaved observer" ! notificationCases().misbehavedObserverMustNotCrashObserver ^
+      endp ^
+      "Tracker action handling" ^
+      "  set initial state of tracker" ! notificationCases().defineInitialState ^
+      "  process undo with no return state " ! notificationCases().handleUndoWithNothingToBeDone ^
+      "  process undo with state to send" ! notificationCases().handleUndoWithState ^
+      "  process redo with no return state " ! notificationCases().handleRedoWithNothingToBeDone ^
+      "  process redo with state to send" ! notificationCases().handleRedoWithState ^
+      "  process clear log" ! notificationCases().handleClearLog ^
+      "  process action dispatched with no state change" ! notificationCases().handleActionDispatchWithNoState ^
+      "  process action dispatched with state change" ! notificationCases().handleActionDispatchWithStateChange ^
+      endp ^
       end
-
 
   case class threadObserver() {
     private val to = new ThreadedObserver[Int]()
@@ -50,12 +71,12 @@ class TrackerTest extends SpecificationWithJUnit {
 
     def answerComeWithinTimeLimit = {
       fireUpdateAfterMillis(20)
-      to.getPing must_== Some(n)
+      to.getObservedState must_== Some(n)
     }
 
     def answerDoesNotComeWithTimeLimit = {
-      fireUpdateAfterMillis(100)
-      to.getPing must_== None
+      fireUpdateAfterMillis(120)
+      to.getObservedState must_== None
     }
 
     private def fireUpdateAfterMillis(i: Int) {
@@ -65,24 +86,92 @@ class TrackerTest extends SpecificationWithJUnit {
     }
   }
 
-  private case class notificationCases() {
-    private val tracker = new Tracker[Int]()
-    private val observer = new ThreadedObserver[Int]()
+  private case class notificationCases() extends Mockito {
+    private val mockController = mock[Tracker.Controller[State]]
+    private val tracker = new Tracker[State](mockController)
+    private val observer = createAndRegisterThreadedObserver()
+    private val mockAction = mock[Action[State]]
+    private val mockRulingProvider = mock[RulingProvider[State]]
     private val n = Random.nextInt()
 
-    tracker.addObserver(observer)
-
     def roundTripToSingleObserver = {
-      executeInOtherThread(20)(tracker.notifyObservers(n))
-      observer.getPing must_== Some(n)
+      executeInOtherThread(20)(tracker.notifyObservers(State(n)))
+      observer.getObservedState must_== Some(State(n))
     }
 
     def roundTripToTwoObserver = {
-      val observer2 = new ThreadedObserver[Int]()
-      tracker.addObserver(observer2)
-      executeInOtherThread(20)(tracker.notifyObservers(n))
-      (observer2.getPing must_== Some(n)) and
-        (observer.getPing must_== Some(n))
+      val observer2 = createAndRegisterThreadedObserver()
+      executeInOtherThread(20)(tracker.notifyObservers(State(n)))
+      (observer2.getObservedState must_== Some(State(n))) and
+        (observer.getObservedState must_== Some(State(n)))
+    }
+
+    def misbehavedObserverMustNotCrashObserver = {
+      tracker.addObserver(new CrashObserver[State])
+      executeInOtherThread(20)(tracker.notifyObservers(State(n)))
+      observer.getObservedState must_== Some(State(n))
+    }
+
+    private def createAndRegisterThreadedObserver(): ThreadedObserver[State] = {
+      val observer = new ThreadedObserver[State]()
+      tracker.addObserver(observer)
+      observer
+    }
+
+    def defineInitialState = {
+      executeInOtherThread(20)(tracker.initializeState(State(n)))
+      observer.getObservedState must_== Some(State(n))
+      there was one(mockController).setInitialState(State(n))
+    }
+
+    def handleUndoWithNothingToBeDone = {
+      mockController.undo() returns None
+      tracker.undo()
+      (observer.getObservedState must_== None) and
+        (there was one(mockController).undo())
+    }
+
+    def handleUndoWithState = {
+      mockController.undo() returns Some(State(n))
+      tracker.undo()
+      (observer.getObservedState must_== Some(State(n))) and
+        (there was one(mockController).undo())
+    }
+
+    def handleRedoWithNothingToBeDone = {
+      mockController.redo() returns None
+      tracker.redo()
+      (observer.getObservedState must_== None) and
+        (there was one(mockController).redo())
+    }
+
+    def handleRedoWithState = {
+      mockController.redo() returns Some(State(n))
+      tracker.redo()
+      (observer.getObservedState must_== Some(State(n))) and
+        (there was one(mockController).redo())
+    }
+
+    def handleClearLog = {
+      tracker.clearHistory()
+      observer.getObservedState
+      there was one(mockController).clearHistory()
+    }
+
+    def handleActionDispatchWithNoState = {
+      mockController.dispatchAction(mockAction,mockRulingProvider) returns None
+      tracker.dispatchAction(mockAction,mockRulingProvider)
+
+      (observer.getObservedState must_== None) and
+        (there was one(mockController).dispatchAction(mockAction,mockRulingProvider))
+    }
+
+    def handleActionDispatchWithStateChange = {
+      mockController.dispatchAction(mockAction,mockRulingProvider) returns Some(State(n))
+      tracker.dispatchAction(mockAction,mockRulingProvider)
+
+      (observer.getObservedState must_== Some(State(n))) and
+        (there was one(mockController).dispatchAction(mockAction,mockRulingProvider))
     }
   }
 

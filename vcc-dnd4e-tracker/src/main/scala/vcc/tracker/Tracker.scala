@@ -16,21 +16,100 @@
  */
 package vcc.tracker
 
-import vcc.tracker.Tracker.Observer
+import actors.{DaemonActor, Actor}
+import vcc.tracker.Tracker.{Controller, Observer}
 
 object Tracker {
+
   trait Observer[S] {
-    def stateUpdated(n:S)
+    def stateUpdated(n: S)
+  }
+
+  trait Controller[S] {
+    def clearHistory()
+
+    def redo(): Option[S]
+
+    def undo(): Option[S]
+
+    def setInitialState(state: S)
+
+    def dispatchAction(action:Action[S], rulingProvider:RulingProvider[S]):Option[S]
   }
 }
 
-class Tracker[S] {
-  var observers:List[Observer[S]] = Nil
-  def addObserver(observer: Observer[S]) {
-    observers = observer :: observers
+class Tracker[S](controller: Controller[S]) {
+
+  private case class AddObserver(observer: Observer[S])
+
+  private case class NotifyObserver(newState: S)
+
+  private val observerRelay: Actor = new ObserverActor()
+
+  observerRelay.start()
+
+  private[tracker] def notifyObservers(newState: S) {
+    observerRelay ! NotifyObserver(newState)
   }
 
-  private[tracker] def notifyObservers(newState:S) {
-    observers.foreach(_.stateUpdated(newState))
+  private class ObserverActor extends DaemonActor {
+    private var observers: List[Observer[S]] = Nil
+
+    def act() {
+      loop {
+        react {
+          case AddObserver(observer) => registerObserver(observer)
+          case NotifyObserver(newState) => notifyObservers(newState)
+          case s =>
+        }
+      }
+    }
+
+    private def registerObserver(observer: Tracker.Observer[S]) {
+      observers = observer :: observers
+    }
+
+    private def notifyObservers(newState: S) {
+      observers.foreach(notifyObserverCaptureExceptions(_, newState))
+    }
+
+    private def notifyObserverCaptureExceptions(observer: Observer[S], newState: S) {
+      try {
+        observer.stateUpdated(newState)
+      } catch {
+        case s =>
+      }
+    }
   }
+
+  def addObserver(observer: Observer[S]) {
+    observerRelay ! AddObserver(observer)
+  }
+
+  def initializeState(initialState:S) {
+    controller.setInitialState(initialState)
+    notifyObservers(initialState)
+  }
+
+  def undo() {
+    notifyObserversIfStateDefined(controller.undo())
+  }
+
+  def redo() {
+    notifyObserversIfStateDefined(controller.redo())
+  }
+
+  def clearHistory() {
+    controller.clearHistory()
+  }
+
+  def dispatchAction(action: Action[S], rulingProvider: RulingProvider[S]) {
+    notifyObserversIfStateDefined(controller.dispatchAction(action, rulingProvider))
+  }
+
+  private def notifyObserversIfStateDefined(newState: Option[S]) {
+    if (newState.isDefined)
+      notifyObservers(newState.get)
+  }
+
 }
