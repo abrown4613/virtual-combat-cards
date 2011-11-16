@@ -34,8 +34,9 @@ object Tracker {
 
     def setInitialState(state: S)
 
-    def dispatchAction(action:Action[S], rulingProvider:RulingProvider[S]):Option[S]
+    def dispatchAction(action: Action[S], rulingProvider: RulingProvider[S]): Option[S]
   }
+
 }
 
 class Tracker[S](controller: Controller[S]) {
@@ -44,9 +45,20 @@ class Tracker[S](controller: Controller[S]) {
 
   private case class NotifyObserver(newState: S)
 
-  private val observerRelay: Actor = new ObserverActor()
+  private case object Redo
 
+  private case object Undo
+
+  private case object ClearHistory
+
+  private case class Dispatch(action: Action[S], rulingProvider: RulingProvider[S])
+
+  private case class Initialize(state: S)
+
+  private val observerRelay: Actor = new ObserverActor()
+  private val tracker: Actor = new TrackerActor(controller)
   observerRelay.start()
+  tracker.start()
 
   private[tracker] def notifyObservers(newState: S) {
     observerRelay ! NotifyObserver(newState)
@@ -82,34 +94,53 @@ class Tracker[S](controller: Controller[S]) {
     }
   }
 
+  private class TrackerActor(controller: Controller[S]) extends DaemonActor {
+    def act() {
+      loop {
+        react {
+          case Redo => notifyObserversIfStateDefined(controller.redo())
+          case Undo => notifyObserversIfStateDefined(controller.undo())
+          case ClearHistory => controller.clearHistory()
+          case Dispatch(action, rulingProvider) =>
+            notifyObserversIfStateDefined(controller.dispatchAction(action, rulingProvider))
+          case Initialize(state) => initializeState(state)
+          case _ =>
+        }
+      }
+    }
+
+    private def initializeState(initialState: S) {
+      controller.setInitialState(initialState)
+      notifyObservers(initialState)
+    }
+
+    private def notifyObserversIfStateDefined(newState: Option[S]) {
+      if (newState.isDefined)
+        notifyObservers(newState.get)
+    }
+  }
+
   def addObserver(observer: Observer[S]) {
     observerRelay ! AddObserver(observer)
   }
 
-  def initializeState(initialState:S) {
-    controller.setInitialState(initialState)
-    notifyObservers(initialState)
+  def initializeState(initialState: S) {
+    tracker ! Initialize(initialState)
   }
 
   def undo() {
-    notifyObserversIfStateDefined(controller.undo())
+    tracker ! Undo
   }
 
   def redo() {
-    notifyObserversIfStateDefined(controller.redo())
+    tracker ! Redo
   }
 
   def clearHistory() {
-    controller.clearHistory()
+    tracker ! ClearHistory
   }
 
   def dispatchAction(action: Action[S], rulingProvider: RulingProvider[S]) {
-    notifyObserversIfStateDefined(controller.dispatchAction(action, rulingProvider))
+    tracker ! Dispatch(action, rulingProvider)
   }
-
-  private def notifyObserversIfStateDefined(newState: Option[S]) {
-    if (newState.isDefined)
-      notifyObservers(newState.get)
-  }
-
 }

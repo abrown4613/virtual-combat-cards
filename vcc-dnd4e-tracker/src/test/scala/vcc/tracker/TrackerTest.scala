@@ -41,8 +41,6 @@ class TrackerTest extends SpecificationWithJUnit {
     }
   }
 
-  println("Current threads: " + Thread.activeCount())
-
   def is =
     "ThreadedObserver" ^
       "get and answer in time out range" ! threadObserver().answerComeWithinTimeLimit ^
