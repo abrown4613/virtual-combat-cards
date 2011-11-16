@@ -18,10 +18,9 @@ package vcc.dnd4e.domain.tracker.common
 
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.controller.{PendingRuling}
-import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
 import vcc.dnd4e.tracker.common._
 import Effect.Condition
+import vcc.dnd4e.tracker.common.Command.{CombatStateAction, UpdateEffectCondition, CancelEffect}
 
 class DomainRulingTest extends SpecificationWithJUnit {
   private val eid = EffectID(CombatantID("A"), 1)
@@ -29,7 +28,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
   "SaveEffectQuestion" should {
     val se = SaveEffectRuling(eid, "slowed")
     val se2 = SaveEffectRuling(eid, "slowed -> new effect")
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(se)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(se)
 
     "Saved is a valid answer" in {
       val saved = SaveEffectDecision(se, SaveEffectDecision.Failed)
@@ -73,7 +72,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
     val ses = SaveEffectSpecialRuling(eid, "bad -> worst")
     val ses2 = SaveEffectSpecialRuling(eid, "bad -> even worst")
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(ses)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(ses)
 
     "Change is only valid on special save" in {
       val saved = SaveEffectSpecialDecision(ses, SaveEffectSpecialDecision.Changed("new effect"))
@@ -109,7 +108,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
   "SaveVersusDeathRuling" should {
     val comb = CombatantID("G")
     val sRuling = SaveVersusDeathRuling(comb)
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(sRuling)
 
     "Accept all types of SaveRuling" in {
       sRuling.isValidDecision(SaveVersusDeathDecision(sRuling, SaveVersusDeathDecision.Failed)) must beTrue
@@ -135,7 +134,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
   "OngoingRuling" should {
     val sRuling = OngoingDamageRuling(eid, "ongoing 5 fire", 5)
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(sRuling)
     val decision = OngoingDamageDecision(sRuling, 10)
 
     "accept valid decision" in {
@@ -157,7 +156,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
   "RegenerateByRuling" should {
     val sRuling = RegenerateByRuling(eid, "regenarate 5 while bloodied", 5)
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(sRuling)
 
     "accept valid decision" in {
       sRuling.isValidDecision(RegenerateByDecision(sRuling, 0)) must beTrue
@@ -179,7 +178,7 @@ class DomainRulingTest extends SpecificationWithJUnit {
 
   "SustainEffectRuling" should {
     val sRuling = SustainEffectRuling(eid, "some nasty zone")
-    val pending: PendingRuling[List[TransactionalAction]] = new PendingRuling(sRuling)
+    val pending: PendingRuling[List[CombatStateAction]] = new PendingRuling(sRuling)
 
     "Accept all types of SaveRuling" in {
       sRuling.isValidDecision(SustainEffectDecision(sRuling, SustainEffectDecision.Sustain)) must beTrue

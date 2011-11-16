@@ -22,7 +22,7 @@ import vcc.tracker.Tracker
 import vcc.controller.message._
 import vcc.infra.prompter.RulingBroker
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.dnd4e.tracker.common.Command.TransactionalActionWithMessage
+import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.domain.tracker.CombatStateViewAdapterBuilder
 
 trait ContextObserver {
@@ -143,7 +143,7 @@ class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, ruli
    * send messages directly to the Tracker.
    * @param action A TransactionalAction message
    */
-  def requestAction(action: TransactionalActionWithMessage) {
+  def requestAction(action: CombatStateAction) {
     newTracker.dispatchAction(action, null)
   }
 

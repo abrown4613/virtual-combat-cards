@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.domain.tracker.transactional.AbstractCombatController
-import vcc.dnd4e.tracker.common.Command.TransactionalActionWithMessage
+import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.tracker.ActionDispatcher
 import vcc.dnd4e.tracker.ruling.AutomaticRulingProvider
 
@@ -28,7 +28,7 @@ trait MigrationHandler {
     case action =>
       val ad = ActionDispatcher.getDispatcher(context.iState.value)
       ad.setRulingProvider(new AutomaticRulingProvider)
-      ad.handle(action.asInstanceOf[TransactionalActionWithMessage])
+      ad.handle(action.asInstanceOf[CombatStateAction])
       context.iState.value = ad.resultState.get
   }
 }

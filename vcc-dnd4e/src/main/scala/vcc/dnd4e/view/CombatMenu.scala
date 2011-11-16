@@ -42,7 +42,7 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
     menuRollInitiative.enabled = !newState.state.allCombatantIDs.isEmpty
   }
 
-  private def createActionRequestMenuItem(label:String, action: TransactionalActionWithMessage):MenuItem = {
+  private def createActionRequestMenuItem(label:String, action: CombatStateAction):MenuItem = {
     val menuItem = new MenuItem(Action(label){
       director requestAction action
     })

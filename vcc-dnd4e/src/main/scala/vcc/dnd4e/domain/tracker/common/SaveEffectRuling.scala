@@ -16,10 +16,9 @@
  */
 package vcc.dnd4e.domain.tracker.common
 
-import vcc.controller.message.TransactionalAction
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
-import vcc.dnd4e.tracker.common.Command.{CancelEffect}
 import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.common.Command.{CombatStateAction, CancelEffect}
 
 //SAVE
 
@@ -38,13 +37,13 @@ object SaveEffectRuling {
  * @param eid Effect identifier
  * @param condition Condition to save from.
  */
-case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class SaveEffectRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   def decisionValidator(decision: Decision[_]): Boolean = decision match {
     case SaveEffectDecision(q, _) => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case SaveEffectDecision(q, SaveEffectDecision.Saved) => List(CancelEffect(q.eid))
       case _ => Nil
@@ -65,13 +64,13 @@ object SaveEffectDecision extends Enumeration {
 case class SaveEffectDecision(ruling: SaveEffectRuling, result: SaveEffectDecision.Value) extends Decision[SaveEffectRuling]
 
 
-case class SaveVersusDeathRuling(comb: CombatantID) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class SaveVersusDeathRuling(comb: CombatantID) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   protected def decisionValidator(decision: Decision[_]): Boolean = decision match {
     case e: SaveVersusDeathDecision => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case SaveVersusDeathDecision(ruling, SaveVersusDeathDecision.Failed) => List(Command.FailDeathSave(ruling.comb))
       case SaveVersusDeathDecision(ruling, SaveVersusDeathDecision.SaveAndHeal) => List(Command.HealDamage(ruling.comb, 1))
