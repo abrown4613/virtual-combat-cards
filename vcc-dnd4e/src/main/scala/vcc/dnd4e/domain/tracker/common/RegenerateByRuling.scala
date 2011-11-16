@@ -17,8 +17,8 @@
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.{Command, EffectID}
+import vcc.dnd4e.tracker.common.Command.CombatStateAction
 
 /**
  * Ask how much damage should be healed.
@@ -26,13 +26,13 @@ import vcc.dnd4e.tracker.common.{Command, EffectID}
  * @param description Full description of the effect/condition.
  * @param hintValue Recommended amount of regeneration (extracted from condition).
  */
-case class RegenerateByRuling(eid: EffectID, description: String, hintValue: Int) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class RegenerateByRuling(eid: EffectID, description: String, hintValue: Int) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
     case a: RegenerateByDecision => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case RegenerateByDecision(r, value) if (value > 0) => List(Command.HealDamage(r.eid.combId, value))
       case _ => Nil

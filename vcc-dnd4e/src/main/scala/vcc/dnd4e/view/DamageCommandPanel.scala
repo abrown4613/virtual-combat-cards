@@ -48,7 +48,7 @@ class DamageCommandPanel(val director: PanelDirector)
 
   private val damage_btn = new Button("Damage")
 
-  private def dispatchAction(tgt: UnifiedCombatant, director: PanelDirector, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalActionWithMessage) {
+  private def dispatchAction(tgt: UnifiedCombatant, director: PanelDirector, term: DamageParser.Term, builder: (CombatantID, Int) => CombatStateAction) {
     val cinfo = Map(
       "b" -> tgt.health.base.totalHP / 2,
       "s" -> tgt.health.base.totalHP / 4
@@ -59,7 +59,7 @@ class DamageCommandPanel(val director: PanelDirector)
     }
   }
 
-  private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalActionWithMessage) = {
+  private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => CombatStateAction) = {
     new UnifiedCombatantActionTransfer(msg, {
       case tgt => {
         dispatchAction(tgt, director, term, builder)

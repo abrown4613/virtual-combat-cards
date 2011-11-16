@@ -14,13 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
-import vcc.controller.message.TransactionalAction
-import vcc.dnd4e.tracker.common.Command.{UpdateEffectCondition, CancelEffect}
 import vcc.dnd4e.tracker.common.{Duration, Effect, EffectID}
+import vcc.dnd4e.tracker.common.Command.{CombatStateAction, UpdateEffectCondition, CancelEffect}
 
 /**
  * For effect that degenerate into worst things
@@ -28,13 +26,13 @@ import vcc.dnd4e.tracker.common.{Duration, Effect, EffectID}
  * @param condition Current condition. If  the format include arrows (->) or slash (/) this effect will be reprocessed
  * prior to display. This format is used to indicate de notion of progression.
  */
-case class SaveEffectSpecialRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class SaveEffectSpecialRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   def decisionValidator(decision: Decision[_]): Boolean = decision match {
     case SaveEffectSpecialDecision(q, _) => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case SaveEffectSpecialDecision(q, SaveEffectSpecialDecision.Saved) =>
         List(CancelEffect(q.eid))

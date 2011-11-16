@@ -17,8 +17,8 @@
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Ruling, Decision}
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.{Command, EffectID}
+import vcc.dnd4e.tracker.common.Command.CombatStateAction
 
 /**
  * Should ongoing damage be applied?
@@ -26,13 +26,13 @@ import vcc.dnd4e.tracker.common.{Command, EffectID}
  * @param description Text of the ongoing effect
  * @param hintValue Initial value
  */
-case class OngoingDamageRuling(eid: EffectID, description: String, hintValue: Int) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class OngoingDamageRuling(eid: EffectID, description: String, hintValue: Int) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
     case a: OngoingDamageDecision => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case OngoingDamageDecision(r, value) if (value > 0) => List(Command.ApplyDamage(r.eid.combId, value))
       case _ => Nil

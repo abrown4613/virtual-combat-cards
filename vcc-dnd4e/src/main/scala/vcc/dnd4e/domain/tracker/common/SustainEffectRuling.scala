@@ -17,21 +17,21 @@
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.controller.{RulingDecisionHandler, Decision, Ruling}
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.{Command, EffectID}
+import vcc.dnd4e.tracker.common.Command.CombatStateAction
 
 /**
  * Ruling for the sustain of a given effect.
  * @param eid Effect to sustain
  * @param condition Effect description
  */
-case class SustainEffectRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[TransactionalAction]] {
+case class SustainEffectRuling(eid: EffectID, condition: String) extends Ruling with RulingDecisionHandler[List[CombatStateAction]] {
   protected def decisionValidator(answer: Decision[_]): Boolean = answer match {
     case o: SustainEffectDecision => true
     case _ => false
   }
 
-  def processDecision(decision: Decision[_ <: Ruling]): List[TransactionalAction] = {
+  def processDecision(decision: Decision[_ <: Ruling]): List[CombatStateAction] = {
     decision match {
       case SustainEffectDecision(q, SustainEffectDecision.Sustain) => List(Command.SustainEffect(q.eid))
       case _ => Nil
