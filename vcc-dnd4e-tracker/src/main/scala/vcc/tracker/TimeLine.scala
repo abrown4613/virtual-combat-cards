@@ -16,8 +16,6 @@
  */
 package vcc.tracker
 
-import org.specs2.matcher.Matcher
-
 object TimeLine {
 
   class OutOfBounds extends RuntimeException
