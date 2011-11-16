@@ -21,6 +21,13 @@ import vcc.controller.SnapshotBuilder
 import vcc.controller.transaction.ChangeNotification
 import vcc.dnd4e.tracker.common._
 
+object CombatStateViewAdapterBuilder {
+  private val builder = new CombatStateViewAdapterBuilder()
+  def buildView(state: CombatState):CombatStateView = {
+    new builder.CombatStateViewAdapter(state)
+  }
+}
+
 class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
 
   private class CombatantStateViewAdapter(combatant: Combatant) extends CombatantStateView {
