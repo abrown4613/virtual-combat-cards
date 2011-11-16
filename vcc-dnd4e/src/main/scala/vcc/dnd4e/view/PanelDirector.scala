@@ -23,7 +23,7 @@ import vcc.controller.message._
 import vcc.infra.prompter.RulingBroker
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
-import vcc.dnd4e.domain.tracker.CombatStateViewAdapterBuilder
+import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}

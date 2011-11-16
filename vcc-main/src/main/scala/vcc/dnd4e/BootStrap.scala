@@ -30,7 +30,6 @@ import view.dialog.FileChooserHelper
 import vcc.dndi.app.CaptureTemplateEngine
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
 import vcc.infra.webserver.WebServer
-import vcc.controller.Tracker
 import javax.swing.JOptionPane
 
 object BootStrap extends StartupRoutine {
@@ -46,7 +45,6 @@ object BootStrap extends StartupRoutine {
   }
 
   private var webServer: WebServer = null
-  private var tracker: Tracker = null
 
   def start(srw: StartupReportWindow): scala.swing.Frame = {
     var createCompendium = false
@@ -149,14 +147,6 @@ object BootStrap extends StartupRoutine {
       webServer = WebServer.initialize("webserver", 4143, Map(
         "/capture" -> classOf[CaptureServlet]
       ))
-      true
-    }
-
-    callStartupSimpleBlock(srw, "Core Tracker") {
-      import vcc.controller.Tracker
-      import vcc.dnd4e.domain.tracker.transactional.{CombatController, CombatContext}
-      import vcc.dnd4e.domain.tracker.common.CombatStateRules
-      tracker = Tracker.initialize(new CombatController(new CombatStateRules(), new CombatContext()))
       true
     }
 
