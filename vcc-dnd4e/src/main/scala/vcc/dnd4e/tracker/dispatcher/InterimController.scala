@@ -22,6 +22,7 @@ import vcc.dnd4e.tracker.ruling.AutomaticRulingProvider
 
 class InterimController extends Tracker.Controller[CombatState] {
 
+  private val logger = org.slf4j.LoggerFactory.getLogger("user")
   private val history = new TimeLine[CombatState]
 
   def clearHistory() {
@@ -61,8 +62,7 @@ class InterimController extends Tracker.Controller[CombatState] {
         return finalState
       } catch {
         case e =>
-          println("Failed to handle: " + action)
-          println("Failed execution: " + e)
+          logger.warn("Failed to handle: " + action, e)
       }
     }
     None

@@ -14,21 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.domain.tracker
+package vcc.dnd4e.tracker.dispatcher
 
-import common.{CombatStateChangeNotification, CombatantStateView, CombatStateView}
-import vcc.controller.SnapshotBuilder
-import vcc.controller.transaction.ChangeNotification
 import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatStateView}
 
 object CombatStateViewAdapterBuilder {
-  private val builder = new CombatStateViewAdapterBuilder()
-  def buildView(state: CombatState):CombatStateView = {
-    new builder.CombatStateViewAdapter(state)
-  }
-}
 
-class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
+  def buildView(state: CombatState): CombatStateView = {
+    new CombatStateViewAdapter(state)
+  }
 
   private class CombatantStateViewAdapter(combatant: Combatant) extends CombatantStateView {
     def healthTracker: HealthTracker = combatant.health
@@ -58,25 +53,4 @@ class CombatStateViewAdapterBuilder() extends SnapshotBuilder[CombatStateView] {
     def nextUp: Option[InitiativeOrderID] = combatState.order.nextUp
   }
 
-  private var combatState: CombatState = CombatState.empty
-
-  def beginChanges() {}
-
-  def processChange(change: ChangeNotification) {
-    change match {
-      case CombatStateChangeNotification(newState) =>
-        combatState = newState
-      case s =>
-        println("***Ignoring : " + s)
-    }
-  }
-
-  def endChanges() {}
-
-  def getSnapshot(): CombatStateView = {
-    new CombatStateViewAdapter(combatState)
-  }
-
-  def handleFailure(e: Throwable, change: List[ChangeNotification]) {
-  }
 }
