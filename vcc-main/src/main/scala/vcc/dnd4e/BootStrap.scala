@@ -175,6 +175,6 @@ object BootStrap extends StartupRoutine {
         new ConfigurationDialog(null, false).promptUser()
       }
     }
-    new MasterFrame(tracker, Configuration.baseDirectory.value, releaseInformation, configurationCallback)
+    new MasterFrame(Configuration.baseDirectory.value, releaseInformation, configurationCallback)
   }
 }

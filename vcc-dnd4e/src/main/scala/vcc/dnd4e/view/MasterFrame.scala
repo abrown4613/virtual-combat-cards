@@ -26,20 +26,22 @@ import vcc.util.UpdateManager.Version
 import java.awt.Toolkit
 import java.io.File
 import java.net.URL
-import vcc.controller.{Tracker, TrackerChangeObserver}
-import vcc.dnd4e.domain.tracker.CombatStateViewAdapterBuilder
-import vcc.dnd4e.domain.tracker.common.CombatStateView
+import vcc.dnd4e.tracker.common.CombatState
+import vcc.tracker.Tracker
+import vcc.dnd4e.tracker.dispatcher.InterimController
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
-class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: ReleaseInformation, configurationPanel: ConfigurationPanelCallback)
+class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, configurationPanel: ConfigurationPanelCallback)
   extends Frame {
 
   private val docker = new CustomDockingAdapter(baseDirectory)
 
   private val statusBar = new StatusBar(releaseInformation.currentVersion)
-  private val csm = new TrackerChangeObserver[CombatStateView](new CombatStateViewAdapterBuilder(), tracker)
-  private val director = new PanelDirector(tracker, csm, statusBar,
+
+  private val newTracker = new Tracker[CombatState](new InterimController())
+
+  private val director = new PanelDirector(newTracker, statusBar,
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
   private val news = new NewsPanel(baseDirectory, releaseInformation)
   private val docks = createAllDockableComponents()
@@ -52,6 +54,10 @@ class MasterFrame(tracker: Tracker, baseDirectory: File, releaseInformation: Rel
   registerDockableKeyStroke()
   docker.loadLayoutOrDefault()
   registerReactions()
+
+  SwingHelper.invokeInEventDispatchThread {
+    newTracker.initializeState(CombatState.empty)
+  }
 
   private def createAllDockableComponents(): List[DockableComponent] = {
     List[DockableComponent](

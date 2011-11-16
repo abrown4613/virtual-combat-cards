@@ -26,7 +26,6 @@ import vcc.infra.docking._
 
 import vcc.dnd4e.tracker.common.Command._
 import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
-import vcc.controller.message.TransactionalAction
 import vcc.dnd4e.tracker.common.CombatantID
 
 class DamageCommandPanel(val director: PanelDirector)
@@ -49,7 +48,7 @@ class DamageCommandPanel(val director: PanelDirector)
 
   private val damage_btn = new Button("Damage")
 
-  private def dispatchAction(tgt: UnifiedCombatant, director: PanelDirector, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalAction) {
+  private def dispatchAction(tgt: UnifiedCombatant, director: PanelDirector, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalActionWithMessage) {
     val cinfo = Map(
       "b" -> tgt.health.base.totalHP / 2,
       "s" -> tgt.health.base.totalHP / 4
@@ -60,7 +59,7 @@ class DamageCommandPanel(val director: PanelDirector)
     }
   }
 
-  private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalAction) = {
+  private def makeAction(msg: String, term: DamageParser.Term, builder: (CombatantID, Int) => TransactionalActionWithMessage) = {
     new UnifiedCombatantActionTransfer(msg, {
       case tgt => {
         dispatchAction(tgt, director, term, builder)

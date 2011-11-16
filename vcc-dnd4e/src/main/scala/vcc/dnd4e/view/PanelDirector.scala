@@ -18,11 +18,12 @@ package vcc.dnd4e.view
 
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.controller.message.{TrackerControlMessage, TransactionalAction}
-import scala.actors.Actor
-import vcc.controller.message.Command
-import vcc.controller._
+import vcc.tracker.Tracker
+import vcc.controller.message._
 import vcc.infra.prompter.RulingBroker
+import vcc.dnd4e.tracker.common.CombatState
+import vcc.dnd4e.tracker.common.Command.TransactionalActionWithMessage
+import vcc.dnd4e.domain.tracker.CombatStateViewAdapterBuilder
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -36,6 +37,7 @@ object PanelDirector {
     val HideDead = Value("Hide Dead")
     val RobinView = Value("Robin View")
   }
+
 }
 
 trait CombatStateObserver {
@@ -59,8 +61,7 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView], statusBar: StatusBar, rulingBroker: RulingBroker)
-  extends TrackerChangeAware[CombatStateView] with CommandSource {
+class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, rulingBroker: RulingBroker) {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
 
@@ -68,7 +69,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
 
   private var propRobinView = true
 
-  private var unifiedTable = new UnifiedSequenceTable(Array(), csm.getSnapshot())
+  private var unifiedTable:UnifiedSequenceTable = null
   private val sequenceBuilder = new UnifiedSequenceTable.Builder()
 
   val rules = new CombatStateRules()
@@ -77,15 +78,20 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
-  //Init code
-  csm.addChangeObserver(this)
-
-  def snapshotChanged(newState: CombatStateView) {
+  private def buildStateAndPropagate(newState: CombatStateView) {
     SwingHelper.invokeInEventDispatchThread {
       unifiedTable = sequenceBuilder.build(newState)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
     }
   }
+
+  newTracker.addObserver(new Tracker.Observer[CombatState] {
+    def stateUpdated(state: CombatState) {
+      logger.debug("[NT] -> " + state)
+      val newState = CombatStateViewAdapterBuilder.buildView(state)
+      buildStateAndPropagate(newState)
+    }
+  })
 
   def registerContextObserver(obs: ContextObserver) {
     contextObserver = obs :: contextObserver
@@ -120,7 +126,7 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
       case _ =>
         throw new Exception("Unknown property: " + property)
     }
-    snapshotChanged(unifiedTable.state)
+    buildStateAndPropagate(unifiedTable.state)
   }
 
   def getBooleanProperty(prop: PanelDirector.property.Value): Boolean = {
@@ -137,12 +143,16 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
    * send messages directly to the Tracker.
    * @param action A TransactionalAction message
    */
-  def requestAction(action: TransactionalAction) {
-    tracker ! Command(this, action)
+  def requestAction(action: TransactionalActionWithMessage) {
+    newTracker.dispatchAction(action, null)
   }
 
   def requestControllerOperation(action: TrackerControlMessage) {
-    tracker ! action
+    action match {
+      case Undo() => newTracker.undo()
+      case Redo() => newTracker.redo()
+      case ClearTransactionLog() => newTracker.clearHistory()
+    }
   }
 
   def actionCompleted(msg: String, producedChanges: Boolean) {
@@ -153,14 +163,4 @@ class PanelDirector(tracker: Actor, csm: TrackerChangeObserver[CombatStateView],
     logger.warn("Failed to execute action, reason: " + reason)
   }
 
-  /**
-   * Send a request to get user input on ruling.
-   * @param context
-   * @param rulings A List of Ruling that require some user Decision
-   * @return A list of Decision in order according to the rulings
-   */
-  def provideDecisionsForRulings(context: TransactionalAction, rulings: List[Ruling]): List[Decision[_ <: Ruling]] = {
-    if (rulings.isEmpty) Nil
-    else rulingBroker.promptRuling("NO-MESSAGE-MIGRATING", rulings)
-  }
 }
