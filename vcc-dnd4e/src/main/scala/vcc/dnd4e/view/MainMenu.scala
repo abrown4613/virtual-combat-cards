@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import scala.swing._
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
-import vcc.controller.message.ClearTransactionLog
 import vcc.dnd4e.view.helper.PartyLoader
 import vcc.util.UpdateManager
 import java.net.URL
@@ -70,22 +69,22 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
 
   private val historyMenu = new Menu("History")
   historyMenu.contents += new MenuItem(new Action("Undo") {
-    def apply(): Unit = {
-      director requestControllerOperation vcc.controller.message.Undo()
+    def apply() {
+      director.requestUndo()
     }
 
     accelerator = Some(KeyStroke.getKeyStroke('Z'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new MenuItem(new Action("Redo") {
-    def apply(): Unit = {
-      director requestControllerOperation vcc.controller.message.Redo()
+    def apply() {
+      director.requestRedo()
     }
 
     accelerator = Some(KeyStroke.getKeyStroke('Y'.toInt, java.awt.Event.CTRL_MASK))
   })
   historyMenu.contents += new Separator
   historyMenu.contents += new MenuItem(Action("Clear History") {
-    director requestControllerOperation ClearTransactionLog()
+    director.requestClearHistory()
   })
 
   private val viewMenu = new Menu("View")

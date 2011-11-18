@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import ruling.NextUpRulingDialog
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.controller.message._
 import vcc.infra.prompter.RulingBroker
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
@@ -159,12 +158,16 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar, rulingB
     tracker.dispatchAction(action, RulingBroker)
   }
 
-  def requestControllerOperation(action: TrackerControlMessage) {
-    action match {
-      case Undo() => tracker.undo()
-      case Redo() => tracker.redo()
-      case ClearTransactionLog() => tracker.clearHistory()
-    }
+  def requestClearHistory() {
+    tracker.clearHistory()
+  }
+
+  def requestUndo() {
+    tracker.undo()
+  }
+
+  def requestRedo() {
+    tracker.redo()
   }
 
   def actionCompleted(msg: String, producedChanges: Boolean) {
