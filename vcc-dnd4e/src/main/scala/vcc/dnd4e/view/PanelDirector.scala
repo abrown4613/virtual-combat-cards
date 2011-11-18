@@ -92,8 +92,6 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar, rulingB
 
   val rules = new CombatStateRules()
 
-  def currentState = unifiedTable
-
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
   tracker.addObserver(new Tracker.Observer[CombatState] {

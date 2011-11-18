@@ -21,18 +21,20 @@ import scala.swing._
 import vcc.dnd4e.tracker.common.Command._
 
 class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") with CombatStateObserver {
-  private val menuStartCombat = createActionRequestMenuItem("Start Combat",StartCombat())
+  private val menuStartCombat = createActionRequestMenuItem("Start Combat", StartCombat())
   private val menuRollInitiative = createInitiativeDialogMenuItem()
   private val menuEndCombat = createActionRequestMenuItem("End Combat", EndCombat())
   private val menuShortRest = createActionRequestMenuItem("Short Rest", ApplyRest(false))
   private val menuExtendedRest = createActionRequestMenuItem("Extended Rest", ApplyRest(true))
   private val menuClearNPC = createActionRequestMenuItem("Clear Monsters", ClearRoster(false))
-  private val menuClearAll =createActionRequestMenuItem("Clear All", ClearRoster(true))
+  private val menuClearAll = createActionRequestMenuItem("Clear All", ClearRoster(true))
+  private var combatState: UnifiedSequenceTable = null
 
   contents ++= Seq(menuRollInitiative, menuStartCombat, menuEndCombat, new Separator, menuShortRest, menuExtendedRest, new Separator, menuClearNPC, menuClearAll)
   director.registerStateObserver(this)
 
   def combatStateChanged(newState: UnifiedSequenceTable) {
+    combatState = newState
     menuStartCombat.enabled = !newState.state.isCombatStarted && director.rules.hasActingCombatant(newState.state)
     menuEndCombat.enabled = newState.state.isCombatStarted
     menuShortRest.enabled = !menuEndCombat.enabled
@@ -42,8 +44,8 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
     menuRollInitiative.enabled = !newState.state.allCombatantIDs.isEmpty
   }
 
-  private def createActionRequestMenuItem(label:String, action: CombatStateAction):MenuItem = {
-    val menuItem = new MenuItem(Action(label){
+  private def createActionRequestMenuItem(label: String, action: CombatStateAction): MenuItem = {
+    val menuItem = new MenuItem(Action(label) {
       director requestAction action
     })
     menuItem.enabled = false
@@ -52,7 +54,7 @@ class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") 
 
   private def createInitiativeDialogMenuItem(): MenuItem = {
     val menuItem = new MenuItem(Action("Roll Initiative...") {
-      val dlg = new InitiativeDialog(parent, director)
+      val dlg = new InitiativeDialog(parent, director, combatState)
       //Result is Pair (Boolean, List[InitiativeDefinition])
       val res = dlg.promptUser()
       if (res.isDefined) {

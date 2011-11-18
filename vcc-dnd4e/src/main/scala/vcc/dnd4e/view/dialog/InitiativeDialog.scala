@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.dialog
 
 import scala.swing._
@@ -24,10 +23,12 @@ import vcc.util.swing._
 import scala.util.Sorting
 import vcc.dnd4e.view.helper.{InitiativeRollEditor, InitiativeRoll}
 import vcc.util.{ListHelper, DiceBag}
-import vcc.dnd4e.view.{IconLibrary, UnifiedCombatant, PanelDirector}
 import vcc.dnd4e.tracker.common.InitiativeDefinition
+import vcc.dnd4e.view.{UnifiedSequenceTable, IconLibrary, UnifiedCombatant, PanelDirector}
 
-class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalPromptDialog[(Boolean, List[InitiativeDefinition])](window, "Roll Initiative") {
+class InitiativeDialog(window: Frame, director: PanelDirector, combatState: UnifiedSequenceTable)
+  extends ModalPromptDialog[(Boolean, List[InitiativeDefinition])](window, "Roll Initiative") {
+
   private val table = new RowProjectionTable[InitiativeDialogEntry] with CustomRenderedRowProjectionTable[InitiativeDialogEntry] {
     projection = new ProjectionTableModel[InitiativeDialogEntry](InitiativeDialogEntryProjection)
     val labelFormatter = new InitiativeDialogEntryFormatter()
@@ -45,7 +46,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
     setDialogResultAndClose(Some((false, getResult)))
   })
   private val rollAndStartButton = new Button(Action("Roll and Start Combat") {
-    val ir = getResult()
+    val ir = getResult
     setDialogResultAndClose(Some((!ir.isEmpty, ir))) //Only start if there are initiative
   })
 
@@ -54,7 +55,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
   })
 
   private val splitGroup = new Button(Action("Split Group") {
-    val sel = getSelectedRow()
+    val sel = getSelectedRow
     if (sel.isDefined) {
       val idx = sel.get
       val toSplit = table.content(idx)
@@ -66,7 +67,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
   })
 
   private val breakGroup = new Button(Action("Break Group") {
-    val sel = getSelectedRow()
+    val sel = getSelectedRow
     if (sel.isDefined) {
       val idx = sel.get
       val toSplit = table.content(idx)
@@ -99,7 +100,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
   reactions += {
     case TableRowsSelected(t, rng, false) =>
       splitGroup.enabled = {
-        val sel = getSelectedRow()
+        val sel = getSelectedRow
         (sel.isDefined) && table.content(sel.get).ids.size > 1
       }
       breakGroup.enabled = splitGroup.enabled
@@ -108,7 +109,7 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
   //Setup table and checkbox
   table.content = {
     val orderedAndFilter: Seq[UnifiedCombatant] = Sorting.stableSort[UnifiedCombatant](
-      director.currentState.elements.filter(e => director.rules.canCombatantRollInitiative(director.currentState.state, e.combId)).toSeq,
+      combatState.elements.filter(e => director.rules.canCombatantRollInitiative(combatState.state, e.combId)).toSeq,
       (a: UnifiedCombatant, b: UnifiedCombatant) => {
         a.combId.id < b.combId.id
       })
@@ -119,20 +120,20 @@ class InitiativeDialog(window: Frame, director: PanelDirector) extends ModalProm
         cmb.isInOrder)
     ).toList.foldLeft(List[InitiativeDialogEntry]())(joinInitiativeRolls)
   }
-  rollAndStartButton.enabled = !director.currentState.state.isCombatStarted
+  rollAndStartButton.enabled = !combatState.state.isCombatStarted
 
 
   def collectResult(): Option[(Boolean, List[InitiativeDefinition])] = {
     None // This should not be called
   }
 
-  private def getResult(): List[InitiativeDefinition] = {
+  private def getResult: List[InitiativeDefinition] = {
     table.content.filter(e => !e.skip).
       map(ie => (ie.ids, ie.init, ie.roll.resolve(ie.init, DiceBag))). //Tuple( Ids, InitBonus, Rolls)
       flatMap(tpl => tpl._1.map(id => InitiativeDefinition(id, tpl._2, tpl._3))).toList
   }
 
-  private def getSelectedRow(): Option[Int] = {
+  private def getSelectedRow: Option[Int] = {
     val sel = table.selection.rows.toSeq
     if (sel.isEmpty) None
     else Some(sel(0))

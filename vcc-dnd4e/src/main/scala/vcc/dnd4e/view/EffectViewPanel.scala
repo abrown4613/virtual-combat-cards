@@ -34,7 +34,7 @@ abstract class EffectViewPanel(director: PanelDirector)
 
   private var context: Option[UnifiedCombatantID] = None
 
-  private var state = director.currentState
+  private var state:UnifiedSequenceTable = null
 
   val effectTable = new RowProjectionTable[Effect]() with CustomRenderedRowProjectionTable[Effect] {
     val labelFormatter = tabular.EffectTableColorer

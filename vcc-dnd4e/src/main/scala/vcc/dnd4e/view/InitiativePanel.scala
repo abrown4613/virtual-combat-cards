@@ -42,7 +42,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent with K
   private var target: Option[UnifiedCombatant] = None
   private val rules = director.rules
   private var _first: Option[UnifiedCombatant] = None
-  private var combatState = director.currentState
+  private var combatState:UnifiedSequenceTable = null
 
   xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
   add(firstLabel, "align right")

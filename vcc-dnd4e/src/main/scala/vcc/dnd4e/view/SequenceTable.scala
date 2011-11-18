@@ -49,7 +49,7 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent {
 
   private var source: Option[UnifiedCombatantID] = None
   private var target: Option[UnifiedCombatantID] = None
-  private var state = director.currentState
+  private var state:UnifiedSequenceTable = null
   private var mustPreventUpdateOfSelection = false
 
   private val setAction = Action("sequence.setacting") {

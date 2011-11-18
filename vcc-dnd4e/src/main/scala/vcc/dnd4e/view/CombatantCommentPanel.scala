@@ -21,7 +21,7 @@ import vcc.dnd4e.tracker.common.Command.SetComment
 
 abstract class CombatantCommentPanel(director: PanelDirector) extends CommentPanel with ContextObserver with CombatStateObserver {
   private var context: Option[UnifiedCombatantID] = None
-  private var state = director.currentState
+  private var state:UnifiedSequenceTable = null
 
   def sendChangeMessage(text: String) {
     director requestAction SetComment(context.get.combId, text)
