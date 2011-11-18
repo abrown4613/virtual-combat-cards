@@ -32,7 +32,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private var _changing: Boolean = false
 
   private var target: Option[UnifiedCombatantID] = None
-  private var state = director.currentState
+  private var state:UnifiedSequenceTable = null
 
   private object TerrainCombatantStateView extends CombatantStateView {
     private val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
