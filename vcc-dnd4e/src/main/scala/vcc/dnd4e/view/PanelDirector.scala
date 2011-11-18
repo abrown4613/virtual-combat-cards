@@ -16,14 +16,17 @@
  */
 package vcc.dnd4e.view
 
+import ruling.NextUpRulingDialog
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.tracker.Tracker
 import vcc.controller.message._
 import vcc.infra.prompter.RulingBroker
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
+import vcc.tracker.{Ruling, RulingProvider, Tracker}
+import vcc.dnd4e.tracker.ruling.{NextUpRuling, AutomaticRulingProvider}
+import vcc.dnd4e.tracker.command.NextUpCommand
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -61,16 +64,32 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, rulingBroker: RulingBroker) {
+class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar, rulingBroker: RulingBroker) {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
-
   private var propHideDead = false
-
   private var propRobinView = true
-
-  private var unifiedTable:UnifiedSequenceTable = null
+  private var unifiedTable: UnifiedSequenceTable = null
   private val sequenceBuilder = new UnifiedSequenceTable.Builder()
+
+  private object RulingBroker extends RulingProvider[CombatState] {
+    private val automatic = new AutomaticRulingProvider
+
+    def provideRulingFor(state: CombatState, rulingNeedingDecision: List[Ruling[CombatState, _, _]]): List[Ruling[CombatState, _, _]] = {
+      rulingNeedingDecision match {
+        case nur@NextUpRuling(next, _) :: Nil => askForNextUp(state, next)
+        case other => automatic.provideRulingFor(state, rulingNeedingDecision)
+      }
+    }
+
+    private def askForNextUp(state: CombatState, next: NextUpCommand): scala.List[NextUpRuling] = {
+      val dialog = new NextUpRulingDialog(null, state, NextUpRuling(next, None))
+      val result = dialog.promptUser()
+      dialog.peer.dispose()
+      result.toList
+    }
+
+  }
 
   val rules = new CombatStateRules()
 
@@ -78,14 +97,7 @@ class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, ruli
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
-  private def buildStateAndPropagate(newState: CombatStateView) {
-    SwingHelper.invokeInEventDispatchThread {
-      unifiedTable = sequenceBuilder.build(newState)
-      combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
-    }
-  }
-
-  newTracker.addObserver(new Tracker.Observer[CombatState] {
+  tracker.addObserver(new Tracker.Observer[CombatState] {
     def stateUpdated(state: CombatState) {
       logger.debug("[NT] -> " + state)
       val newState = CombatStateViewAdapterBuilder.buildView(state)
@@ -144,14 +156,14 @@ class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, ruli
    * @param action A TransactionalAction message
    */
   def requestAction(action: CombatStateAction) {
-    newTracker.dispatchAction(action, null)
+    tracker.dispatchAction(action, RulingBroker)
   }
 
   def requestControllerOperation(action: TrackerControlMessage) {
     action match {
-      case Undo() => newTracker.undo()
-      case Redo() => newTracker.redo()
-      case ClearTransactionLog() => newTracker.clearHistory()
+      case Undo() => tracker.undo()
+      case Redo() => tracker.redo()
+      case ClearTransactionLog() => tracker.clearHistory()
     }
   }
 
@@ -161,6 +173,13 @@ class PanelDirector(newTracker: Tracker[CombatState], statusBar: StatusBar, ruli
 
   def actionCancelled(reason: String) {
     logger.warn("Failed to execute action, reason: " + reason)
+  }
+
+  private def buildStateAndPropagate(newState: CombatStateView) {
+    SwingHelper.invokeInEventDispatchThread {
+      unifiedTable = sequenceBuilder.build(newState)
+      combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
+    }
   }
 
 }
