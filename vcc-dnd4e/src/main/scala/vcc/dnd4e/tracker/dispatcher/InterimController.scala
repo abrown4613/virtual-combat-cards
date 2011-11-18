@@ -18,7 +18,6 @@ package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.tracker._
-import vcc.dnd4e.tracker.ruling.AutomaticRulingProvider
 
 class InterimController extends Tracker.Controller[CombatState] {
 
@@ -53,7 +52,7 @@ class InterimController extends Tracker.Controller[CombatState] {
     val initialState = history.getState
     if (initialState.isDefined) {
       val dispatcher = ActionDispatcher.getDispatcher(initialState.get)
-      dispatcher.setRulingProvider(new AutomaticRulingProvider)
+      dispatcher.setRulingProvider(rulingProvider)
       try {
         dispatcher.handle(action)
         val finalState = dispatcher.resultState

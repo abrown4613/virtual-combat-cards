@@ -39,9 +39,9 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
 
   private val statusBar = new StatusBar(releaseInformation.currentVersion)
 
-  private val newTracker = new Tracker[CombatState](new InterimController())
+  private val tracker = new Tracker[CombatState](new InterimController())
 
-  private val director = new PanelDirector(newTracker, statusBar,
+  private val director = new PanelDirector(tracker, statusBar,
     new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
   private val news = new NewsPanel(baseDirectory, releaseInformation)
   private val docks = createAllDockableComponents()
@@ -56,7 +56,7 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
   registerReactions()
 
   SwingHelper.invokeInEventDispatchThread {
-    newTracker.initializeState(CombatState.empty)
+    tracker.initializeState(CombatState.empty)
   }
 
   private def createAllDockableComponents(): List[DockableComponent] = {
