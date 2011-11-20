@@ -20,11 +20,15 @@ import java.lang.IllegalStateException
 
 class InfiniteLoopException extends RuntimeException
 
+case class RulingContext[S](state: S, triggeringCommand: Command[S], rulingNeedingDecision: List[Ruling[S, _, _]])
+
 trait RulingProvider[S] {
-  def provideRulingFor(state: S, rulingNeedingDecision: List[Ruling[S, _, _]]): List[Ruling[S, _, _]]
+
+  def provideRulingFor(context: RulingContext[S]): List[Ruling[S, _, _]]
 }
 
 object ActionDispatcher {
+
   class RulingsAndDecisionsMismatchException(rulings: List[Ruling[_, _, _]], decisions: List[Ruling[_, _, _]])
     extends RuntimeException(
       "Ruling and decision mismatch: %s <-> %s".format(rulings.mkString(", "), decisions.mkString(", ")))
@@ -91,21 +95,22 @@ class ActionDispatcher[S] private(initialState: S) {
     if (requiredRulings.isEmpty)
       Nil
     else
-      collectDecisionsForRulings(requiredRulings)
+      collectDecisionsForRulings(command, requiredRulings)
   }
 
-  private def collectDecisionsForRulings(requiredRulings: List[Ruling[S, _, _]]): List[Command[S]] = {
-    val decisions = rulingProvider.provideRulingFor(currentState, requiredRulings)
+  private def collectDecisionsForRulings(command: Command[S], requiredRulings: List[Ruling[S, _, _]]): List[Command[S]] = {
+    val context = RulingContext(currentState, command, requiredRulings)
+    val decisions = rulingProvider.provideRulingFor(context)
     validateDecisions(requiredRulings, decisions)
     decisions.flatMap(r => r.generateCommands(currentState))
   }
 
   private def validateDecisions(rulings: List[Ruling[S, _, _]], decisions: List[Ruling[S, _, _]]) {
-    if(rulings.length != decisions.length)
+    if (rulings.length != decisions.length)
       throw new ActionDispatcher.RulingsAndDecisionsMismatchException(rulings, decisions)
 
-    for((ruling,decision) <- rulings zip decisions)
-      if( !ruling.isRulingSameSubject(decision))
+    for ((ruling, decision) <- rulings zip decisions)
+      if (!ruling.isRulingSameSubject(decision))
         throw new ActionDispatcher.RulingsAndDecisionsMismatchException(rulings, decisions)
   }
 

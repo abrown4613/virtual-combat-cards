@@ -17,11 +17,12 @@
 package vcc.dnd4e.tracker.ruling
 
 import vcc.dnd4e.tracker.common.CombatState
-import vcc.tracker.{Ruling, RulingProvider}
+import vcc.tracker.{RulingContext, Ruling, RulingProvider}
 
 class AutomaticRulingProvider extends RulingProvider[CombatState] {
-  def provideRulingFor(state: CombatState, rulingNeedingDecision: List[Ruling[CombatState, _, _]]): List[Ruling[CombatState, _, _]] = {
-    for (ruling <- rulingNeedingDecision) yield {
+
+  def provideRulingFor(context: RulingContext[CombatState]): List[Ruling[CombatState, _, _]] = {
+    for (ruling <- context.rulingNeedingDecision) yield {
       ruling match {
         case r: NextUpRuling => r.withDecision(r.candidates.next)
         case r: SaveRuling => r.withDecision(SaveRulingResult.Saved)
