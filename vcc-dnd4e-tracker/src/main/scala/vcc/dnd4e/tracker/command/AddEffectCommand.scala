@@ -18,9 +18,8 @@ package vcc.dnd4e.tracker.command
 
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.EffectTransformation._
-import vcc.controller.IllegalActionException
-import vcc.dnd4e.tracker.event.{ChangeEffectListEvent, AddEffectEvent, CombatStateEvent}
-import vcc.tracker.Event
+import vcc.dnd4e.tracker.event.{ChangeEffectListEvent, AddEffectEvent}
+import vcc.tracker.{IllegalActionException, Event}
 
 /**
  * Locates target in initiative order, adds new effect to list.

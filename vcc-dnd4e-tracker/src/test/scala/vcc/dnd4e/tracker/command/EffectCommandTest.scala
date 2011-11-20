@@ -19,8 +19,8 @@ package vcc.dnd4e.tracker.command
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common._
-import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
+import vcc.tracker.IllegalActionException
 
 class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   private val eid = EffectID(combA, 11)

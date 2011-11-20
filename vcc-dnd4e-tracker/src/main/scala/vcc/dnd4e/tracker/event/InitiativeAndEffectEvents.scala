@@ -16,8 +16,8 @@
  */
 package vcc.dnd4e.tracker.event
 
-import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
+import vcc.tracker.IllegalActionException
 
 /*
 * Place holder, not for real use.
