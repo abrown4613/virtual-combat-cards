@@ -16,11 +16,9 @@
  */
 package vcc.dnd4e.view
 
-import ruling.{TranslatorService, RulingDialog}
 import scala.swing._
 import event.{WindowOpened, WindowClosing}
 import vcc.infra.docking._
-import vcc.infra.prompter.RulingBroker
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
 import vcc.util.UpdateManager.Version
 import java.awt.Toolkit
@@ -41,8 +39,7 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
 
   private val tracker = new Tracker[CombatState](new InterimController())
 
-  private val director = new PanelDirector(tracker, statusBar,
-    new RulingBroker(RulingDialog.getInstanceAndController(this), TranslatorService.getInstance()))
+  private val director = new PanelDirector(tracker, statusBar)
   private val news = new NewsPanel(baseDirectory, releaseInformation)
   private val docks = createAllDockableComponents()
   private val mainMenu = new MainMenu(director, docker, this, configurationPanel, releaseInformation)

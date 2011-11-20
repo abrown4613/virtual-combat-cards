@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import ruling.NextUpRulingDialog
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.infra.prompter.RulingBroker
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
@@ -63,7 +62,7 @@ trait SimpleCombatStateObserver extends CombatStateObserver {
 /**
  * This component act as a Mediator between all the panels and the CombatStateManager.
  */
-class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar, rulingBroker: RulingBroker) {
+class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
   private var combatStateObserver: List[CombatStateObserver] = Nil
   private var contextObserver: List[ContextObserver] = Nil
   private var propHideDead = false
