@@ -40,14 +40,14 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
     val dispatcher = ActionDispatcher.getDispatcher(startState)
 
     val mockRulingProvider = mock[RulingProvider[State]]
-    mockRulingProvider.provideRulingFor(any, any) returns Nil
+    mockRulingProvider.provideRulingFor(any) returns Nil
     dispatcher.setRulingProvider(mockRulingProvider);
 
-    protected def mockFlexRulingDecision(state: State, decisions: flexDecision*) {
+    protected def mockFlexRulingDecision(state: State, command: Command[State], decisions: flexDecision*) {
       val expectedRulings: List[FlexRuling] = decisions.map(d => FlexRuling(d.prompt, None)).toList
       val providedDecisions = decisions.map(d => FlexRuling(d.prompt, Some(d.decisionCommands.toList))).toList
 
-      mockRulingProvider.provideRulingFor(state, expectedRulings) returns providedDecisions
+      mockRulingProvider.provideRulingFor(RulingContext(state, command, expectedRulings)) returns providedDecisions
     }
 
     protected case class flexDecision(prompt: String, decisionCommands: Command[State]*)
@@ -108,36 +108,38 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   }
 
   "handle Action with single Command single Ruling that results in one Command" in new context {
-    mockFlexRulingDecision(startState, flexDecision("what", FlexCommand(14)))
+    mockFlexRulingDecision(startState, FlexCommand("what"), flexDecision("what", FlexCommand(14)))
 
     dispatcher.handle(FlexAction(FlexCommand("what")))
 
     dispatcher.resultState.get must_== State(14)
-    there was one(mockRulingProvider).provideRulingFor(startState, List(rulingWhat))
+    there was one(mockRulingProvider).provideRulingFor(RulingContext(startState, FlexCommand("what"), List(rulingWhat)))
   }
 
   "handle Action with single Command single Ruling that results in one Command follow by original events" in new context {
-    mockFlexRulingDecision(startState, flexDecision("what", FlexCommand(SetStateEvent(5))))
+    val command = FlexCommand("what", 1, 1)
+    mockFlexRulingDecision(startState, command, flexDecision("what", FlexCommand(SetStateEvent(5))))
 
-    dispatcher.handle(FlexAction(FlexCommand("what", 1, 1)))
+    dispatcher.handle(FlexAction(command))
 
     dispatcher.resultState.get must_== State(7)
-    there was one(mockRulingProvider).provideRulingFor(startState, List(rulingWhat))
+    there was one(mockRulingProvider).provideRulingFor(RulingContext(startState, command, List(rulingWhat)))
   }
 
   "handle Action with single Command that produces several Ruling with multiple commands of multiple events" in new context {
-    mockFlexRulingDecision(startState,
+    val command = new FlexCommand(List("what", "where"), List(7, 8))
+    mockFlexRulingDecision(startState, command,
       flexDecision("what", FlexCommand(1), FlexCommand(2, 3)),
       flexDecision("where", FlexCommand(4), FlexCommand(5, 6)))
 
-    dispatcher.handle(FlexAction(new FlexCommand(List("what", "where"), List(7, 8))))
+    dispatcher.handle(FlexAction(command))
 
     dispatcher.resultState.get must_== State(36)
   }
 
   "handle Action with two Commands that produces single Ruling with multiple commands of multiple events" in new context {
-    mockFlexRulingDecision(startState, flexDecision("what", FlexCommand(1, 2)))
-    mockFlexRulingDecision(State(3), flexDecision("where", FlexCommand(3, 4)))
+    mockFlexRulingDecision(startState, FlexCommand("what"), flexDecision("what", FlexCommand("what"), FlexCommand(1, 2)))
+    mockFlexRulingDecision(State(3), FlexCommand("where", 5), flexDecision("where", FlexCommand("what"), FlexCommand(3, 4)))
 
     dispatcher.handle(FlexAction(FlexCommand("what"), FlexCommand("where", 5)))
 
@@ -145,20 +147,22 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   }
 
   "throw exception if single Ruling is not answered" in new context {
-    mockRulingProvider.provideRulingFor(startState, List(rulingWhat)) returns List(rulingWhat)
+    mockRulingProvider.provideRulingFor(
+      RulingContext(startState, FlexCommand("what"), List(rulingWhat))) returns List(rulingWhat)
 
     dispatcher.handle(FlexAction(FlexCommand("what"))) must throwA[UndecidedRulingException]
   }
 
   "throw exception if not all Ruling have Decision" in new context {
-    mockRulingProvider.provideRulingFor(startState, List(rulingWhat, rulingWhere)) returns List(decisionWhat)
+    mockRulingProvider.provideRulingFor(
+      RulingContext(startState, commandWithWhatWhereRuling, List(rulingWhat, rulingWhere))) returns List(decisionWhat)
     dispatcher.handle(FlexAction(commandWithWhatWhereRuling)) must
       throwA(new RulingsAndDecisionsMismatchException(List(rulingWhat, rulingWhere), List(decisionWhat)))
-
   }
 
   "throw exception if Decision does not match ruling" in new context {
-    mockRulingProvider.provideRulingFor(startState, List(rulingWhat, rulingWhere)) returns
+    mockRulingProvider.provideRulingFor(
+      RulingContext(startState, commandWithWhatWhereRuling, List(rulingWhat, rulingWhere))) returns
       List(makeDecision("what"), decisionSorry)
 
     dispatcher.handle(FlexAction(commandWithWhatWhereRuling)) must
@@ -166,7 +170,8 @@ class ActionDispatcherTest extends SpecificationWithJUnit with Mockito {
   }
 
   "throw exception if too many Decisions are provided" in new context {
-    mockRulingProvider.provideRulingFor(startState, List(rulingWhat)) returns List(decisionWhat, decisionSorry)
+    mockRulingProvider.provideRulingFor(
+      RulingContext(startState, commandWithWhatRuling, List(rulingWhat))) returns List(decisionWhat, decisionSorry)
 
     dispatcher.handle(FlexAction(commandWithWhatRuling)) must
       throwA(new RulingsAndDecisionsMismatchException(List(rulingWhat), List(decisionWhat, decisionSorry)))

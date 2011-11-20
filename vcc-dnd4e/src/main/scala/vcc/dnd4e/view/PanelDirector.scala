@@ -22,9 +22,9 @@ import vcc.util.swing.SwingHelper
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
-import vcc.tracker.{Ruling, RulingProvider, Tracker}
 import vcc.dnd4e.tracker.ruling.{NextUpRuling, AutomaticRulingProvider}
 import vcc.dnd4e.tracker.command.NextUpCommand
+import vcc.tracker.{RulingContext, Ruling, RulingProvider, Tracker}
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -73,10 +73,11 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
   private object RulingBroker extends RulingProvider[CombatState] {
     private val automatic = new AutomaticRulingProvider
 
-    def provideRulingFor(state: CombatState, rulingNeedingDecision: List[Ruling[CombatState, _, _]]): List[Ruling[CombatState, _, _]] = {
-      rulingNeedingDecision match {
-        case nur@NextUpRuling(next, _) :: Nil => askForNextUp(state, next)
-        case other => automatic.provideRulingFor(state, rulingNeedingDecision)
+
+    def provideRulingFor(context: RulingContext[CombatState]): List[Ruling[CombatState, _, _]] = {
+      context.rulingNeedingDecision match {
+        case nur@NextUpRuling(next, _) :: Nil => askForNextUp(context.state, next)
+        case other => automatic.provideRulingFor(context)
       }
     }
 
