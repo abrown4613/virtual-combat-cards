@@ -18,8 +18,8 @@ package vcc.dnd4e.tracker.command
 
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
-import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.event._
+import vcc.tracker.IllegalActionException
 
 class HealthCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   def is = {

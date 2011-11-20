@@ -19,7 +19,7 @@ package vcc.dnd4e.tracker.command
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
-import vcc.controller.IllegalActionException
+import vcc.tracker.IllegalActionException
 
 class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEventSourceBehavior with EventSourceSampleEvents {
   def is =
@@ -79,7 +79,6 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
           when(DelayCommand(ioA0)).
           then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
       endp
-    //TODO Check for illegal state before execute
   }
 
   private def execEndRoundOfDelaying = {
@@ -128,7 +127,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
   }
 
   private def execMoveBefore = {
-    val exception: IllegalActionException = new IllegalActionException("Cant move " + ioA0 + " before " + io2_0)
+    val exception = new IllegalActionException("Cant move " + ioA0 + " before " + io2_0)
     "do Move Before" ^
       "fail if not defined" !
         (given(emptyState, buildEvents) when (MoveBeforeCommand(ioA0, ioB0)) must throwAn[IllegalActionException]) ^
@@ -136,7 +135,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
         (given(emptyState, buildEvents) when (MoveBeforeCommand(ioB0, ioA0)) must throwAn[IllegalActionException]) ^
       "fail if not allowed" !
         (given(emptyState, buildEvents, evtStartRoundA) when (MoveBeforeCommand(ioA0, io2_0)) failWith exception) ^
-      "moving first out should move rotate then move" ! //TODO This will deprecate with new always acting
+      "moving first out should move rotate then move" !
         (given(emptyState, buildEvents).
           when(MoveBeforeCommand(ioA0, io2_0)).
           then(RotateRobinEvent, MoveBeforeOtherEvent(ioA0, io2_0))) ^

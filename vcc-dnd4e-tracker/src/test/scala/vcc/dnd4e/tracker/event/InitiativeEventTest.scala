@@ -21,7 +21,7 @@ import org.specs2.{SpecificationWithJUnit}
 import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import java.lang.Exception
-import vcc.controller.IllegalActionException
+import vcc.tracker.IllegalActionException
 
 class InitiativeEventTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 

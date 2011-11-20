@@ -18,7 +18,7 @@ package vcc.tracker
 
 trait Action[S] {
 
-  protected def singleCommand(command: Command[S]):CommandStream[S] = CommandStream(command)
+  protected def singleCommand(command: Command[S]): CommandStream[S] = CommandStream(command)
 
   def createCommandStream(): CommandStream[S]
 }
@@ -33,3 +33,5 @@ trait Command[S] {
 trait Event[S] {
   def transition(iState: S): S
 }
+
+class IllegalActionException(msg: String) extends RuntimeException(msg)

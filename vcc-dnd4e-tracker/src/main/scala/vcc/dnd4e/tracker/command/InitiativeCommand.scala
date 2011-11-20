@@ -16,11 +16,10 @@
  */
 package vcc.dnd4e.tracker.command
 
-import vcc.controller.IllegalActionException
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.event._
-import vcc.tracker.{Ruling, Event}
 import vcc.dnd4e.tracker.ruling._
+import vcc.tracker.{IllegalActionException, Ruling, Event}
 
 abstract class InitiativeCommand extends CombatStateCommand {
   val who: InitiativeOrderID

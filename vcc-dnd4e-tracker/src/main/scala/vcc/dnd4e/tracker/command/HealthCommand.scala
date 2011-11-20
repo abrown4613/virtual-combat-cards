@@ -18,8 +18,7 @@ package vcc.dnd4e.tracker.command
 
 import vcc.dnd4e.tracker.common.{CombatState, CombatantID}
 import vcc.dnd4e.tracker.event._
-import vcc.controller.IllegalActionException
-import vcc.tracker.Event
+import vcc.tracker.{IllegalActionException, Event}
 
 /**
  * Base health modification transition.
