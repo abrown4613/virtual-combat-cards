@@ -78,7 +78,7 @@ abstract class ModalPromptDialog[T](window: Window, title: String) extends Modal
    * Default ok Action which will correct result (using {@code collectResult}) and set the dialog invisible.
    */
   protected val okAction = Action("OK") {
-    setDialogResultAndClose(collectResult)
+    setDialogResultAndClose(collectResult())
   }
 
   /**
@@ -93,7 +93,7 @@ abstract class ModalPromptDialog[T](window: Window, title: String) extends Modal
    * Implementation of this class must provide a implementation of this method.
    * @return None when the dialog has been cancels, Some when a value has been returned.
    */
-  def collectResult(): Option[T]
+  protected def collectResult(): Option[T]
 
   /**
    * Set the dialog result value
@@ -118,18 +118,18 @@ abstract class ModalPromptDialog[T](window: Window, title: String) extends Modal
     peer.setVisible(false)
   }
 
-  @deprecated("Use promptUser")
-  override def visible_=(b: Boolean) {
-    peer.setVisible(b)
-  }
-
   /**
    * PromptUser for a result. Will clear previous result then show the dialog.
    * @return Return the value from the dialog (see {@code dialogResult}).
    */
   def promptUser():Option[T] = {
     dialogResult = None
+    peer.pack()
     peer.setVisible(true)
     dialogResult
+  }
+
+  def dispose() {
+    peer.dispose()
   }
 }
