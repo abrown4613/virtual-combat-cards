@@ -54,6 +54,11 @@
             <artifactId>vcc-datastore</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
+            <artifactId>swing</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
