@@ -18,11 +18,14 @@ package vcc.dnd4e.view.ruling
 
 import javax.swing.{AbstractAction, JButton, JFrame}
 import java.awt.event.ActionEvent
-import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
-import vcc.dnd4e.tracker.common.CombatState
+import org.uispec4j.interception.WindowInterceptor
 import vcc.tracker.{Ruling, RulingContext}
 import org.junit.Assert
 import org.uispec4j._
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.event.{StartCombatEvent, AddCombatantToOrderEvent, AddCombatantEvent}
+import vcc.dnd4e.tracker.command.{EndRoundCommand, StartRoundCommand}
+import vcc.dnd4e.tracker.ruling.SustainEffectRuling
 
 class RulingDialogLayoutSample extends JFrame("Ruling Dialog Sample") {
   private var context: RulingContext[CombatState] = null
@@ -46,51 +49,36 @@ class RulingDialogLayoutSample extends JFrame("Ruling Dialog Sample") {
   setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 }
 
-object RulingDialogLayoutSample {
+object RulingDialogLayoutSample extends SampleStateData {
+  private val eid = EffectID(combA, 1)
+  private val state = CombatState.empty.transitionWith(List(
+    AddCombatantEvent(Some(combA), null, goblinEntity),
+    AddCombatantEvent(Some(combB), null, pcEntity),
+    AddCombatantToOrderEvent(InitiativeDefinition(combA, 0, List(15))),
+    AddCombatantToOrderEvent(InitiativeDefinition(combB, 1, List(10))),
+    StartCombatEvent
+  ))
+
+
   def main(args: Array[String]) {
     val frame = new RulingDialogLayoutSample()
     frame.setContext(RulingContext(
-      CombatState.empty,
-      null,
-      Nil))
+      state,
+      EndRoundCommand(ioiA0),
+      List(SustainEffectRuling(eid, None))))
     frame.pack()
     frame.setVisible(true)
   }
 }
 
-trait WindowInterceptorWrapper {
-
-  implicit def wrapInterceptor(interceptor: WindowInterceptor): RichWindow = new RichWindow(interceptor)
-
-  trait WindowWrapperBuilder {
-    def makeWindowHandler(): WindowHandler
-  }
-
-  case class clickButton(name: String) extends WindowWrapperBuilder {
-    def makeWindowHandler(): WindowHandler = new WindowHandler() {
-      def process(window: Window): Trigger = window.getButton(name).triggerClick()
-    }
-  }
-
-  trait CommandEnd
-
-  case object run extends CommandEnd
-
-  class RichWindow(interceptor: WindowInterceptor) {
-
-    def ~>(wrapper: WindowWrapperBuilder): RichWindow = {
-      interceptor.process(wrapper.makeWindowHandler())
-      this
-    }
-
-    def ~>(n: CommandEnd) {
-      interceptor.run()
-    }
-  }
-
-}
-
-class RulingDialogTest extends UISpecTestCase with WindowInterceptorWrapper {
+class RulingDialogTest extends UISpecTestCase with WindowInterceptorWrapper with SampleStateData {
+  private val state = CombatState.empty.transitionWith(List(
+    AddCombatantEvent(Some(combA), null, goblinEntity),
+    AddCombatantEvent(Some(combB), null, pcEntity),
+    AddCombatantToOrderEvent(InitiativeDefinition(combA, 0, List(15))),
+    AddCombatantToOrderEvent(InitiativeDefinition(combB, 1, List(10))),
+    StartCombatEvent
+  ))
 
   var dialogOwner: RulingDialogLayoutSample = null
 
@@ -117,6 +105,26 @@ class RulingDialogTest extends UISpecTestCase with WindowInterceptorWrapper {
     dialogOwner.setContext(RulingContext(CombatState.empty, null, Nil))
     showRulingDialog ~> clickButton("OK") ~> run
     Assert.assertEquals(Some(Nil), dialogOwner.getResult)
+  }
+
+  def testTitleWhenDialog_isInStartRoundContext() {
+    dialogOwner.setContext(RulingContext(state, StartRoundCommand(ioiA0), Nil))
+    showRulingDialog ~> mustBeTrue(_.titleEquals("[Aº] Goblin - Start Round")) ~>
+      mustBeTrue(_.titleContains("Start")) ~> clickButton("Cancel") ~> run
+  }
+
+  def testTitleWhenDialog_isInEndRoundContext() {
+    dialogOwner.setContext(RulingContext(state, EndRoundCommand(ioiB0), Nil))
+    showRulingDialog ~> mustBeTrue(_.titleEquals("[Bº] Fighter - End Round")) ~>
+      clickButton("Cancel") ~> run
+  }
+
+  def testPromptForSustainEffectIsWellFormed() {
+    val eid = EffectID(combA, 0)
+    dialogOwner.setContext(RulingContext(state, EndRoundCommand(ioiB0), List(SustainEffectRuling(eid, None))))
+    showRulingDialog ~> mustBeTrue(_.getRadioButton("Sustain").isEnabled) ~>
+      mustBeTrue(_.getRadioButton("Cancel").isEnabled) ~>
+      mustBeFalse(_.getButton("Ok").isEnabled) ~> clickButton("Cancel") ~> run
   }
 
   private def showRulingDialog = WindowInterceptor.init(getMainWindow.getButton("Test").triggerClick())
