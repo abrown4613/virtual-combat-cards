@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view.ruling
+package org.uispec4j.scala
 
 import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j.{Trigger, Window}
@@ -77,7 +77,7 @@ trait WindowInterceptorWrapper {
 
   trait CommandEnd
 
-  case object run extends CommandEnd
+  case object go extends CommandEnd
 
   class RichWindowInterceptor(interceptor: WindowInterceptor) {
 
@@ -92,6 +92,4 @@ trait WindowInterceptorWrapper {
 
     def ~>(ongoing: PartialTest): OngoingTest = OngoingTest(this, ongoing)
   }
-
-
 }
