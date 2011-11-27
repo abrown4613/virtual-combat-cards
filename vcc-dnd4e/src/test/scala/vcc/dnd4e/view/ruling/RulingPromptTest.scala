@@ -24,10 +24,10 @@ import vcc.dnd4e.tracker.command.{EndRoundCommand, StartRoundCommand}
 import javax.swing.JLabel
 import org.uispec4j.assertion.Assertion
 import junit.framework.Assert
-import vcc.dnd4e.tracker.ruling.{SustainEffectRulingResult, SustainEffectRuling}
 import org.uispec4j.finder.ComponentFinder
-import vcc.dnd4e.tracker.common.{EffectID, Duration, InitiativeDefinition, CombatState}
 import vcc.tracker.{Command, Ruling, RulingContext}
+import vcc.dnd4e.tracker.common._
+import vcc.dnd4e.tracker.ruling._
 
 class RulingPromptTest extends UISpecTestCase with SampleStateData {
   private val effectNameOnA = "something bad on A"
@@ -113,12 +113,59 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     Assert.assertEquals(List(SustainEffectRuling(eidB1, Some(SustainEffectRulingResult.Cancel))), controller.collectAnswer)
   }
 
+  def testSaveRuling_thenSaved() {
+    val controller = dialogController(makeContext(commandEndRoundB, makeSaveRulingList(eidA1)))
+    val expectedTitle = nameCombB + " - Save against: " + effectNameOnA
+    controller.showDialogAndProcess(expectedTitle, "Saved")
+    Assert.assertEquals(List(SaveRuling(eidA1, Some(SaveRulingResult.Saved))), controller.collectAnswer)
+  }
+
+  def testSaveRuling_thenFail() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveRulingList(eidB1)))
+    val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
+    controller.showDialogAndProcess(expectedTitle, "Failed")
+    Assert.assertEquals(List(SaveRuling(eidB1, Some(SaveRulingResult.Failed))), controller.collectAnswer)
+  }
+
+  def testSaveVersusDeath_thenFail() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
+    val expectedTitle = nameCombA + " - Save versus Death"
+    controller.showDialogAndProcess(expectedTitle, "Failed")
+    Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.Failed), controller.collectAnswer)
+  }
+
+  def testSaveVersusDeath_thenPass() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
+    val expectedTitle = nameCombA + " - Save versus Death"
+    controller.showDialogAndProcess(expectedTitle, "Saved")
+    Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.Saved), controller.collectAnswer)
+  }
+
+  def testSaveVersusDeath_thenPassAndHeal() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
+    val expectedTitle = nameCombA + " - Save versus Death"
+    controller.showDialogAndProcess(expectedTitle, "Saved and heal (1 HP)")
+    Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.SaveAndHeal), controller.collectAnswer)
+  }
+
+  private def saveVersusDeathResult(a: CombatantID, value: SaveVersusDeathResult.Value) = {
+    List(SaveVersusDeathRuling(a, Some(value)))
+  }
+
   private def makeContext(command: Command[CombatState], rulings: List[Ruling[CombatState, _, _]]) = {
     RulingContext(state, command, rulings)
   }
 
+  private def makeSaveRulingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
+    List(SaveRuling(id, None))
+  }
+
   private def makeSustainEffectList(id: EffectID): List[Ruling[CombatState, _, _]] = {
     List(SustainEffectRuling(id, None))
+  }
+
+  private def makeSaveVersusDeathRulingList(id: CombatantID): List[Ruling[CombatState, _, _]] = {
+    List(SaveVersusDeathRuling(id, None))
   }
 
   private def validateTitleAndCancel(title: String): WindowHandler = {

@@ -21,8 +21,7 @@ import vcc.dnd4e.view.dialog.PromptDialog.StaticModel
 import vcc.dnd4e.tracker.command.{EndRoundCommand, StartRoundCommand}
 import vcc.dnd4e.view.dialog.{RadioPromptPanel, PromptDialog}
 import vcc.tracker.{Ruling, RulingContext}
-import vcc.dnd4e.tracker.ruling.SustainEffectRuling
-import vcc.dnd4e.tracker.ruling.SustainEffectRulingResult
+import vcc.dnd4e.tracker.ruling._
 
 object RulingPrompt {
   def promptUser(context: RulingContext[CombatState]): List[Ruling[CombatState, _, _]] = {
@@ -66,6 +65,19 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
             actingCombatantName() + " - Sustain effect: " + getEffectDescription(eid),
             RadioPromptPanel.Choice("Sustain", SustainEffectRulingResult.Sustain),
             RadioPromptPanel.Choice("Cancel", SustainEffectRulingResult.Cancel)))
+      case save@SaveRuling(eid, _) =>
+        new RulingPanelWrapper(save,
+          new RadioPromptPanel[SaveRulingResult.Value](
+            actingCombatantName() + " - Save against: " + getEffectDescription(eid),
+            RadioPromptPanel.Choice("Saved", SaveRulingResult.Saved),
+            RadioPromptPanel.Choice("Failed save", SaveRulingResult.Failed)))
+      case save@SaveVersusDeathRuling(combId, _) =>
+        new RulingPanelWrapper(save,
+          new RadioPromptPanel[SaveVersusDeathResult.Value](
+            actingCombatantName() + " - Save versus Death",
+            RadioPromptPanel.Choice("Saved", SaveVersusDeathResult.Saved),
+            RadioPromptPanel.Choice("Saved and Heal (1 HP)", SaveVersusDeathResult.SaveAndHeal),
+            RadioPromptPanel.Choice("Failed save", SaveVersusDeathResult.Failed)))
     }
   }
 
