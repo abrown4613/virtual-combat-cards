@@ -25,5 +25,6 @@ trait SampleStateData {
   protected val ioiA0 = InitiativeOrderID(combA, 0)
   protected val combB = CombatantID("B")
   protected val ioiB0 = InitiativeOrderID(combB, 0)
-
+  protected val eidA1 = EffectID(combA, 1)
+  protected val eidB1 = EffectID(combB, 1)
 }
