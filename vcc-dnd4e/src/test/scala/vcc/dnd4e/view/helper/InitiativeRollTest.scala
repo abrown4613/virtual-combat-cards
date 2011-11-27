@@ -17,7 +17,7 @@
 package vcc.dnd4e.view.helper
 
 import java.text.ParseException
-import vcc.util.DiceGenerator
+import vcc.dnd4e.util.DiceGenerator
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope

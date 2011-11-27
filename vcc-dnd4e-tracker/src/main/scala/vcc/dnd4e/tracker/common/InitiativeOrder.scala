@@ -16,8 +16,7 @@
  */
 package vcc.dnd4e.tracker.common
 
-import vcc.dnd4e.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
-import vcc.util.DiceBag
+import vcc.dnd4e.util.{DiceBag, ReorderedListBuilderCompare, ReorderedListBuilder}
 
 /**
  * A combat InitiativeOrder

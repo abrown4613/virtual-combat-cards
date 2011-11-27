@@ -22,9 +22,10 @@ import vcc.util.swing._
 
 import scala.util.Sorting
 import vcc.dnd4e.view.helper.{InitiativeRollEditor, InitiativeRoll}
-import vcc.util.{ListHelper, DiceBag}
+import vcc.util.{ListHelper}
 import vcc.dnd4e.tracker.common.InitiativeDefinition
 import vcc.dnd4e.view.{UnifiedSequenceTable, IconLibrary, UnifiedCombatant, PanelDirector}
+import vcc.dnd4e.util.DiceBag
 
 class InitiativeDialog(window: Frame, director: PanelDirector, combatState: UnifiedSequenceTable)
   extends ModalPromptDialog[(Boolean, List[InitiativeDefinition])](window, "Roll Initiative") {
