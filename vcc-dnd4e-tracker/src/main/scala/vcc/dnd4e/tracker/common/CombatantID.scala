@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.infra.util.UniquelyIdentified
+import vcc.dnd4e.util.UniquelyIdentified
 
 /**
  * CombatantID defines a unique combatant in the Roster.
@@ -101,7 +100,7 @@ case class InitiativeResult(override val uniqueId: InitiativeOrderID, bonus: Int
   def compare(that: InitiativeResult): Int =
     if (this.result == that.result) {
       if (this.bonus == that.bonus) {
-        //Check for tie-Breakr
+        //Check for tie-Breaker
         if (this.tieBreaker != 0 && that.tieBreaker != 0)
           if (this.tieBreaker < that.tieBreaker) -1
           else 1
