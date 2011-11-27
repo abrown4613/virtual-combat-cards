@@ -24,11 +24,16 @@ import vcc.tracker.{Ruling, RulingContext}
 import vcc.dnd4e.tracker.ruling._
 
 object RulingPrompt {
+
   def promptUser(context: RulingContext[CombatState]): List[Ruling[CombatState, _, _]] = {
-    val prompt = new RulingPrompt(context)
-    val panels = prompt.getPanels
-    PromptDialog.promptUserAndDismiss(StaticModel(prompt.translateCommandToTitle(), panels), null)
-    prompt.generateResult()
+    promptUserAndCollectResult(new RulingPrompt(context))
+  }
+
+  private def promptUserAndCollectResult(prompt: RulingPrompt): List[Ruling[CombatState, _, _]] = {
+    if (PromptDialog.promptUserAndDismiss(prompt.createModel()))
+      prompt.generateResult()
+    else
+      Nil
   }
 
   private[ruling] def buildEffectProgression(effectDescription: String): String = {
@@ -42,6 +47,12 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
   private val panels = createPanels()
 
   def getPanels = panels.map(_.panel)
+
+  def createModel(): PromptDialog.Model = {
+    StaticModel(
+      translateCommandToTitle(),
+      getPanels)
+  }
 
   def generateResult(): List[Ruling[CombatState, _, _]] = {
     panels.map(_.bindAnswer())

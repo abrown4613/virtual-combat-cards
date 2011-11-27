@@ -16,15 +16,12 @@
  */
 package vcc.dnd4e.view
 
-import ruling.NextUpRulingDialog
 import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
-import vcc.dnd4e.tracker.ruling.{NextUpRuling, AutomaticRulingProvider}
-import vcc.dnd4e.tracker.command.NextUpCommand
-import vcc.tracker.{RulingContext, Ruling, RulingProvider, Tracker}
+import vcc.tracker.Tracker
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -69,27 +66,7 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
   private var propRobinView = true
   private var unifiedTable: UnifiedSequenceTable = null
   private val sequenceBuilder = new UnifiedSequenceTable.Builder()
-
-  private object RulingBroker extends RulingProvider[CombatState] {
-    private val automatic = new AutomaticRulingProvider
-
-
-    def provideRulingFor(context: RulingContext[CombatState]): List[Ruling[CombatState, _, _]] = {
-      context.rulingNeedingDecision match {
-        case nur@NextUpRuling(next, _) :: Nil => askForNextUp(context.state, next)
-        case other => automatic.provideRulingFor(context)
-      }
-    }
-
-    private def askForNextUp(state: CombatState, next: NextUpCommand): scala.List[NextUpRuling] = {
-      val dialog = new NextUpRulingDialog(null, state, NextUpRuling(next, None))
-      val result = dialog.promptUser()
-      dialog.peer.dispose()
-      result.toList
-    }
-
-  }
-
+  private val rulingProvider = new DialogRulingProvider()
   val rules = new CombatStateRules()
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
@@ -153,7 +130,7 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
    * @param action A TransactionalAction message
    */
   def requestAction(action: CombatStateAction) {
-    tracker.dispatchAction(action, RulingBroker)
+    tracker.dispatchAction(action, rulingProvider)
   }
 
   def requestClearHistory() {
@@ -182,5 +159,4 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))
     }
   }
-
 }
