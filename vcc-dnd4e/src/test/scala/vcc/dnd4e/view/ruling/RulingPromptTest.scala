@@ -31,7 +31,7 @@ import vcc.dnd4e.tracker.ruling._
 
 class RulingPromptTest extends UISpecTestCase with SampleStateData {
   private val effectNameOnA = "something bad on A"
-  private val effectNameOnB = "something bad on B"
+  private val effectNameOnB = "something bad on B -> worst on B / horrible on B"
   private val nameCombA = "[Aº] Goblin"
   private val nameCombB = "[Bº] Fighter"
 
@@ -148,6 +148,27 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.SaveAndHeal), controller.collectAnswer)
   }
 
+  def testSaveSpecial_thenSaved() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveSpecialRulingList(eidB1)))
+    val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
+    controller.showDialogAndProcess(expectedTitle, "Saved")
+    Assert.assertEquals(List(SaveSpecialRuling(eidB1, Some(SaveSpecialRulingResult.Saved))), controller.collectAnswer)
+  }
+
+  def testSaveSpecial_thenFailedAndChange() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSaveSpecialRulingList(eidB1)))
+    val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
+    val progression = "worst on B -> horrible on B"
+    controller.showDialogAndProcess(expectedTitle, "Failed and change to: " + progression)
+    Assert.assertEquals(List(SaveSpecialRuling(eidB1, Some(SaveSpecialRulingResult.Changed(progression)))), controller.collectAnswer)
+  }
+
+  def testProgressionHelper() {
+    Assert.assertEquals("b -> c", RulingPrompt.buildEffectProgression("a/b/c"))
+    Assert.assertEquals("a", RulingPrompt.buildEffectProgression("a"))
+    Assert.assertEquals("b -> c", RulingPrompt.buildEffectProgression("a->b/c"))
+  }
+
   private def saveVersusDeathResult(a: CombatantID, value: SaveVersusDeathResult.Value) = {
     List(SaveVersusDeathRuling(a, Some(value)))
   }
@@ -158,6 +179,10 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
 
   private def makeSaveRulingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
     List(SaveRuling(id, None))
+  }
+
+  private def makeSaveSpecialRulingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
+    List(SaveSpecialRuling(id, None))
   }
 
   private def makeSustainEffectList(id: EffectID): List[Ruling[CombatState, _, _]] = {
