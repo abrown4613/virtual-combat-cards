@@ -30,6 +30,11 @@ object RulingPrompt {
     PromptDialog.promptUserAndDismiss(StaticModel(prompt.translateCommandToTitle(), panels), null)
     prompt.generateResult()
   }
+
+  private[ruling] def buildEffectProgression(effectDescription: String):String= {
+    val effects = ConditionMatcher.splitProgression(effectDescription)
+    if (effects.length > 1) effects.tail.mkString(" -> ") else effects(0)
+  }
 }
 
 class RulingPrompt private(context: RulingContext[CombatState]) {
@@ -78,6 +83,13 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
             RadioPromptPanel.Choice("Saved", SaveVersusDeathResult.Saved),
             RadioPromptPanel.Choice("Saved and Heal (1 HP)", SaveVersusDeathResult.SaveAndHeal),
             RadioPromptPanel.Choice("Failed save", SaveVersusDeathResult.Failed)))
+      case save@SaveSpecialRuling(eid, _) =>
+        val progression = RulingPrompt.buildEffectProgression(getEffectDescription(eid))
+        new RulingPanelWrapper(save,
+          new RadioPromptPanel[SaveSpecialRulingResult](
+            actingCombatantName() + " - Save against: " + getEffectDescription(eid),
+            RadioPromptPanel.Choice("Saved", SaveSpecialRulingResult.Saved),
+            RadioPromptPanel.Choice("Failed and change to: " + progression, SaveSpecialRulingResult.Changed(progression))))
     }
   }
 
