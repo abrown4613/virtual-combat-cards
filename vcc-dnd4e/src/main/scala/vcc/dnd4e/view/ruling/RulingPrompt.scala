@@ -31,7 +31,7 @@ object RulingPrompt {
     prompt.generateResult()
   }
 
-  private[ruling] def buildEffectProgression(effectDescription: String):String= {
+  private[ruling] def buildEffectProgression(effectDescription: String): String = {
     val effects = ConditionMatcher.splitProgression(effectDescription)
     if (effects.length > 1) effects.tail.mkString(" -> ") else effects(0)
   }
@@ -90,6 +90,21 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
             actingCombatantName() + " - Save against: " + getEffectDescription(eid),
             RadioPromptPanel.Choice("Saved", SaveSpecialRulingResult.Saved),
             RadioPromptPanel.Choice("Failed and change to: " + progression, SaveSpecialRulingResult.Changed(progression))))
+
+      case regen@RegenerationRuling(eid, _) =>
+        val ConditionMatcher.FirstRegenerate(effectName, hint) = getEffectDescription(eid)
+        new RulingPanelWrapper(regen,
+          new RadioPromptPanel[Int](
+            actingCombatantName() + " - Regeneration: " + effectName,
+            RadioPromptPanel.Choice("Regenerate " + hint + " HP", hint),
+            RadioPromptPanel.Choice("Skip", 0)))
+      case ongoing@OngoingDamageRuling(eid, _) =>
+        val ConditionMatcher.FirstOngoing(effectName, hint) = getEffectDescription(eid)
+        new RulingPanelWrapper(ongoing,
+          new RadioPromptPanel[Int](
+            actingCombatantName() + " - Ongoing Damage: " + effectName,
+            RadioPromptPanel.Choice("Take " + hint + " damage", hint),
+            RadioPromptPanel.Choice("Skip", 0)))
     }
   }
 
