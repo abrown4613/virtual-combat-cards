@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.util
+package vcc.dnd4e.util
 
 /**
  * Any dice roller or generator should implement this interface.
@@ -48,5 +47,5 @@ object DiceBag extends DiceGenerator {
    * Generate a true or false
    * @return true or false
    */
-  def flipCoin(): Boolean = rand.nextBoolean
+  def flipCoin(): Boolean = rand.nextBoolean()
 }

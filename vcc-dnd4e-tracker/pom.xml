@@ -15,12 +15,4 @@
         <testSourceDirectory>src/test/scala</testSourceDirectory>
     </build>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.exnebula</groupId>
-            <artifactId>vcc-infra</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
-
 </project>
