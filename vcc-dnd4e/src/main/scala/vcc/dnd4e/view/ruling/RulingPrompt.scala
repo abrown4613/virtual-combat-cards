@@ -47,7 +47,7 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
     panels.map(_.bindAnswer())
   }
 
-  private class RulingPanelWrapper[D, R <: Ruling[CombatState, D, R]](ruling: Ruling[CombatState, D, R], val panel: RadioPromptPanel[D]) {
+  private class RulingPanelWrapper[R <: Ruling[CombatState, D, R], D](ruling: Ruling[CombatState, D, R], val panel: RadioPromptPanel[D]) {
     def bindAnswer(): Ruling[CombatState, D, R] = {
       ruling.withDecision(panel.response.get)
     }
@@ -57,55 +57,55 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
     context.rulingNeedingDecision.map(generateRulingPanel)
   }
 
+  private def generateRulingPanel(ruling: Ruling[CombatState, _, _]): RulingPanelWrapper[_, _] = {
+    ruling match {
+      case sustain@SustainEffectRuling(eid, _) =>
+        makeRulingPromptPanel(sustain, makeTitleFromEffect(" - Sustain effect: ", eid),
+          ("Sustain", SustainEffectRulingResult.Sustain),
+          ("Cancel", SustainEffectRulingResult.Cancel))
+      case save@SaveRuling(eid, _) =>
+        makeRulingPromptPanel(save, makeTitleFromEffect(" - Save against: ", eid),
+          ("Saved", SaveRulingResult.Saved),
+          ("Failed save", SaveRulingResult.Failed))
+      case save@SaveVersusDeathRuling(combId, _) =>
+        makeRulingPromptPanel(save, actingCombatantName() + " - Save versus Death",
+          ("Saved", SaveVersusDeathResult.Saved),
+          ("Saved and Heal (1 HP)", SaveVersusDeathResult.SaveAndHeal),
+          ("Failed save", SaveVersusDeathResult.Failed))
+      case save@SaveSpecialRuling(eid, _) =>
+        val progression = RulingPrompt.buildEffectProgression(getEffectDescription(eid))
+        makeRulingPromptPanel[SaveSpecialRuling, SaveSpecialRulingResult](save,
+          makeTitleFromEffect(" - Save against: ", eid),
+          ("Saved", SaveSpecialRulingResult.Saved),
+          ("Failed and change to: " + progression, SaveSpecialRulingResult.Changed(progression)))
+
+      case regen@RegenerationRuling(eid, _) =>
+        val ConditionMatcher.FirstRegenerate(effectName, hint) = getEffectDescription(eid)
+        makeRulingPromptPanel(regen,
+          actingCombatantName() + " - Regeneration: " + effectName,
+          ("Regenerate " + hint + " HP", hint),
+          ("Skip", 0))
+      case ongoing@OngoingDamageRuling(eid, _) =>
+        val ConditionMatcher.FirstOngoing(effectName, hint) = getEffectDescription(eid)
+        makeRulingPromptPanel(ongoing,
+          actingCombatantName() + " - Ongoing Damage: " + effectName,
+          ("Take " + hint + " damage", hint),
+          ("Skip", 0))
+    }
+  }
+
   private def getEffectDescription(eid: EffectID): String = {
     val effect = context.state.roster.combatant(eid.combId).effects.find(eid)
     effect.map(e => e.condition.description).getOrElse("Missing effect?")
   }
 
-  private def generateRulingPanel(ruling: Ruling[CombatState, _, _]): RulingPanelWrapper[_, _] = {
-    ruling match {
-      case sustain@SustainEffectRuling(eid, _) =>
-        new RulingPanelWrapper(sustain,
-          new RadioPromptPanel[SustainEffectRulingResult.Value](
-            actingCombatantName() + " - Sustain effect: " + getEffectDescription(eid),
-            RadioPromptPanel.Choice("Sustain", SustainEffectRulingResult.Sustain),
-            RadioPromptPanel.Choice("Cancel", SustainEffectRulingResult.Cancel)))
-      case save@SaveRuling(eid, _) =>
-        new RulingPanelWrapper(save,
-          new RadioPromptPanel[SaveRulingResult.Value](
-            actingCombatantName() + " - Save against: " + getEffectDescription(eid),
-            RadioPromptPanel.Choice("Saved", SaveRulingResult.Saved),
-            RadioPromptPanel.Choice("Failed save", SaveRulingResult.Failed)))
-      case save@SaveVersusDeathRuling(combId, _) =>
-        new RulingPanelWrapper(save,
-          new RadioPromptPanel[SaveVersusDeathResult.Value](
-            actingCombatantName() + " - Save versus Death",
-            RadioPromptPanel.Choice("Saved", SaveVersusDeathResult.Saved),
-            RadioPromptPanel.Choice("Saved and Heal (1 HP)", SaveVersusDeathResult.SaveAndHeal),
-            RadioPromptPanel.Choice("Failed save", SaveVersusDeathResult.Failed)))
-      case save@SaveSpecialRuling(eid, _) =>
-        val progression = RulingPrompt.buildEffectProgression(getEffectDescription(eid))
-        new RulingPanelWrapper(save,
-          new RadioPromptPanel[SaveSpecialRulingResult](
-            actingCombatantName() + " - Save against: " + getEffectDescription(eid),
-            RadioPromptPanel.Choice("Saved", SaveSpecialRulingResult.Saved),
-            RadioPromptPanel.Choice("Failed and change to: " + progression, SaveSpecialRulingResult.Changed(progression))))
+  private def makeRulingPromptPanel[R <: Ruling[CombatState, D, R], D](ruling: R, title: String, choices: (String, D)*) = {
+    new RulingPanelWrapper[R, D](ruling,
+      new RadioPromptPanel[D](title, choices.map(p => RadioPromptPanel.Choice(p._1, p._2)): _*))
+  }
 
-      case regen@RegenerationRuling(eid, _) =>
-        val ConditionMatcher.FirstRegenerate(effectName, hint) = getEffectDescription(eid)
-        new RulingPanelWrapper(regen,
-          new RadioPromptPanel[Int](
-            actingCombatantName() + " - Regeneration: " + effectName,
-            RadioPromptPanel.Choice("Regenerate " + hint + " HP", hint),
-            RadioPromptPanel.Choice("Skip", 0)))
-      case ongoing@OngoingDamageRuling(eid, _) =>
-        val ConditionMatcher.FirstOngoing(effectName, hint) = getEffectDescription(eid)
-        new RulingPanelWrapper(ongoing,
-          new RadioPromptPanel[Int](
-            actingCombatantName() + " - Ongoing Damage: " + effectName,
-            RadioPromptPanel.Choice("Take " + hint + " damage", hint),
-            RadioPromptPanel.Choice("Skip", 0)))
-    }
+  private def makeTitleFromEffect(infix: String, eid: EffectID): String = {
+    actingCombatantName() + infix + getEffectDescription(eid)
   }
 
   private def translateCommandToTitle(): String = {
