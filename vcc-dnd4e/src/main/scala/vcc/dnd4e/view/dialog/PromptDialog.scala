@@ -34,8 +34,9 @@ object PromptDialog {
 
   case class StaticModel(override val dialogTitle: String, override val prompts: List[PromptPanel]) extends Model
 
-  def promptUserAndDismiss(model:Model, owner:Window):Boolean = {
+  def promptUserAndDismiss(model: Model): Boolean = {
     val dialog = new PromptDialog(model, null)
+    dialog.placeOnScreenCenter()
     dialog.promptUser()
     dialog.dispose()
     dialog.dialogResult.getOrElse(false)
@@ -49,10 +50,10 @@ class PromptDialog(model: PromptDialog.Model, owner: Window)
 
   initializePanel()
 
-  contents = new MigPanel("fill","[growprio 0]10[growprio 0]10[]", "[growprio 100]10[growprio 0]") {
+  contents = new MigPanel("fill", "[growprio 0]10[growprio 0]10[]", "[growprio 100]10[growprio 0]") {
     add(new Component {
       override lazy val peer = promptPanel
-    }, "span 3,width 300, height 150, growx, growy, wrap")
+    }, "span 3,width 500, height 165, growx, growy, wrap")
     add(new Button(okAction), "width button!")
     add(new Button(cancelAction), "width button!")
   }
