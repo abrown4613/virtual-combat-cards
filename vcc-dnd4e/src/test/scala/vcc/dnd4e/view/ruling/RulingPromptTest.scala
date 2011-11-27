@@ -84,26 +84,6 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     }
   }
 
-  case class dialogController(context: RulingContext[CombatState]) {
-    private var ret: List[Ruling[CombatState, _, _]] = Nil
-
-    def showDialogAndProcess(expectedTitle: String, button: String) {
-      WindowInterceptor.init(new Trigger {
-        def run() {
-          ret = RulingPrompt.promptUser(context)
-        }
-      }).process(new WindowHandler() {
-        def process(window: Window): Trigger = {
-          assertTrue(windowContainsLabel(window, expectedTitle))
-          window.getRadioButton(button).click()
-          window.getButton("Ok").triggerClick()
-        }
-      }).run()
-    }
-
-    def collectAnswer = ret
-  }
-
   def testSustainEffect() {
     val controller = dialogController(makeContext(commandEndRoundB, makeSustainEffectList(eidA1)))
     val expectedTitle = nameCombB + " - Sustain effect: " + effectNameOnA
@@ -116,6 +96,17 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     val expectedTitle = nameCombA + " - Sustain effect: " + effectNameOnB
     controller.showDialogAndProcess(expectedTitle, "Cancel")
     Assert.assertEquals(List(SustainEffectRuling(eidB1, Some(SustainEffectRulingResult.Cancel))), controller.collectAnswer)
+  }
+
+  def testSustainEffect_selectAndCancel() {
+    val controller = dialogController(makeContext(commandEndRoundA, makeSustainEffectList(eidB1)))
+    controller.processWith(new WindowHandler() {
+      def process(window: Window): Trigger = {
+        window.getRadioButton("Sustain").click()
+        window.getButton("Cancel").triggerClick()
+      }
+    })
+    Assert.assertEquals(Nil, controller.collectAnswer)
   }
 
   def testSaveRuling_thenSaved() {
@@ -242,4 +233,33 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
       }
     }
   }
+
+  private case class dialogController(context: RulingContext[CombatState]) {
+    private var ret: List[Ruling[CombatState, _, _]] = Nil
+
+    private def showDialog(): WindowInterceptor = {
+      WindowInterceptor.init(new Trigger {
+        def run() {
+          ret = RulingPrompt.promptUser(context)
+        }
+      })
+    }
+
+    def showDialogAndProcess(expectedTitle: String, button: String) {
+      showDialog().process(new WindowHandler() {
+        def process(window: Window): Trigger = {
+          assertTrue(windowContainsLabel(window, expectedTitle))
+          window.getRadioButton(button).click()
+          window.getButton("Ok").triggerClick()
+        }
+      }).run()
+    }
+
+    def processWith(windowHandler: WindowHandler) {
+      showDialog().process(windowHandler).run()
+    }
+
+    def collectAnswer = ret
+  }
+
 }
