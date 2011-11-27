@@ -38,7 +38,7 @@ class PromptDialogLayoutSample extends JFrame("Ruling Dialog Sample") {
 
   add(new JButton(new AbstractAction("Test") {
     def actionPerformed(e: ActionEvent) {
-      dialogResult = PromptDialog.promptUserAndDismiss(dialogModel, null)
+      dialogResult = PromptDialog.promptUserAndDismiss(dialogModel)
     }
   }))
   setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
