@@ -34,6 +34,12 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
   private val effectNameOnB = "something bad on B -> worst on B / horrible on B"
   private val nameCombA = "[Aº] Goblin"
   private val nameCombB = "[Bº] Fighter"
+  private val ongoingDescription = "Ongoing 5 fire"
+  private val regenerateDescription = "Regen 2 while bloodied"
+
+  private val commandEndRoundB = EndRoundCommand(ioiB0)
+  private val commandEndRoundA = EndRoundCommand(ioiA0)
+  private val commandStartRoundB = StartRoundCommand(ioiB0)
 
   private val state = CombatState.empty.transitionWith(List(
     AddCombatantEvent(Some(combA), null, goblinEntity),
@@ -42,7 +48,9 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     AddCombatantToOrderEvent(InitiativeDefinition(combB, 1, List(10))),
     StartCombatEvent,
     AddEffectEvent(combA, combB, Condition.Generic(effectNameOnA, false), Duration.EndOfEncounter),
-    AddEffectEvent(combB, combA, Condition.Generic(effectNameOnB, false), Duration.EndOfEncounter)
+    AddEffectEvent(combB, combA, Condition.Generic(effectNameOnB, false), Duration.EndOfEncounter),
+    AddEffectEvent(combB, combA, Condition.Generic(ongoingDescription + " and slowed", false), Duration.EndOfEncounter),
+    AddEffectEvent(combB, combA, Condition.Generic(regenerateDescription + " and +2 atk", false), Duration.EndOfEncounter)
   ))
 
   override def setUp() {
@@ -95,9 +103,6 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
 
     def collectAnswer = ret
   }
-
-  private val commandEndRoundB = EndRoundCommand(ioiB0)
-  private val commandEndRoundA = EndRoundCommand(ioiA0)
 
   def testSustainEffect() {
     val controller = dialogController(makeContext(commandEndRoundB, makeSustainEffectList(eidA1)))
@@ -163,6 +168,34 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     Assert.assertEquals(List(SaveSpecialRuling(eidB1, Some(SaveSpecialRulingResult.Changed(progression)))), controller.collectAnswer)
   }
 
+  def testRegenerateRuling_skip() {
+    val controller = dialogController(makeContext(commandStartRoundB, makeRegenerationList(eidB3)))
+    val expectedTitle = nameCombB + " - Regeneration: " + regenerateDescription
+    controller.showDialogAndProcess(expectedTitle, "Skip")
+    Assert.assertEquals(List(RegenerationRuling(eidB3, Some(0))), controller.collectAnswer)
+  }
+
+  def testRegenerateRuling_regen() {
+    val controller = dialogController(makeContext(commandStartRoundB, makeRegenerationList(eidB3)))
+    val expectedTitle = nameCombB + " - Regeneration: " + regenerateDescription
+    controller.showDialogAndProcess(expectedTitle, "Regenerate 2 HP")
+    Assert.assertEquals(List(RegenerationRuling(eidB3, Some(2))), controller.collectAnswer)
+  }
+
+  def testOngoingRuling_skip() {
+    val controller = dialogController(makeContext(commandStartRoundB, makeOngoingList(eidB2)))
+    val expectedTitle = nameCombB + " - Ongoing Damage: " + ongoingDescription
+    controller.showDialogAndProcess(expectedTitle, "Skip")
+    Assert.assertEquals(List(OngoingDamageRuling(eidB2, Some(0))), controller.collectAnswer)
+  }
+
+  def testOngoingRuling_applyDamage() {
+    val controller = dialogController(makeContext(commandStartRoundB, makeOngoingList(eidB2)))
+    val expectedTitle = nameCombB + " - Ongoing Damage: " + ongoingDescription
+    controller.showDialogAndProcess(expectedTitle, "Take 5 damage")
+    Assert.assertEquals(List(OngoingDamageRuling(eidB2, Some(5))), controller.collectAnswer)
+  }
+
   def testProgressionHelper() {
     Assert.assertEquals("b -> c", RulingPrompt.buildEffectProgression("a/b/c"))
     Assert.assertEquals("a", RulingPrompt.buildEffectProgression("a"))
@@ -179,6 +212,14 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
 
   private def makeSaveRulingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
     List(SaveRuling(id, None))
+  }
+
+  private def makeRegenerationList(id: EffectID): List[Ruling[CombatState, _, _]] = {
+    List(RegenerationRuling(id, None))
+  }
+
+  private def makeOngoingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
+    List(OngoingDamageRuling(id, None))
   }
 
   private def makeSaveSpecialRulingList(id: EffectID): List[Ruling[CombatState, _, _]] = {
