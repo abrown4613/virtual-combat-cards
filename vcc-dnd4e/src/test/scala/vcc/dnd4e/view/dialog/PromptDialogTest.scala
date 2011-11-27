@@ -65,6 +65,9 @@ class PromptDialogTest extends UISpecTestCase {
   private val choice2 = RadioPromptPanel.Choice("Case 2", 2)
   private val choice3 = RadioPromptPanel.Choice("Case 3", 3)
 
+  private val panel1 = createPromptPanel("Which size", choice1, choice2)
+  private val panel2 = createPromptPanel("Next prompt", choice2, choice3)
+
   private var dialogOwner: PromptDialogLayoutSample = null
   private var mockModel: PromptDialog.Model = null
 
@@ -105,12 +108,11 @@ class PromptDialogTest extends UISpecTestCase {
   }
 
   def testSetupSimplePanel() {
-    val panel1 = new RadioPromptPanel[Int]("Which size", RadioPromptPanel.Choice("Case 1", 1), RadioPromptPanel.Choice("Case 2", 2))
     doReturn(List[PromptPanel](panel1)).when(mockModel).prompts
     showRulingDialog.process(new WindowHandler() {
       def process(window: Window): Trigger = {
-        assertTrue(window.getRadioButton("Case 1").isEnabled)
-        assertTrue(window.getRadioButton("Case 2").isEnabled)
+        assertTrue(window.getRadioButton(choice1.name).isEnabled)
+        assertTrue(window.getRadioButton(choice2.name).isEnabled)
         assertFalse(window.getButton("Ok").isEnabled)
         window.getButton("Cancel").triggerClick()
       }
@@ -118,20 +120,23 @@ class PromptDialogTest extends UISpecTestCase {
   }
 
   def testCompleteEditorEnablesOk() {
+    doReturn(List[PromptPanel](panel1)).when(mockModel).prompts
+    showRulingDialog.process(clickPromptRadioAntThenDismissWithOk(choice1.name)).run()
+  }
+
+  def testCompleteEditor_andAnswerIsDefined() {
+    doReturn(List[PromptPanel](panel1)).when(mockModel).prompts
+    showRulingDialog.process(clickPromptRadioAntThenDismissWithOk(choice1.name)).run()
+    Assert.assertEquals(Some(1), panel1.response)
+  }
+  def testCompleteEditor_andAnswerIsDefined2() {
     val panel1 = createPromptPanel("Which size", choice1, choice2)
     doReturn(List[PromptPanel](panel1)).when(mockModel).prompts
-    showRulingDialog.process(new WindowHandler() {
-      def process(window: Window): Trigger = {
-        window.getRadioButton(choice1.name).click()
-        assertTrue(window.getButton("Ok").isEnabled)
-        window.getButton("Ok").triggerClick()
-      }
-    }).run()
+    showRulingDialog.process(clickPromptRadioAntThenDismissWithOk(choice2.name)).run()
+    Assert.assertEquals(Some(2), panel1.response)
   }
 
   def testTwoPanel_whenCompleteEditorEnablesOk() {
-    val panel1 = createPromptPanel("Which size", choice1, choice2)
-    val panel2 = createPromptPanel("Next prompt", choice2, choice3)
     doReturn(List[PromptPanel](panel1, panel2)).when(mockModel).prompts
     showRulingDialog.process(new WindowHandler() {
       def process(window: Window): Trigger = {
@@ -142,6 +147,16 @@ class PromptDialogTest extends UISpecTestCase {
         window.getButton("Ok").triggerClick()
       }
     }).run()
+  }
+
+  private def clickPromptRadioAntThenDismissWithOk(radioButtonName: String): WindowHandler = {
+    new WindowHandler() {
+      def process(window: Window): Trigger = {
+        window.getRadioButton(radioButtonName).click()
+        assertTrue(window.getButton("Ok").isEnabled)
+        window.getButton("Ok").triggerClick()
+      }
+    }
   }
 
   private def createPromptPanel(promptTitle: String, choice: RadioPromptPanel.Choice[Int]*): RadioPromptPanel[Int] = {

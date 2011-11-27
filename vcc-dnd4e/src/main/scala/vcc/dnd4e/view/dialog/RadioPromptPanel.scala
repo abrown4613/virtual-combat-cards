@@ -37,6 +37,9 @@ class RadioPromptPanel[T](val title:String,  val choices:Choice[T]*) extends Pro
   private val statusLabel = new Label("Click to change")
   private val editorPanel = createEditorPanel()
   private val viewPanel = createViewPanel()
+  private var promptOption:Option[T] = None
+
+  def response: Option[T] = promptOption
 
   def setEditCompletionListener(listener: EditCompletionListener) {
     editCompletionListener = listener
@@ -66,6 +69,7 @@ class RadioPromptPanel[T](val title:String,  val choices:Choice[T]*) extends Pro
         case ButtonClicked(button) =>
           editCompletionListener.editComplete()
           statusLabel.text = button.text
+          promptOption = choices.find(c => c.name == button.text).map(_.value)
       }
     }
   }
