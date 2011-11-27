@@ -47,6 +47,7 @@ class PromptDialog(model: PromptDialog.Model, owner: Window)
   extends ModalPromptDialog[Boolean](owner, "") {
 
   private val promptPanel = new JPromptPanelList()
+  private val okButton = new Button(okAction)
 
   initializePanel()
 
@@ -54,7 +55,7 @@ class PromptDialog(model: PromptDialog.Model, owner: Window)
     add(new Component {
       override lazy val peer = promptPanel
     }, "span 3,width 500, height 165, growx, growy, wrap")
-    add(new Button(okAction), "width button!")
+    add(okButton, "width button!")
     add(new Button(cancelAction), "width button!")
   }
 
@@ -65,6 +66,7 @@ class PromptDialog(model: PromptDialog.Model, owner: Window)
     addPromptPanelsAndSetActive(model.prompts)
     promptPanel.setRowHeight(50)
     registerEditCompletionListener()
+    peer.getRootPane.setDefaultButton(okButton.peer)
 
     def registerEditCompletionListener() {
       promptPanel.setAutoSelectNextUnanswered()
