@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
-import vcc.infra.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
+import vcc.dnd4e.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
 import vcc.util.DiceBag
 
 /**
