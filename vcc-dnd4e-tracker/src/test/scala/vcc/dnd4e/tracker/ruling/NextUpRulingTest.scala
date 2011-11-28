@@ -16,22 +16,30 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.dnd4e.tracker.common.{CombatState, SampleStateData}
-import vcc.dnd4e.tracker.command.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 import vcc.tracker.{InvalidDecisionException, Ruling}
+import vcc.dnd4e.tracker.event.EventSourceSampleEvents
+import vcc.dnd4e.tracker.common.{InitiativeState, CombatState, SampleStateData}
+import vcc.dnd4e.tracker.command.{EndRoundCommand, NextUpCommand, MoveUpCommand, StartRoundCommand}
 
-class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") with SampleStateData {
+class NextUpRulingTest extends RulingAcceptance[CombatState]("NextUpRuling") with EventSourceSampleEvents {
 
   private val ruling = NextUpRuling(NextUpCommand(ioA0, List(io1_0, ioB0)), None)
 
-  protected val state = CombatState.empty
+  protected val state = CombatState.empty.transitionWith(List(
+    evtAddCombA, evtAddCombNoId, evtAddCombB, meAddToOrder(combA, 1, 10), evtStart))
+
+  protected val state2 = state.transitionWith(List(ForceChangeEvent(s => s.lensFactory.initiativeTrackerLens(ioA0).mod(state,_.copy(state = InitiativeState.Delaying)))))
   protected val rulingWithAnswer: Ruling[CombatState, _, _] = ruling.withDecision(io1_0)
   protected val rulingWithoutAnswer: Ruling[CombatState, _, _] = ruling
   protected val userPromptMessage: String = "Select which combatant should act next"
 
+  println(state2.order.tracker)
+
   def buildCases =
     "generate StartRount if main selected" !
       (ruling.withDecision(ioA0).generateCommands(state) must_== List(StartRoundCommand(ioA0))) ^
+      "generate EndRound and StartRound if main selected but delaying" !
+        (ruling.withDecision(ioA0).generateCommands(state2) must_== List(EndRoundCommand(ioA0), StartRoundCommand(ioA0))) ^
       "generate moveUp if delaying is selected" !
         (ruling.withDecision(io1_0).generateCommands(state) must_== List(MoveUpCommand(io1_0))) ^
       "generate moveUp if delaying is selected " !
