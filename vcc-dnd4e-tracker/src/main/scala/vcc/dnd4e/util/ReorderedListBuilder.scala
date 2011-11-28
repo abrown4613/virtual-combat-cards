@@ -16,8 +16,6 @@
  */
 package vcc.dnd4e.util
 
-import annotation.tailrec
-
 /**
  * Provides a way to determine if two elements are larger than each other.
  * Since ordering object may involve arbitrarily complex calculations this trait allows elements to include
@@ -54,108 +52,27 @@ class NotInOrderException(msg: String) extends Exception(msg)
  */
 class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], initReorder: List[(K, K)], comparator: ReorderedListBuilderCompare[T]) {
 
-  /**
-   * These elements have two order, base list as defined by comparator and a reorder next and prev pointing to the
-   * previous element in that list.
-   * @param e The element being added
-   * @param next The next in base line order
-   * @param prevReorder The previous on the reorder
-   * @param nextReorder The next on the reorder list
-   */
-  private class ListLink(val elem: T, var next: ListLink, var prevReorder: ListLink, var nextReorder: ListLink) {
-    def findLink(search: K): ListLink = {
-      findKey(search).getOrElse(null)
-    }
+  private var baseOrder: List[T] = Nil
+  private var reorderingList: List[(K, K)] = Nil
 
-    def contains(search: K) = findKey(search).isDefined
-
-    @tailrec
-    private def findKey(key: K): Option[ListLink] = {
-      if (elem.uniqueId == key)
-        Some(this)
-      else if (next != null)
-        next.findKey(key: K)
-      else
-        None
-    }
-  }
-
-  private class DirectListIterator(private var currentLink: ListLink) extends Iterator[T] {
-    def next() = {
-      val r = currentLink.elem
-      currentLink = currentLink.next
-      r
-    }
-
-    def hasNext = currentLink != null
-  }
-
-
-  private var _baseList: ListLink = null
-  private var _last: ListLink = null
-  private var _reorder: List[(K, K)] = Nil
-
-  sanitize()
-
-  //Build list and sanitize input parameters and build list
-  private def sanitize() {
-    var previous: ListLink = null
-    for (e <- initList) {
-      checkElementNotInBaseList(e)
-      checkElementIsInOrder(e)
-      previous = linkNewElement(previous, new ListLink(e, null, null, null))
-    }
-    verifyAllEntriesInReorderAreValid()
-    _reorder = initReorder
-
-    def linkNewElement(prev: ListLink, ne: ListLink): ListLink = {
-      if (prev != null) {
-        prev.next = ne
-      } else {
-        _baseList = ne
-      }
-      ne
-    }
-
-    def checkElementIsInOrder(element: T) {
-      if (previous != null && !comparator.isBefore(previous.elem, element))
-        throw new NotInOrderException("Entry " + previous.elem + " is not less than it " + element)
-    }
-
-    def verifyAllEntriesInReorderAreValid() {
-      for (p <- initReorder) {
-        if (p._1 == p._2) throw new IllegalArgumentException("Entries of reorder list must contain different elements, found: " + p)
-        if (!_baseList.contains(p._1)) throw new NoSuchElementException("Element" + p._1 + " not found in base list")
-        if (!_baseList.contains(p._2)) throw new NoSuchElementException("Element" + p._2 + " not found in base list")
-      }
-    }
-  }
-
-  private def checkElementNotInBaseList(element: T) {
-    if (_baseList != null && _baseList.contains(element.uniqueId))
-      throw new DuplicateElementException("An entry of " + element + "already exists in the list")
-  }
-
+  verifyCorrectnessOfBuildParameters()
 
   /**
    * Add a new entry in is correct place of the ordered list
    */
-  def addEntry(e: T) {
-    checkElementNotInBaseList(e)
-    if (_baseList != null) {
-      val ne = new ListLink(e, null, null, null)
-      val last = findInsertListLink(_baseList,e)
-      if (last == null) {
-        ne.next = _baseList
-        _baseList = ne
-      } else {
-        ne.next = last.next
-        last.next = ne
-      }
-    } else {
-      _baseList = new ListLink(e, null, null, null)
+  def addEntry(entry: T) {
+    checkElementNotInBaseList(entry)
+    baseOrder = insertElementAccordingToOrder(baseOrder)
+
+    def insertElementAccordingToOrder(list: List[T]): List[T] = {
+      val (itemsBeforeInsertPoint, itemsAfterInsertPoint) = list.splitAt(insertPointOrEndOfList(list))
+      itemsBeforeInsertPoint ::: List(entry) ::: itemsAfterInsertPoint
     }
-    _last = null //Force reorder
+
+    def insertPointOrEndOfList(list: List[T]): Int = {
+      val index = list.indexWhere(e => comparator.isBefore(entry, e))
+      if (index == -1) list.length else index
+    }
   }
 
   /**
@@ -165,10 +82,11 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
    * @param before Element to be move before
    */
   def addReorder(elem: K, before: K) {
-    if (elem == before) throw new IllegalArgumentException(elem + " and " + before + " must be different")
-    if (_baseList != null && _baseList.contains(elem) && _baseList.contains(before)) {
-      _reorder = _reorder ::: List((elem, before))
-    } else throw new NoSuchElementException("Base list is does not contain " + elem + " or " + before)
+    throwExceptionOnIdenticalKeysInReorderList(elem,before)
+    throwExceptionIfKeyNotInOrder(elem)
+    throwExceptionIfKeyNotInOrder(before)
+
+    reorderingList = reorderingList ::: List((elem, before))
   }
 
   /**
@@ -176,75 +94,92 @@ class ReorderedListBuilder[K, T <: UniquelyIdentified[K]](initList: List[T], ini
    * @return A reordered list of T
    */
   def reorderedList(): List[K] = {
-    if (_last == null) {
-      _last = makeReverseList(_baseList)
 
-      for ((elem, before) <- _reorder) {
-        val elemLink = _baseList.findLink(elem)
-        val befLink = _baseList.findLink(before)
-        //Take element out of d-link
-        if (elemLink.nextReorder == null) {
-          _last = elemLink.prevReorder
-          elemLink.prevReorder.nextReorder = null
-        } else if (elemLink.prevReorder == null) {
-          elemLink.nextReorder.prevReorder = null
-        } else {
-          elemLink.prevReorder.nextReorder = elemLink.nextReorder
-          elemLink.nextReorder.prevReorder = elemLink.prevReorder
-        }
-        //           Prev to B PTB
-        //            Before:            After
-        //            PTB ---> Before  PTB ---> Elem ---> Before
-        //            PTB <--- Before  PTB <--- Elem <--- Before
-        elemLink.prevReorder = befLink.prevReorder
-        elemLink.nextReorder = befLink
-        if (elemLink.prevReorder != null) elemLink.prevReorder.nextReorder = elemLink
-        befLink.prevReorder = elemLink
-      }
+    def matchKey(toMove: K): (T) => Boolean = (_.uniqueId == toMove)
+
+    def moveBefore(order: List[T], toMove: K, before: K): List[T] = {
+      val listWithoutToMove: List[T] = order.filterNot(matchKey(toMove))
+      val (bef, after) = listWithoutToMove.splitAt(listWithoutToMove.indexWhere(matchKey(before)))
+      bef ::: order.find(matchKey(toMove)).toList ::: after
     }
-    buildReturnListInReverseOrder(_last)
+
+    var initialList = baseOrder
+    for ((elem, before) <- reorderingList) {
+      initialList = moveBefore(initialList, elem, before)
+    }
+    initialList.map(_.uniqueId)
   }
 
   /**
    * Get list of reorder commands.
    */
-  def reorders(): List[(K, K)] = _reorder
+  def reorders(): List[(K, K)] = reorderingList
 
   /**
    * Get the baseList after the additions.
    */
-  def baseList(): List[T] = (new DirectListIterator(_baseList)).toList
+  def baseList(): List[T] = baseOrder
 
-  private def makeReverseList(start: ListLink): ListLink = {
-    var p = start
-    var last: ListLink = null
-
-    while (p != null) {
-      p.prevReorder = last
-      p.nextReorder = p.next
-      last = p
-      p = p.next
-    }
-    last
+  private def throwExceptionOnIdenticalKeysInReorderList(a: K, b: K) {
+    if (a == b)
+      throw new IllegalArgumentException("Entries of reorder list must contain different elements, found: " +(a, b))
   }
 
-  private def buildReturnListInReverseOrder(startingElement: ListLink): List[K] = {
-    var current = startingElement
-    var ret: List[K] = Nil
-    while (current != null) {
-      ret = current.elem.uniqueId :: ret
-      current = current.prevReorder
+  private def verifyCorrectnessOfBuildParameters() {
+    mustNotHaveDuplicateKey(initList)
+    checkOrderingOfElements(initList)
+    baseOrder = initList
+
+    verifyAllEntriesInReorderAreValid()
+    reorderingList = initReorder
+
+    def mustNotHaveDuplicateKey(list: List[T]) {
+      var alreadyDefined = Set.empty[K]
+      for (element <- list) {
+        if (alreadyDefined.contains(element.uniqueId))
+          throw new DuplicateElementException("Base order already contains one : " + element.uniqueId)
+        alreadyDefined = alreadyDefined + element.uniqueId
+      }
     }
-    ret
+
+    def checkOrderingOfElements(list: List[T]) {
+      for ((a, b) <- inPairs(list)) {
+        mustBeInOrder(a, b)
+      }
+
+      def inPairs[A](list: List[A]): List[(A, A)] = {
+        if (list.length > 1)
+          (list.head, list(1)) :: inPairs(list.tail)
+        else
+          Nil
+      }
+
+      def mustBeInOrder(a: T, b: T) {
+        if (!comparator.isBefore(a, b))
+          throw new NotInOrderException("Entry " + a + " is not less than it " + b)
+      }
+    }
+
+    def verifyAllEntriesInReorderAreValid() {
+      for ((a, b) <- initReorder) {
+        throwExceptionOnIdenticalKeysInReorderList(a, b)
+        throwExceptionIfKeyNotInOrder(a)
+        throwExceptionIfKeyNotInOrder(b)
+      }
+    }
   }
 
-  private def findInsertListLink(startingLink: ListLink, e:T): ListLink = {
-    var p  = startingLink
-    var last: ListLink = null
-    while (p != null && comparator.isBefore(p.elem, e)) {
-      last = p
-      p = p.next
-    }
-    last
+  private def checkElementNotInBaseList(element: T) {
+    if (keyExistsInBaseOrder(element.uniqueId))
+      throw new DuplicateElementException("An entry of " + element + "already exists in the list")
+  }
+
+  private def throwExceptionIfKeyNotInOrder(key: K) {
+    if (!keyExistsInBaseOrder(key))
+      throw new NoSuchElementException("Element" + key + " not found in base list")
+  }
+
+  private def keyExistsInBaseOrder(key: K): Boolean = {
+    baseOrder.exists(_.uniqueId == key)
   }
 }
