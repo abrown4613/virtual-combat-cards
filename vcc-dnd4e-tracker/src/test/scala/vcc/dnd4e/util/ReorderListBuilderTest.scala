@@ -37,8 +37,13 @@ class ReorderListBuilderTest extends SpecificationWithJUnit {
   }
 
   "ReorderListBuilder constructor" should {
+    "accept list with one element" in {
+      new ReorderedListBuilder[Int, UIInt](List(1), Nil, comparator) must not beNull;
+    }
+
     "reject duplicated elements on base list" in {
       new ReorderedListBuilder[Int, UIInt](List(1, 2, 10, 10), Nil, comparator) must throwA[DuplicateElementException]
+      new ReorderedListBuilder[Int, UIInt](List(1, 2, 10, 3, 10), Nil, comparator) must throwA[DuplicateElementException]
     }
 
     "reject unsorted base list" in {
