@@ -44,15 +44,26 @@ object AutomationCommandSource {
     case HeadStateAndHealth(ioi, Waiting, Dead) => StartRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Ready, Dead) => StartRoundCommand(ioi)
     case HeadStateAndHealth(ioi, Acting, Dead) => EndRoundCommand(ioi)
-    case s@HeadStateAndHealth(ioi, Waiting, _) => makeNextUpCommand(s, ioi)
-    case s@HeadStateAndHealth(ioi, Ready, _) => makeNextUpCommand(s, ioi)
+    case s@HeadStateAndHealth(ioi, Waiting, _) if (hasLivingDelayingCombatants(s, ioi)) => makeNextUpCommand(s, ioi)
+    case s@HeadStateAndHealth(ioi, Ready, _) if (hasLivingDelayingCombatants(s, ioi)) => makeNextUpCommand(s, ioi)
+    case s@HeadStateAndHealth(ioi, Delaying, _) if (hasLivingDelayingCombatants(s, ioi)) => makeNextUpCommand(s, ioi)
     case HeadStateAndHealth(ioi, Delaying, _) => EndRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Waiting, _) => StartRoundCommand(ioi)
+    case HeadStateAndHealth(ioi, Ready, _) => StartRoundCommand(ioi)
   })
 
-  private def makeNextUpCommand(state: CombatState, next: InitiativeOrderID): Command[CombatState] = {
-    val eligible = state.order.sequence.filter(ioi =>
-      state.order.tracker(ioi).state == InitiativeState.Delaying &&
+  private def hasLivingDelayingCombatants(state: CombatState, next: InitiativeOrderID): Boolean = {
+    !collectLiveDelayCombatant(state, next).isEmpty
+  }
+
+  private def collectLiveDelayCombatant(state: CombatState, next: InitiativeOrderID): List[InitiativeOrderID] = {
+    state.order.sequence.filter(ioi =>
+      state.order.tracker(ioi).state == InitiativeState.Delaying && ioi != next &&
         state.roster.combatant(ioi.combId).health.status != HealthStatus.Dead)
+  }
+
+  private def makeNextUpCommand(state: CombatState, next: InitiativeOrderID): Command[CombatState] = {
+    val eligible = collectLiveDelayCombatant(state, next)
     if (eligible.isEmpty) StartRoundCommand(next)
     else NextUpCommand(next, eligible)
   }

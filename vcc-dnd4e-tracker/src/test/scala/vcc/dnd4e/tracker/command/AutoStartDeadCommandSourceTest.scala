@@ -36,6 +36,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       "  auto start round of dead ready" ! testStartDeadAndReady ^
       "  auto end round of dead acting" ! testEndDeadAndActing ^
       "  all together" ! testFullDeadAndStartNextAutomation ^
+      "  all together with next delay along with others" ! testNextUpDelayingAndSomeOtherDelaying ^
       endp ^
       "Automatic start living" ^
       "  auto start first Waiting" ! testStartWaitingLiving ^
@@ -155,6 +156,8 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
     while (step.isDefined) {
       nState = nState.transitionWith(step.get._1.generateEvents(nState))
       trans = step.get._1 :: trans
+      if(step.get._1.isInstanceOf[NextUpCommand])
+        return (nState, trans.reverse)
       step = (step.get._2).get(nState)
     }
     (nState, trans.reverse)
@@ -173,6 +176,18 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       EndRoundCommand(io2_0), StartRoundCommand(io2_0), EndRoundCommand(io2_0),
       StartRoundCommand(ioB0), EndRoundCommand(ioB0),
       StartRoundCommand(ioA0)))
+  }
+
+  private def testNextUpDelayingAndSomeOtherDelaying = {
+    val state = getInitialState.transitionWith(List(
+      updateInitiativeEvent(io1_0, _.copy(state = InitiativeState.Acting)),
+      updateInitiativeEvent(io2_0, _.copy(state = InitiativeState.Delaying)),
+      updateInitiativeEvent(ioB0, _.copy(state = InitiativeState.Delaying))))
+
+    val (nState, transitions) = miniDispatcher(CommandStream(EndRoundCommand(io1_0)) followedBy startNextCommandStream, state)
+
+    (nState.order.nextUp.get must_== io2_0) and (transitions must_== List(
+      EndRoundCommand(io1_0), NextUpCommand(io2_0, List(ioB0))))
   }
 
   private def getInitialState: CombatState = {

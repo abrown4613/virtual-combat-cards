@@ -16,9 +16,9 @@
  */
 package vcc.dnd4e.tracker.ruling
 
-import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatState}
-import vcc.dnd4e.tracker.command.{NextUpCommand, MoveUpCommand, StartRoundCommand}
 import vcc.tracker.{Command, InvalidDecisionException, Ruling}
+import vcc.dnd4e.tracker.common.{InitiativeState, InitiativeOrderID, CombatState}
+import vcc.dnd4e.tracker.command.{EndRoundCommand, NextUpCommand, MoveUpCommand, StartRoundCommand}
 
 case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOrderID])
   extends Ruling[CombatState, InitiativeOrderID, NextUpRuling] {
@@ -30,11 +30,14 @@ case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOr
     }
   }
 
-  def userPrompt(state: CombatState):String = "Select which combatant should act next"
+  def userPrompt(state: CombatState): String = "Select which combatant should act next"
 
   protected def commandsFromDecision(state: CombatState): List[Command[CombatState]] = {
     val ioi = decision.get
-    (if (ioi == candidates.next) StartRoundCommand(ioi) else MoveUpCommand(ioi)) :: Nil
+    if (ioi == candidates.next)
+      commandForNextUp(state, ioi)
+    else
+      MoveUpCommand(ioi) :: Nil
   }
 
   def withDecision(value: InitiativeOrderID): NextUpRuling = {
@@ -42,4 +45,12 @@ case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOr
       throw new InvalidDecisionException(value + " is not eligible to act")
     copy(decision = Some(value))
   }
+
+  private def commandForNextUp(state: CombatState, ioi: InitiativeOrderID): List[Command[CombatState]] = {
+    if (state.order.tracker(ioi).state == InitiativeState.Delaying)
+      EndRoundCommand(ioi) :: StartRoundCommand(ioi) :: Nil
+    else
+      StartRoundCommand(ioi) :: Nil
+  }
+
 }
