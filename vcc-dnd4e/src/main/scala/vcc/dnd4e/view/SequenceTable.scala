@@ -49,7 +49,7 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent {
 
   private var source: Option[UnifiedCombatantID] = None
   private var target: Option[UnifiedCombatantID] = None
-  private var state:UnifiedSequenceTable = null
+  private var state: UnifiedSequenceTable = null
   private var mustPreventUpdateOfSelection = false
 
   private val setAction = Action("sequence.setacting") {
@@ -81,10 +81,12 @@ with ContextObserver with CombatStateObserver with ScalaDockableComponent {
   }
 
   def combatStateChanged(newState: UnifiedSequenceTable) {
+    val hasFirstChanged = (state == null) || (state.orderFirstId != newState.orderFirstId)
     state = newState
+
     updateContent()
 
-    if (state.orderFirstId.isDefined)
+    if (state.orderFirstId.isDefined && hasFirstChanged)
       updateActingCombatantLater(state.orderFirstId)
   }
 
