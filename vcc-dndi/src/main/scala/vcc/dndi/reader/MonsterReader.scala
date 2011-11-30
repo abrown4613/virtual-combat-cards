@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
 import collection.immutable.List
@@ -121,9 +120,7 @@ object SomePowerDefinition {
       case _ => null
     }
     if (pdef == null) {
-      //      //TODO: Implement simplified fail-over.
-      //      println("Parts: " + PowerHeaderParts.unapply(parts))
-      //      throw new Exception("Processing of power header failed, content: " + parts)
+      // We ignore failed parse, maybe could try to recover.
       None
     } else {
       Some(pdef)
@@ -208,7 +205,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
       case Block("P#flavor alt", SomePowerDefinition(pdef)) => pdef
       case _ => throw new UnexpectedBlockElementException("Expected P with class 'flavor alt'", stream.head)
     }
-    stream.advance
+    stream.advance()
 
     //From now on we expect P#flavor and P#flavorIndent
     val textBuilder = new TextBuilder()
@@ -223,9 +220,9 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
       case _ =>
         false
     }) {
-      stream.advance
+      stream.advance()
     }
-    Power(definition, action, textBuilder.getDocument)
+    Power(definition, action, textBuilder.getDocument())
   }
 
   /**
@@ -369,7 +366,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
           case s =>
             partsToPairs(trimmedList, true)
         }
-        val normalizedParts = pairs.map(p => p._1.toLowerCase() -> p._2)
+        val normalizedParts = pairs.map(p => p._1.toLowerCase -> p._2)
         result ++= normalizedParts
         stream.advance()
       case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
@@ -381,7 +378,8 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         if (comment != null) result.update("comment", comment)
         stream.advance()
       case blk =>
-        throw new UnexpectedBlockElementException("Expected P blocks in the trailing stat block, found:", blk)
+
+        stream.advance()
     }) {
       //Nothing to do
     }
