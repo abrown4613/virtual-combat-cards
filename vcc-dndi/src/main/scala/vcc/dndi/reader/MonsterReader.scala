@@ -182,8 +182,11 @@ object PowerHeaderParts {
  * Reads DNDI monster entries in both MM3 and previous format
  */
 class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
-  final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
-  final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
+  final private val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
+  final private val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
+  final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
+  final private val senseMatcher = """^.*;\s+(.+)$""".r
+
 
   private final val primaryStats = Set("Initiative", "Senses", "HP", "Bloodied",
     "AC", "Fortitude", "Reflex", "Will",
@@ -191,8 +194,9 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     "Saving Throws", "Speed", "Action Points", "Perception")
 
 
-  private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
-    l match {
+  private def normalizeTitle(spanList: List[(String, String)]): List[(String, String)] = {
+    spanList match {
+      case ("xp", "-") :: rest => ("xp", "0") :: normalizeTitle(rest)
       case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) :: ("role", role) :: normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
@@ -409,9 +413,6 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
           StyledText.singleBlock("P", "flavorIndent", desc))
     }
   }
-
-  final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
-  final private val senseMatcher = """^.*;\s+(.+)$""".r
 
   /**
    * Normalize perception and senses from a MM<3 senses expression. Normally in format: 'Perception +15; sense'. This

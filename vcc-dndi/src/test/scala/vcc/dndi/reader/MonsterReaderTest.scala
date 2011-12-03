@@ -23,7 +23,6 @@ import xml.Node
 import MonsterBlockStreamRewrite.EndOfPower
 import collection.mutable.ListBuffer
 
-
 class MonsterReaderTest extends SpecificationWithJUnit {
   val reader = new MonsterReader(0)
 
@@ -42,7 +41,6 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     ts.advance must beTrue
     ts
   }
-
 
   "MonsterReader.processTailBlock" should {
     "read description" in {
@@ -82,6 +80,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       map must haveKey("comment")
       map("comment") must_== "Published in Dungeon Magazine 155."
     }
+
     "standalone MM<3 Equipment line" in {
       //<P class="flavor alt"><B>Equipment</B>: <A href="bla" target="_new">chainmail</A> , <A href="bla" target="_new">crossbow bolt</A>  x10, <A href="bla" target="_new">hand crossbow</A> , <A href="bla" target="_new">light shield</A> , <A href="bla" target="_new">spear</A> .</P>
       val stream = new TokenStream[BlockElement](List(Block("P#flavor alt", List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))))
@@ -103,6 +102,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       )
       map must beDefinedBy(expects.toSeq: _*)
     }
+
     "STR block MM3" in {
       //<P class="flavor alt"><B>Str</B> 19 (+10)    <B>Dex</B> 19 (+10)     <B>Wis</B> 15 (+8)<BR/><B>Con</B> 20 (+11)        <B>Int</B> 8 (+5)     <B>Cha</B> 17 (+9)</P>
       val stream = new TokenStream[BlockElement](List(Block("P#flavor alt", List(Key("Skills"), Text(" Bluff +8, Stealth +9, Thievery +9"), Break(),
@@ -129,6 +129,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "name" -> "Pest", "type" -> "dude", "level" -> "1",
         "xp" -> "25", "role" -> "Controller")
     }
+
     "provide No Role for old minion format" in {
       val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Minion"), ("xp", "XP 25")))))
       ts.advance()
@@ -138,6 +139,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "name" -> "Pest", "type" -> "dude", "level" -> "1",
         "xp" -> "25", "role" -> "No Role")
     }
+
     "leave other roles unchanged" in {
       val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Elite Brute (Leader)"), ("xp", "XP 25")))))
       ts.advance()
@@ -148,6 +150,15 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "xp" -> "25", "role" -> "Elite Brute (Leader)")
     }
 
+    "change xp of - to 0" in {
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Elite Brute (Leader)"), ("xp", "-")))))
+      ts.advance()
+      val fields = reader.processHeader(ts)
+
+      fields must havePairs(
+        "name" -> "Pest", "type" -> "dude", "level" -> "1",
+        "xp" -> "0", "role" -> "Elite Brute (Leader)")
+    }
   }
 
   "MonsterReader.processPrimaryBlock" should {
@@ -189,7 +200,6 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       auras(1)._1 must_== "Aura name 2"
     }
 
-
     "process tabular block" in {
       val blk = Table("bodytable", List(
         Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
@@ -222,7 +232,6 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "perception" -> "15",
         "resist" -> "5 necrotic")
       map must beDefinedBy(expects.toSeq: _*)
-
     }
 
     "process tabular block with no Senses, saving, or resist" in {
@@ -247,12 +256,11 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "reflex" -> "20",
         "speed" -> "6")
       map must beDefinedBy(expects.toSeq: _*)
-      (map must not be haveKey("senses"))
-      (map must not be haveKey("saving throws"))
-      (map must not be haveKey("resist"))
+      (map must not haveKey("senses"))
+      (map must not haveKey("saving throws"))
+      (map must not haveKey("resist"))
     }
   }
-
 
   "MonsterReader.processPower" should {
 
@@ -265,7 +273,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B>
         1</P>)
       val power = mr.processPower(ActionType.Trait, ts)
-      power must not beNull
+      power must not beNull;
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage(1))
       power.action must_== ActionType.Trait
@@ -277,7 +285,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
       </P>)
       val power = mr.processPower(ActionType.Minor, ts)
-      power must not beNull
+      power must not beNull;
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(1))
       power.action must_== ActionType.Minor
@@ -290,7 +298,6 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       </P>)
       mr.processPower(ActionType.Minor, ts) must throwAn[UnexpectedBlockElementException]
     }
-
   }
 
   "MonsterReader.processPowerGroup" should {
@@ -303,6 +310,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       powers(0).definition.name must_== "hack"
       powers(1).definition.name must_== "slash"
     }
+
     "read a sequence of powers ending with a H2 header" in {
       val standardAction = Block("H2", List(Text("Standard Action")))
       val ts = new TokenStream[BlockElement](generateMeleePower("hack") ::: generateMeleePower("slash") ::: List(standardAction))
@@ -374,6 +382,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       ts.advance() must beTrue
       ts.head must_== blk
     }
+
     "return normal 'flavor alt' when not power end" in {
       val phl = (<P class="flavor alt">
         <IMG src="http://www.wizards.com/dnd/images/symbol/S2.gif"></IMG> <B>Mace</B>
@@ -403,6 +412,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage(10))
       power.description must_== auraDesc
     }
+
     "lift simple aura with keyword to new power" in {
       val power = reader.promoteAuraLike("Aura of Terror", "(Fear) aura 5; some description.")
       (power must not beNull)
@@ -418,6 +428,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       power.definition must_== CompletePowerDefinition(Seq(), "Regeneration", null, NoUsage)
       power.description must_== StyledText(List(TextBlock("P", "flavorIndent", TextSegment("10"))))
     }
+
     "lift regeneration with a description" in {
       val power = reader.promoteAuraLike("Regeneration", "3 (if the werewolf takes damage from a silver weapon)")
       (power must not beNull)
@@ -434,26 +445,31 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val norm = reader.normalizeLegacySenses(senses)
       norm must_== senses
     }
+
     "normalize broken Senses" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "; low-light vision"))
       norm must_== Map("hp" -> "100", "perception" -> "0", "senses" -> "low-light vision")
     }
+
     "normalize Senses with two modes" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10; blindsight 10, tremorsense 20"))
       norm must_== Map("hp" -> "100", "perception" -> "10", "senses" -> "blindsight 10, tremorsense 20")
     }
+
     "normalize Senses with one modes" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10; darkvision"))
       norm must_== Map("hp" -> "100", "perception" -> "10", "senses" -> "darkvision")
     }
+
     "normalize Senses with one modes, negative perception" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception -10; darkvision"))
       norm must_== Map("hp" -> "100", "perception" -> "-10", "senses" -> "darkvision")
     }
+
     "normalize Senses with no modes" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10"))
       norm must_== Map("hp" -> "100", "perception" -> "10")
-      norm must not be haveKey("senses")
+      norm must not haveKey("senses")
     }
   }
   /*
@@ -477,7 +493,6 @@ class MonsterReaderTest extends SpecificationWithJUnit {
           } catch {
             case e =>
               System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
-              //e.printStackTrace
               false
           }
           if (testedOk) {
