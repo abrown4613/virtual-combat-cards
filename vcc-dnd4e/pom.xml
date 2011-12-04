@@ -94,14 +94,14 @@
                             <goal>replace</goal>
                         </goals>
                         <configuration>
-                            <file>${build.sourceDirectory}/../resources/version.xml</file>
+                            <file>${project.build.sourceDirectory}/../resources/version.xml</file>
                             <replacements>
                                 <replacement>
                                     <token>VERSION</token>
                                     <value>${project.version}</value>
                                 </replacement>
                             </replacements>
-                            <outputFile>${build.outputDirectory}/vcc/version.xml</outputFile>
+                            <outputFile>${project.build.outputDirectory}/vcc/version.xml</outputFile>
                         </configuration>
 
                     </execution>
