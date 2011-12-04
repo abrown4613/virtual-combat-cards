@@ -86,7 +86,7 @@ class ActionDispatcher[S] private(initialState: S) {
   private def executeCommand(command: Command[S]) {
     val rulingCommands = collectRulingCommands(command)
 
-    rulingCommands.foreach(processCommandEvents)
+    rulingCommands.foreach(executeCommand)
     processCommandEvents(command)
   }
 
