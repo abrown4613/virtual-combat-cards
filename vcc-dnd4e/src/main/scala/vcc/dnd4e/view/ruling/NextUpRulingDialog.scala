@@ -21,6 +21,7 @@ import java.awt.Window
 import vcc.util.swing.{MigPanel, ModalPromptDialog}
 import vcc.dnd4e.tracker.common.{CombatantID, CombatState}
 import swing.{ScrollPane, ListView, Button}
+import vcc.dnd4e.view.IconLibrary
 
 class NextUpRulingDialog(owner: Window, state: CombatState, nextUpRuling: NextUpRuling)
   extends ModalPromptDialog[NextUpRuling](owner, "Select next combatant to act") {
@@ -38,6 +39,7 @@ class NextUpRulingDialog(owner: Window, state: CombatState, nextUpRuling: NextUp
   peer.getRootPane.setDefaultButton(okButton.peer)
   this.peer.pack()
   this.placeOnScreenCenter()
+  this.peer.setIconImage(IconLibrary.MetalD20.getImage)
 
   def collectResult(): Option[NextUpRuling] = {
     Some(nextUpRuling.withDecision(orderIds(optionList.selection.leadIndex)))

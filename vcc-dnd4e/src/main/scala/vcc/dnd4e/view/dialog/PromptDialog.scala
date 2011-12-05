@@ -22,7 +22,7 @@ import swing.{Component, Button}
 import vcc.util.swing.MigPanel
 import java.lang.String
 import org.exnebula.swing.{PromptPanelEditListener, JPromptPanelList, PromptPanel}
-
+import vcc.dnd4e.view.IconLibrary
 
 object PromptDialog {
 
@@ -67,6 +67,7 @@ class PromptDialog(model: PromptDialog.Model, owner: Window)
     promptPanel.setRowHeight(50)
     registerEditCompletionListener()
     peer.getRootPane.setDefaultButton(okButton.peer)
+    peer.setIconImage(IconLibrary.MetalD20.getImage)
 
     def registerEditCompletionListener() {
       promptPanel.setAutoSelectNextUnanswered()
