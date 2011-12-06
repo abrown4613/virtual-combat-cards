@@ -100,7 +100,7 @@ case class ClearRosterCommand(onlyMonsters: Boolean) extends CombatStateCommand 
 
     val toClear: Seq[CombatantID] = {
       if (onlyMonsters) {
-        (for ((cid, comb) <- iState.roster.entries if (comb.definition.entity.ctype != CombatantType.Character)) yield {
+        (for ((cid, comb) <- iState.roster.entries if (comb.combatantType != CombatantType.Character)) yield {
           cid
         }).toSeq
       } else {

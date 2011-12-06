@@ -72,6 +72,7 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
       there was atLeastOne(mockCombB).healthTracker
     }
   }
+
   "rules.canCombatantRollInitiative" should {
     "return true if combat is not started" in new baseMockups {
       state.isCombatStarted returns false
@@ -178,7 +179,6 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
       val fIT = mock[InitiativeTracker]
       val action = InitiativeAction.StartRound
 
-
       mIT.canTransform(fIT, action) returns false
 
       state.isCombatStarted returns true
@@ -191,45 +191,38 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
       there was one(state).initiativeTrackerFromID(ioB0)
       there was one(mIT).canTransform(fIT, action)
     }
-
   }
 
   "rules.areAllied" should {
     "be true if combatant are both character" in new baseMockups {
-      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Character)
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Character)
+      mockCombA.combatantType returns CombatantType.Character
+      mockCombB.combatantType returns CombatantType.Character
       rules.areAllied(state, cidA, cidB) must beTrue
-      there was one(mockCombA).definition
-      there was one(mockCombB).definition
+      there was one(mockCombA).combatantType
+      there was one(mockCombB).combatantType
     }
 
     "be true if combatant are both are not character" in new baseMockups {
-      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Monster)
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      mockCombA.combatantType returns CombatantType.Monster
+      mockCombB.combatantType returns CombatantType.Minion
       rules.areAllied(state, cidA, cidB) must beTrue
 
-      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Monster)
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Monster)
+      mockCombA.combatantType returns CombatantType.Monster
+      mockCombB.combatantType returns CombatantType.Minion
       rules.areAllied(state, cidA, cidB) must beTrue
 
-      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Minion)
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      mockCombA.combatantType returns CombatantType.Minion
+      mockCombB.combatantType returns CombatantType.Minion
       rules.areAllied(state, cidA, cidB) must beTrue
     }
 
     "be false otherwise" in new baseMockups {
-      mockCombA.definition returns combatantDefinitionWithTypeOnly(cidA, CombatantType.Character)
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Minion)
+      mockCombA.combatantType returns CombatantType.Character
+      mockCombB.combatantType returns CombatantType.Minion
       rules.areAllied(state, cidA, cidB) must beFalse
 
-      mockCombB.definition returns combatantDefinitionWithTypeOnly(cidB, CombatantType.Monster)
+      mockCombB.combatantType returns CombatantType.Monster
       rules.areAllied(state, cidA, cidB) must beFalse
     }
   }
-
-  /**
-   * Helper to create a  CombatantRosterDefinition with only the ctype and eid defined.
-   */
-  private def combatantDefinitionWithTypeOnly(comb: CombatantID, ctype: CombatantType.Value) =
-    CombatantRosterDefinition(comb, null, CombatantEntity(null, null, null, 0, ctype, null))
 }

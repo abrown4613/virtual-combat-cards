@@ -66,6 +66,10 @@ case class Combatant(definition: CombatantRosterDefinition, comment: String, hea
    */
   def name = definition.entity.name
 
+  /**
+   * Get combatant type
+   */
+  def combatantType = definition.entity.combatantType
 }
 
 /**
@@ -91,5 +95,4 @@ object Combatant {
 
     def createCombatant(definition: CombatantRosterDefinition): Combatant = apply(definition)
   }
-
 }

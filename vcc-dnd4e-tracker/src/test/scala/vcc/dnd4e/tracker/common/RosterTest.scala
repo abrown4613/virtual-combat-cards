@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
 import org.specs2.SpecificationWithJUnit
@@ -38,26 +37,24 @@ class RosterTest extends SpecificationWithJUnit {
 
   import RosterTestHelper._
 
-  type T = SampleEntry
-
-  val combEnt = CombatantEntity(null, "Mage", CharacterHealthDefinition(40), 4, CombatantType.Character, null)
-  val combEnt2 = CombatantEntity(null, "Fighter", CharacterHealthDefinition(50), 4, CombatantType.Character, null)
-  val combMonster = CombatantEntity(null, "Bad Guy", CharacterHealthDefinition(50), 4, CombatantType.Monster, null)
+  val combEnt = CombatantEntity(null, "Mage", CharacterHealthDefinition(40), 4, null)
+  val combEnt2 = CombatantEntity(null, "Fighter", CharacterHealthDefinition(50), 4, null)
+  val combMonster = CombatantEntity(null, "Bad Guy", CharacterHealthDefinition(50), 4, null)
   val combA = CombatantID("A")
   val combB = CombatantID("B")
   val comb1 = CombatantID("1")
   val comb2 = CombatantID("2")
   val comb3 = CombatantID("3")
 
-  val factory = new Factory()
-  val fullRoster = new Roster[T](factory, Map(
+  val factory:RosterCombatantFactory[SampleEntry] = new Factory()
+  val fullRoster = new Roster[SampleEntry](factory, Map(
     combA -> SampleEntry(combA, null, combEnt),
     combB -> SampleEntry(combB, "el palo", combEnt2),
     comb1 -> SampleEntry(comb1, null, combMonster),
     comb3 -> SampleEntry(comb3, null, combMonster)
   ))
 
-  val emptyRoster = new Roster[T](factory, Map())
+  val emptyRoster = new Roster[SampleEntry](factory, Map())
 
   val mRoster = mocked(fullRoster)
 
@@ -87,8 +84,7 @@ class RosterTest extends SpecificationWithJUnit {
 
   def notBePresent(roster: Roster[SampleEntry], comb: CombatantID) = roster.isDefinedAt(comb) must beFalse
 
-
-  case class mocked(roster: Roster[T]) extends Mockito {
+  case class mocked(roster: Roster[SampleEntry]) extends Mockito {
     val mFactory = spy(roster.factory)
     val mRoster = roster.copy(factory = mFactory)
 
@@ -102,23 +98,23 @@ class RosterTest extends SpecificationWithJUnit {
       there was one(mFactory).createCombatant(CombatantRosterDefinition(expectedId, alias, definition))
     }
 
-    def callPredicateNTimeOnClear(pred: T => Boolean) = {
-      class FWrap extends Function1[T, Boolean] {
-        def apply(v1: T): Boolean = pred(v1)
+    def callPredicateNTimeOnClear(pred: SampleEntry => Boolean) = {
+      class FWrap extends Function1[SampleEntry, Boolean] {
+        def apply(v1: SampleEntry): Boolean = pred(v1)
       }
       val spyPred = spy(new FWrap)
       roster.clear(spyPred)
-      there was atLeast(roster.entries.size)(spyPred).apply(any[T])
+      there was atLeast(roster.entries.size)(spyPred).apply(any[SampleEntry])
     }
   }
 
-  case class using(roster: Roster[T]) {
+  case class using(roster: Roster[SampleEntry]) {
     def updatedAllOnAdd(definedId: Option[CombatantID], expectedId: CombatantID, alias: String, definition: CombatantEntity) = {
       val r = roster.addCombatant(definedId, alias, definition)
       r.entries must beDefinedAt(expectedId) and havePair(expectedId -> SampleEntry(expectedId, alias, definition))
     }
 
-    def filterElements(pred: T => Boolean, expectedList: List[CombatantID]) = {
+    def filterElements(pred: SampleEntry => Boolean, expectedList: List[CombatantID]) = {
       val r = roster.clear(pred)
       r.allCombatantIDs must_== expectedList
     }
@@ -127,5 +123,4 @@ class RosterTest extends SpecificationWithJUnit {
       roster.allCombatantIDs must contain(expectedList.map(lazyfy(_)): _*)
     }
   }
-
 }

@@ -20,16 +20,15 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
 import vcc.infra.datastore.naming.EntityID
-import vcc.dnd4e.compendium.{MonsterEntity, CompendiumRepository}
 import vcc.dnd4e.model.{CombatantEntityBuilder, PartyMember}
-import vcc.dnd4e.tracker.common.{CombatantID, CombatantRosterDefinition}
+import vcc.dnd4e.compendium.{MonsterEntity, CompendiumRepository}
+import vcc.dnd4e.tracker.common.{CombatantType, CombatantID, CombatantRosterDefinition}
 
 class PartyLoaderTest extends SpecificationWithJUnit with Mockito {
 
   private val entId1 = EntityID.fromName("test:1")
   private val entId2 = EntityID.fromName("test:2")
   private val entId3 = EntityID.fromName("test:3")
-
 
   trait alpha extends Scope {
     val peer = mock[PartyLoader.ViewPeer]
@@ -119,11 +118,22 @@ class PartyLoaderTest extends SpecificationWithJUnit with Mockito {
     }
   }
 
+  "CombatantEntityBuilder" should  {
+    "load 1 hit point monster as minion" in {
+      val entity = CombatantEntityBuilder.fromCompendiumCombatantEntity(makeMonsterWithHitPoints(entId2, 1))
+      entity.combatantType must_== CombatantType.Minion
+    }
+  }
+
   private def makeMonster(eid: EntityID) = {
+    makeMonsterWithHitPoints(eid, 40)
+  }
+
+  private def makeMonsterWithHitPoints(eid: EntityID, hitPoints: Int) = {
     val monsterEntity = new MonsterEntity(entId1)
     monsterEntity.loadFromMap(Map(
       "base:name" -> ("Some " + eid.asStorageString),
-      "stat:hp" -> "40",
+      "stat:hp" -> hitPoints.toString,
       "base:level" -> "4",
       "stat:initiative" -> "2",
       "text:statblock" -> "foo"

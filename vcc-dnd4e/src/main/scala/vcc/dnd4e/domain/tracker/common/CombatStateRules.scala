@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.domain.tracker.common
 
 import vcc.dnd4e.tracker.common._
@@ -62,8 +61,8 @@ class CombatStateRules {
   }
 
   def areAllied(combatState: CombatStateView, combA: CombatantID, combB: CombatantID): Boolean = {
-    val a = combatState.combatantViewFromID(combA).definition.entity.ctype
-    val b = combatState.combatantViewFromID(combB).definition.entity.ctype
+    val a = combatState.combatantViewFromID(combA).combatantType
+    val b = combatState.combatantViewFromID(combB).combatantType
     (a == CombatantType.Character && b == CombatantType.Character) || (a != CombatantType.Character && b != CombatantType.Character)
   }
 }

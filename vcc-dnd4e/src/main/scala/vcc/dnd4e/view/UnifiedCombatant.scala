@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import vcc.dnd4e.tracker.common.CombatantType
@@ -38,7 +37,7 @@ case class UnifiedCombatantID(combId: CombatantID, orderId: InitiativeOrderID)
 class UnifiedCombatant(val combId: CombatantID,
                        val initiative: InitiativeTracker,
                        combatant: CombatantStateView) {
-  def isCharacter = combatant.definition.entity.ctype == CombatantType.Character
+  def isCharacter = combatant.combatantType == CombatantType.Character
 
   def health = combatant.healthTracker
 

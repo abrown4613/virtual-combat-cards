@@ -32,7 +32,6 @@ trait DemoCompendium {
         case CombatantType.Character => CharacterHealthDefinition(hp)
       },
       initiative = init,
-      ctype = ctype,
       statBlock = "<html><body>" + name + "</body></html>"
     )
   }

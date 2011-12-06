@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
 /**
  * Health base definition for the combatant
- * @param totalHP The total Hitpoints
+ * @param totalHP The total Hit Points
  */
 abstract class HealthDefinition(val totalHP: Int) {
   val lowerBound: Int
   val hasTemporaryHP: Boolean
-  val ctype: CombatantType.Value
+  val combatantType: CombatantType.Value
 
   def status(tracker: HealthTracker): HealthStatus.Value = {
     if (tracker.deathStrikes == 3) HealthStatus.Dead
@@ -36,27 +35,27 @@ abstract class HealthDefinition(val totalHP: Int) {
 
 /**
  * Character health Definition, with means that this char will die at -bloodied, or has three strikes
- * @param totalHP The total Hitpoints
+ * @param totalHP The total Hit points
  */
 case class CharacterHealthDefinition(override val totalHP: Int) extends HealthDefinition(totalHP) {
   val lowerBound = -totalHP / 2
   val hasTemporaryHP = true
-  val ctype = CombatantType.Character
+  val combatantType = CombatantType.Character
 }
 
 /**
  * Monster health Definition, with means that this dies at 0 no strikes
- * @param totalHP The total Hitpoints
+ * @param totalHP The total Hit points
  */
 case class MonsterHealthDefinition(override val totalHP: Int) extends HealthDefinition(totalHP) {
   val lowerBound = 0
   val hasTemporaryHP = true
-  val ctype = CombatantType.Monster
+  val combatantType = CombatantType.Monster
 }
 
 case object MinionHealthDefinition extends HealthDefinition(1) {
   val lowerBound = 0
-  val ctype = CombatantType.Minion
+  val combatantType = CombatantType.Minion
   val hasTemporaryHP = false
 }
 
@@ -77,18 +76,17 @@ object HealthTracker {
 
   /**
    * Create a HealthTracker based on a HealthDefinition
-   * @param hdef Base health definition
+   * @param healthDefinition Base health definition
    */
-  def createTracker(hdef: HealthDefinition): HealthTracker = {
-    HealthTracker(hdef.totalHP, 0, 0, hdef)
+  def createTracker(healthDefinition: HealthDefinition): HealthTracker = {
+    HealthTracker(healthDefinition.totalHP, 0, 0, healthDefinition)
   }
 
   /**
-   * Create a HealthTracker based on a HealthDefinition
-   * @param hdef Base health definition
+   * Create tracker from type and hit points.
    */
-  private[common] def createTracker(ctype: CombatantType.Value, hp: Int): HealthTracker = {
-    ctype match {
+  private[common] def createTracker(combatantType: CombatantType.Value, hp: Int): HealthTracker = {
+    combatantType match {
       case CombatantType.Character => createTracker(CharacterHealthDefinition(hp))
       case CombatantType.Monster => createTracker(MonsterHealthDefinition(hp))
       case CombatantType.Minion => createTracker(MinionHealthDefinition)
