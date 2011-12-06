@@ -16,7 +16,8 @@
  */
 package vcc.dnd4e.tracker.common
 
-case class CombatantEntity(eid: String, name: String, healthDef: HealthDefinition, initiative: Int, ctype: CombatantType.Value, statBlock: String) {
-  override def toString: String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + ctype + ")"
-}
+case class CombatantEntity(eid: String, name: String, healthDef: HealthDefinition, initiative: Int, statBlock: String) {
+  override def toString: String = "CombatantEntity(" + eid + "," + name + "," + healthDef + "," + initiative + "," + combatantType + ")"
 
+  def combatantType: CombatantType.Value = healthDef.combatantType
+}

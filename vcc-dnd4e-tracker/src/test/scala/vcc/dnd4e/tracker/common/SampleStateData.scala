@@ -34,8 +34,8 @@ trait SampleStateData {
   val io2_0 = InitiativeOrderID(comb2, 0)
 
   //Val CombatantEntity
-  val entityPc1 = CombatantEntity(null, "Fighter", CharacterHealthDefinition(40), 2, CombatantType.Character, null)
-  val entityPc2 = CombatantEntity(null, "Mage", CharacterHealthDefinition(25), 4, CombatantType.Character, null)
-  val entityMinion = CombatantEntity(null, "Minion", MinionHealthDefinition, 1, CombatantType.Minion, null)
-  val entityMonster = CombatantEntity(null, "Monster", MonsterHealthDefinition(30), 1, CombatantType.Minion, null)
+  val entityPc1 = CombatantEntity(null, "Fighter", CharacterHealthDefinition(40), 2, null)
+  val entityPc2 = CombatantEntity(null, "Mage", CharacterHealthDefinition(25), 4, null)
+  val entityMinion = CombatantEntity(null, "Minion", MinionHealthDefinition, 1, null)
+  val entityMonster = CombatantEntity(null, "Monster", MonsterHealthDefinition(30), 1, null)
 }

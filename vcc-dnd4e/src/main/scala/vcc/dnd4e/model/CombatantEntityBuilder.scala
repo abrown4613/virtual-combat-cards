@@ -20,7 +20,6 @@ import vcc.dnd4e.compendium.{CombatantEntity => CompendiumCombatantEntity, Monst
 import vcc.dndi.app.CaptureTemplateEngine
 import vcc.infra.xtemplate.{MapDataSource}
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.compendium.{CombatantType => CompendiumCombatantType}
 
 object CombatantEntityBuilder {
 
@@ -29,6 +28,7 @@ object CombatantEntityBuilder {
    */
   def fromCompendiumCombatantEntity(comp: CompendiumCombatantEntity): CombatantEntity = {
     val healthDef: HealthDefinition = comp match {
+      case monster: MonsterEntity if(monster.hp.value == 1) => MinionHealthDefinition
       case monster: MonsterEntity => MonsterHealthDefinition(monster.hp.value)
       case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value)
       case s => throw new Exception("Unexpected Entity type: " + s)
@@ -36,14 +36,10 @@ object CombatantEntityBuilder {
     val statBlock = if (comp.statblock.isDefined) {
       comp.statblock.value
     } else {
-      val template = CaptureTemplateEngine.fetchClassTemplate(comp.classID.shortClassName())
+      val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(comp.classID.shortClassName())
       val dse = comp.asDataStoreEntity()
       template.render(new MapDataSource(dse.data, Map(), Map())).toString()
     }
-    CombatantEntity(comp.eid.asStorageString, comp.name.value, healthDef, comp.initiative.value, mapCombatantType(comp.combatantType), statBlock)
-  }
-
-  private def mapCombatantType(compendiumType: CompendiumCombatantType.Value): CombatantType.Value = {
-    CombatantType.withName(compendiumType.toString)
+    CombatantEntity(comp.eid.asStorageString, comp.name.value, healthDef, comp.initiative.value, statBlock)
   }
 }

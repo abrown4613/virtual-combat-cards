@@ -88,8 +88,8 @@ object CombatState {
     }
 
     def areAllied(combatState: CombatState, combA: CombatantID, combB: CombatantID): Boolean = {
-      val a = combatState.roster.entries(combA).definition.entity.ctype
-      val b = combatState.roster.entries(combB).definition.entity.ctype
+      val a = combatState.roster.entries(combA).combatantType
+      val b = combatState.roster.entries(combB).combatantType
       (a == CombatantType.Character && b == CombatantType.Character) || (a != CombatantType.Character && b != CombatantType.Character)
     }
 

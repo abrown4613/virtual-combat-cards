@@ -31,6 +31,8 @@ trait CombatantStateView {
   def comment: String
 
   def name: String = definition.entity.name
+
+  def combatantType = definition.entity.combatantType
 }
 
 /**

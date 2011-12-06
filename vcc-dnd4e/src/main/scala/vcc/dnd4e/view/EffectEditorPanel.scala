@@ -21,7 +21,7 @@ import vcc.util.swing._
 import vcc.dnd4e.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
-import vcc.dnd4e.tracker.common.{CombatantEntity, CombatantType}
+import vcc.dnd4e.tracker.common.CombatantEntity
 import vcc.dnd4e.domain.tracker.common.CombatantStateView
 
 class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel: Int) extends MigPanel("fillx,hidemode 3")
@@ -35,7 +35,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private var state:UnifiedSequenceTable = null
 
   private object TerrainCombatantStateView extends CombatantStateView {
-    private val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, CombatantType.Minion, null)
+    private val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, null)
 
     def definition: CombatantRosterDefinition = CombatantRosterDefinition(otherId, null, terrainDefinition)
 

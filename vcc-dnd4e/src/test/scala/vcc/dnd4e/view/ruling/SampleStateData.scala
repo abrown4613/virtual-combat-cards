@@ -19,8 +19,8 @@ package vcc.dnd4e.view.ruling
 import vcc.dnd4e.tracker.common._
 
 trait SampleStateData {
-  protected val goblinEntity = CombatantEntity(null, "Goblin", MonsterHealthDefinition(24), 0, CombatantType.Minion, null)
-  protected val pcEntity = CombatantEntity(null, "Fighter", CharacterHealthDefinition(40), 1, CombatantType.Character, null)
+  protected val goblinEntity = CombatantEntity(null, "Goblin", MonsterHealthDefinition(24), 0, null)
+  protected val pcEntity = CombatantEntity(null, "Fighter", CharacterHealthDefinition(40), 1, null)
   protected val combA = CombatantID("A")
   protected val ioiA0 = InitiativeOrderID(combA, 0)
   protected val combB = CombatantID("B")
