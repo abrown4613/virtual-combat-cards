@@ -36,35 +36,14 @@ object FileChooserHelper {
   /**
    * Filter files that are party. 
    */
-  val partyFilter = new FileNameExtensionFilter("XML Files", "peml", "xml")
+  val partyFilter = new FileNameExtensionFilter("Party Files", "peml", "xml")
+
+  val combatSaveFilter = new FileNameExtensionFilter("Combat Save Files", "vccsave")
 
   /**
    * Filter for DND4E file (.dnd4e)
    */
   val characterBuilderFilter = new FileNameExtensionFilter("Character Builder Files", "dnd4e")
-
-  protected def normalizeFileName(file: File, filter: FileFilter): File = {
-    filter match {
-      case `partyFilter` =>
-        val filename = file.getAbsolutePath
-        if (!filename.endsWith(".xml") && !filename.endsWith(".peml"))
-          new File(filename + ".peml")
-        else file
-    }
-  }
-
-  protected def confirmOverwrite(file: File): Option[File] = {
-    if (file.exists) {
-      val res = JOptionPane.showConfirmDialog(
-        null, "Are you sure you want to overwrite " + file.getAbsolutePath + "?",
-        "Overwrite File?", JOptionPane.YES_NO_OPTION)
-      if (res == JOptionPane.YES_OPTION) Some(file)
-      else None
-    } else
-      Some(file)
-  }
-
-  private def getWorkDirectory: File = lastDirectory
 
   /**
    * Open a Save Dialog, get file, and normalize name to add extension.
@@ -102,4 +81,37 @@ object FileChooserHelper {
     } else
       None
   }
+
+  private def normalizeFileName(file: File, filter: FileFilter): File = {
+    if (filter.isInstanceOf[FileNameExtensionFilter])
+      normalizeFilenameExtensionNotAllowed(file, filter.asInstanceOf[FileNameExtensionFilter].getExtensions.toList)
+    else
+      file
+  }
+
+  private def normalizeFilenameExtensionNotAllowed(file: File, extensions: List[String]): File = {
+    if (hasAllowedExtension(file, extensions))
+      file
+    else
+      new File(file.getAbsolutePath + "." + extensions(0))
+  }
+
+  private def hasAllowedExtension(file: File, extensions: List[String]): Boolean = {
+    val filename = file.getAbsolutePath
+    extensions.exists(ext => filename.endsWith("." + ext))
+  }
+
+  protected def confirmOverwrite(file: File): Option[File] = {
+    if (file.exists) {
+      val res = JOptionPane.showConfirmDialog(
+        null, "Are you sure you want to overwrite " + file.getAbsolutePath + "?",
+        "Overwrite File?", JOptionPane.YES_NO_OPTION)
+      if (res == JOptionPane.YES_OPTION) Some(file)
+      else None
+    } else
+      Some(file)
+  }
+
+  private def getWorkDirectory: File = lastDirectory
+
 }
