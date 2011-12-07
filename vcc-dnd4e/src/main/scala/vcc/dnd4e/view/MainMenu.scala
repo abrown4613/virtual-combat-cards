@@ -25,6 +25,7 @@ import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
 import vcc.util.swing.SwingHelper
+import vcc.dnd4e.application.Application
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties
@@ -58,6 +59,19 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     val file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
       PartyLoader.getInstance(director, Component.wrap(parent.peer.getRootPane)).loadToBattle(file.get)
+    }
+  })
+  fileMenu.contents += new Separator()
+  fileMenu.contents += new MenuItem(Action("Save combat ...") {
+    val file = FileChooserHelper.chooseSaveFile(this.peer, FileChooserHelper.combatSaveFilter)
+    if (file.isDefined) {
+      Application.getInstance.saveStateToFile(file.get)
+    }
+  })
+  fileMenu.contents += new MenuItem(Action("Load combat ...") {
+    val file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.combatSaveFilter)
+    if (file.isDefined) {
+      Application.getInstance.loadStateFile(file.get)
     }
   })
   fileMenu.contents += new Separator()
