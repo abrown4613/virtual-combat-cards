@@ -22,6 +22,7 @@ import vcc.dnd4e.tracker.common.CombatState
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
 import vcc.tracker.Tracker
+import vcc.dnd4e.application.Application
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -68,10 +69,10 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
   private val sequenceBuilder = new UnifiedSequenceTable.Builder()
   private val rulingProvider = new DialogRulingProvider()
   val rules = new CombatStateRules()
-
+  
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
-  tracker.addObserver(new Tracker.Observer[CombatState] {
+  Application.initialize(tracker, new Tracker.Observer[CombatState] {
     def stateUpdated(state: CombatState) {
       logger.debug("[NT] -> " + state)
       val newState = CombatStateViewAdapterBuilder.buildView(state)

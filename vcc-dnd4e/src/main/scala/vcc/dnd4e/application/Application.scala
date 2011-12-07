@@ -30,6 +30,10 @@ object Application {
 
   def initialize(observer: Tracker.Observer[CombatState]) {
     val tracker = new Tracker[CombatState](new InterimController())
+    initialize(tracker, observer)
+  }
+
+  def initialize(tracker: Tracker[CombatState], observer: Tracker.Observer[CombatState]) {
     tracker.addObserver(observer)
     tracker.initializeState(CombatState.empty)
     theInstance = new Application(tracker)
@@ -39,10 +43,10 @@ object Application {
 
 class Application(tracker: Tracker[CombatState]) extends Tracker.Observer[CombatState] {
 
-  private var state:CombatState = CombatState.empty
+  private var state: CombatState = CombatState.empty
 
   tracker.addObserver(this)
-  
+
   def loadStateFile(fileToSave: File) {
     val f = new CombatSaveFile()
     val state = f.load(new FileInputStream(fileToSave))
