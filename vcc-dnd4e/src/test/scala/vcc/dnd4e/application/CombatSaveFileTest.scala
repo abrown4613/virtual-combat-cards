@@ -18,49 +18,79 @@ package vcc.dnd4e.application
 
 import org.specs2.SpecificationWithJUnit
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import vcc.dnd4e.tracker.event.{AddCombatantEvent, SetCombatCommentEvent}
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.tracker.common._
+import vcc.tracker.Event
+import vcc.dnd4e.tracker.event._
 
 class CombatSaveFileTest extends SpecificationWithJUnit {
+  private val combA = CombatantID("A")
+  private val comb1 = CombatantID("1")
+  private val emptyState = CombatState.empty
+
   def is = "CombatSaveFile".title ^
-    "save empty state" ! saveEmptyState ^
-    "save state with comment" ! saveStateWithComment ^
-    "save state with multiple combatants" ! saveStateWithCombatant ^
+    baseCases ^
+    healthCases ^
     end
 
-  private def saveEmptyState = {
-    val combatState = CombatState.empty
-    val loadedCombatState: CombatState = storeAndLoadToMemory(combatState)
-    loadedCombatState must_== combatState
+  def healthCases = {
+    val cases = List(
+      testCase("with damage", buildState(stateWithCombatant(), ApplyDamageEvent(comb1, 10))),
+      testCase("with temp hp", buildState(stateWithCombatant(), SetTemporaryHitPointsEvent(combA, 7))),
+      testCase("with dead", buildState(stateWithCombatant(), ApplyDamageEvent(combA, 100))),
+      testCase("with reverted death", buildState(stateWithCombatant(), ApplyDamageEvent(combA, 100), RevertDeathEvent(combA)))
+    )
+    "heath cases" ^ cases ^ endp
   }
 
-  private def saveStateWithComment = {
-    val combatState = CombatState.empty.transitionWith(List(SetCombatCommentEvent(Some("memorable"))))
-    val loadedCombatState: CombatState = storeAndLoadToMemory(combatState)
-    loadedCombatState must_== combatState
+  def baseCases = {
+    val cases = List(
+      testCase("empty state", emptyState),
+      testCase("combat comment", buildState(emptyState, SetCombatCommentEvent(Some("memorable")))),
+      testCase("multiple combatants", stateWithCombatant()),
+      testCase("combatants with comment",
+        buildState(stateWithCombatant(), SetCombatantCommentEvent(combA, "a comment"))),
+      testCase("base case", stateWithCombatant())
+    )
+    "base cases" ^ cases ^ endp
   }
 
-  private def saveStateWithCombatant = {
-    val entity1 = CombatantEntity(EntityID.generateRandom().asStorageString, "Fighter", CharacterHealthDefinition(30), 5, "<html><body>block</body></html>")
-    val entity2 = CombatantEntity(EntityID.generateRandom().asStorageString, "Goblin", MonsterHealthDefinition(25), 3, "<html><body>monster</body></html>")
-    val entity3 = CombatantEntity(EntityID.generateRandom().asStorageString, "Goblin-mini", MinionHealthDefinition, 1, "<html><body>minion</body></html>")
-    val combatState = CombatState.empty.transitionWith(List(
-      AddCombatantEvent(Some(CombatantID("A")), "alias", entity1),
-      AddCombatantEvent(None, null, entity2),
-      AddCombatantEvent(None, "boss", entity3)))
+  private def testCase(testDescription: String, combatState: CombatState) = {
     val loadedCombatState = storeAndLoadToMemory(combatState)
-    loadedCombatState must_== combatState
+    testDescription ! (loadedCombatState must_== combatState)
+  }
+
+  private def buildState(baseState: CombatState, events: Event[CombatState]*): CombatState = {
+    baseState.transitionWith(events.toList)
   }
 
   private def storeAndLoadToMemory(combatState: CombatState): CombatState = {
     loadFromByteArray(storeToByteArray(combatState))
   }
 
+  private def stateWithCombatant(): CombatState = {
+    val entity1 = createCombatantEntity("Fighter", CharacterHealthDefinition(30), 5)
+    val entity2 = createCombatantEntity("Goblin", MonsterHealthDefinition(25), 3)
+    val entity3 = createCombatantEntity("Goblin-mini", MinionHealthDefinition, 1)
+    val combatState = CombatState.empty.transitionWith(List(
+      AddCombatantEvent(Some(combA), "alias", entity1),
+      AddCombatantEvent(None, null, entity2),
+      AddCombatantEvent(None, "boss", entity3)))
+    combatState
+  }
+
+  private def createCombatantEntity(name: String, healthDefinition: HealthDefinition, initiativeBonus: Int) = {
+    CombatantEntity(
+      EntityID.generateRandom().asStorageString,
+      name, healthDefinition, initiativeBonus,
+      "<html><body>" + name + "</body></html>")
+  }
+
   private def storeToByteArray(combatState: CombatState): Array[Byte] = {
     val s = new CombatSaveFile();
     val os = new ByteArrayOutputStream();
     s.save(os, combatState)
+    println(os.toString)
     os.toByteArray
   }
 
