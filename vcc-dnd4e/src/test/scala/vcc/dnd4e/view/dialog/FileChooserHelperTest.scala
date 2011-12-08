@@ -48,13 +48,13 @@ class FileChooserHelperTest extends UISpecTestCase {
   }
 
   def testShowSaveDialog_uponSelectingExistentFilePromptForOverwrite() {
-    val preExistentFile = new File("file.xml")
+    val preExistentFile = new File("file2.peml")
     runSaveOperationWithOverwrite(preExistentFile, "yes")
     validateReturnedAbsoluteFilename(preExistentFile)
   }
 
   def testShowSaveDialog_uponSelectingExistentFilePromptForOverwriteButNegate() {
-    val preExistentFile = new File("file.xml")
+    val preExistentFile = new File("file2.peml")
     preExistentFile.createNewFile()
     runSaveOperationWithOverwrite(preExistentFile, "No")
     Assert.assertEquals(None, result)
