@@ -39,15 +39,13 @@ class CombatSaveFile {
 
   def save(outputStream: OutputStream, combatState: CombatState) {
     val writer: Writer = new PrintWriter(outputStream)
-    val commentNode: NodeSeq = breakLine(combatState.comment.map(c => createSimpleDataNode("comment", c)).toList)
-    val topLevel = lineBreak :: commentNode :: serializeCombatants(combatState.roster) :: Nil
-    XML.write(writer, (<CombatSave>
-      {topLevel}
-    </CombatSave>), "UTF-8", true, null)
+    val commentNode: NodeSeq = formatPretty(tabStop1, combatState.comment.map(c => createSimpleDataNode("comment", c)).toList)
+    val topLevel = lineBreak :: commentNode :: serializeRoster(combatState.roster) :: Nil
+    XML.write(writer, createSequenceNode("combat-state",topLevel.flatMap(x => x)), "UTF-8", true, null)
     writer.flush()
   }
 
-  private def createHealthDefinition(healthDefinition: HealthDefinition): Elem = {
+  private def serializeHealthDefinition(healthDefinition: HealthDefinition): Elem = {
       <health-definition type={healthDefinition.combatantType.toString} hp={healthDefinition.totalHP.toString}/>
   }
 
@@ -56,61 +54,66 @@ class CombatSaveFile {
       createSimpleDataNode("entity-id", entity.eid),
       createSimpleDataNode("name", entity.name),
       createSimpleDataNode("initiative", entity.initiative.toString),
-      createHealthDefinition(entity.healthDef),
+      serializeHealthDefinition(entity.healthDef),
       createSimpleDataNode("statblock", entity.statBlock))
     createSequenceNode("entity", lineBreak ++ formatPretty(tabStop3, nodes) ++ tabStop2)
   }
 
-  private def formatPretty(indent: Text, nodes: Seq[Node]): Seq[Node] = {
-    nodes.flatMap(node => indent ++ node ++ lineBreak)
+  private def serializeHealthDelta(delta: HealthTrackerDelta): Elem = {
+      <health-delta damage={delta.damage.toString} temporary={delta.temporaryHP.toString} death-strikes={delta.deathStrikes.toString}/>
   }
 
-  private def serializeCombatant(values: Iterable[Combatant]): Seq[Node] = {
-    values.map(combatant => {
-      val seq = lineBreak ++ tabStop2 ++ serializeCombatantEntity(combatant.definition.entity) ++ lineBreak ++ tabStop1
-      val baseNode = createSequenceNode("combatant", seq);
-
-      if (combatant.definition.alias != null)
-        baseNode % Attribute("id", Text(combatant.definition.cid.id), Null) % Attribute("alias", Text(combatant.definition.alias), Null)
-      else
-        baseNode % Attribute("id", Text(combatant.definition.cid.id), Null)
-    }).toSeq
+  private def serializeCombatants(values: Iterable[Combatant]): Seq[Node] = {
+    values.map(combatant => serializeCombatant(combatant)).toSeq
   }
 
-  private def serializeCombatants(roster: Roster[Combatant]): NodeSeq = {
+  private def serializeCombatant(combatant:Combatant) = {
+    val parts = Seq(
+      serializeCombatantEntity(combatant.definition.entity),
+      createSimpleDataNode("comment", combatant.comment),
+      serializeHealthDelta(combatant.health.getDelta))
+
+    val baseNode = createSequenceNode("combatant", lineBreak ++ formatPretty(tabStop2, parts) ++ tabStop1);
+    val aliasAttribute = attributeOrNull("alias", combatant.definition.alias)
+    baseNode % attributeOrNull("id", combatant.definition.cid.id) % aliasAttribute
+  }
+
+  private def serializeRoster(roster: Roster[Combatant]): NodeSeq = {
     val values = roster.entries.values
-    createSequenceNode("roster", lineBreak ++ formatPretty(tabStop1, serializeCombatant(values)))
-  }
-
-  private def breakLine(nodeSeq: NodeSeq): NodeSeq = {
-    if (!nodeSeq.isEmpty) tabStop1 ++ nodeSeq ++ lineBreak
-    else nodeSeq
+    createSequenceNode("roster", lineBreak ++ formatPretty(tabStop1, serializeCombatants(values)))
   }
 
   private def loadRoster(rosterNode: Node): Roster[Combatant] = {
-    val rosterMap: Map[CombatantID, Combatant] =
-      Map(rosterNode \ "combatant" map ({
-        combatantNode: Node =>
-          val combId = CombatantID(combatantNode \ "@id" text)
-          val normAlias = getOptionalTextNode(combatantNode, "@alias")
-          combId ->
-            Combatant(CombatantRosterDefinition(combId, normAlias,
-              parseCombatantEntity(firstMatchingChild(combatantNode, "entity"))))
-      }): _*)
+    def loadCombatantNode(combId: CombatantID, normAlias: String, combatantNode: Node): Combatant = {
+      val c = Combatant(CombatantRosterDefinition(combId, normAlias,
+        parseCombatantEntity(firstMatchingChild(combatantNode, "entity"))))
+      val healthDeltaNode = firstMatchingChild(combatantNode, "health-delta")
+      c.copy(
+        comment = getOptionalTextNode(combatantNode, "comment"),
+        health = c.health.applyDelta(loadHealthDelta(healthDeltaNode))
+      )
+    }
+
+    def loadRosterEntry(combatantNode: Node): (CombatantID, Combatant) = {
+      val combId = CombatantID(combatantNode \ "@id" text)
+      val normAlias = getOptionalTextNode(combatantNode, "@alias")
+      combId -> loadCombatantNode(combId, normAlias, combatantNode)
+    }
+
+    def loadHealthDelta(healthDeltaNode: Node): HealthTrackerDelta = {
+      HealthTrackerDelta(
+        findTagInNodeAsInt(healthDeltaNode, "@damage"),
+        findTagInNodeAsInt(healthDeltaNode, "@temporary"),
+        findTagInNodeAsInt(healthDeltaNode, "@death-strikes"))
+    }
+
+    val rosterMap: Map[CombatantID, Combatant] = Map(rosterNode \ "combatant" map (loadRosterEntry): _*)
     Roster[Combatant](Combatant.RosterFactory, rosterMap)
-  }
-
-  private def firstMatchingChild(node: Node, tagName: String): Node = (node \ tagName)(0)
-
-  private def getOptionalTextNode(baseNode: Node, tagName: String): String = {
-    val search = baseNode \ tagName
-    if (search.isEmpty) null
-    else search.text
   }
 
   private def parseHealthDefinition(healthNode: Node): HealthDefinition = {
     val combatantType = (healthNode \ "@type" text)
-    val hp = (healthNode \ "@hp" text).toInt
+    val hp = findTagInNodeAsInt(healthNode, "@hp")
     combatantType match {
       case "Character" => CharacterHealthDefinition(hp)
       case "Monster" => MonsterHealthDefinition(hp)
@@ -122,8 +125,24 @@ class CombatSaveFile {
     CombatantEntity(combatantNode \ "entity-id" text,
       combatantNode \ "name" text,
       parseHealthDefinition(firstMatchingChild(combatantNode, "health-definition")),
-      (combatantNode \ "initiative" text).toInt,
+      findTagInNodeAsInt(combatantNode, "initiative"),
       combatantNode \ "statblock" text)
+  }
+
+  private def formatPretty(indent: Text, nodes: Seq[Node]): Seq[Node] = {
+    nodes.flatMap(node => indent ++ node ++ lineBreak)
+  }
+
+  private def firstMatchingChild(node: Node, tagName: String): Node = (node \ tagName)(0)
+
+  private def getOptionalTextNode(baseNode: Node, tagName: String): String = {
+    val search = baseNode \ tagName
+    if (search.isEmpty) null
+    else search.text
+  }
+
+  private def findTagInNodeAsInt(node: Node, tagName: String): Int = {
+    (node \ tagName).text.toInt
   }
 
   private def createSimpleDataNode(label: String, text: String): Elem = {
@@ -134,4 +153,10 @@ class CombatSaveFile {
     Elem(null, label, Null, TopScope, nodes: _*)
   }
 
+  private def attributeOrNull(identifier: String, value: String): MetaData = {
+    if(value !=null)
+      Attribute(identifier, Text(value), Null)
+    else
+      Null
+  }
 }
