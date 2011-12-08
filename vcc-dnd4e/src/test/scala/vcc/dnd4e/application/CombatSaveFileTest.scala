@@ -17,26 +17,40 @@
 package vcc.dnd4e.application
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dnd4e.tracker.common.CombatState
-import java.io.{InputStream, ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
-import vcc.dnd4e.tracker.event.SetCombatCommentEvent
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import vcc.dnd4e.tracker.event.{AddCombatantEvent, SetCombatCommentEvent}
+import vcc.infra.datastore.naming.EntityID
+import vcc.dnd4e.tracker.common._
 
 class CombatSaveFileTest extends SpecificationWithJUnit {
   def is = "CombatSaveFile".title ^
     "save empty state" ! saveEmptyState ^
     "save state with comment" ! saveStateWithComment ^
+    "save state with multiple combatants" ! saveStateWithCombatant ^
     end
 
-  def saveEmptyState = {
+  private def saveEmptyState = {
     val combatState = CombatState.empty
     val loadedCombatState: CombatState = storeAndLoadToMemory(combatState)
-    combatState must_== loadedCombatState
+    loadedCombatState must_== combatState
   }
 
   private def saveStateWithComment = {
     val combatState = CombatState.empty.transitionWith(List(SetCombatCommentEvent(Some("memorable"))))
     val loadedCombatState: CombatState = storeAndLoadToMemory(combatState)
-    combatState must_== loadedCombatState
+    loadedCombatState must_== combatState
+  }
+
+  private def saveStateWithCombatant = {
+    val entity1 = CombatantEntity(EntityID.generateRandom().asStorageString, "Fighter", CharacterHealthDefinition(30), 5, "<html><body>block</body></html>")
+    val entity2 = CombatantEntity(EntityID.generateRandom().asStorageString, "Goblin", MonsterHealthDefinition(25), 3, "<html><body>monster</body></html>")
+    val entity3 = CombatantEntity(EntityID.generateRandom().asStorageString, "Goblin-mini", MinionHealthDefinition, 1, "<html><body>minion</body></html>")
+    val combatState = CombatState.empty.transitionWith(List(
+      AddCombatantEvent(Some(CombatantID("A")), "alias", entity1),
+      AddCombatantEvent(None, null, entity2),
+      AddCombatantEvent(None, "boss", entity3)))
+    val loadedCombatState = storeAndLoadToMemory(combatState)
+    loadedCombatState must_== combatState
   }
 
   private def storeAndLoadToMemory(combatState: CombatState): CombatState = {
@@ -44,14 +58,14 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
   }
 
   private def storeToByteArray(combatState: CombatState): Array[Byte] = {
-    val s: CombatSaveFile = new CombatSaveFile();
+    val s = new CombatSaveFile();
     val os = new ByteArrayOutputStream();
     s.save(os, combatState)
     os.toByteArray
   }
 
   private def loadFromByteArray(inputBytes: Array[Byte]): CombatState = {
-    val is: InputStream = new ByteArrayInputStream(inputBytes)
+    val is = new ByteArrayInputStream(inputBytes)
     val loadedCombatState: CombatState = new CombatSaveFile().load(is)
     loadedCombatState
   }
