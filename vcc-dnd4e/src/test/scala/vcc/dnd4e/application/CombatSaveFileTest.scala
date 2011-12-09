@@ -26,11 +26,13 @@ import vcc.dnd4e.tracker.event._
 class CombatSaveFileTest extends SpecificationWithJUnit {
   private val combA = CombatantID("A")
   private val comb1 = CombatantID("1")
+  private val comb2 = CombatantID("2")
   private val emptyState = CombatState.empty
 
   def is = "CombatSaveFile".title ^
     baseCases ^
     healthCases ^
+    initiativeOrder ^
     end
 
   def healthCases = {
@@ -53,6 +55,24 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
       testCase("base case", stateWithCombatant())
     )
     "base cases" ^ cases ^ endp
+  }
+
+  def initiativeOrder = {
+    def addToOrder(comb: CombatantID, bonus: Int, rolls: Int*) =
+      AddCombatantToOrderEvent(InitiativeDefinition(comb, bonus, rolls.toList))
+
+    val order1A2 = buildState(stateWithCombatant(), addToOrder(combA, 3, 10), addToOrder(comb1, 5, 15), addToOrder(comb2, 6, 8))
+
+    val cases = List(
+      testCase("set initiative", buildState(stateWithCombatant(), addToOrder(combA, 3, 10))),
+      testCase("set initiative complex", buildState(stateWithCombatant(), addToOrder(combA, 3, 10, 5), addToOrder(comb1, 5, 1))),
+      testCase("all tied", buildState(stateWithCombatant(), addToOrder(combA, 3, 10, 10), addToOrder(comb1, 3, 10), addToOrder(comb2, 3, 10))),
+      testCase("order 1, A, 2", order1A2),
+      testCase("order 1, A, 2, start", buildState(order1A2, StartCombatEvent)),
+      testCase("order 1, A, 2, start, reorder", buildState(order1A2, StartCombatEvent,
+        MoveBeforeOtherEvent(InitiativeOrderID(comb2, 0), InitiativeOrderID(combA, 0))))
+    )
+    "initiative order cases" ^ cases ^ endp
   }
 
   private def testCase(testDescription: String, combatState: CombatState) = {
@@ -90,7 +110,6 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
     val s = new CombatSaveFile();
     val os = new ByteArrayOutputStream();
     s.save(os, combatState)
-    println(os.toString)
     os.toByteArray
   }
 
