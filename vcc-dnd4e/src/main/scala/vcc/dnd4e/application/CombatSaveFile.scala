@@ -20,6 +20,8 @@ import java.io._
 import scala.xml._
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.util.{ReorderedListBuilderCompare, ReorderedListBuilder}
+import vcc.dnd4e.tracker.common.Effect.Condition
+import vcc.dnd4e.tracker.common.Duration.RoundBound
 
 class CombatSaveFile {
 
@@ -73,13 +75,45 @@ class CombatSaveFile {
     val parts = Seq(
       serializeCombatantEntity(combatant.definition.entity),
       createSimpleDataNode("comment", combatant.comment),
-      serializeHealthDelta(combatant.health.getDelta))
+      serializeHealthDelta(combatant.health.getDelta)) ++  serializeEffects(combatant)
 
     val baseNode = createSequenceNode("combatant", lineBreak ++ indentNodes(tabStop2, parts) ++ tabStop1);
     val aliasAttribute = attributeOrNull("alias", combatant.definition.alias)
     baseNode % attributeOrNull("id", combatant.definition.cid.id) % aliasAttribute
   }
+  
+  private def serializeEffects(combatant: Combatant):NodeSeq = {
+    combatant.effects.effects.map(serializeEffect)
+  }
+  
+  private def serializeEffect(effect: Effect):Node = {
 
+    def serializeCondition(condition: Condition): Elem = {
+      condition match {
+        case Condition.Generic(description, beneficial) =>
+          <generic beneficial={beneficial.toString}>{description}</generic>
+        case Condition.Mark(marker, permanent) =>
+          <mark by={marker.id} permanent={permanent.toString}/>
+      }
+    }
+
+    def serializeDuration(duration:Duration): Seq[Attribute] = {
+      duration match {
+        case RoundBound(ioi, limit) => Seq(
+          Attribute(null, "limit-cid", ioi.combId.id, Null),
+          Attribute(null, "limit-seq", ioi.seq.toString, Null),
+          Attribute(null, "limit", limit.toString, Null))
+        case staticDuration => Seq(Attribute(null, "duration", staticDuration.shortDescription, Null))
+      }
+    }
+
+    val effectElem = (<effect seq={effect.effectId.seq.toString}
+            source={effect.source.id}
+            beneficial={effect.condition.beneficial.toString}>{serializeCondition(effect.condition)}</effect>)
+    val durationAttributes = serializeDuration(effect.duration)
+    durationAttributes.foldLeft(effectElem)(_ % _ )
+  }
+  
   private def serializeRoster(roster: Roster[Combatant]): NodeSeq = {
     val values = roster.entries.values
     createSequenceNode("roster", lineBreak ++ indentNodes(tabStop1, serializeCombatants(values)))
@@ -122,12 +156,13 @@ class CombatSaveFile {
       val healthDeltaNode = firstMatchingChild(combatantNode, "health-delta")
       c.copy(
         comment = getOptionalTextNode(combatantNode, "comment"),
-        health = c.health.applyDelta(loadHealthDelta(healthDeltaNode))
+        health = c.health.applyDelta(loadHealthDelta(healthDeltaNode)),
+        effects = EffectList(combId, loadEffects(combId, combatantNode \ "effect"))
       )
     }
 
     def loadRosterEntry(combatantNode: Node): (CombatantID, Combatant) = {
-      val combId = CombatantID(combatantNode \ "@id" text)
+      val combId = findCombatantID(combatantNode,"@id")
       val normAlias = getOptionalTextNode(combatantNode, "@alias")
       combId -> loadCombatantNode(combId, normAlias, combatantNode)
     }
@@ -139,16 +174,52 @@ class CombatSaveFile {
         findTagInNodeAsInt(healthDeltaNode, "@death-strikes"))
     }
 
+    def loadEffects(combId: CombatantID, nodes: NodeSeq): List[Effect] = {
+      def extractCondition(conditionNode: Node): Condition = {
+        conditionNode.label match {
+          case "generic" =>
+            Condition.Generic(conditionNode.child.text, (conditionNode \ "@beneficial" text) == "true")
+          case "mark" =>
+            Condition.Mark(findCombatantID(conditionNode, "@by"), (conditionNode \ "@permanent" text) == "true")
+        }
+      }
+
+      def loadDuration(effectNode:Node):Duration = {
+        firstMatchingChildOption(effectNode, "@duration") match {
+          case Some(durationAttribute) =>
+            Duration.staticDurationFromDescription(durationAttribute.text).get
+          case None =>
+            extractRoundBoundDurationFromNode(effectNode)
+        }
+      }
+
+      def extractRoundBoundDurationFromNode(effectNode: Node): Duration.RoundBound = {
+         RoundBound(
+           extractInitiativeOrderID(effectNode, "limit-"),
+           Duration.Limit.withName(getOptionalTextNode(effectNode, "@limit")))
+       }
+
+      def extractEffect(effectNode: Node): Effect = {
+        Effect(
+          EffectID(combId, findTagInNodeAsInt(effectNode, "@seq")),
+          findCombatantID(effectNode, "@source"),
+          extractCondition(effectNode.child(0)),
+          loadDuration(effectNode))
+      }
+
+      nodes.map(extractEffect).toList
+    }
+
     val rosterMap: Map[CombatantID, Combatant] = Map(rosterNode \ "combatant" map (loadRosterEntry): _*)
     Roster[Combatant](Combatant.RosterFactory, rosterMap)
   }
 
   private def extractInitiativeOrderID(node: Node): InitiativeOrderID = {
-    InitiativeOrderID(CombatantID(node \ "@cid" text), findTagInNodeAsInt(node, "@seq"))
+    InitiativeOrderID(findCombatantID(node , "@cid" ), findTagInNodeAsInt(node, "@seq"))
   }
 
   private def extractInitiativeOrderID(node: Node, prefix: String): InitiativeOrderID = {
-    InitiativeOrderID(CombatantID(node \ ("@" + prefix + "cid") text), findTagInNodeAsInt(node, ("@" + prefix + "seq")))
+    InitiativeOrderID(findCombatantID(node, ("@" + prefix + "cid")), findTagInNodeAsInt(node, ("@" + prefix + "seq")))
   }
 
   private def loadReorders(reorderNodes: NodeSeq): List[(InitiativeOrderID, InitiativeOrderID)] = {
@@ -239,6 +310,11 @@ class CombatSaveFile {
   private def findTagInNodeAsInt(node: Node, tagName: String): Int = {
     (node \ tagName).text.toInt
   }
+  
+  private def findCombatantID(node:Node, tagName: String):CombatantID = {
+    CombatantID(node \ tagName text)
+  }
+
 
   private def createSimpleDataNode(label: String, text: String): Elem = {
     Elem(null, label, Null, TopScope, Text(text))
