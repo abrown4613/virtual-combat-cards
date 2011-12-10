@@ -33,6 +33,7 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
     baseCases ^
     healthCases ^
     initiativeOrder ^
+    effectHandling ^
     end
 
   def healthCases = {
@@ -73,6 +74,43 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
         MoveBeforeOtherEvent(InitiativeOrderID(comb2, 0), InitiativeOrderID(combA, 0))))
     )
     "initiative order cases" ^ cases ^ endp
+  }
+
+  private def effectHandling = {
+    import vcc.dnd4e.tracker.common.Effect._
+
+    def makeEventWithDuration(duration: Duration): AddEffectEvent = {
+      AddEffectEvent(comb1, combA, Condition.Mark(comb1, true), duration)
+    }
+
+    def makeRoundBoundDuration(limit: Duration.Limit.Value): Duration = {
+      Duration.RoundBound(InitiativeOrderID(CombatantID(limit.id.toString), limit.id), limit)
+    }
+
+    val event1 = AddEffectEvent(combA, comb1, Condition.Generic("effect", true), Duration.EndOfEncounter)
+    val event2 = AddEffectEvent(combA, comb2, Condition.Generic("bad effect", false), Duration.EndOfEncounter)
+    val event3 = AddEffectEvent(combA, comb2, Condition.Mark(comb2, false), Duration.EndOfEncounter)
+    val event4 = AddEffectEvent(comb1, combA, Condition.Mark(comb1, true), Duration.EndOfEncounter)
+    val event5 = makeEventWithDuration(Duration.Stance)
+
+    val durations = Duration.allStaticDurations ++
+      Seq(
+        Duration.RoundBound(InitiativeOrderID(combA, 1), Duration.Limit.EndOfNextTurn),
+        Duration.RoundBound(InitiativeOrderID(comb2, 2), Duration.Limit.EndOfTurnSustain)) ++
+      Duration.Limit.values.map(makeRoundBoundDuration)
+
+    val cases = List(
+      testCase("Generic beneficial", buildState(stateWithCombatant(), event1)),
+      testCase("both genereic events", buildState(stateWithCombatant(), event1, event2)),
+      testCase("mark", buildState(stateWithCombatant(), event3)),
+      testCase("both mark types", buildState(stateWithCombatant(), event3, event4)),
+      testCase("stance duration", buildState(stateWithCombatant(), event5))
+    )
+
+    "effect type cases" ^
+      cases ^
+      durations.map(d => testCase(d + "duration", buildState(stateWithCombatant(), makeEventWithDuration(d)))) ^
+      endp
   }
 
   private def testCase(testDescription: String, combatState: CombatState) = {
