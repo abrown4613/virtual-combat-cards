@@ -49,8 +49,19 @@ class CombatSaveFile {
     writer.flush()
   }
 
-  private def serializeHealthDefinition(healthDefinition: HealthDefinition): Elem = {
-      <health-definition type={healthDefinition.combatantType.toString} hp={healthDefinition.totalHP.toString}/>
+  private def serializeCombatants(values: Iterable[Combatant]): Seq[Node] = {
+    values.map(combatant => serializeCombatant(combatant)).toSeq
+  }
+
+  private def serializeCombatant(combatant: Combatant) = {
+    val parts = Seq(
+      serializeCombatantEntity(combatant.definition.entity),
+      createSimpleDataNode("comment", combatant.comment),
+      serializeHealthDelta(combatant.health.getDelta)) ++ serializeEffects(combatant)
+
+    val baseNode = createSequenceNode("combatant", lineBreak ++ indentNodes(tabStop2, parts) ++ tabStop1);
+    val aliasAttribute = attributeOrNull("alias", combatant.definition.alias)
+    baseNode % attributeOrNull("id", combatant.definition.cid.toXMLNotation) % aliasAttribute
   }
 
   private def serializeCombatantEntity(entity: CombatantEntity) = {
@@ -63,90 +74,59 @@ class CombatSaveFile {
     createSequenceNode("entity", lineBreak ++ indentNodes(tabStop3, nodes) ++ tabStop2)
   }
 
+  private def serializeHealthDefinition(healthDefinition: HealthDefinition): Elem = {
+      <health-definition type={healthDefinition.combatantType.toString} hp={healthDefinition.totalHP.toString}/>
+  }
+
   private def serializeHealthDelta(delta: HealthTrackerDelta): Elem = {
-      <health-delta damage={delta.damage.toString} temporary={delta.temporaryHP.toString} death-strikes={delta.deathStrikes.toString}/>
+      <health-delta damage={delta.damage.toString}
+                    temporary={delta.temporaryHP.toString}
+                    death-strikes={delta.deathStrikes.toString}/>
   }
 
-  private def serializeCombatants(values: Iterable[Combatant]): Seq[Node] = {
-    values.map(combatant => serializeCombatant(combatant)).toSeq
-  }
-
-  private def serializeCombatant(combatant: Combatant) = {
-    val parts = Seq(
-      serializeCombatantEntity(combatant.definition.entity),
-      createSimpleDataNode("comment", combatant.comment),
-      serializeHealthDelta(combatant.health.getDelta)) ++  serializeEffects(combatant)
-
-    val baseNode = createSequenceNode("combatant", lineBreak ++ indentNodes(tabStop2, parts) ++ tabStop1);
-    val aliasAttribute = attributeOrNull("alias", combatant.definition.alias)
-    baseNode % attributeOrNull("id", combatant.definition.cid.id) % aliasAttribute
-  }
-  
-  private def serializeEffects(combatant: Combatant):NodeSeq = {
+  private def serializeEffects(combatant: Combatant): NodeSeq = {
     combatant.effects.effects.map(serializeEffect)
   }
-  
-  private def serializeEffect(effect: Effect):Node = {
 
+  private def serializeEffect(effect: Effect): Node = {
     def serializeCondition(condition: Condition): Elem = {
       condition match {
         case Condition.Generic(description, beneficial) =>
-          <generic beneficial={beneficial.toString}>{description}</generic>
+          createSimpleDataNode("generic", description) % attributeOrNull("beneficial", beneficial.toString)
         case Condition.Mark(marker, permanent) =>
-          <mark by={marker.id} permanent={permanent.toString}/>
+            <mark by={marker.toXMLNotation} permanent={permanent.toString}/>
       }
     }
 
-    def serializeDuration(duration:Duration): Seq[Attribute] = {
+    def serializeDuration(duration: Duration): Seq[Attribute] = {
       duration match {
         case RoundBound(ioi, limit) => Seq(
-          Attribute(null, "limit-cid", ioi.combId.id, Null),
-          Attribute(null, "limit-seq", ioi.seq.toString, Null),
+          Attribute(null, "limit-order-id", ioi.toXMLNotation, Null),
           Attribute(null, "limit", limit.toString, Null))
         case staticDuration => Seq(Attribute(null, "duration", staticDuration.shortDescription, Null))
       }
     }
 
-    val effectElem = (<effect seq={effect.effectId.seq.toString}
-            source={effect.source.id}
-            beneficial={effect.condition.beneficial.toString}>{serializeCondition(effect.condition)}</effect>)
-    val durationAttributes = serializeDuration(effect.duration)
-    durationAttributes.foldLeft(effectElem)(_ % _ )
+    val effectElem = createSequenceNode("effect", serializeCondition(effect.condition))
+    val durationAttributes = serializeDuration(effect.duration) ++ Seq(
+      attributeOrNull("effect-number", effect.effectId.seq.toString),
+      attributeOrNull("source", effect.source.toXMLNotation))
+    durationAttributes.foldLeft(effectElem)(_ % _)
   }
-  
+
   private def serializeRoster(roster: Roster[Combatant]): NodeSeq = {
     val values = roster.entries.values
     createSequenceNode("roster", lineBreak ++ indentNodes(tabStop1, serializeCombatants(values)))
   }
 
-  def serializeReorder(reorderList: List[(InitiativeOrderID, InitiativeOrderID)]): Seq[Node] = {
-    for ((who, whom) <- reorderList) yield {
-        <reorder who-cid={who.combId.id} who-seq={who.seq.toString}
-                 whom-cid={whom.combId.id} whom-seq={whom.seq.toString}/>
+  private def parseHealthDefinition(healthNode: Node): HealthDefinition = {
+    val combatantType = (healthNode \ "@type" text)
+    val hp = findTagInNodeAsInt(healthNode, "@hp")
+    combatantType match {
+      case "Character" => CharacterHealthDefinition(hp)
+      case "Monster" => MonsterHealthDefinition(hp)
+      case "Minion" => MinionHealthDefinition
     }
-  }
-
-  def serializeNextUp(order: InitiativeOrder): Seq[Node] = {
-    order.nextUp.map(ioi => <next-up cid={ioi.combId.id} seq={ioi.seq.toString}/>).toSeq
-  }
-
-  private def serializeOrder(order: InitiativeOrder): Node = {
-    createSequenceNode("initiative-order", lineBreak ++
-      indentNodes(tabStop2,
-        serializeOrderEntries(order.baseList, order.tracker) ++
-        serializeReorder(order.reorderList) ++
-        serializeNextUp(order))
-    )
-  }
-
-  private def serializeOrderEntries(list: List[InitiativeResult], tracker: Map[InitiativeOrderID, InitiativeTracker]): Seq[Node] = {
-    def serializeOrderEntry(result: InitiativeResult, tracker: InitiativeTracker): Elem = {
-        <order-entry cid={result.uniqueId.combId.id} seq={result.uniqueId.seq.toString} result={result.result.toString}
-                     tie-breaker={result.tieBreaker.toString} bonus={result.bonus.toString}
-                     round-number={tracker.round.toString} state={tracker.state.toString}/>
-    }
-    list.map(result => serializeOrderEntry(result, tracker(result.uniqueId))
-    )
   }
 
   private def loadRoster(rosterNode: Node): Roster[Combatant] = {
@@ -162,7 +142,7 @@ class CombatSaveFile {
     }
 
     def loadRosterEntry(combatantNode: Node): (CombatantID, Combatant) = {
-      val combId = findCombatantID(combatantNode,"@id")
+      val combId = findCombatantID(combatantNode, "@id")
       val normAlias = getOptionalTextNode(combatantNode, "@alias")
       combId -> loadCombatantNode(combId, normAlias, combatantNode)
     }
@@ -184,7 +164,7 @@ class CombatSaveFile {
         }
       }
 
-      def loadDuration(effectNode:Node):Duration = {
+      def loadDuration(effectNode: Node): Duration = {
         firstMatchingChildOption(effectNode, "@duration") match {
           case Some(durationAttribute) =>
             Duration.staticDurationFromDescription(durationAttribute.text).get
@@ -194,14 +174,14 @@ class CombatSaveFile {
       }
 
       def extractRoundBoundDurationFromNode(effectNode: Node): Duration.RoundBound = {
-         RoundBound(
-           extractInitiativeOrderID(effectNode, "limit-"),
-           Duration.Limit.withName(getOptionalTextNode(effectNode, "@limit")))
-       }
+        RoundBound(
+          extractInitiativeOrderID(effectNode, "@limit-order-id"),
+          Duration.Limit.withName(getOptionalTextNode(effectNode, "@limit")))
+      }
 
       def extractEffect(effectNode: Node): Effect = {
         Effect(
-          EffectID(combId, findTagInNodeAsInt(effectNode, "@seq")),
+          EffectID(combId, findTagInNodeAsInt(effectNode, "@effect-number")),
           findCombatantID(effectNode, "@source"),
           extractCondition(effectNode.child(0)),
           loadDuration(effectNode))
@@ -214,18 +194,42 @@ class CombatSaveFile {
     Roster[Combatant](Combatant.RosterFactory, rosterMap)
   }
 
-  private def extractInitiativeOrderID(node: Node): InitiativeOrderID = {
-    InitiativeOrderID(findCombatantID(node , "@cid" ), findTagInNodeAsInt(node, "@seq"))
+  private def parseCombatantEntity(combatantNode: Node): CombatantEntity = {
+    CombatantEntity(combatantNode \ "entity-id" text,
+      combatantNode \ "name" text,
+      parseHealthDefinition(firstMatchingChild(combatantNode, "health-definition")),
+      findTagInNodeAsInt(combatantNode, "initiative"),
+      combatantNode \ "statblock" text)
   }
 
-  private def extractInitiativeOrderID(node: Node, prefix: String): InitiativeOrderID = {
-    InitiativeOrderID(findCombatantID(node, ("@" + prefix + "cid")), findTagInNodeAsInt(node, ("@" + prefix + "seq")))
+  private def serializeOrder(order: InitiativeOrder): Node = {
+    createSequenceNode("initiative-order", lineBreak ++
+      indentNodes(tabStop2,
+        serializeOrderEntries(order.baseList, order.tracker) ++
+          serializeReorder(order.reorderList) ++
+          serializeNextUp(order))
+    )
   }
 
-  private def loadReorders(reorderNodes: NodeSeq): List[(InitiativeOrderID, InitiativeOrderID)] = {
-    reorderNodes.map {
-      node => (extractInitiativeOrderID(node, "who-"), extractInitiativeOrderID(node, "whom-"))
-    }.toList
+  private def serializeOrderEntries(list: List[InitiativeResult], tracker: Map[InitiativeOrderID, InitiativeTracker]): Seq[Node] = {
+    def serializeOrderEntry(result: InitiativeResult, tracker: InitiativeTracker): Elem = {
+        <order-entry order-id={result.uniqueId.toXMLNotation} result={result.result.toString}
+                     tie-breaker={result.tieBreaker.toString} bonus={result.bonus.toString}
+                     round-number={tracker.round.toString} state={tracker.state.toString}/>
+    }
+    list.map(result => serializeOrderEntry(result, tracker(result.uniqueId))
+    )
+  }
+
+  private def serializeNextUp(order: InitiativeOrder): Seq[Node] = {
+    order.nextUp.map(ioi => <next-up order-id={ioi.toXMLNotation}/>).toSeq
+  }
+
+  private def serializeReorder(reorderList: List[(InitiativeOrderID, InitiativeOrderID)]): Seq[Node] = {
+    for ((who, whom) <- reorderList) yield {
+        <reorder who={who.toXMLNotation}
+                 whom={whom.toXMLNotation}/>
+    }
   }
 
   private def loadOrder(node: Node): InitiativeOrder = {
@@ -244,7 +248,7 @@ class CombatSaveFile {
     )
   }
 
-  def loadBaseList(results: NodeSeq): List[(InitiativeResult, InitiativeTracker)] = {
+  private def loadBaseList(results: NodeSeq): List[(InitiativeResult, InitiativeTracker)] = {
     def loadInitiativeResult(node: Node, orderId: InitiativeOrderID, totalInitiative: Int): InitiativeResult = {
       InitiativeResult(
         orderId,
@@ -267,31 +271,27 @@ class CombatSaveFile {
     results.map(loadResultAndTracker).toList
   }
 
+  private def loadReorders(reorderNodes: NodeSeq): List[(InitiativeOrderID, InitiativeOrderID)] = {
+    reorderNodes.map {
+      node => (extractInitiativeOrderID(node, "@who"), extractInitiativeOrderID(node, "@whom"))
+    }.toList
+  }
+
   private def loadNextUp(node: Node): Option[InitiativeOrderID] = {
     val nextUpNode = firstMatchingChildOption(node, "next-up")
     nextUpNode.map(extractInitiativeOrderID)
   }
 
-  private def parseHealthDefinition(healthNode: Node): HealthDefinition = {
-    val combatantType = (healthNode \ "@type" text)
-    val hp = findTagInNodeAsInt(healthNode, "@hp")
-    combatantType match {
-      case "Character" => CharacterHealthDefinition(hp)
-      case "Monster" => MonsterHealthDefinition(hp)
-      case "Minion" => MinionHealthDefinition
-    }
-  }
-
-  private def parseCombatantEntity(combatantNode: Node): CombatantEntity = {
-    CombatantEntity(combatantNode \ "entity-id" text,
-      combatantNode \ "name" text,
-      parseHealthDefinition(firstMatchingChild(combatantNode, "health-definition")),
-      findTagInNodeAsInt(combatantNode, "initiative"),
-      combatantNode \ "statblock" text)
-  }
-
   private def indentNodes(indent: Text, nodes: Seq[Node]): Seq[Node] = {
     nodes.flatMap(node => indent ++ node ++ lineBreak)
+  }
+
+  private def extractInitiativeOrderID(node: Node): InitiativeOrderID = {
+    orderIdFromXMLNotation(node \ "@order-id" text)
+  }
+
+  private def extractInitiativeOrderID(node: Node, attribute: String): InitiativeOrderID = {
+    orderIdFromXMLNotation(node \ attribute text)
   }
 
   private def firstMatchingChild(node: Node, tagName: String): Node = (node \ tagName)(0)
@@ -310,11 +310,13 @@ class CombatSaveFile {
   private def findTagInNodeAsInt(node: Node, tagName: String): Int = {
     (node \ tagName).text.toInt
   }
-  
-  private def findCombatantID(node:Node, tagName: String):CombatantID = {
-    CombatantID(node \ tagName text)
-  }
 
+  private def findCombatantID(node: Node, tagName: String): CombatantID = {
+    val xmlNotation = (node \ tagName text)
+    CombatantID.fromXMLNotation(xmlNotation).getOrElse {
+      throw new Exception("Invalid CombatantID: " + xmlNotation)
+    }
+  }
 
   private def createSimpleDataNode(label: String, text: String): Elem = {
     Elem(null, label, Null, TopScope, Text(text))
@@ -329,5 +331,11 @@ class CombatSaveFile {
       Attribute(identifier, Text(value), Null)
     else
       Null
+  }
+
+  private def orderIdFromXMLNotation(notation: String): InitiativeOrderID = {
+    InitiativeOrderID.fromXMLNotation(notation).getOrElse {
+      throw new Exception("Invalid InitiativeOrderID: " + notation)
+    }
   }
 }
