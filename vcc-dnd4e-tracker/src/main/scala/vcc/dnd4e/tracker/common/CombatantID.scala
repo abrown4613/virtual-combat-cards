@@ -28,11 +28,45 @@ trait CombatantID {
 
   def asNumber: Option[Int]
 
-  /** Return user notation [id] */
+  /**Return user notation [id] */
   def simpleNotation: String = "[" + id + "]"
 }
 
-object CombatantID extends UniquenessCache[String, CombatantID] {
+object CombatantID {
+  private val numberRE = """([0-9]+)""".r
+  private val validIds = """(\w+)""".r
+
+  private val cache = new UniquenessCache[String, CombatantID] {
+    protected def valueFromKey(id: String): CombatantID = {
+      id match {
+        case numberRE(i) => new IntCombatantID(i.toInt)
+        case validIds(s) => new StringCombatantID(s.toUpperCase)
+        case rest => throw new IllegalArgumentException("String '" + rest + "' is not a valid CombatantID")
+      }
+    }
+
+    protected def keyFromValue(sym: CombatantID): Option[String] = Some(sym.id)
+  }
+
+  /**
+   * Use to create IDs that do not conform to naming format. Use with case, since they are not used as flyweight and may
+   * lead to issues when exporting data.
+   */
+  def makeSpecialID(name: String):CombatantID = {
+    new StringCombatantID(name)
+  }
+
+  def isValidID(id: String): Boolean = validIds.unapplySeq(id).isDefined
+
+  private def normalizeKey(valueToNormalize: String): String = {
+    valueToNormalize.trim.toUpperCase
+  }
+
+  def apply(name: String): CombatantID = {
+    cache.apply(normalizeKey(name))
+  }
+
+  def unapply(other: CombatantID): Option[String] = cache.unapply(other)
 
   private class StringCombatantID(val id: String) extends CombatantID {
     def asNumber: Option[Int] = None
@@ -43,20 +77,7 @@ object CombatantID extends UniquenessCache[String, CombatantID] {
 
     val asNumber = Some(num)
   }
-
-  private val numberRE = """([0-9]+)""".r
-
-  protected def valueFromKey(id: String): CombatantID = {
-    id.trim match {
-      case numberRE(i) => new IntCombatantID(i.toInt)
-      case s => new StringCombatantID(s)
-    }
-  }
-
-  protected def keyFromValue(sym: CombatantID): Option[String] = Some(sym.id)
-
 }
-
 
 /**
  * Unique identifier for an entry in the InitiativeOrder.

@@ -14,27 +14,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
 import org.specs2.{SpecificationWithJUnit}
 
 class CombatantIDTest extends SpecificationWithJUnit {
+
+  private val badCases: List[String] = "A-/1+1/A B/a:1/a(/c)/8*".split("/").toList
+
   def is =
     "a CombatantID should" ^
       "String backed id should" ^
-      "ignore white space" ! ignoreWhiteSpace(" a ") ^
+      "ignore white space" ! ignoreWhiteSpaceChangeToUpperCase(" a ") ^
       "be a well defined ID " ^ isWellBehavedCombatantID(CombatantID("A1")) ^
+      "be a well defined ID 2" ^ isWellBehavedCombatantID(CombatantID("A_1")) ^
       endp ^
       "Integer like string id should" ^
-      "ignore white space" ! ignoreWhiteSpace(" 1 ") ^
-      "be a well defined ID " ^ isWellBehavedCombatantID(CombatantID("12")) ^
-      "provide itself as a number" ^ isNumericBacked(CombatantID("14")) ^
+      "  ignore white space" ! ignoreWhiteSpaceChangeToUpperCase(" 1 ") ^
+      "  be a well defined ID " ^ isWellBehavedCombatantID(CombatantID("12")) ^
+      "  provide itself as a number" ^ isNumericBacked(CombatantID("14")) ^
       endp ^
       "a list of Ids should" ^ listBuildingFragment ^
+      endp ^
+      "fail on illegal character" ^ failBadCases(badCases) ^ endp ^
+      "provide test for illegal characters" ^ notAllowedIds(badCases) ^ endp ^
+      "provide test for legal characters" ^ allowedIds(List("A1", "11", "A_1", "_1")) ^ endp ^
       end
 
-  def listBuildingFragment =
+  private def listBuildingFragment =
     "be filtered out Int base ids" ! exampleMakeList(List(CombatantID("10"), CombatantID("A"), CombatantID("11")), List(10, 11)) ^
       "and this other " ! exampleMakeList(List(CombatantID("21"), CombatantID("A1")), List(21)) ^
       "filter to Nil if no numbers" ! exampleMakeList(List(CombatantID("B"), CombatantID("A1")), Nil)
@@ -44,17 +51,43 @@ class CombatantIDTest extends SpecificationWithJUnit {
 
     def matchesCombatantWithSameId = comb must_== CombatantID(comb.id)
 
+    def matchesCombatantWithSameIdWithoutCase = comb must_== CombatantID(comb.id.toLowerCase)
+
     def pointsToSameObject = comb must beEqualTo(CombatantID(comb.id))
 
     def hasSameHashCode = comb.hashCode must_== CombatantID(comb.id).hashCode
   }
 
-  def exampleMakeList(ids: List[CombatantID], mustMatch: List[Int]) =
+  private def failBadCases(badCases: List[String]) = {
+    for (c <- badCases) yield {
+      c + " must throw exception" ! {
+        CombatantID(c) must throwA[IllegalArgumentException]
+      }
+    }
+  }
+
+  private def notAllowedIds(badCases: List[String]) = {
+    for (c <- badCases) yield {
+      c + " should be invalid" ! {
+        CombatantID.isValidID(c) must beFalse
+      }
+    }
+  }
+
+  private def allowedIds(badCases: List[String]) = {
+    for (c <- badCases) yield {
+      c + " should be valid" ! {
+        CombatantID.isValidID(c) must beTrue
+      }
+    }
+  }
+
+  private def exampleMakeList(ids: List[CombatantID], mustMatch: List[Int]) =
     ids.flatMap(x => x.asNumber) must_== mustMatch
 
-  def ignoreWhiteSpace(s: String) = CombatantID(s).id must_== s.trim
+  private def ignoreWhiteSpaceChangeToUpperCase(s: String) = CombatantID(s).id must_== s.trim.toUpperCase
 
-  def isNumericBacked(comb: CombatantID) =
+  private def isNumericBacked(comb: CombatantID) =
     "be a IntCombatantID" ! {
       comb.asNumber.isDefined must beTrue
     } ^
@@ -62,10 +95,11 @@ class CombatantIDTest extends SpecificationWithJUnit {
         comb.asNumber.get.toString must_== comb.id
       }
 
-  def isWellBehavedCombatantID(comb: CombatantID) = {
+  private def isWellBehavedCombatantID(comb: CombatantID) = {
     "provides proper to string" ! definedCombatant(comb).hasToString ^
       "matches a copy of self" ! definedCombatant(comb).matchesCombatantWithSameId ^
       "points to same fly-weight" ! definedCombatant(comb).pointsToSameObject ^
+      "fly-weight must be case independent"! definedCombatant(comb).matchesCombatantWithSameIdWithoutCase ^
       "have same hashcode" ! definedCombatant(comb).hasSameHashCode
   }
 }
