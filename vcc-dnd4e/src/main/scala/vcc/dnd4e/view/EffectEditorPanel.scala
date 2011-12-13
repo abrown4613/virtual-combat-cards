@@ -46,7 +46,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
     def comment: String = null
   }
 
-  private val otherId = CombatantID("?")
+  private val otherId = CombatantID.makeSpecialID("?")
   private val otherCombatant = new UnifiedCombatant(otherId, null, TerrainCombatantStateView)
 
   val activeModel = new ContainerComboBoxModel[UnifiedCombatant](List(otherCombatant))
