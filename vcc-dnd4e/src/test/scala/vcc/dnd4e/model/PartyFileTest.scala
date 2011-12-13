@@ -60,9 +60,16 @@ class PartyFileTest extends SpecificationWithJUnit with Mockito {
 
     "return list of party of two one with alias the other with id" in {
       val is = makePartyFile(
-        "<combatant eid='" + entId1.asStorageString + "' id='A' />",
+        "<combatant eid='" + entId1.asStorageString + "' id='a' />",
         "<combatant eid='" + entId2.asStorageString + "' alias='some other name'/>")
       PartyFile.loadFromStream(is) must_== (List(PartyMember(CombatantID("A"), null, entId1), PartyMember(null, "some other name", entId2)), true)
+    }
+
+    "return list of party of stripping invalid ids" in {
+      val is = makePartyFile(
+        "<combatant eid='" + entId1.asStorageString + "' id='a 7' />",
+        "<combatant eid='" + entId2.asStorageString + "' id='a-4' alias='some other name'/>")
+      PartyFile.loadFromStream(is) must_== (List(PartyMember(null, null, entId1), PartyMember(null, "some other name", entId2)), true)
     }
 
     "return list of party one combatant and another broken" in {
