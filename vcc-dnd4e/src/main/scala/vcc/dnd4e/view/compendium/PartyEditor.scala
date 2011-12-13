@@ -76,9 +76,10 @@ class PartyEditor(director: PanelDirector) extends Frame {
     )
     val setter: PartialFunction[(Int, PartyTableEntry, Any), Unit] = {
       case (0, entry, value) if (entry.qty == 1) =>
-        entry.id = value.toString
-        if (entry.id == "") entry.id = null
-      case (2, entry, value) => entry.alias = value.toString
+        val filteredValue: String = if (CombatantID.isValidID(value.toString)) value.toString else null
+        entry.id = normalizeStringCellValue(filteredValue)
+      case (2, entry, value) =>
+        entry.alias = normalizeStringCellValue(value.toString)
       case (3, entry, value) if (entry.id == null) =>
         val v = try {
           value.toString.toInt
@@ -271,5 +272,9 @@ class PartyEditor(director: PanelDirector) extends Frame {
     val xp = pml.map(e => e.qty * e.xp).foldLeft(0)(_ + _)
     val level = ExperienceCalculator.encounterLevel(partySizeCombo.selection.item, xp)
     totalXPLabel.text = "Total XP: " + xp + " Level: " + level
+  }
+  
+  private def normalizeStringCellValue(value: String):String = {
+    if (value == "") null else value
   }
 }
