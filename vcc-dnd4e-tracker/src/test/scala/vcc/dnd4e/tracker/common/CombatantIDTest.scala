@@ -38,7 +38,7 @@ class CombatantIDTest extends SpecificationWithJUnit {
       endp ^
       "fail on illegal character" ^ failBadCases(badCases) ^ endp ^
       "provide test for illegal characters" ^ notAllowedIds(badCases) ^ endp ^
-      "provide test for legal characters" ^ allowedIds(List("A1", "11", "A_1", "_1")) ^ endp ^
+      "provide test for legal characters" ^ allowedIds(List("A1", "11", "A_1", "_1", " _1")) ^ endp ^
       end
 
   private def listBuildingFragment =
@@ -47,6 +47,8 @@ class CombatantIDTest extends SpecificationWithJUnit {
       "filter to Nil if no numbers" ! exampleMakeList(List(CombatantID("B"), CombatantID("A1")), Nil)
 
   case class definedCombatant(comb: CombatantID) {
+    def serializeToXMLNotation = CombatantID.fromXMLNotation(comb.toXMLNotation) must_== Some(comb)
+
     def hasToString = comb.toString must_== "CombatantID(" + comb.id + ")"
 
     def matchesCombatantWithSameId = comb must_== CombatantID(comb.id)
@@ -100,6 +102,8 @@ class CombatantIDTest extends SpecificationWithJUnit {
       "matches a copy of self" ! definedCombatant(comb).matchesCombatantWithSameId ^
       "points to same fly-weight" ! definedCombatant(comb).pointsToSameObject ^
       "fly-weight must be case independent"! definedCombatant(comb).matchesCombatantWithSameIdWithoutCase ^
-      "have same hashcode" ! definedCombatant(comb).hasSameHashCode
+      "have same hashcode" ! definedCombatant(comb).hasSameHashCode ^
+      "serialize/deserialize XML notation" ! definedCombatant(comb).serializeToXMLNotation ^
+      endp
   }
 }

@@ -22,6 +22,8 @@ import vcc.dnd4e.util.UniquelyIdentified
  * CombatantID defines a unique combatant in the Roster.
  */
 trait CombatantID {
+  def toXMLNotation: String = "c-%s".format(this.id)
+
   def id: String
 
   override def toString: String = "CombatantID(" + id + ")"
@@ -34,6 +36,7 @@ trait CombatantID {
 
 object CombatantID {
   private val numberRE = """([0-9]+)""".r
+  private val xmlNotationRE = """c-(\w+)""".r
   private val validIds = """(\w+)""".r
 
   private val cache = new UniquenessCache[String, CombatantID] {
@@ -56,7 +59,14 @@ object CombatantID {
     new StringCombatantID(name)
   }
 
-  def isValidID(id: String): Boolean = validIds.unapplySeq(id).isDefined
+  def fromXMLNotation(xmlNotation: String):Option[CombatantID] = {
+    xmlNotation match {
+      case xmlNotationRE(id) => Some(CombatantID(id))
+      case _ => None
+    }
+  }
+  
+  def isValidID(id: String): Boolean = validIds.unapplySeq(normalizeKey(id)).isDefined
 
   private def normalizeKey(valueToNormalize: String): String = {
     valueToNormalize.trim.toUpperCase
@@ -85,11 +95,26 @@ object CombatantID {
  * @param seq Sequential number to separate different InitiativeOrderID from the same CombatantID.
  */
 case class InitiativeOrderID(combId: CombatantID, seq: Int) {
+  
+  def toXMLNotation: String = "o-%s-%d".format(combId.id, seq)
+
   override def toString: String = "InitiativeOrderID(" + combId.id + ":" + seq + ")"
 
   def toLabelString: String = combId.id + (if (seq < 4) superscript(seq) else ":" + seq)
 
   final private val superscript = "º¹²³"
+}
+
+object InitiativeOrderID {
+  private val xmlNotationRE = """o-(\w+)-(\d+)""".r
+
+  def fromXMLNotation(xmlNotation: String): Option[InitiativeOrderID] = {
+    xmlNotation match {
+      case xmlNotationRE(combatantId, seq) =>
+        Some(InitiativeOrderID(CombatantID(combatantId), seq.toInt))
+      case _ => None
+    }
+  }
 }
 
 /**
