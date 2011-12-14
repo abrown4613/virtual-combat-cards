@@ -38,44 +38,6 @@ case class PartyMember(id: CombatantID, alias: String, eid: EntityID) {
 object PartyFile {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
 
-  private def parseEntry(node: Node): PartyMember = {
-    val eidUri = nodeSeq2String(node \ "@eid")
-    val id = nodeSeq2String(node \ "@id", null)
-    val alias = nodeSeq2String(node \ "@alias", null)
-    val eid = EntityID.fromStorageString(eidUri)
-    
-    val combatantID:CombatantID = if(CombatantID.isValidID(id)) CombatantID(id) else null
-
-    PartyMember(combatantID, alias, eid)
-  }
-
-  private def loadFromXML(node: Node): (List[PartyMember], Boolean) = {
-    var x: List[PartyMember] = Nil
-    var ok = true
-    val ver = {
-      val vnl = node \ "@version"
-      if (vnl.isEmpty) None
-      else Some(vnl(0).text)
-    }
-    if (node.label == "party" && ver == Some("1.0")) {
-      for (snode <- node.child if (snode.label != "#PCDATA")) {
-        try {
-          x = parseEntry(snode) :: x
-        } catch {
-          case e: Exception =>
-            logger.warn("Failed to load node: " + snode, e)
-            ok = false
-        }
-      }
-    } else {
-      if (ver == None) logger.error("No version found on file, this may be a legacy file")
-      else logger.error("Failed to load party, either is not a party")
-      ok = false
-    }
-    val (withId, noId) = x.reverse.partition(pm => pm.id != null)
-    (withId ++ noId, ok)
-  }
-
   /**
    * Load a PEML party and return a list of PartyMembers
    * @param Stream InputStream containing the XML for the PartyFile
@@ -105,5 +67,65 @@ object PartyFile {
       {entries.map(_.toXML)}
     </party>)
     XML.save(file.toString, doc, "UTF-8", true, null)
+  }
+
+  private def loadFromXML(node: Node): (List[PartyMember], Boolean) = {
+    def isValidPartyFile(node: Node): Boolean = {
+      node.label == "party" && extractVersion(node) == Some("1.0")
+    }
+
+    def filterFailedLoadAndProduceResult(loadedMembers: Seq[Option[PartyMember]]): (List[PartyMember], Boolean) = {
+      val partyMembers = loadedMembers.flatMap(x => x).toList
+      val loadedAll = (loadedMembers.length == partyMembers.length)
+      val (entriesWithId, entryWithoutId) = partyMembers.partition(pm => pm.id != null)
+      (entriesWithId ++ entryWithoutId, loadedAll)
+    }
+
+    if (isValidPartyFile(node)) {
+      filterFailedLoadAndProduceResult(loadAllMemberEntries(node))
+    } else {
+      reportLoadError(node)
+    }
+  }
+
+  private def loadAllMemberEntries(node: Node): Seq[Option[PartyMember]] = {
+    for (memberNode <- node.child if (memberNode.label != "#PCDATA")) yield {
+      parseMemberEntryReportingFailedParse(memberNode)
+    }
+  }
+
+  private def parseMemberEntryReportingFailedParse(memberNode: Node): Option[PartyMember] = {
+    try {
+      Some(parseEntry(memberNode))
+    } catch {
+      case e: Exception =>
+        logger.warn("Failed to load node: " + memberNode, e)
+        None
+    }
+  }
+
+  private def parseEntry(node: Node): PartyMember = {
+    val eidUri = nodeSeq2String(node \ "@eid")
+    val id = nodeSeq2String(node \ "@id", null)
+    val alias = nodeSeq2String(node \ "@alias", null)
+    val eid = EntityID.fromStorageString(eidUri)
+
+    val combatantID: CombatantID = if (id != null && CombatantID.isValidID(id)) CombatantID(id) else null
+
+    PartyMember(combatantID, alias, eid)
+  }
+
+  private def extractVersion(node: Node): Option[String] = {
+    val vnl = node \ "@version"
+    if (vnl.isEmpty) None
+    else Some(vnl(0).text)
+  }
+
+  private def reportLoadError(node: Node): (List[PartyMember], Boolean) = {
+    if (extractVersion(node) == None)
+      logger.error("No version found on file, this may be a legacy file")
+    else
+      logger.error("Failed to load party, may not be a party file")
+    (Nil, false)
   }
 }
