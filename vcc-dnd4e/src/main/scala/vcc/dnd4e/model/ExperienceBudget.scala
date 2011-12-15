@@ -18,7 +18,7 @@ package vcc.dnd4e.model
 
 import annotation.tailrec
 
-object PartyModel {
+object ExperienceBudget {
   private val incrementList = List(25, 50, 100, 200, 400, 950, 2000)
 
   private def nextHeadAndTailFromInfiniteIncrements(increments: List[Int]): (Int, List[Int]) = {
@@ -61,7 +61,4 @@ object PartyModel {
 
     adjustLevelForLowerBound(experiencePerPC, level)
   }
-}
-
-class PartyModel {
 }
