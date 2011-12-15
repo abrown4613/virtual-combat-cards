@@ -20,7 +20,7 @@ import org.specs2.SpecificationWithJUnit
 import org.specs2.matcher.DataTables
 
 
-object ExperienceBudget extends DataTables {
+object ExperienceBudgetData extends DataTables {
   val table = "level" | "4 pc" | "5 pc" | "6 pc" |
     1 ! 400 ! 500 ! 600 |
     2 ! 500 ! 625 ! 750 |
@@ -55,7 +55,7 @@ object ExperienceBudget extends DataTables {
     31 ! 92000 ! 115000 ! 138000
 }
 
-class PartyModelTest extends SpecificationWithJUnit {
+class ExperienceBudgetTest extends SpecificationWithJUnit {
   def is =
     "Calculate level on budget" ! levelOnBudget ^
       "Calculate level for slight below budget" ! slightUnderBudget ^
@@ -64,25 +64,25 @@ class PartyModelTest extends SpecificationWithJUnit {
 
 
   def levelOnBudget = {
-    ExperienceBudget.table |> {
+    ExperienceBudgetData.table |> {
       (level, pc4, pc5, pc6) =>
-        (PartyModel.levelFromExperience(pc4, 4) must_== level) and
-          (PartyModel.levelFromExperience(pc5, 5) must_== level) and
-          (PartyModel.levelFromExperience(pc6, 6) must_== level)
+        (ExperienceBudget.levelFromExperience(pc4, 4) must_== level) and
+          (ExperienceBudget.levelFromExperience(pc5, 5) must_== level) and
+          (ExperienceBudget.levelFromExperience(pc6, 6) must_== level)
     }
   }
 
   def slightUnderBudget = {
-    ExperienceBudget.table |> {
+    ExperienceBudgetData.table |> {
       (level, pc4, pc5, pc6) =>
-        (PartyModel.levelFromExperience(pc5 - 10, 5) must_== (level - 1))
+        (ExperienceBudget.levelFromExperience(pc5 - 10, 5) must_== (level - 1))
     }
   }
 
   def slightOverBudget = {
-    ExperienceBudget.table |> {
+    ExperienceBudgetData.table |> {
       (level, pc4, pc5, pc6) =>
-        (PartyModel.levelFromExperience(pc5 + 10, 5) must_== level)
+        (ExperienceBudget.levelFromExperience(pc5 + 10, 5) must_== level)
     }
   }
 }
