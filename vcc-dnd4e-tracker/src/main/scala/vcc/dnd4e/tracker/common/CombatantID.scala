@@ -172,13 +172,13 @@ case class InitiativeResult(override val uniqueId: InitiativeOrderID, bonus: Int
 private[tracker] abstract class UniquenessCache[K, V >: Null] {
 
   import java.lang.ref.WeakReference
-  import java.util.WeakHashMap
+  import java.util.HashMap
   import java.util.concurrent.locks.ReentrantReadWriteLock
 
   private val rwl = new ReentrantReadWriteLock()
   private val rlock = rwl.readLock
   private val wlock = rwl.writeLock
-  private val map = new WeakHashMap[K, WeakReference[V]]
+  private val map = new HashMap[K, WeakReference[V]]
 
   protected def valueFromKey(k: K): V
 
