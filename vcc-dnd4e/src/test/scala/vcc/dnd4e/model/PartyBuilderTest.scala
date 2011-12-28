@@ -242,7 +242,7 @@ class PartyBuilderTest extends SpecificationWithJUnit {
     "load single entry" in new contextWithResolver {
       val party = List(PartyMember(null, null, entity1))
       partyBuilder.loadFromParty(resolver, party)
-      there was atLeast(3)(resolver.resolveEntity(entity1));
+      there was one(resolver).resolveEntity(entity1);
       checkTotals(1, 100)
       checkRow(0, entry1, 1)
     }
