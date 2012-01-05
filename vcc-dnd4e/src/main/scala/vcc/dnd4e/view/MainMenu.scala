@@ -50,7 +50,7 @@ trait ConfigurationPanelCallback {
 }
 
 class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame,
-               configurationPanel: ConfigurationPanelCallback, releaseInformation:ReleaseInformation)
+               configurationPanel: ConfigurationPanelCallback, releaseInformation: ReleaseInformation)
   extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
@@ -65,13 +65,17 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   fileMenu.contents += new MenuItem(Action("Save combat ...") {
     val file = FileChooserHelper.chooseSaveFile(this.peer, FileChooserHelper.combatSaveFilter)
     if (file.isDefined) {
-      Application.getInstance.saveStateToFile(file.get)
+      tryExecutionReportingError("Failed to save combat") {
+        Application.getInstance.saveStateToFile(file.get)
+      }
     }
   })
   fileMenu.contents += new MenuItem(Action("Load combat ...") {
     val file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.combatSaveFilter)
     if (file.isDefined) {
-      Application.getInstance.loadStateFile(file.get)
+      tryExecutionReportingError("Failed to load combat") {
+        Application.getInstance.loadStateFile(file.get)
+      }
     }
   })
   fileMenu.contents += new Separator()
@@ -172,4 +176,14 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   contents += new CompendiumMenu(director)
   contents += dockMenu
   contents += helpMenu
+
+  private def tryExecutionReportingError(errorMessage: String)(executionBlock: => Unit) {
+    try {
+      executionBlock
+    } catch {
+      case exception =>
+        logger.warn(errorMessage, exception)
+        Dialog.showMessage(null, errorMessage + ". Report was added to log.", errorMessage, messageType = Dialog.Message.Error)
+    }
+  }
 }
