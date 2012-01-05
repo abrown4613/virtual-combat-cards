@@ -34,7 +34,18 @@ class CombatSaveFileTest extends SpecificationWithJUnit {
     healthCases ^
     initiativeOrder ^
     effectHandling ^
+    encodingSafe ^
     end
+
+  def encodingSafe = {
+    if (System.getProperty("file.encoding") != "UTF-8") {
+      "test encoding issues" ^
+        testCase("bad encoding", buildState(emptyState, SetCombatCommentEvent(Some("dragon’s")))) ^
+        endp
+    } else {
+      endp
+    }
+  }
 
   def healthCases = {
     val cases = List(

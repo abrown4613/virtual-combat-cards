@@ -42,7 +42,7 @@ class CombatSaveFile {
   }
 
   def save(outputStream: OutputStream, combatState: CombatState) {
-    val writer: Writer = new PrintWriter(outputStream)
+    val writer: Writer = new OutputStreamWriter(outputStream, "UTF-8")
     val commentNode: NodeSeq = indentNodes(tabStop1, combatState.comment.map(c => createSimpleDataNode("comment", c)).toList)
     val topLevel = lineBreak :: commentNode :: serializeRoster(combatState.roster) :: serializeOrder(combatState.order) :: Nil
     XML.write(writer, createSequenceNode("combat-state", topLevel.flatMap(x => x)), "UTF-8", true, null)
