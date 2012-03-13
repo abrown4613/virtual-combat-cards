@@ -104,6 +104,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
     setColumnWidth(0, 150)
     setColumnWidth(3, 35)
     setColumnWidth(4, 60)
+    name = "creature-view"
   }
   private val characterTableModel = new ProjectionTableModel(CharacterSummaryProjection)
   private val characterTable = new RowProjectionTable[EntitySummary]() {
@@ -112,6 +113,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
     model = characterTableModel
     setColumnWidth(0, 150)
     setColumnWidth(3, 35)
+    name = "character-view"
   }
   private val trapTableModel = new ProjectionTableModel(TrapSummaryProjection)
   private val trapTable = new RowProjectionTable[EntitySummary]() {
@@ -120,6 +122,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
     model = trapTableModel
     setColumnWidth(0, 150)
     setColumnWidth(3, 35)
+    name = "trap-view"
   }
   private val scrollPane = new ScrollPane(monsterTable)
   monsterButton.selected = true
