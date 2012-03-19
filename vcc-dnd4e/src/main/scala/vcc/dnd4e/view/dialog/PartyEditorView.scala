@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import vcc.dnd4e.view.dialog.PartyEditorView.{PartyTableEntry}
 import javax.swing.{ListSelectionModel, JTable}
 import javax.swing.event.{ListSelectionEvent, ListSelectionListener}
 import java.lang.{Class, String}
+import vcc.dnd4e.model.ExperienceBudget
 
 object PartyEditorView {
 
@@ -34,9 +35,7 @@ object PartyEditorView {
                              alias: Option[String], name: String, experience: Int)
 
   trait UIElement {
-    def setExperienceMessage(newMessage: String)
-
-    def setPartyTableContent(content: List[PartyTableEntry])
+    def setPartyTableContent(totalExperience: Int, content: List[PartyTableEntry])
   }
 
 }
@@ -92,38 +91,16 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
 
   def this() = this(new PartyEditorPresenter())
 
+  private var experience = 0
   private val compendiumEntries = new CompendiumEntitySelectionPanel
-  private val totalXPLabel = new Label()
-  totalXPLabel.name = "experience-label"
-  private val partySizeCombo = new ComboBox[Int]((1 to 10).toSeq)
-  partySizeCombo.selection.item = 5
+  private val totalXPLabel = createXPLabel()
+  private val partySizeCombo = createPartySizeCombo()
   private val collapseCheckBox = new CheckBox("Collapse similar entries")
-  private val addButton = new Button(Action("Add to Party >>") {
-    val sel = compendiumEntries.currentSelection
-    if (sel.isDefined) {
-      presenter.addEntry(sel.get.eid)
-    }
-  })
-  addButton.tooltip = "Double clicking on entries from the right table will also add to party."
-
-  private val removeButton = new Button(Action(" << Remove") {
-    presenter.changeQuantity(table.getSelectedRow, 0)
-  })
-  removeButton.enabled = false
-
-  private val clearAllButton = new Button(Action("Clear all") {
-    presenter.clearAll()
-  })
-
+  private val addButton = createAddButton()
+  private val removeButton = createRemoveButton()
+  private val clearAllButton = createClearAllButton()
   private val tableModel = new PartyTableModel()
-  private val table = new JTable(tableModel)
-  table.setName("party-table")
-  table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-  table.getSelectionModel.addListSelectionListener(new ListSelectionListener {
-    def valueChanged(e: ListSelectionEvent) {
-      removeButton.enabled = (table.getSelectedRows.length > 0)
-    }
-  })
+  private val table = createPartyTable()
 
   compendiumEntries.doubleClickAction = addButton.action
   title = "Edit Encounter and Party"
@@ -133,11 +110,16 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
 
   presenter.setView(this)
 
-  def setExperienceMessage(newMessage: String) {
-    totalXPLabel.text = newMessage
+  listenTo(this.collapseCheckBox, partySizeCombo.selection)
+
+  reactions += {
+    case ButtonClicked(this.collapseCheckBox) => toggleEntryCollapse()
+    case event.SelectionChanged(this.partySizeCombo) => updateExperienceMessage()
   }
 
-  def setPartyTableContent(content: List[PartyTableEntry]) {
+  def setPartyTableContent(totalExperience: Int, content: List[PartyTableEntry]) {
+    this.experience = totalExperience
+    updateExperienceMessage()
     tableModel.setContent(content)
   }
 
@@ -157,16 +139,6 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     }
   }
 
-  listenTo(this.collapseCheckBox)
-  reactions += {
-    case ButtonClicked(this.collapseCheckBox) =>
-      if (collapseCheckBox.selected)
-        presenter.collapseEntries()
-      else
-        presenter.expandEntries()
-  }
-
-
   private def createMenuBar() = {
     val mb = new MenuBar()
     val fileMenu = new Menu("File")
@@ -184,6 +156,56 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     mb
   }
 
+  private def createRemoveButton(): Button = {
+    val button = new Button(Action(" << Remove") {
+      presenter.changeQuantity(table.getSelectedRow, 0)
+    })
+    button.enabled = false
+    button
+  }
+
+  private def createAddButton(): Button = {
+    val button = new Button(Action("Add to Party >>") {
+      val sel = compendiumEntries.currentSelection
+      if (sel.isDefined) {
+        presenter.addEntry(sel.get.eid)
+      }
+    })
+    button.tooltip = "Double clicking on entries from the right table will also add to party."
+    button
+  }
+
+  private def createPartySizeCombo(): ComboBox[Int] = {
+    val combo = new ComboBox[Int]((1 to 10).toSeq)
+    combo.selection.item = 5
+    combo.name = "party-size"
+    combo
+  }
+
+  private def createXPLabel(): Label = {
+    val label = new Label()
+    label.name = "experience-label"
+    label
+  }
+
+  private def createPartyTable():JTable = {
+    val jTable = new JTable(tableModel)
+    jTable.setName("party-table")
+    jTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+    jTable.getSelectionModel.addListSelectionListener(new ListSelectionListener {
+      def valueChanged(e: ListSelectionEvent) {
+        removeButton.enabled = (table.getSelectedRows.length > 0)
+      }
+    })
+    jTable
+  }
+
+  private def createClearAllButton(): Button = {
+    new Button(Action("Clear all") {
+      presenter.clearAll()
+    })
+  }
+
   private def validateAndUpdateCombatantID(rowIndex: Int, newId: String) {
     if (!presenter.isValidCombatantID(rowIndex, newId))
       scala.swing.Dialog.showMessage(removeButton,
@@ -193,4 +215,15 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
       presenter.changeCombatantId(rowIndex, newId)
   }
 
+  private def updateExperienceMessage() {
+    val level = ExperienceBudget.levelFromExperience(experience, partySizeCombo.selection.item)
+    totalXPLabel.text = experience + " XP (Level " + level + ")"
+  }
+
+  private def toggleEntryCollapse() {
+    if (collapseCheckBox.selected)
+      presenter.collapseEntries()
+    else
+      presenter.expandEntries()
+  }
 }

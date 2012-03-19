@@ -69,13 +69,12 @@ class PartyEditorPresenter(builder: PartyBuilder) {
   }
   
   private def updateView() {
-    view.setExperienceMessage(builder.encounterExperience + " XP")
     val entries = for (row <- 0 until builder.numberOfRows) yield {
       PartyTableEntry(
         builder.getId(row), builder.getQuantity(row),
         builder.getAlias(row), builder.getName(row), builder.getExperience(row))
     }
-    view.setPartyTableContent(entries.toList)
+    view.setPartyTableContent(builder.encounterExperience, entries.toList)
   }
 
   def clearAll() {

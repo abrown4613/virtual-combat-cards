@@ -49,24 +49,21 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       val entity1 = getMonster(0)
       pp.addEntry(entity1)
 
-      there was one(mockView).setExperienceMessage("100 XP")
-      there was one(mockView).setPartyTableContent(List(entryFromEntityID(entity1)))
+      there was one(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1)))
     }
 
     "add a trap" in new scope {
       val entity1 = getTrap(2)
       pp.addEntry(entity1)
 
-      there was one(mockView).setExperienceMessage("300 XP")
-      there was one(mockView).setPartyTableContent(List(entryFromEntityID(entity1)))
+      there was one(mockView).setPartyTableContent(300, List(entryFromEntityID(entity1)))
     }
 
     "add a character" in new scope {
       val entity1 = getCharacter(4)
       pp.addEntry(entity1)
 
-      there was one(mockView).setExperienceMessage("0 XP")
-      there was one(mockView).setPartyTableContent(List(entryFromEntityID(entity1)))
+      there was one(mockView).setPartyTableContent(0, List(entryFromEntityID(entity1)))
     }
 
     "add one of each" in new scope {
@@ -78,8 +75,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity2)
       pp.addEntry(entity3)
 
-      there was atLeastOne(mockView).setExperienceMessage("400 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(
+      there was atLeastOne(mockView).setPartyTableContent(400, List(
         entryFromEntityID(entity1), entryFromEntityID(entity2), entryFromEntityID(entity3)))
     }
 
@@ -88,8 +84,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity1)
       pp.changeQuantity(0, 2)
 
-      there was atLeastOne(mockView).setExperienceMessage("600 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(
+      there was atLeastOne(mockView).setPartyTableContent(600, List(
         PartyTableEntry(None, 1, None, getEntityDefinition(entity1).name, getEntityDefinition(entity1).experience),
         PartyTableEntry(None, 1, None, getEntityDefinition(entity1).name, getEntityDefinition(entity1).experience)))
     }
@@ -99,8 +94,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity1)
 
       pp.changeAlias(0, "some alias")
-      there was atLeastOne(mockView).setExperienceMessage("100 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(entryFromEntityID(entity1, alias = Some("some alias"))))
+      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, alias = Some("some alias"))))
     }
 
     "update alias of combatant to blank" in new scope {
@@ -108,8 +102,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity1)
 
       pp.changeAlias(0, "")
-      there was atLeastOne(mockView).setExperienceMessage("100 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(entryFromEntityID(entity1, alias = None)))
+      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, alias = None)))
     }
 
     "update CombatantID of combatant" in new scope {
@@ -117,8 +110,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity1)
 
       pp.changeCombatantId(0, "ida")
-      there was atLeastOne(mockView).setExperienceMessage("100 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA")))))
+      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA")))))
     }
 
     "update CombatantID of combatant then blank" in new scope {
@@ -127,9 +119,8 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
 
       pp.changeCombatantId(0, "ida")
       pp.changeCombatantId(0, "")
-      there was atLeastOne(mockView).setExperienceMessage("100 XP")
-      there was atLeastOne(mockView).setPartyTableContent(List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA"))))) then
-        two(mockView).setPartyTableContent(List(entryFromEntityID(entity1)))
+      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA"))))) then
+        two(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1)))
     }
 
     "collapse similar entries" in new spyScope {
@@ -138,7 +129,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       there was one(builderSpy).collapseSimilar()
       pp.addEntry(entity1)
       pp.addEntry(entity1)
-      there was atLeastOne(mockView).setPartyTableContent(List(
+      there was atLeastOne(mockView).setPartyTableContent(600, List(
         entryFromEntityID(entity1, 2)))
     }
 
@@ -150,7 +141,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.addEntry(entity1)
       pp.expandEntries()
       there was one(builderSpy).expandSimilar()
-      there was atLeastOne(mockView).setPartyTableContent(List(
+      there was atLeastOne(mockView).setPartyTableContent(600, List(
         entryFromEntityID(entity1), entryFromEntityID(entity1)
       ))
     }
@@ -182,8 +173,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
     "clear all and update view" in new spyScope {
       pp.clearAll()
       there was one(builderSpy).clear()
-      there was one(mockView).setPartyTableContent(Nil)
-      there was one(mockView).setExperienceMessage("0 XP")
+      there was one(mockView).setPartyTableContent(0, Nil)
     }
   }
 
