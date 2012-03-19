@@ -19,12 +19,13 @@ package vcc.dnd4e.view.dialog
 import org.mockito.Mockito._
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.compendium._
-import org.uispec4j.{UISpecAdapter, Window, UISpecTestCase}
 import javax.swing.{JLabel, JFrame}
 import org.uispec4j.assertion.Assertion
 import vcc.dnd4e.view.dialog.PartyEditorView.PartyTableEntry
 import vcc.dnd4e.model.PartyBuilder
 import vcc.dnd4e.tracker.common.CombatantID
+import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
+import org.uispec4j.{Trigger, UISpecAdapter, Window, UISpecTestCase}
 
 object MockedPartyEditor {
   def main(args: Array[String]) {
@@ -34,60 +35,6 @@ object MockedPartyEditor {
     val view = new PartyEditorView()
     view.peer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
     view.visible = true
-  }
-}
-
-class MockedCompendium {
-
-  private val monsterEntries = createMonsterEntries(10)
-  private val trapEntries = createTrapEntries(10)
-  private val characterEntries = createCharacterEntries(10)
-
-  def initialize() {
-    val mockRepository = createMockCompendium()
-    Compendium.setActiveRepository(mockRepository)
-  }
-
-
-  private def createMockCompendium(): CompendiumRepository = {
-    val mockRepository: CompendiumRepository = mock(classOf[CompendiumRepository])
-    when(mockRepository.getMonsterSummaries()).thenReturn(monsterEntries)
-    when(mockRepository.getCharacterSummaries()).thenReturn(characterEntries)
-    when(mockRepository.getTrapSummaries()).thenReturn(trapEntries)
-
-    mockFetch(mockRepository, monsterEntries)
-    mockFetch(mockRepository, trapEntries)
-    mockFetch(mockRepository, characterEntries)
-
-    mockRepository
-  }
-
-  private def mockFetch(mockRepository: CompendiumRepository, entries: Seq[EntitySummary]) {
-    entries.foreach(entry => when(mockRepository.getEntitySummary(entry.eid)).thenReturn(entry))
-  }
-
-  private def createTrapEntries(maxLevel: Int): Seq[TrapSummary] = {
-    (1 to maxLevel).map {
-      level =>
-        TrapSummary(EntityID.generateRandom(), Compendium.monsterClassID,
-          "Trap " + level, level, level * 100, "Trap", false)
-    }
-  }
-
-  private def createCharacterEntries(maxLevel: Int): Seq[CharacterSummary] = {
-    (1 to maxLevel).map {
-      level =>
-        CharacterSummary(EntityID.generateRandom(), Compendium.monsterClassID,
-          "Character " + level, level, "Human", "Fighter")
-    }
-  }
-
-  private def createMonsterEntries(maxLevel: Int): Seq[MonsterSummary] = {
-    (1 to maxLevel).map {
-      level =>
-        MonsterSummary(EntityID.generateRandom(), Compendium.monsterClassID,
-          "Monster " + level, level, level * 100, "soldier", false)
-    }
   }
 }
 
@@ -123,14 +70,7 @@ class PartyEditorViewTest extends UISpecTestCase {
 
   def testMessageOnExperiencePoints() {
     uiElement.setExperienceMessage("Ipsum lorem")
-    assertTrue(new Assertion() {
-      def check() {
-        val label = getMainWindow.findSwingComponent(classOf[JLabel], "experience-label")
-        assert(label != null, "Label not found")
-        val expected = "Ipsum lorem"
-        assert(label.getText == expected, "Expected label text:" + expected + " found: " + label.getText)
-      }
-    })
+    assertTrue(checkLabelContent(getMainWindow, "experience-label", "Ipsum lorem"))
   }
 
   def testSetTableEntry() {
@@ -164,7 +104,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     getMainWindow.getTable("party-table").selectRow(0)
     removeButton.click()
     assertTrue(verify(presenter).changeQuantity(0, 0))
-}
+  }
 
   def testCollapseAndExpandEntries() {
     val checkBox = getMainWindow.getCheckBox("Collapse Similar Entries")
@@ -181,11 +121,52 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(verify(presenter).changeQuantity(0, 2))
   }
 
+  def testChangeAlias() {
+    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    getMainWindow.getTable("party-table").editCell(0, 1, "some alias", true)
+
+    assertTrue(verify(presenter).changeAlias(0, "some alias"))
+  }
+
+  def testChangeCombatantID() {
+    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    when(presenter.isValidCombatantID(0, "a")).thenReturn(true)
+
+    getMainWindow.getTable("party-table").editCell(0, 0, "a", true)
+
+    assertTrue(verify(presenter).changeCombatantId(0, "a"))
+    assertTrue(wrapWithCheck(verify(presenter, atLeastOnce()).isValidCombatantID(0, "a")))
+  }
+
+  def testChangeCombatantIDToInvalid() {
+    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    when(presenter.isValidCombatantID(0, "-")).thenReturn(false)
+
+    WindowInterceptor.init(new Trigger {
+      def run() {
+        getMainWindow.getTable("party-table").editCell(0, 0, "-", true)
+      }
+    }).process(new WindowHandler("Message") {
+      def process(window: Window) = {
+        assertTrue(window.titleEquals("Invalid Comabatant ID"))
+        assertTrue(checkLabelContent(window, "OptionPane.label", "'-' is not a valid Comabatant ID" +
+          ", must be unique and contain letter, numbers and underscore"))
+        window.getButton("OK").triggerClick()
+      }
+    }).run()
+    assertTrue(wrapWithCheck(verify(presenter, atLeastOnce()).isValidCombatantID(0, "-")))
+  }
+
   def testUpdateQuantityCellWithWrongField() {
     uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     getMainWindow.getTable("party-table").editCell(0, 3, "a", true)
 
     assertTrue(verify(presenter, never()).changeQuantity(0, 2))
+  }
+  
+  def testClearAllButton() {
+    getMainWindow.getButton("Clear all").click()
+    assertTrue(verify(presenter).clearAll())
   }
 
   implicit private def wrapWithCheck(block: => Unit): Assertion = {
@@ -212,4 +193,14 @@ class PartyEditorViewTest extends UISpecTestCase {
     PartyTableEntry(id, 1, Option(alias), definition1.name, definition1.experience)
   }
 
+  private def checkLabelContent(window: Window, labelName: String, expected1: String): Assertion = {
+    new Assertion() {
+      def check() {
+        val label = window.findSwingComponent(classOf[JLabel], labelName)
+        assert(label != null, "Label not found")
+        val expected = expected1
+        assert(label.getText == expected, "Expected label text: " + expected + " found: " + label.getText)
+      }
+    }
+  }
 }

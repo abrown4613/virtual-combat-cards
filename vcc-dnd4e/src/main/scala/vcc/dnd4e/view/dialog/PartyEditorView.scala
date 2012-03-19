@@ -70,19 +70,17 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     }
 
     override def isCellEditable(rowIndex: Int, columnIndex: Int): Boolean = {
-      columnIndex == 3
+      Set(3, 1, 0) contains columnIndex
     }
 
     override def setValueAt(aValue: AnyRef, rowIndex: Int, columnIndex: Int) {
-
-
-      try {
-        presenter.changeQuantity(rowIndex, aValue.asInstanceOf[java.lang.Integer].toInt)
-      } catch {
-        case s => s.printStackTrace()
+      columnIndex match {
+        case 0 => validateAndUpdateCombatantID(rowIndex, aValue.asInstanceOf[String])
+        case 1 => presenter.changeAlias(rowIndex, aValue.asInstanceOf[String])
+        case 3 => presenter.changeQuantity(rowIndex, aValue.asInstanceOf[java.lang.Integer].toInt)
       }
-
     }
+
 
     override def getColumnClass(columnIndex: Int): Class[_] = {
       if (columnIndex == 3)
@@ -106,11 +104,15 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
       presenter.addEntry(sel.get.eid)
     }
   })
+  addButton.tooltip = "Double clicking on entries from the right table will also add to party."
+
   private val removeButton = new Button(Action(" << Remove") {
     presenter.changeQuantity(table.getSelectedRow, 0)
   })
   removeButton.enabled = false
+
   private val clearAllButton = new Button(Action("Clear all") {
+    presenter.clearAll()
   })
 
   private val tableModel = new PartyTableModel()
@@ -123,7 +125,6 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     }
   })
 
-  addButton.tooltip = "Double clicking on entries from the right table will also add to party."
   compendiumEntries.doubleClickAction = addButton.action
   title = "Edit Encounter and Party"
   iconImage = IconLibrary.MetalD20.getImage
@@ -159,12 +160,12 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
   listenTo(this.collapseCheckBox)
   reactions += {
     case ButtonClicked(this.collapseCheckBox) =>
-      if(collapseCheckBox.selected)
+      if (collapseCheckBox.selected)
         presenter.collapseEntries()
       else
         presenter.expandEntries()
   }
-  
+
 
   private def createMenuBar() = {
     val mb = new MenuBar()
@@ -182,4 +183,14 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     })
     mb
   }
+
+  private def validateAndUpdateCombatantID(rowIndex: Int, newId: String) {
+    if (!presenter.isValidCombatantID(rowIndex, newId))
+      scala.swing.Dialog.showMessage(removeButton,
+        "'" + newId + "' is not a valid Comabatant ID, must be unique and contain letter, numbers and underscore",
+        "Invalid Comabatant ID", Dialog.Message.Error)
+    else
+      presenter.changeCombatantId(rowIndex, newId)
+  }
+
 }

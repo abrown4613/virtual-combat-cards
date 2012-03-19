@@ -21,8 +21,11 @@ import vcc.dnd4e.view.dialog.PartyEditorView.PartyTableEntry
 import vcc.dnd4e.model.PartyBuilder
 import vcc.dnd4e.model.PartyBuilder.{EntryDefinition, EntityResolver}
 import vcc.dnd4e.compendium.{CharacterSummary, TrapSummary, MonsterSummary, Compendium}
+import vcc.dnd4e.tracker.common.CombatantID
 
 class PartyEditorPresenter(builder: PartyBuilder) {
+
+  private var view: PartyEditorView.UIElement = null
 
   def this() = this(new PartyBuilder())
 
@@ -41,7 +44,16 @@ class PartyEditorPresenter(builder: PartyBuilder) {
     updateView()
   }
 
-  private var view: PartyEditorView.UIElement = null
+  def changeAlias(row: Int, aliasText: String) {
+    builder.setAlias(row, Some(aliasText))
+    updateView()
+  }
+
+  def changeCombatantId(row: Int, cid: String) {
+    val cidOption = if(cid == null || cid == "") None else Some(CombatantID(cid))
+    builder.setId(row, cidOption)
+    updateView()
+  }
 
   def addEntry(entityId: EntityID) {
     builder.addEncounterParticipant(PartyEditorPresenter.resolveEntity(entityId))
@@ -52,12 +64,23 @@ class PartyEditorPresenter(builder: PartyBuilder) {
     this.view = view
   }
 
+  def isValidCombatantID(rowToSet:Int, combatantId: String):Boolean = {
+    CombatantID.isValidID(combatantId) && !builder.wouldViolateIdUniqueness(CombatantID(combatantId), rowToSet)
+  }
+  
   private def updateView() {
     view.setExperienceMessage(builder.encounterExperience + " XP")
     val entries = for (row <- 0 until builder.numberOfRows) yield {
-      PartyTableEntry(None, builder.getQuantity(row), None, builder.getName(row), builder.getExperience(row))
+      PartyTableEntry(
+        builder.getId(row), builder.getQuantity(row),
+        builder.getAlias(row), builder.getName(row), builder.getExperience(row))
     }
     view.setPartyTableContent(entries.toList)
+  }
+
+  def clearAll() {
+    builder.clear()
+    updateView()
   }
 
 }
