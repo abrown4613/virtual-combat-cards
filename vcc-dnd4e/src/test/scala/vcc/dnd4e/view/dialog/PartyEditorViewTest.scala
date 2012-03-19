@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,19 +69,31 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testMessageOnExperiencePoints() {
-    uiElement.setExperienceMessage("Ipsum lorem")
-    assertTrue(checkLabelContent(getMainWindow, "experience-label", "Ipsum lorem"))
+    uiElement.setPartyTableContent(1023, Nil)
+    assertTrue(checkLabelContent(getMainWindow, "experience-label", "1023 XP (Level 5)"))
+  }
+
+  def testUpdateLevelOnPartySizeChangeTo4() {
+    uiElement.setPartyTableContent(1023, Nil)
+    getMainWindow.getComboBox("party-size").select("4")
+    assertTrue(checkLabelContent(getMainWindow, "experience-label", "1023 XP (Level 6)"))
+  }
+
+  def testUpdateLevelOnPartySizeChangeTo6() {
+    uiElement.setPartyTableContent(1023, Nil)
+    getMainWindow.getComboBox("party-size").select("6")
+    assertTrue(checkLabelContent(getMainWindow, "experience-label", "1023 XP (Level 3)"))
   }
 
   def testSetTableEntry() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     assertTrue(getMainWindow.getTable("party-table").rowEquals(0,
       Array("ID", "Alias", "Name", "Qty", "XP"),
       Array("A", "Nick", "creature", "1", "34")))
   }
 
   def testSelectOnlyOneRow() {
-    uiElement.setPartyTableContent(List(
+    uiElement.setPartyTableContent(0, List(
       createSingleEntry(Some(CombatantID("A")), "Nick"),
       createSingleEntry(None, null)))
     val partyTable = getMainWindow.getTable("party-table")
@@ -91,7 +103,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testRemoveRowActionEnabledOnSelect() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     val removeButton = getMainWindow.getButton("Remove")
     assertFalse(removeButton.isEnabled)
     getMainWindow.getTable("party-table").selectRow(0)
@@ -99,7 +111,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testRemoveRowAction() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     val removeButton = getMainWindow.getButton("Remove")
     getMainWindow.getTable("party-table").selectRow(0)
     removeButton.click()
@@ -115,21 +127,21 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testUpdateQuantityCell() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     getMainWindow.getTable("party-table").editCell(0, 3, "2", true)
 
     assertTrue(verify(presenter).changeQuantity(0, 2))
   }
 
   def testChangeAlias() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     getMainWindow.getTable("party-table").editCell(0, 1, "some alias", true)
 
     assertTrue(verify(presenter).changeAlias(0, "some alias"))
   }
 
   def testChangeCombatantID() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     when(presenter.isValidCombatantID(0, "a")).thenReturn(true)
 
     getMainWindow.getTable("party-table").editCell(0, 0, "a", true)
@@ -139,7 +151,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testChangeCombatantIDToInvalid() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     when(presenter.isValidCombatantID(0, "-")).thenReturn(false)
 
     WindowInterceptor.init(new Trigger {
@@ -158,7 +170,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   def testUpdateQuantityCellWithWrongField() {
-    uiElement.setPartyTableContent(List(createSingleEntry(Some(CombatantID("A")), "Nick")))
+    uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     getMainWindow.getTable("party-table").editCell(0, 3, "a", true)
 
     assertTrue(verify(presenter, never()).changeQuantity(0, 2))
