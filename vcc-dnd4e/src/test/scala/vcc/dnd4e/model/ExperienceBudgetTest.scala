@@ -19,7 +19,6 @@ package vcc.dnd4e.model
 import org.specs2.SpecificationWithJUnit
 import org.specs2.matcher.DataTables
 
-
 object ExperienceBudgetData extends DataTables {
   val table = "level" | "4 pc" | "5 pc" | "6 pc" |
     1 ! 400 ! 500 ! 600 |
@@ -60,6 +59,7 @@ class ExperienceBudgetTest extends SpecificationWithJUnit {
     "Calculate level on budget" ! levelOnBudget ^
       "Calculate level for slight below budget" ! slightUnderBudget ^
       "Calculate level for slight over budget" ! slightOverBudget ^
+      "Lower bound" ! lowerBound ^
       end
 
 
@@ -84,5 +84,10 @@ class ExperienceBudgetTest extends SpecificationWithJUnit {
       (level, pc4, pc5, pc6) =>
         (ExperienceBudget.levelFromExperience(pc5 + 10, 5) must_== level)
     }
+  }
+
+  def lowerBound = {
+    (ExperienceBudget.levelFromExperience(100, 5) must_== 0) and
+      (ExperienceBudget.levelFromExperience(400, 5) must_== 0)
   }
 }
