@@ -57,7 +57,7 @@ object ExperienceBudget {
     }
 
     val experiencePerPC = experiencePoints / math.max(1, numberOfPlayerCharacters)
-    val level = levelFromXP(experiencePerPC - 100, 1, incrementList)
+    val level = levelFromXP(math.max(experiencePerPC - 100, 0), 1, incrementList)
 
     adjustLevelForLowerBound(experiencePerPC, level)
   }
