@@ -144,33 +144,38 @@ class PartyEditorView(presenter: PartyEditorPresenter, panelDirector: PanelDirec
   }
 
   private def createMenuBar() = {
-    val mb = new MenuBar()
-    val fileMenu = new Menu("File")
-    mb.contents += fileMenu
-    fileMenu.contents += new MenuItem(Action("Save ...") {
+    def createSaveMenu() = Action("Save ...") {
       val targetFile = FileChooserHelper.chooseSaveFile(null, FileChooserHelper.partyFilter)
-      println(targetFile)
-      if(targetFile.isDefined)
+      if (targetFile.isDefined)
         presenter.saveToFile(targetFile.get)
-    })
-    fileMenu.contents += new MenuItem(Action("Load ...") {
+    }
+
+    def createLoadMenu() = Action("Load ...") {
       val file = FileChooserHelper.chooseOpenFile(null, FileChooserHelper.partyFilter)
-      if(file.isDefined) {
+      if (file.isDefined) {
         val loadedFile = PartyFile.loadFromStream(new FileInputStream(file.get))
         val goodFile = PartyLoader.getInstance(null, menuBar).validatePartyLoadAndWarn(loadedFile)
         val validatedList = goodFile.filter(e => Compendium.activeRepository.containsEntity(e.eid))
-        if(validatedList.length != goodFile.length) {
+        if (validatedList.length != goodFile.length) {
           Dialog.showMessage(null,
             "Not all entries where found in you compendium, showing valid only",
             "Not all entries loaded", Dialog.Message.Warning)
         }
         presenter.loadPartyMembers(validatedList)
       }
-    })
-    fileMenu.contents += new Separator()
-    fileMenu.contents += new MenuItem(Action("Add to combat") {
+    }
+
+    def createAddToCombatMenu() = Action("Add to combat") {
       presenter.addPartyToBattle(panelDirector)
-    })
+    }
+
+    val mb = new MenuBar()
+    val fileMenu = new Menu("File")
+    fileMenu.contents += new MenuItem(createSaveMenu())
+    fileMenu.contents += new MenuItem(createLoadMenu())
+    fileMenu.contents += new Separator()
+    fileMenu.contents += new MenuItem(createAddToCombatMenu())
+    mb.contents += fileMenu
     mb
   }
 
@@ -206,7 +211,7 @@ class PartyEditorView(presenter: PartyEditorPresenter, panelDirector: PanelDirec
     label
   }
 
-  private def createPartyTable():JTable = {
+  private def createPartyTable(): JTable = {
     val jTable = new JTable(tableModel)
     jTable.setName("party-table")
     jTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
@@ -226,7 +231,7 @@ class PartyEditorView(presenter: PartyEditorPresenter, panelDirector: PanelDirec
 
   private def validateAndUpdateCombatantID(rowIndex: Int, newId: String) {
     if (!presenter.isValidCombatantID(rowIndex, newId))
-      scala.swing.Dialog.showMessage(removeButton,
+      Dialog.showMessage(removeButton,
         "'" + newId + "' is not a valid Comabatant ID, must be unique and contain letter, numbers and underscore",
         "Invalid Comabatant ID", Dialog.Message.Error)
     else
