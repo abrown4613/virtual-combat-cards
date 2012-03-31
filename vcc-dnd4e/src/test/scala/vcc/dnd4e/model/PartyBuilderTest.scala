@@ -167,6 +167,7 @@ class PartyBuilderTest extends SpecificationWithJUnit {
       checkTotals(2, 400)
       checkRow(0, entry1, 3)
       checkRow(1, entry2, 2)
+      partyBuilder.isCollapsed must beTrue
     }
 
     "setting quantity updates entries" in new context {
@@ -195,6 +196,7 @@ class PartyBuilderTest extends SpecificationWithJUnit {
       partyBuilder.expandSimilar()
       checkTotals(5, 400)
       checkAllRows(entry1, entry1, entry1, entry2, entry2)
+      partyBuilder.isCollapsed must beFalse
     }
 
     "setting alias on collapsed entry breaks row" in new loadedCollapsed {

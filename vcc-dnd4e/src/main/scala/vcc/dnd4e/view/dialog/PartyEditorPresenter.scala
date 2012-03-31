@@ -73,34 +73,17 @@ class PartyEditorPresenter(builder: PartyBuilder) {
       CombatantID.isValidID(combatantId) && !builder.wouldViolateIdUniqueness(CombatantID(combatantId), rowToSet)
   }
 
-  private def updateView() {
-    val entries = for (row <- 0 until builder.numberOfRows) yield {
-      PartyTableEntry(
-        builder.getId(row), builder.getQuantity(row),
-        builder.getAlias(row), builder.getName(row), builder.getExperience(row))
-    }
-    view.setPartyTableContent(builder.encounterExperience, entries.toList)
-  }
-
   def clearAll() {
     builder.clear()
     updateView()
   }
 
-  private def partyMembersWithIDFirst(list:Seq[PartyMember]): Seq[PartyMember] = {
-    val (withId, withoutId) = list.partition(pm => pm.id != null)
-    val finalList = withId ++ withoutId
-    finalList
-  }
-
   def loadPartyMembers(list: Seq[PartyMember]) {
-    val finalList: Seq[PartyMember] = partyMembersWithIDFirst(list)
-    for (element <- finalList) {
-      val idx = builder.numberOfRows
-      builder.addEncounterParticipant(PartyEditorPresenter.resolveEntity(element.eid))
-      builder.setAlias(idx, Option(element.alias))
-      builder.setId(idx, Option(element.id))
-    }
+    val isCollapsed = builder.isCollapsed
+    if (isCollapsed) builder.expandSimilar()
+    clearAll()
+    loadAllEntries(partyMembersWithIDFirst(list))
+    if (isCollapsed) builder.collapseSimilar()
     updateView()
   }
 
@@ -112,6 +95,31 @@ class PartyEditorPresenter(builder: PartyBuilder) {
   def saveToFile(file: File) {
     PartyFile.saveToFile(file, partyMembersWithIDFirst(builder.generateParty()))
   }
+
+  private def updateView() {
+    val entries = for (row <- 0 until builder.numberOfRows) yield {
+      PartyTableEntry(
+        builder.getId(row), builder.getQuantity(row),
+        builder.getAlias(row), builder.getName(row), builder.getExperience(row))
+    }
+    view.setPartyTableContent(builder.encounterExperience, entries.toList)
+  }
+
+  private def partyMembersWithIDFirst(list:Seq[PartyMember]): Seq[PartyMember] = {
+    val (withId, withoutId) = list.partition(pm => pm.id != null)
+    val finalList = withId ++ withoutId
+    finalList
+  }
+
+  private def loadAllEntries(finalList: scala.Seq[PartyMember]) {
+    for (element <- finalList) {
+      val idx = builder.numberOfRows
+      builder.addEncounterParticipant(PartyEditorPresenter.resolveEntity(element.eid))
+      builder.setAlias(idx, Option(element.alias))
+      builder.setId(idx, Option(element.id))
+    }
+  }
+
 }
 
 object PartyEditorPresenter extends EntityResolver {
