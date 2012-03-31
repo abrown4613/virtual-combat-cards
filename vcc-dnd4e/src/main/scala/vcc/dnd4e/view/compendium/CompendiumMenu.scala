@@ -18,7 +18,6 @@ package vcc.dnd4e.view.compendium
 
 import scala.swing._
 import vcc.util.swing.SwingHelper
-import vcc.dnd4e.view.dialog.FileChooserHelper
 import java.io.FileInputStream
 import vcc.dnd4e.compendium.{CombatantEntityBuilder, Compendium}
 import vcc.dndi.reader.CharacterBuilderImporter
@@ -26,6 +25,7 @@ import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 import vcc.dnd4e.compendium.view.{TemplateProvider, CompendiumView}
 import vcc.infra.xtemplate.Template
 import vcc.dndi.app.CaptureTemplateEngine
+import vcc.dnd4e.view.dialog.{PartyEditorView, FileChooserHelper}
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
@@ -57,7 +57,7 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
   this.contents += new MenuItem(compendiumView.newEntryAction)
 
   this.contents += new MenuItem(Action("Edit Parties ...") {
-    val partyEditor = new PartyEditor(director)
+    val partyEditor = new PartyEditorView(director)
     SwingHelper.centerFrameOnScreen(partyEditor)
     partyEditor.visible = true
   })
