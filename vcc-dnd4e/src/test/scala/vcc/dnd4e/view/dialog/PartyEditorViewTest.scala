@@ -19,24 +19,16 @@ package vcc.dnd4e.view.dialog
 import org.mockito.Mockito._
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.compendium._
-import javax.swing.{JLabel, JFrame}
 import org.uispec4j.assertion.Assertion
 import vcc.dnd4e.view.dialog.PartyEditorView.PartyTableEntry
-import vcc.dnd4e.model.PartyBuilder
 import vcc.dnd4e.tracker.common.CombatantID
-import org.uispec4j.interception.{WindowHandler, WindowInterceptor}
 import org.uispec4j.{Trigger, UISpecAdapter, Window, UISpecTestCase}
-
-object MockedPartyEditor {
-  def main(args: Array[String]) {
-
-    new MockedCompendium().initialize()
-
-    val view = new PartyEditorView()
-    view.peer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
-    view.visible = true
-  }
-}
+import org.uispec4j.interception.{FileChooserHandler, WindowHandler, WindowInterceptor}
+import javax.swing.{JLabel}
+import java.io.File
+import org.mockito.Matchers._
+import vcc.dnd4e.model.{PartyFile, PartyMember, PartyBuilder}
+import vcc.dnd4e.view.PanelDirector
 
 class PartyEditorViewTest extends UISpecTestCase {
 
@@ -45,6 +37,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   private var presenter: PartyEditorPresenter = null
   private var uiElement: PartyEditorView.UIElement = null
   private val mockCompendium = new MockedCompendium()
+  private val mockPanelDirector = mock(classOf[PanelDirector])
 
   override def setUp() {
     super.setUp()
@@ -175,10 +168,54 @@ class PartyEditorViewTest extends UISpecTestCase {
 
     assertTrue(verify(presenter, never()).changeQuantity(0, 2))
   }
-  
+
   def testClearAllButton() {
     getMainWindow.getButton("Clear all").click()
     assertTrue(verify(presenter).clearAll())
+  }
+
+  def testLoadFile() {
+    val file = new File("some.peml")
+    val memberEid = Compendium.activeRepository.getMonsterSummaries()(0).eid
+    val member = PartyMember(null, null, memberEid)
+    PartyFile.saveToFile(file, List(member, member))
+    handleFileLoadMenu(handleAndVerifyLoadDialog().select(file.getName))
+    assertTrue(verify(presenter).loadPartyMembers(List(member, member)))
+    file.delete()
+  }
+
+  def testFileWithBadContent() {
+    val file = new File("some.peml")
+    val goodList = buildBadPartyFileAndReturnGoodEntries(file)
+    file.deleteOnExit()
+
+    openLoadDialog().
+      process(handleAndVerifyLoadDialog().select(file.getName)).
+      process(handleNotAllLoadedWarning()).
+      run()
+    assertTrue(verify(presenter).loadPartyMembers(goodList))
+  }
+
+  def testAskForLoadButGiveUp() {
+    handleFileLoadMenu(handleAndVerifyLoadDialog().cancelSelection())
+    assertTrue(verify(presenter, never()).loadPartyMembers(any[List[PartyMember]]))
+  }
+
+  def testAddToBattle() {
+    getMainWindow.getMenuBar.getMenu("File").getSubMenu("Add to combat").click()
+    assertTrue(verify(presenter).addPartyToBattle(any[PanelDirector]))
+  }
+
+  def testSaveToFileAndCancel() {
+    handleFileSaveDialog(handleAndVerifySaveDialog().cancelSelection)
+    assertTrue(verify(presenter, never()).saveToFile(any[File]))
+  }
+
+  def testSaveToFileDoIt() {
+    val file = new File("file-to-save.peml")
+    assertTrue("File must not exist", wrapWithCheck(!file.exists()))
+    handleFileSaveDialog(handleAndVerifySaveDialog().select(file))
+    assertTrue(verify(presenter).saveToFile(file))
   }
 
   implicit private def wrapWithCheck(block: => Unit): Assertion = {
@@ -190,7 +227,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   private def createWindowAdapter(presenter: PartyEditorPresenter): UISpecAdapter = {
-    val view = new PartyEditorView(presenter)
+    val view = new PartyEditorView(presenter, mockPanelDirector)
     val window = new Window(view.peer)
     uiElement = view
 
@@ -212,6 +249,54 @@ class PartyEditorViewTest extends UISpecTestCase {
         assert(label != null, "Label not found")
         val expected = expected1
         assert(label.getText == expected, "Expected label text: " + expected + " found: " + label.getText)
+      }
+    }
+  }
+
+  private def handleAndVerifyLoadDialog(): FileChooserHandler = {
+    FileChooserHandler.
+      init().
+      assertIsOpenDialog().
+      assertAcceptsFilesOnly()
+  }
+
+  private def handleAndVerifySaveDialog(): FileChooserHandler = {
+    FileChooserHandler.
+      init().
+      assertIsSaveDialog().
+      assertAcceptsFilesOnly()
+  }
+
+  private def handleFileSaveDialog(handler: WindowHandler) {
+    WindowInterceptor.
+      init(getMainWindow.getMenuBar.getMenu("File").getSubMenu("Save ...").triggerClick()).
+      process(handler).
+      run()
+  }
+
+  private def handleFileLoadMenu(handler: WindowHandler) {
+    openLoadDialog().process(handler).run()
+  }
+
+  private def openLoadDialog(): WindowInterceptor = {
+    WindowInterceptor.
+      init(getMainWindow.getMenuBar.getMenu("File").getSubMenu("Load ...").triggerClick())
+  }
+
+  private def buildBadPartyFileAndReturnGoodEntries(file: File): List[PartyMember] = {
+    val member2Eid = Compendium.activeRepository.getMonsterSummaries()(0).eid
+    val member2 = PartyMember(null, null, member2Eid)
+    val member1 = PartyMember(null, null, EntityID.generateRandom())
+    PartyFile.saveToFile(file, List(member1, member2))
+    val goodList = List(member2)
+    goodList
+  }
+
+  private def handleNotAllLoadedWarning(): WindowHandler = {
+    new WindowHandler("Warning dialog") {
+      def process(window: Window): Trigger = {
+        assertTrue(window.titleEquals("Not all entries loaded"))
+        window.getButton("OK").triggerClick()
       }
     }
   }

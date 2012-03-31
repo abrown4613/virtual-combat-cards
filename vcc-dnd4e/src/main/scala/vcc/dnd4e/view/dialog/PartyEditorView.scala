@@ -16,18 +16,21 @@
  */
 package vcc.dnd4e.view.dialog
 
-import vcc.dnd4e.view.IconLibrary
 import vcc.util.swing.MigPanel
 import swing._
 import event.ButtonClicked
 import vcc.dnd4e.compendium.view.CompendiumEntitySelectionPanel
 import vcc.dnd4e.tracker.common.CombatantID
 import javax.swing.table.AbstractTableModel
-import vcc.dnd4e.view.dialog.PartyEditorView.{PartyTableEntry}
+import vcc.dnd4e.view.dialog.PartyEditorView.PartyTableEntry
 import javax.swing.{ListSelectionModel, JTable}
 import javax.swing.event.{ListSelectionEvent, ListSelectionListener}
 import java.lang.{Class, String}
-import vcc.dnd4e.model.ExperienceBudget
+import vcc.dnd4e.model.{PartyFile, ExperienceBudget}
+import java.io.FileInputStream
+import vcc.dnd4e.view.helper.PartyLoader
+import vcc.dnd4e.compendium.Compendium
+import vcc.dnd4e.view.{PanelDirector, IconLibrary}
 
 object PartyEditorView {
 
@@ -40,7 +43,8 @@ object PartyEditorView {
 
 }
 
-class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyEditorView.UIElement {
+class PartyEditorView(presenter: PartyEditorPresenter, panelDirector: PanelDirector)
+  extends Frame with PartyEditorView.UIElement {
 
   private class PartyTableModel extends AbstractTableModel {
     private var content: List[PartyTableEntry] = Nil
@@ -89,7 +93,7 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     }
   }
 
-  def this() = this(new PartyEditorPresenter())
+  def this(panelDirector: PanelDirector) = this(new PartyEditorPresenter(), panelDirector)
 
   private var experience = 0
   private val compendiumEntries = new CompendiumEntitySelectionPanel
@@ -144,14 +148,28 @@ class PartyEditorView(presenter: PartyEditorPresenter) extends Frame with PartyE
     val fileMenu = new Menu("File")
     mb.contents += fileMenu
     fileMenu.contents += new MenuItem(Action("Save ...") {
-      //doSave()
+      val targetFile = FileChooserHelper.chooseSaveFile(null, FileChooserHelper.partyFilter)
+      println(targetFile)
+      if(targetFile.isDefined)
+        presenter.saveToFile(targetFile.get)
     })
     fileMenu.contents += new MenuItem(Action("Load ...") {
-      //doLoad()
+      val file = FileChooserHelper.chooseOpenFile(null, FileChooserHelper.partyFilter)
+      if(file.isDefined) {
+        val loadedFile = PartyFile.loadFromStream(new FileInputStream(file.get))
+        val goodFile = PartyLoader.getInstance(null, menuBar).validatePartyLoadAndWarn(loadedFile)
+        val validatedList = goodFile.filter(e => Compendium.activeRepository.containsEntity(e.eid))
+        if(validatedList.length != goodFile.length) {
+          Dialog.showMessage(null,
+            "Not all entries where found in you compendium, showing valid only",
+            "Not all entries loaded", Dialog.Message.Warning)
+        }
+        presenter.loadPartyMembers(validatedList)
+      }
     })
     fileMenu.contents += new Separator()
     fileMenu.contents += new MenuItem(Action("Add to combat") {
-      //doAddToCombat()
+      presenter.addPartyToBattle(panelDirector)
     })
     mb
   }

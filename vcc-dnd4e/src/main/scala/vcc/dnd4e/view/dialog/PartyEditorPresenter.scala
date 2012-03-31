@@ -18,13 +18,15 @@ package vcc.dnd4e.view.dialog
 
 import vcc.infra.datastore.naming.EntityID
 import vcc.dnd4e.view.dialog.PartyEditorView.PartyTableEntry
-import vcc.dnd4e.model.PartyBuilder
 import vcc.dnd4e.model.PartyBuilder.{EntryDefinition, EntityResolver}
 import vcc.dnd4e.compendium.{CharacterSummary, TrapSummary, MonsterSummary, Compendium}
 import vcc.dnd4e.tracker.common.CombatantID
+import vcc.dnd4e.view.PanelDirector
+import java.io.File
+import vcc.dnd4e.view.helper.PartyLoader
+import vcc.dnd4e.model.{PartyFile, PartyMember, PartyBuilder}
 
 class PartyEditorPresenter(builder: PartyBuilder) {
-
   private var view: PartyEditorView.UIElement = null
 
   def this() = this(new PartyBuilder())
@@ -50,7 +52,7 @@ class PartyEditorPresenter(builder: PartyBuilder) {
   }
 
   def changeCombatantId(row: Int, cid: String) {
-    val cidOption = if(cid == null || cid == "") None else Some(CombatantID(cid))
+    val cidOption = if (cid == null || cid == "") None else Some(CombatantID(cid))
     builder.setId(row, cidOption)
     updateView()
   }
@@ -64,10 +66,13 @@ class PartyEditorPresenter(builder: PartyBuilder) {
     this.view = view
   }
 
-  def isValidCombatantID(rowToSet:Int, combatantId: String):Boolean = {
-    CombatantID.isValidID(combatantId) && !builder.wouldViolateIdUniqueness(CombatantID(combatantId), rowToSet)
+  def isValidCombatantID(rowToSet: Int, combatantId: String): Boolean = {
+    if (combatantId == "")
+      true
+    else
+      CombatantID.isValidID(combatantId) && !builder.wouldViolateIdUniqueness(CombatantID(combatantId), rowToSet)
   }
-  
+
   private def updateView() {
     val entries = for (row <- 0 until builder.numberOfRows) yield {
       PartyTableEntry(
@@ -82,6 +87,31 @@ class PartyEditorPresenter(builder: PartyBuilder) {
     updateView()
   }
 
+  private def partyMembersWithIDFirst(list:Seq[PartyMember]): Seq[PartyMember] = {
+    val (withId, withoutId) = list.partition(pm => pm.id != null)
+    val finalList = withId ++ withoutId
+    finalList
+  }
+
+  def loadPartyMembers(list: Seq[PartyMember]) {
+    val finalList: Seq[PartyMember] = partyMembersWithIDFirst(list)
+    for (element <- finalList) {
+      val idx = builder.numberOfRows
+      builder.addEncounterParticipant(PartyEditorPresenter.resolveEntity(element.eid))
+      builder.setAlias(idx, Option(element.alias))
+      builder.setId(idx, Option(element.id))
+    }
+    updateView()
+  }
+
+  def addPartyToBattle(director: PanelDirector) {
+    val toAdd = partyMembersWithIDFirst(builder.generateParty())
+    PartyLoader.getInstance(director, null).loadToBattle(toAdd)
+  }
+
+  def saveToFile(file: File) {
+    PartyFile.saveToFile(file, partyMembersWithIDFirst(builder.generateParty()))
+  }
 }
 
 object PartyEditorPresenter extends EntityResolver {
