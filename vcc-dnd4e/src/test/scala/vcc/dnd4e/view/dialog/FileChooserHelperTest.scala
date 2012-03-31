@@ -17,20 +17,19 @@
 package vcc.dnd4e.view.dialog
 
 import org.uispec4j.{Window, Trigger, UISpecTestCase}
-import java.util.Locale
 import org.uispec4j.interception.{FileChooserHandler, WindowHandler, WindowInterceptor}
 import java.io.File
 import junit.framework.Assert
 import javax.swing.filechooser.FileNameExtensionFilter
+import javax.swing.UIManager
 
 class FileChooserHelperTest extends UISpecTestCase {
 
-  private var result: Option[File] = None
+  private val saveTitle = getLabel("FileChooser.saveDialogTitleText")
+  private val yesButtonLabel = getLabel("OptionPane.yesButtonText")
+  private val noButtonLabel = getLabel("OptionPane.noButtonText")
 
-  override def setUp() {
-    super.setUp()
-    Locale.setDefault(Locale.US)
-  }
+  private var result: Option[File] = None
 
   def testShowSaveDialogAndSetPartialFileName() {
     runSaveOperation("file")
@@ -49,14 +48,15 @@ class FileChooserHelperTest extends UISpecTestCase {
 
   def testShowSaveDialog_uponSelectingExistentFilePromptForOverwrite() {
     val preExistentFile = new File("file2.peml")
-    runSaveOperationWithOverwrite(preExistentFile, "yes")
+    runSaveOperationWithOverwrite(preExistentFile, yesButtonLabel)
     validateReturnedAbsoluteFilename(preExistentFile)
   }
 
   def testShowSaveDialog_uponSelectingExistentFilePromptForOverwriteButNegate() {
     val preExistentFile = new File("file2.peml")
     preExistentFile.createNewFile()
-    runSaveOperationWithOverwrite(preExistentFile, "No")
+    runSaveOperationWithOverwrite(preExistentFile, noButtonLabel)
+    preExistentFile.delete()
     Assert.assertEquals(None, result)
   }
 
@@ -65,13 +65,15 @@ class FileChooserHelperTest extends UISpecTestCase {
   }
 
   private def runSaveOperation(selectedFileName: String) {
-    showSaveDialog(result, FileChooserHelper.partyFilter).process(checkTitleAndSelectAnswer("Save", selectedFileName)).run()
+    showSaveDialog(result, FileChooserHelper.partyFilter).process(checkTitleAndSelectAnswer(saveTitle, selectedFileName)).run()
   }
+
+  private def getLabel(resource: String)= UIManager.get(resource).asInstanceOf[String]
 
   def runSaveOperationWithOverwrite(preExistentFile: File, overwriteAnswer: String) {
     preExistentFile.createNewFile()
     showSaveDialog(result, FileChooserHelper.partyFilter).
-      process(checkTitleAndSelectAnswer("Save", preExistentFile.getName)).
+      process(checkTitleAndSelectAnswer(saveTitle, preExistentFile.getName)).
       process(expectOverwriteWarningAndOverride(overwriteAnswer)).
       run()
     preExistentFile.delete()
