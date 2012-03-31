@@ -133,6 +133,8 @@ class PartyBuilder {
     expandList()
   }
 
+  def isCollapsed = groupSimilar
+
   def removeRow(row: Int) {
     val (before, after) = entries.splitAt(row)
     entries = before ++ after.tail

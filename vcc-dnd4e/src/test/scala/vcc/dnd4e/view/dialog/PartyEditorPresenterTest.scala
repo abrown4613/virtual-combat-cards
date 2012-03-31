@@ -205,6 +205,21 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       ))
     }
 
+    "load party with repeated entries with compressed view" in new scope {
+      val member = PartyMember(null, null, getMonster(0))
+      pp.collapseEntries()
+      pp.loadPartyMembers(List(member, member, member))
+      there was one(mockView).setPartyTableContent(300, List(entryFromEntityID(getMonster(0), quantity = 3)))
+    }
+
+    "loading party should clear current list" in new scope {
+      val member = PartyMember(null, null, getMonster(0))
+      pp.collapseEntries()
+      pp.addEntry(getMonster(5))
+      pp.loadPartyMembers(List(member, member, member))
+      there was one(mockView).setPartyTableContent(300, List(entryFromEntityID(getMonster(0), quantity = 3)))
+    }
+
     "load to battle" in new scope {
       val list = makePartyList()
       val director = mock[PanelDirector]
