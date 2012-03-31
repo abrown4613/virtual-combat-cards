@@ -42,11 +42,26 @@ class MockedCompendium {
     mockFetch(mockRepository, trapEntries)
     mockFetch(mockRepository, characterEntries)
 
+    mockFullMonster(mockRepository, monsterEntries)
     mockRepository
   }
 
   private def mockFetch(mockRepository: CompendiumRepository, entries: Seq[EntitySummary]) {
-    entries.foreach(entry => when(mockRepository.getEntitySummary(entry.eid)).thenReturn(entry))
+    entries.foreach(entry => {
+      when(mockRepository.getEntitySummary(entry.eid)).thenReturn(entry)
+      when(mockRepository.containsEntity(entry.eid)).thenReturn(true)
+    })
+  }
+
+  private def mockFullMonster(mockRepository: CompendiumRepository, monsters: Seq[MonsterSummary]) {
+    monsters.foreach(monster => {
+      val m = new MonsterEntity(monster.eid)
+      m.hp.value = 1
+      m.statblock.value = "dummy"
+      m.name.value = monster.name
+      m.initiative.value = 1
+      when(mockRepository.load(monster.eid, true)).thenReturn(m)
+    })
   }
 
   private def createTrapEntries(maxLevel: Int): Seq[TrapSummary] = {

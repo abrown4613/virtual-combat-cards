@@ -23,8 +23,11 @@ import vcc.dnd4e.compendium.Compendium
 import vcc.dnd4e.model.PartyBuilder.EntryDefinition
 import vcc.infra.datastore.naming.EntityID
 import org.specs2.specification.Scope
-import vcc.dnd4e.model.PartyBuilder
-import vcc.dnd4e.tracker.common.CombatantID
+import vcc.dnd4e.view.PanelDirector
+import vcc.dnd4e.tracker.common.Command.AddCombatants
+import vcc.dnd4e.tracker.common.{CombatantRosterDefinition, CombatantID}
+import vcc.dnd4e.model.{CombatantEntityBuilder, PartyMember, PartyFile, PartyBuilder}
+import java.io.{FileInputStream, File}
 
 class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
 
@@ -35,6 +38,16 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
     val pp = new PartyEditorPresenter()
     val mockView = mock[PartyEditorView.UIElement]
     pp.setView(mockView)
+
+    protected def loadPartyInDirectOrder(list: List[PartyMember]) {
+      var idx = 0
+      for (l <- list) {
+        pp.addEntry(l.eid)
+        pp.changeAlias(idx, l.alias)
+        pp.changeCombatantId(idx, if (l.id != null) l.id.id else null)
+        idx += 1
+      }
+    }
   }
 
   trait spyScope extends Scope {
@@ -160,6 +173,13 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       there was no(builderSpy).wouldViolateIdUniqueness(any, any)
     }
 
+    "accept blank combatant ID" in new spyScope {
+      val entity1 = getMonster(2)
+      pp.addEntry(entity1)
+      pp.isValidCombatantID(0, "") must beTrue
+      there was no(builderSpy).wouldViolateIdUniqueness(any, any)
+    }
+
     "check ID uniqueness violation" in new spyScope {
       val entity1 = getMonster(2)
       pp.addEntry(entity1)
@@ -169,11 +189,48 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.isValidCombatantID(1, "A") must beFalse
       there was one(builderSpy).wouldViolateIdUniqueness(CombatantID("A"), 1)
     }
-    
+
     "clear all and update view" in new spyScope {
       pp.clearAll()
       there was one(builderSpy).clear()
       there was one(mockView).setPartyTableContent(0, Nil)
+    }
+
+    "load party member" in new scope {
+      val list = makePartyList()
+      pp.loadPartyMembers(list)
+      there was one(mockView).setPartyTableContent(1100, List(
+        entryFromEntityID(list(1).eid, cid = Some(CombatantID("A"))),
+        entryFromEntityID(list(0).eid, alias = Some("alias"))
+      ))
+    }
+
+    "load to battle" in new scope {
+      val list = makePartyList()
+      val director = mock[PanelDirector]
+      loadPartyInDirectOrder(list)
+      pp.addPartyToBattle(director)
+      val m1 = makeCombatantRosterDefinition(list(1), "Monster 3")
+      val m2 = makeCombatantRosterDefinition(list(0), "Monster 7")
+      there was one(director).requestAction(AddCombatants(List(m1, m2)))
+
+      def makeCombatantRosterDefinition(member: PartyMember, name: String) = {
+        val entity = Compendium.activeRepository.load(member.eid, true)
+        CombatantRosterDefinition(member.id, member.alias, CombatantEntityBuilder.fromCompendiumCombatantEntity(entity))
+      }
+    }
+
+    "save to file" in new scope {
+      val file = File.createTempFile("vcc", "peml")
+      val list = makePartyList()
+
+      loadPartyInDirectOrder(list)
+
+      pp.saveToFile(file)
+
+      val loaded = PartyFile.loadFromStream(new FileInputStream(file))
+      file.delete()
+      loaded must_==(List(list(1), list(0)), true)
     }
   }
 
@@ -197,4 +254,9 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
     PartyTableEntry(cid, quantity, alias, getEntityDefinition(entityId).name, getEntityDefinition(entityId).experience)
   }
 
+  private def makePartyList() = {
+    val member2 = PartyMember(CombatantID("A"), null, getMonster(6))
+    val member1 = PartyMember(null, "alias", getMonster(3))
+    List(member1, member2)
+  }
 }
