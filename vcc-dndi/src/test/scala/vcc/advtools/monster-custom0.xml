@@ -356,8 +356,62 @@
       <Name>Elite</Name>
     </ReferencedObject>
   </GroupRole>
-  <Items />
-  <Languages />
+  <Items>
+    <ItemAndQuantity>
+      <Quantity>1</Quantity>
+      <Item>
+        <id xsi:type="string">W40</id>
+        <ReferencedObject>
+          <ID xsi:type="string">W40</ID>
+          <Name>Longbow</Name>
+          <Description></Description>
+        </ReferencedObject>
+      </Item>
+    </ItemAndQuantity>
+    <ItemAndQuantity>
+      <Quantity>1</Quantity>
+      <Item>
+        <id xsi:type="string">W20</id>
+        <ReferencedObject>
+          <ID xsi:type="string">W20</ID>
+          <Name>Short sword</Name>
+          <Description></Description>
+        </ReferencedObject>
+      </Item>
+    </ItemAndQuantity>
+    <ItemAndQuantity>
+      <Quantity>1</Quantity>
+      <Item>
+        <id xsi:type="string">A5</id>
+        <ReferencedObject>
+          <ID xsi:type="string">A5</ID>
+          <Name>Scale Armor</Name>
+          <Description>Overlapping pieces of highly durable material, such as steel or even dragon scales, make up scale armor. Despite its heaviness, scale is surprisingly easy to wear; its straps and buckles make it adjustable and able to fit snugly on the body, allowing for flexibility and agility.</Description>
+        </ReferencedObject>
+      </Item>
+    </ItemAndQuantity>
+    <ItemAndQuantity>
+      <Quantity>30</Quantity>
+      <Item>
+        <id xsi:type="string">E11</id>
+        <ReferencedObject>
+          <ID xsi:type="string">E11</ID>
+          <Name>Arrows</Name>
+          <Description>Arrows come in a quiver that holds thirty arrows. Ammunition is  used up when you fire it from a projectile weapon.</Description>
+        </ReferencedObject>
+      </Item>
+    </ItemAndQuantity>
+  </Items>
+  <Languages>
+    <ObjectReference>
+      <id xsi:type="string">20</id>
+      <ReferencedObject>
+        <ID xsi:type="string">20</ID>
+        <Name>Goblin</Name>
+        <Description>Goblin is a debased form of Supernal, in the way that goblins heard the first language. Goblin is the only foundational language of the world that lacks its own script, owing to the brutal and barbaric nature of the goblin race.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+  </Languages>
   <Alignment>
     <id xsi:type="string">1</id>
     <ReferencedObject>
@@ -408,11 +462,11 @@
                 </DefaultBonus>
               </AverageDamage>
               <DiceQuantity>1</DiceQuantity>
-              <DamageConstant FinalValue="7">
+              <DamageConstant FinalValue="11">
                 <Name>DamageConstant</Name>
                 <DefaultBonus xsi:type="AddNumberBonus">
                   <Name>Ad hoc</Name>
-                  <Value>0</Value>
+                  <Value>7</Value>
                   <ID xsi:type="string">Ad hoc</ID>
                 </DefaultBonus>
               </DamageConstant>
@@ -547,11 +601,11 @@
                 </DefaultBonus>
               </AverageDamage>
               <DiceQuantity>1</DiceQuantity>
-              <DamageConstant FinalValue="7">
+              <DamageConstant FinalValue="11">
                 <Name>DamageConstant</Name>
                 <DefaultBonus xsi:type="AddNumberBonus">
                   <Name>Ad hoc</Name>
-                  <Value>0</Value>
+                  <Value>7</Value>
                   <ID xsi:type="string">Ad hoc</ID>
                 </DefaultBonus>
               </DamageConstant>
