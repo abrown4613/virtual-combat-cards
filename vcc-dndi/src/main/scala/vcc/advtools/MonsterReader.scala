@@ -17,15 +17,15 @@
 package vcc.advtools
 
 import java.io.InputStream
-import vcc.advtools.Monster.{Defense, GroupTaxonomy, BestiaryTaxonomy}
 import xml.{NodeSeq, Node, XML}
+import vcc.advtools.Monster.{AbilityScores, Defense, GroupTaxonomy, BestiaryTaxonomy}
 
 class MonsterReader(inputStream: InputStream) {
   val xml = XML.load(inputStream)
 
   def getName: String = getElementAsText("Name")
 
-  def getGroupCategory= GroupTaxonomy(getRole, getGroupRole, getIsLeader, getLevel, getExperience)
+  def getGroupCategory = GroupTaxonomy(getRole, getGroupRole, getIsLeader, getLevel, getExperience)
 
   def getTaxonomy = BestiaryTaxonomy(getSize, getOrigin, getType)
 
@@ -34,7 +34,38 @@ class MonsterReader(inputStream: InputStream) {
     Defense(map("AC"), map("Fortitude"), map("Reflex"), map("Will"))
   }
 
-  def getSkills:Map[String, Int] = extractValues(xml \ "Skills" \\ "SkillNumber")
+  def getSkills: Map[String, Int] = extractValues(xml \ "Skills" \\ "SkillNumber")
+
+  def getAbilityScores = {
+    val map = extractValues(xml \ "AbilityScores" \\ "AbilityScoreNumber")
+    AbilityScores(map("Strength"), map("Constitution"), map("Dexterity"),
+      map("Intelligence"), map("Wisdom"), map("Charisma"))
+  }
+
+  def getEquipment: Option[String] = {
+    def formatItem(item: String, qty: String): String = if (qty == "1") item else item + " (" + qty + ")"
+
+    def formatItems(ns: NodeSeq): Seq[String] = {
+      ns.map(node => formatItem((node \\ "Name").text, (node \ "Quantity").text))
+    }
+
+    val ns = formatItems(xml \ "Items" \\ "ItemAndQuantity")
+    stringSeqToCommaSeparatedStringOption(ns)
+  }
+
+  def getLanguages: Option[String] = {
+    val ns = (xml \ "Languages" \\ "Name").map(_.text)
+    stringSeqToCommaSeparatedStringOption(ns)
+  }
+
+  def getAlignment = getReferencedObjectName("Alignment")
+
+  private def stringSeqToCommaSeparatedStringOption(ns: Seq[String]):Option[String] = {
+    if (ns.isEmpty)
+      None
+    else
+      Some(ns.mkString(", "))
+  }
 
   private def getLevel: Int = getTextAtPath("Level").toInt
 

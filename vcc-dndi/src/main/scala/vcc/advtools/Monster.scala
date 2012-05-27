@@ -24,4 +24,6 @@ object Monster {
 
   case class Defense(ac: Int, fortitude: Int, reflex: Int, will: Int)
 
+  case class AbilityScores(strength: Int, dexterity: Int, constitution: Int, intelligence: Int, wisdom: Int, charisma: Int)
+
 }
