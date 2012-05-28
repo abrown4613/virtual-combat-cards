@@ -17,7 +17,7 @@
 package vcc.advtools
 
 import org.specs2.SpecificationWithJUnit
-import vcc.advtools.Monster.{AbilityScores, Defense, GroupTaxonomy, BestiaryTaxonomy}
+import vcc.advtools.Monster._
 
 class MonsterReaderTest extends SpecificationWithJUnit {
 
@@ -40,9 +40,12 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedEquipment: Option[String] = None
     val expectedLanguages: Option[String] = None
     val expectedAlignment: String
+    val expectedBaseStats: BaseStats
+    val expectedCompendiumID: Option[Int] = None
 
     def baseDefinition = {
-      "has correct name" ! (reader.getName must_== expectedName) ^
+      "  has correct name" ! (reader.getName must_== expectedName) ^
+        "has expected compendium id" ! (reader.getCompendiumID must_== expectedCompendiumID) ^
         "has correct group taxonomy" ! (reader.getGroupCategory must_== expectedGroupTaxonomy) ^
         "has correct bestiary taxonomy" ! (reader.getTaxonomy must_== expectedBestiaryTaxonomy) ^
         "has correct defense" ! (reader.getDefense must_== expectedDefense) ^
@@ -50,7 +53,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has correct skills" ! (reader.getSkills must_== expectedSkills) ^
         "has equipment" ! (reader.getEquipment must_== expectedEquipment) ^
         "has languages" ! (reader.getLanguages must_== expectedLanguages) ^
-        "has alignment" ! (reader.getAlignment must_== expectedAlignment)
+        "has alignment" ! (reader.getAlignment must_== expectedAlignment) ^
+        "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats)
     }
   }
 
@@ -63,6 +67,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedAbilityScore = AbilityScores(12, 15, 20, 14, 18, 12)
     val expectedAlignment = "Evil"
     override val expectedLanguages = Some("Common, Supernal")
+    val expectedBaseStats = BaseStats(63, 12, 0, 0)
+    override val expectedCompendiumID = Some(99999)
   }
 
   case class monsterCustom0() extends MonsterCase("vcc/advtools/monster-custom0.xml") {
@@ -77,6 +83,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedEquipment = Some("Longbow, Short sword, Scale Armor, Arrows (30)")
     override val expectedLanguages = Some("Goblin")
     val expectedAlignment = "Unaligned"
+    val expectedBaseStats = BaseStats(120, 5, 1, 2)
   }
 
 }
