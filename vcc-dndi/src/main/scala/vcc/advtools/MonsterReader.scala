@@ -18,12 +18,15 @@ package vcc.advtools
 
 import java.io.InputStream
 import xml.{NodeSeq, Node, XML}
-import vcc.advtools.Monster.{AbilityScores, Defense, GroupTaxonomy, BestiaryTaxonomy}
+import vcc.advtools.Monster._
+import util.matching.Regex
 
 class MonsterReader(inputStream: InputStream) {
   val xml = XML.load(inputStream)
 
   def getName: String = getElementAsText("Name")
+
+  def getCompendiumID: Option[Int] = extractWithRegex((xml \ "CompendiumUrl").text, """.*\?id=(\d+)""".r).map(_.toInt)
 
   def getGroupCategory = GroupTaxonomy(getRole, getGroupRole, getIsLeader, getLevel, getExperience)
 
@@ -60,16 +63,32 @@ class MonsterReader(inputStream: InputStream) {
 
   def getAlignment = getReferencedObjectName("Alignment")
 
-  private def stringSeqToCommaSeparatedStringOption(ns: Seq[String]):Option[String] = {
+  def getBaseStats = BaseStats(
+    hitPoint = getIntAtPath("HitPoints", "@FinalValue"),
+    initiative = getIntAtPath("Initiative", "@FinalValue"),
+    actionPoints = getIntAtPath("ActionPoints", "@FinalValue"),
+    saveBonus = getIntAtPath("SavingThrows", "MonsterSavingThrow", "@FinalValue")
+  )
+
+  private def extractWithRegex(text:String, re: Regex):Option[String] = {
+    text match {
+      case `re`(m) => Some(m)
+      case _ => None
+    }
+  }
+
+  private def stringSeqToCommaSeparatedStringOption(ns: Seq[String]): Option[String] = {
     if (ns.isEmpty)
       None
     else
       Some(ns.mkString(", "))
   }
 
-  private def getLevel: Int = getTextAtPath("Level").toInt
+  private def getLevel: Int = getIntAtPath("Level")
 
-  private def getExperience = getTextAtPath("Experience", "@FinalValue").toInt
+  private def getExperience = getIntAtPath("Experience", "@FinalValue")
+
+  private def getIntAtPath(pathFragments: String*): Int = getTextAtPath(pathFragments: _*).toInt
 
   private def getRole: String = getReferencedObjectName("Role")
 
