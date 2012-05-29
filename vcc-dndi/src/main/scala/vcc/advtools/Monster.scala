@@ -18,7 +18,7 @@ package vcc.advtools
 
 object Monster {
 
-  case class BestiaryTaxonomy(size: String, origin: String, creatureType: String)
+  case class BestiaryTaxonomy(size: String, origin: String, creatureType: String, keyword: Option[String], race: Option[String])
 
   case class GroupTaxonomy(role: String, groupRole: String, isLeader: Boolean, level: Int, experience: Int)
 
