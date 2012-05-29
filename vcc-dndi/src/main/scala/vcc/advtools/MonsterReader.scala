@@ -30,7 +30,17 @@ class MonsterReader(inputStream: InputStream) {
 
   def getGroupCategory = GroupTaxonomy(getRole, getGroupRole, getIsLeader, getLevel, getExperience)
 
-  def getTaxonomy = BestiaryTaxonomy(getSize, getOrigin, getType)
+  def getTaxonomy = BestiaryTaxonomy(getSize, getOrigin, getType, getKeyword, getRace)
+
+  def getSenses: Option[String] = {
+    def formatSense(item: String, qty: String): String = if (qty == "0") item else item + " " + qty
+
+    def formatSenses(ns: NodeSeq): Seq[String] = {
+      ns.map(node => formatSense((node \\ "Name").text, (node \ "Range").text))
+    }
+    val ns = formatSenses(xml \ "Senses" \\ "SenseReference")
+    stringSeqToCommaSeparatedStringOption(ns)
+  }
 
   def getDefense = {
     val map = extractValues(xml \ "Defenses" \\ "SimpleAdjustableNumber")
@@ -101,6 +111,23 @@ class MonsterReader(inputStream: InputStream) {
   private def getType: String = getReferencedObjectName("Type")
 
   private def getOrigin: String = getReferencedObjectName("Origin")
+
+  private def getRace: Option[String] = {
+    val name = getReferencedObjectName("Race")
+    emptyOrStringAsOption(name)
+  }
+
+  private def emptyOrStringAsOption(name: String): Option[String] = {
+    if (name == "")
+      None
+    else
+      Some(name)
+  }
+
+  private def getKeyword: Option[String] = {
+    val names = (xml \ "Keywords" \\ "Name").map(_.text)
+    stringSeqToCommaSeparatedStringOption(names)
+  }
 
   private def extractValues(ns: NodeSeq): Map[String, Int] = {
     ns.map(node => ((node \ "Name").text -> (node \ "@FinalValue").text.toInt)).toMap

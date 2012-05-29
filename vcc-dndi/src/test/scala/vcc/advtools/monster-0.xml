@@ -254,6 +254,16 @@
       </ReferencedObject>
       <Range>0</Range>
     </SenseReference>
+    <SenseReference>
+      <id xsi:type="string">11</id>
+      <ReferencedObject>
+        <DefaultRange>10</DefaultRange>
+        <ID xsi:type="string">11</ID>
+        <Name>tremorsense</Name>
+        <Description>A creature that has blindsight can clearly see creatures or objects within a specified range and within line of effect, even if they are invisible or in obscured squares. The creature otherwise relies on its normal vision.</Description>
+      </ReferencedObject>
+      <Range>10</Range>
+    </SenseReference>
   </Senses>
   <Regeneration FinalValue="0">
     <Name>Regeneration</Name>
@@ -271,6 +281,14 @@
         <ID xsi:type="string">42</ID>
         <Name>Devil</Name>
         <Description>Devils are evil immortal creatures native to the Nine Hells. They don’t need to sleep.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+    <ObjectReference>
+      <id xsi:type="string">57</id>
+      <ReferencedObject>
+        <ID xsi:type="string">57</ID>
+        <Name>Aquatic</Name>
+        <Description>Aquatic creatures can breathe underwater. In aquatic combat, an aquatic creature gains a +2 bonus to attack rolls against nonaquatic creatures.</Description>
       </ReferencedObject>
     </ObjectReference>
   </Keywords>

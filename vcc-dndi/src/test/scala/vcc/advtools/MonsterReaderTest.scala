@@ -42,12 +42,14 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedAlignment: String
     val expectedBaseStats: BaseStats
     val expectedCompendiumID: Option[Int] = None
+    val expectedSenses: Option[String] = None
 
     def baseDefinition = {
       "  has correct name" ! (reader.getName must_== expectedName) ^
         "has expected compendium id" ! (reader.getCompendiumID must_== expectedCompendiumID) ^
         "has correct group taxonomy" ! (reader.getGroupCategory must_== expectedGroupTaxonomy) ^
         "has correct bestiary taxonomy" ! (reader.getTaxonomy must_== expectedBestiaryTaxonomy) ^
+        "has correct senses" ! (reader.getSenses must_== expectedSenses) ^
         "has correct defense" ! (reader.getDefense must_== expectedDefense) ^
         "has correct ability" ! (reader.getAbilityScores must_== expectedAbilityScore) ^
         "has correct skills" ! (reader.getSkills must_== expectedSkills) ^
@@ -61,7 +63,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
   case class monster0() extends MonsterCase("vcc/advtools/monster-0.xml") {
     val expectedName = "El Monster 99999"
     val expectedGroupTaxonomy = GroupTaxonomy("Lurker", "Standard", false, 7, 300)
-    val expectedBestiaryTaxonomy = BestiaryTaxonomy("Tiny", "Immortal", "Humanoid")
+    val expectedBestiaryTaxonomy = BestiaryTaxonomy("Tiny", "Immortal", "Humanoid", Some("Devil, Aquatic"), None)
     val expectedDefense = Defense(21, 20, 19, 18)
     val expectedSkills = Map("Perception" -> 12, "Bluff" -> 9, "Stealth" -> 13)
     val expectedAbilityScore = AbilityScores(12, 15, 20, 14, 18, 12)
@@ -69,12 +71,13 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedLanguages = Some("Common, Supernal")
     val expectedBaseStats = BaseStats(63, 12, 0, 0)
     override val expectedCompendiumID = Some(99999)
+    override val expectedSenses = Some("Darkvision, tremorsense 10")
   }
 
   case class monsterCustom0() extends MonsterCase("vcc/advtools/monster-custom0.xml") {
     val expectedName = "El cabron"
     val expectedGroupTaxonomy = GroupTaxonomy("Soldier", "Elite", false, 4, 350)
-    val expectedBestiaryTaxonomy = BestiaryTaxonomy("Medium", "Fey", "Humanoid")
+    val expectedBestiaryTaxonomy = BestiaryTaxonomy("Medium", "Fey", "Humanoid", None, Some("Drow"))
     val expectedDefense = Defense(23, 16, 19, 15)
     val expectedSkills = Map("Diplomacy" -> 3, "Nature" -> 3, "Streetwise" -> 3, "Acrobatics" -> 8, "Endurance" -> 3,
       "Heal" -> 3, "Insight" -> 3, "Religion" -> 4, "Thievery" -> 3, "Intimidate" -> 3, "History" -> 9,
