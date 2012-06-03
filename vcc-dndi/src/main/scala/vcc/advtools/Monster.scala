@@ -26,6 +26,19 @@ object Monster {
 
   case class AbilityScores(strength: Int, dexterity: Int, constitution: Int, intelligence: Int, wisdom: Int, charisma: Int)
 
-  case class BaseStats(hitPoint:Int, initiative: Int, actionPoints: Int, saveBonus: Int)
+  case class BaseStats(hitPoint: Int, initiative: Int, actionPoints: Int, saveBonus: Int)
 
+  trait Susceptibility {
+    def damageType: String
+
+    def amount: Int
+  }
+
+  case class Resistance(damageType: String, amount: Int) extends Susceptibility
+
+  case class Vulnerability(damageType: String, amount: Int) extends Susceptibility
+
+  case class Immune(damageType: String) extends Susceptibility {
+    def amount = Integer.MAX_VALUE
+  }
 }

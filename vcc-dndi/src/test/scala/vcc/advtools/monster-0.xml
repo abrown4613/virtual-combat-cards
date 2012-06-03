@@ -1042,7 +1042,25 @@
   </SavingThrows>
   <Weaknesses />
   <Immunities />
-  <Resistances />
+  <Resistances>
+    <CreatureSusceptibility>
+      <id xsi:type="string">73</id>
+      <ReferencedObject>
+        <ID xsi:type="string">73</ID>
+        <Name>Fire</Name>
+        <Description>Purple-black energy that deadens flesh and wounds the soul.</Description>
+      </ReferencedObject>
+      <Amount FinalValue="5">
+        <Name>Resistance</Name>
+        <DefaultBonus xsi:type="AddNumberBonus">
+          <Name>Ad hoc</Name>
+          <Value>0</Value>
+          <ID xsi:type="string">Ad hoc</ID>
+        </DefaultBonus>
+      </Amount>
+      <Details></Details>
+    </CreatureSusceptibility>
+  </Resistances>
   <TemplateApplications />
   <FullPortrait>
     <id xsi:type="string">76_Full</id>
