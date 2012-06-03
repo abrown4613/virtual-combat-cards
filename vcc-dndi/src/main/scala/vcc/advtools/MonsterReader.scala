@@ -80,7 +80,21 @@ class MonsterReader(inputStream: InputStream) {
     saveBonus = getIntAtPath("SavingThrows", "MonsterSavingThrow", "@FinalValue")
   )
 
-  private def extractWithRegex(text:String, re: Regex):Option[String] = {
+  def getSusceptibilities: List[Susceptibility] = {
+    def mapSusceptibilities(key: String, builder: (String, Int) => Susceptibility): Seq[Susceptibility] = {
+      (xml \ key \ "CreatureSusceptibility" map (node =>
+        builder(
+              getReferencedObjectName(node),
+              (node \\ "@FinalValue" text).toInt)))
+    }
+
+    (mapSusceptibilities("Resistances", Resistance.apply) ++
+      mapSusceptibilities("Weaknesses", Vulnerability.apply) ++
+      (xml \ "Immunities" \\ "Name").map(node => Immune(node.text))
+      ).toList
+  }
+
+  private def extractWithRegex(text: String, re: Regex): Option[String] = {
     text match {
       case `re`(m) => Some(m)
       case _ => None
@@ -139,6 +153,10 @@ class MonsterReader(inputStream: InputStream) {
 
   private def getReferencedObjectName(key: String): String = {
     (xml \ key \ "ReferencedObject" \ "Name").text
+  }
+
+  private def getReferencedObjectName(node: Node): String = {
+    (node \ "ReferencedObject" \ "Name").text
   }
 
   private def getTextAtPath(pathFragments: String*): String = {

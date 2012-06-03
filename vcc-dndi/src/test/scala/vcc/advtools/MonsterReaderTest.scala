@@ -22,15 +22,17 @@ import vcc.advtools.Monster._
 class MonsterReaderTest extends SpecificationWithJUnit {
 
   def is = "MonsterReaderTest".title ^
-    "Handle monster-0" ^
-    monster0().baseDefinition ^
-    endp ^
-    "Handle monster-custom0" ^
-    monsterCustom0().baseDefinition ^
+    run(monster0()) ^
+    run(monsterCustom0()) ^
+    run(monster1()) ^
     end
 
-  abstract class MonsterCase(resource: String) {
-    val reader = new MonsterReader(this.getClass.getClassLoader.getResourceAsStream(resource))
+  def run(monster: MonsterCase) = {
+    "Handle " + monster.resource ^ monster.baseDefinition ^ endp
+  }
+
+  abstract class MonsterCase(val resource: String) {
+    val reader = new MonsterReader(this.getClass.getClassLoader.getResourceAsStream("vcc/advtools/" + resource))
     val expectedName: String
     val expectedGroupTaxonomy: GroupTaxonomy
     val expectedBestiaryTaxonomy: BestiaryTaxonomy
@@ -43,6 +45,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedBaseStats: BaseStats
     val expectedCompendiumID: Option[Int] = None
     val expectedSenses: Option[String] = None
+    val expectedSusceptibilities: List[Susceptibility] = Nil
 
     def baseDefinition = {
       "  has correct name" ! (reader.getName must_== expectedName) ^
@@ -56,11 +59,12 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has equipment" ! (reader.getEquipment must_== expectedEquipment) ^
         "has languages" ! (reader.getLanguages must_== expectedLanguages) ^
         "has alignment" ! (reader.getAlignment must_== expectedAlignment) ^
-        "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats)
+        "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats) ^
+        "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities)
     }
   }
 
-  case class monster0() extends MonsterCase("vcc/advtools/monster-0.xml") {
+  case class monster0() extends MonsterCase("monster-0.xml") {
     val expectedName = "El Monster 99999"
     val expectedGroupTaxonomy = GroupTaxonomy("Lurker", "Standard", false, 7, 300)
     val expectedBestiaryTaxonomy = BestiaryTaxonomy("Tiny", "Immortal", "Humanoid", Some("Devil, Aquatic"), None)
@@ -72,9 +76,28 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedBaseStats = BaseStats(63, 12, 0, 0)
     override val expectedCompendiumID = Some(99999)
     override val expectedSenses = Some("Darkvision, tremorsense 10")
+    override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
   }
 
-  case class monsterCustom0() extends MonsterCase("vcc/advtools/monster-custom0.xml") {
+  case class monster1() extends MonsterCase("monster-1.xml") {
+    val expectedName = "Charlie Victor Lima"
+    val expectedGroupTaxonomy = GroupTaxonomy("Skirmisher", "Elite", true, 11, 1200)
+    val expectedBestiaryTaxonomy = BestiaryTaxonomy("Medium", "Natural", "Humanoid", Some("Undead"), None)
+    val expectedDefense = Defense(28, 27, 26, 25)
+    val expectedSkills = Map("Acrobatics" -> 15, "Thievery" -> 15, "Intimidate" -> 13, "Bluff" -> 13,
+      "Perception" -> 8, "Athletics" -> 13, "Stealth" -> 15)
+    val expectedAbilityScore = AbilityScores(16, 13, 20, 12, 11, 16)
+    val expectedAlignment = "Evil"
+    override val expectedLanguages = Some("Common")
+    val expectedBaseStats = BaseStats(248, 12, 1, 2)
+    override val expectedCompendiumID = Some(98765)
+    override val expectedSenses = Some("Darkvision")
+    override val expectedEquipment = Some("Leather Armor, Short sword")
+    override val expectedSusceptibilities = List(Resistance("Necrotic", 10), Vulnerability("Radiant", 10),
+      Immune("Disease"), Immune("Poison"))
+  }
+
+  case class monsterCustom0() extends MonsterCase("monster-custom0.xml") {
     val expectedName = "El cabron"
     val expectedGroupTaxonomy = GroupTaxonomy("Soldier", "Elite", false, 4, 350)
     val expectedBestiaryTaxonomy = BestiaryTaxonomy("Medium", "Fey", "Humanoid", None, Some("Drow"))
