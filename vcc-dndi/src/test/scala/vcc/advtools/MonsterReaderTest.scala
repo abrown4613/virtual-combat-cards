@@ -46,6 +46,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedCompendiumID: Option[Int] = None
     val expectedSenses: Option[String] = None
     val expectedSusceptibilities: List[Susceptibility] = Nil
+    val expectedSpeeds:String
 
     def baseDefinition = {
       "  has correct name" ! (reader.getName must_== expectedName) ^
@@ -59,6 +60,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has equipment" ! (reader.getEquipment must_== expectedEquipment) ^
         "has languages" ! (reader.getLanguages must_== expectedLanguages) ^
         "has alignment" ! (reader.getAlignment must_== expectedAlignment) ^
+        "has correct speed" ! (reader.getSpeeds must_== expectedSpeeds) ^
         "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats) ^
         "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities)
     }
@@ -77,6 +79,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedCompendiumID = Some(99999)
     override val expectedSenses = Some("Darkvision, tremorsense 10")
     override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
+    val expectedSpeeds = "Speed 4, Fly 7 (hover)"
   }
 
   case class monster1() extends MonsterCase("monster-1.xml") {
@@ -95,6 +98,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedEquipment = Some("Leather Armor, Short sword")
     override val expectedSusceptibilities = List(Resistance("Necrotic", 10), Vulnerability("Radiant", 10),
       Immune("Disease"), Immune("Poison"))
+    val expectedSpeeds = "Speed 8, Climb 4"
   }
 
   case class monsterCustom0() extends MonsterCase("monster-custom0.xml") {
@@ -110,6 +114,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedLanguages = Some("Goblin")
     val expectedAlignment = "Unaligned"
     val expectedBaseStats = BaseStats(120, 5, 1, 2)
+    val expectedSpeeds = "Speed 6"
   }
 
 }

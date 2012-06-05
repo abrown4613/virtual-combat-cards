@@ -84,14 +84,23 @@ class MonsterReader(inputStream: InputStream) {
     def mapSusceptibilities(key: String, builder: (String, Int) => Susceptibility): Seq[Susceptibility] = {
       (xml \ key \ "CreatureSusceptibility" map (node =>
         builder(
-              getReferencedObjectName(node),
-              (node \\ "@FinalValue" text).toInt)))
+          getReferencedObjectName(node),
+          (node \\ "@FinalValue" text).toInt)))
     }
 
     (mapSusceptibilities("Resistances", Resistance.apply) ++
       mapSusceptibilities("Weaknesses", Vulnerability.apply) ++
       (xml \ "Immunities" \\ "Name").map(node => Immune(node.text))
       ).toList
+  }
+
+  def getSpeeds: String = {
+    def formatSpeed(node: Node): String = {
+      val detail = emptyOrStringAsOption(node \ "Details" text)
+      (Seq((node \ "ReferencedObject" \ "Name" text), (node \ "Speed" \ "@FinalValue" text)) ++ detail).mkString(" ")
+    }
+    val speeds = "Speed " + (xml \ "LandSpeed" \ "Speed" \ "@FinalValue" text)
+    (Seq(speeds) ++ (xml \ "Speeds" \ "CreatureSpeed").map(formatSpeed)).mkString(", ")
   }
 
   private def extractWithRegex(text: String, re: Regex): Option[String] = {
