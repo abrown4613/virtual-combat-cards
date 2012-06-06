@@ -103,6 +103,22 @@ class MonsterReader(inputStream: InputStream) {
     (Seq(speeds) ++ (xml \ "Speeds" \ "CreatureSpeed").map(formatSpeed)).mkString(", ")
   }
 
+  def getPowers = {
+    def format(text:String) = {
+      if (text != "") " " + text
+      else text
+    }
+    (xml \ "Powers" \ "MonsterPower").map {
+      power =>
+        val powerName = power \ "Name" text
+        val action = power \ "Action" text
+        val usage = (power \ "Usage" text) + format(power \ "UsageDetails" text)
+        val rangeType = power \ "Type" text
+        val isBasicAttack = (power \ "IsBasic" text) == "true"
+        Power(powerName, action, usage, rangeType, isBasicAttack)
+    }.toList
+  }
+
   private def extractWithRegex(text: String, re: Regex): Option[String] = {
     text match {
       case `re`(m) => Some(m)

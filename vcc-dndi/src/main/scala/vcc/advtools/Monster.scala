@@ -41,4 +41,6 @@ object Monster {
   case class Immune(damageType: String) extends Susceptibility {
     def amount = Integer.MAX_VALUE
   }
+
+  case class Power(powerName: String, action: String, usage: String, rangeType: String, isBasicAttack:Boolean)
 }

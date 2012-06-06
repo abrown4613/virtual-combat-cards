@@ -46,7 +46,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedCompendiumID: Option[Int] = None
     val expectedSenses: Option[String] = None
     val expectedSusceptibilities: List[Susceptibility] = Nil
-    val expectedSpeeds:String
+    val expectedSpeeds: String
+    val expectedPowers: List[Power]
 
     def baseDefinition = {
       "  has correct name" ! (reader.getName must_== expectedName) ^
@@ -62,7 +63,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has alignment" ! (reader.getAlignment must_== expectedAlignment) ^
         "has correct speed" ! (reader.getSpeeds must_== expectedSpeeds) ^
         "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats) ^
-        "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities)
+        "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities) ^
+        "has correct powers" ! (reader.getPowers must_== expectedPowers)
     }
   }
 
@@ -80,6 +82,11 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedSenses = Some("Darkvision, tremorsense 10")
     override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
     val expectedSpeeds = "Speed 4, Fly 7 (hover)"
+    val expectedPowers = List(
+      Power("Razor", "Standard", "At-Will", "Melee", true),
+      Power("Tail Sting", "Standard", "At-Will", "Melee", true),
+      Power("Vanish ", "Standard", "At-Will", "", false),
+      Power("Quick Escape", "Immediate Reaction", "Encounter", "", false))
   }
 
   case class monster1() extends MonsterCase("monster-1.xml") {
@@ -99,6 +106,14 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedSusceptibilities = List(Resistance("Necrotic", 10), Vulnerability("Radiant", 10),
       Immune("Disease"), Immune("Poison"))
     val expectedSpeeds = "Speed 8, Climb 4"
+    val expectedPowers = List(
+      Power("Short Sword", "Standard", "At-Will", "Melee", true),
+      Power("Deft Strick", "Standard", "At-Will", "Melee", false),
+      Power("Imperiling Strike", "Standard", "Encounter", "Melee", false),
+      Power("Blood Drain", "Standard", "Recharge when an adjacent creature becomes bloodied", "Melee", false),
+      Power("Dominating Gaze", "Minor", "Recharge 4", "Ranged", false),
+      Power("Mist Form", "Standard", "Encounter", "", false),
+      Power("Second Wind", "Standard", "Encounter", "", false))
   }
 
   case class monsterCustom0() extends MonsterCase("monster-custom0.xml") {
@@ -115,6 +130,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedAlignment = "Unaligned"
     val expectedBaseStats = BaseStats(120, 5, 1, 2)
     val expectedSpeeds = "Speed 6"
+    val expectedPowers = List(
+      Power("Whip Ash", "Standard", "At-Will", "Melee", true),
+      Power("New Utility Power", "Minor", "", "None", false))
   }
 
 }
