@@ -48,6 +48,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedSusceptibilities: List[Susceptibility] = Nil
     val expectedSpeeds: String
     val expectedPowers: List[Power]
+    val expectedTraits: List[BaseCreatureTrait]
 
     def baseDefinition = {
       "  has correct name" ! (reader.getName must_== expectedName) ^
@@ -64,7 +65,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has correct speed" ! (reader.getSpeeds must_== expectedSpeeds) ^
         "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats) ^
         "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities) ^
-        "has correct powers" ! (reader.getPowers must_== expectedPowers)
+        "has correct powers" ! (reader.getPowers must_== expectedPowers) ^
+        "have correct traits" ! (reader.getCreatureTraits must_== expectedTraits)
     }
   }
 
@@ -83,10 +85,11 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
     val expectedSpeeds = "Speed 4, Fly 7 (hover)"
     val expectedPowers = List(
-      Power("Razor", "Standard", "At-Will", "Melee", true),
-      Power("Tail Sting", "Standard", "At-Will", "Melee", true),
-      Power("Vanish ", "Standard", "At-Will", "", false),
-      Power("Quick Escape", "Immediate Reaction", "Encounter", "", false))
+      Power("Razor", "Standard", "At-Will", BasicAttack("Melee")),
+      Power("Tail Sting", "Standard", "At-Will", BasicAttack("Melee")),
+      Power("Vanish ", "Standard", "At-Will", NonAttack),
+      Power("Quick Escape", "Immediate Reaction", "Encounter", NonAttack))
+    val expectedTraits = List(CreatureTrait("Bleed the Helpless", "When the assassin imp attacks a sleeping or helpless target, its razor attack deals +2d6 damage and ongoing 5 damage (save ends)."))
   }
 
   case class monster1() extends MonsterCase("monster-1.xml") {
@@ -107,13 +110,16 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Immune("Disease"), Immune("Poison"))
     val expectedSpeeds = "Speed 8, Climb 4"
     val expectedPowers = List(
-      Power("Short Sword", "Standard", "At-Will", "Melee", true),
-      Power("Deft Strick", "Standard", "At-Will", "Melee", false),
-      Power("Imperiling Strike", "Standard", "Encounter", "Melee", false),
-      Power("Blood Drain", "Standard", "Recharge when an adjacent creature becomes bloodied", "Melee", false),
-      Power("Dominating Gaze", "Minor", "Recharge 4", "Ranged", false),
-      Power("Mist Form", "Standard", "Encounter", "", false),
-      Power("Second Wind", "Standard", "Encounter", "", false))
+      Power("Short Sword", "Standard", "At-Will", BasicAttack("Melee")),
+      Power("Deft Strick", "Standard", "At-Will", NormalAttack("Melee")),
+      Power("Imperiling Strike", "Standard", "Encounter", NormalAttack("Melee")),
+      Power("Blood Drain", "Standard", "Recharge when an adjacent creature becomes bloodied", NormalAttack("Melee")),
+      Power("Dominating Gaze", "Minor", "Recharge 4", NormalAttack("Ranged")),
+      Power("Mist Form", "Standard", "Encounter", NonAttack),
+      Power("Second Wind", "Standard", "Encounter", NonAttack))
+    val expectedTraits = List(
+      Aura("Sepulchral Stench",3, "enemies in the aura take a -2 penalty to all defenses."),
+      CreatureTrait("Combat Advantage", "Dude deals an extra 3d6 damage with her attacks against any target she has combat advantage against."))
   }
 
   case class monsterCustom0() extends MonsterCase("monster-custom0.xml") {
@@ -131,8 +137,11 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedBaseStats = BaseStats(120, 5, 1, 2)
     val expectedSpeeds = "Speed 6"
     val expectedPowers = List(
-      Power("Whip Ash", "Standard", "At-Will", "Melee", true),
-      Power("New Utility Power", "Minor", "", "None", false))
+      Power("Whip Ash", "Standard", "At-Will", BasicAttack("Melee")),
+      Power("New Utility Power", "Minor", "", NonAttack))
+    val expectedTraits = List(
+      CreatureTrait("Goblin coolnes", "Shift for free when hit"),
+      Aura("Aura of Pain",1, "-2 to all Attackers"))
   }
 
 }

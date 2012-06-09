@@ -42,5 +42,20 @@ object Monster {
     def amount = Integer.MAX_VALUE
   }
 
-  case class Power(powerName: String, action: String, usage: String, rangeType: String, isBasicAttack:Boolean)
+  sealed trait AttackType
+
+  case class BasicAttack(attackType: String) extends AttackType
+
+  case class NormalAttack(attackType: String) extends AttackType
+
+  case object NonAttack extends AttackType
+
+  case class Power(powerName: String, action: String, usage: String, attackType: AttackType)
+
+  trait BaseCreatureTrait
+
+  case class Aura(name: String, radius: Int, details: String) extends BaseCreatureTrait
+
+  case class CreatureTrait(name: String, details: String) extends BaseCreatureTrait
+
 }
