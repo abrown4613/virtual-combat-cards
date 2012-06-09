@@ -469,7 +469,7 @@
       <FlavorText></FlavorText>
       <Attacks>
         <MonsterAttack>
-          <Range>Cali moves up to 2 squares and makes a short sword attack</Range>
+          <Range>Dude moves up to 2 squares and makes a short sword attack</Range>
           <Hit>
             <Name>Hit</Name>
             <Aftereffects />
@@ -632,7 +632,7 @@
               <DiceSides>6</DiceSides>
               <Expression>1d6+10</Expression>
             </Damage>
-            <Description>damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Cali’s next turn</Description>
+            <Description>damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn</Description>
             <Attacks />
             <FailedSavingThrows />
           </Hit>
@@ -760,7 +760,7 @@
               <DiceSides>12</DiceSides>
               <Expression>2d12+8</Expression>
             </Damage>
-            <Description>damage, the target is weakened (save ends), and Cali regains 46 hit points</Description>
+            <Description>damage, the target is weakened (save ends), and Dude regains 46 hit points</Description>
             <Attacks />
             <FailedSavingThrows />
           </Hit>
@@ -900,7 +900,7 @@
                   <DiceSides>0</DiceSides>
                   <Expression></Expression>
                 </Damage>
-                <Description>The target is dazed (save ends). Cali can dominate only one creature at a time</Description>
+                <Description>The target is dazed (save ends). Dude can dominate only one creature at a time</Description>
                 <Attacks />
                 <FailedSavingThrows />
               </MonsterAttackEntry>
@@ -1056,7 +1056,7 @@
           <ID xsi:type="string">Ad hoc</ID>
         </DefaultBonus>
       </Range>
-      <Details>Cali deals an extra 3d6 damage with her attacks against any target she has combat advantage against.</Details>
+      <Details>Dude deals an extra 3d6 damage with her attacks against any target she has combat advantage against.</Details>
       <Name>Combat Advantage</Name>
       <Type>Trait</Type>
       <IsBasic>false</IsBasic>
@@ -1156,7 +1156,7 @@
               <DiceSides>0</DiceSides>
               <Expression></Expression>
             </Damage>
-            <Description>Cali becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Cali can remain in mist form for up to 1 hour or end the effect as a minor action.</Description>
+            <Description>Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.</Description>
             <Attacks />
             <FailedSavingThrows />
           </Effect>
@@ -1279,7 +1279,7 @@ Death Ends: Polymorph effects end immediately on a creature that dies.</Descript
               <DiceSides>0</DiceSides>
               <Expression></Expression>
             </Damage>
-            <Description>Cali spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.</Description>
+            <Description>Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.</Description>
             <Attacks />
             <FailedSavingThrows />
           </Effect>

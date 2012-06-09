@@ -104,18 +104,39 @@ class MonsterReader(inputStream: InputStream) {
   }
 
   def getPowers = {
-    def format(text:String) = {
+    def format(text: String) = {
       if (text != "") " " + text
       else text
     }
+
+    def attackType(rangeType: String, isBasic: Boolean): AttackType = {
+      if (rangeType == "None" || rangeType == "") {
+        NonAttack
+      } else {
+        if (isBasic) BasicAttack(rangeType) else NormalAttack(rangeType)
+      }
+    }
     (xml \ "Powers" \ "MonsterPower").map {
       power =>
-        val powerName = power \ "Name" text
-        val action = power \ "Action" text
+        val powerName = (power \ "Name" text)
+        val action = (power \ "Action" text)
         val usage = (power \ "Usage" text) + format(power \ "UsageDetails" text)
-        val rangeType = power \ "Type" text
+        val rangeType = (power \ "Type" text)
         val isBasicAttack = (power \ "IsBasic" text) == "true"
-        Power(powerName, action, usage, rangeType, isBasicAttack)
+        Power(powerName, action, usage, attackType(rangeType, isBasicAttack))
+    }.toList
+  }
+
+  def getCreatureTraits: List[BaseCreatureTrait] = {
+    (xml \ "Powers" \ "MonsterTrait").map {
+      power =>
+        val radius = (power \ "Range" \ "@FinalValue").text.toInt
+        val name = (power \ "Name").text
+        val details = (power \ "Details").text
+        if (radius > 0)
+          Aura(name, radius, details)
+        else
+          CreatureTrait(name, details)
     }.toList
   }
 

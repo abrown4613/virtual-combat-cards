@@ -694,7 +694,7 @@
           <ID xsi:type="string">Ad hoc</ID>
         </DefaultBonus>
       </Range>
-      <Details>-2  to all Attackers</Details>
+      <Details>-2 to all Attackers</Details>
       <Name>Aura of Pain</Name>
       <Type>Trait</Type>
       <IsBasic>false</IsBasic>
@@ -713,7 +713,7 @@
   <HitPoints FinalValue="120">
     <AdjustmentID xsi:type="string">High</AdjustmentID>
     <Name>HitPoints</Name>
-    <DefaultBonus xsi:type="PercentageNumberBonus">
+    <DefaultBonus xsi:typ○e="PercentageNumberBonus">
       <Name>Ad hoc</Name>
       <Value>0</Value>
       <ID xsi:type="string">Ad hoc</ID>
