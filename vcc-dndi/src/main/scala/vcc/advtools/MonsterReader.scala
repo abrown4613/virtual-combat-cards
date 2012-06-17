@@ -116,6 +116,34 @@ class MonsterReader(inputStream: InputStream) {
         if (isBasic) BasicAttack(rangeType) else NormalAttack(rangeType)
       }
     }
+    def extractKeywords(power: Node): Set[String] = {
+      (power \ "Keywords" \ "ObjectReference").map(getReferencedObjectName).toSet
+    }
+
+    def extractAttackBonuses(attack: Node): List[AttackBonus] = {
+      (attack \ "AttackBonuses" \ "MonsterPowerAttackNumber").map(x =>
+        AttackBonus(
+          x \ "Defense" \ "ReferencedObject" \ "DefenseName" text,
+          (x \ "@FinalValue").text.toInt)).toList
+    }
+
+    def extractResult(result: Node): AttackResult = {
+      AttackResult(
+        (result \ "Attacks" \ "MonsterAttack").map(extractAttack).toList,
+        emptyOrStringAsOption(result \ "Damage" \ "Expression" text),
+        emptyOrStringAsOption(result \ "Description" text)
+      )
+    }
+
+    def extractAttack(attack: Node): Attack = {
+      Attack(
+        extractAttackBonuses(attack),
+        extractResult(attack \ "Hit" head),
+        extractResult(attack \ "Miss" head),
+        extractResult(attack \ "Effect" head)
+      )
+    }
+
     (xml \ "Powers" \ "MonsterPower").map {
       power =>
         val powerName = (power \ "Name" text)
@@ -123,7 +151,9 @@ class MonsterReader(inputStream: InputStream) {
         val usage = (power \ "Usage" text) + format(power \ "UsageDetails" text)
         val rangeType = (power \ "Type" text)
         val isBasicAttack = (power \ "IsBasic" text) == "true"
-        Power(powerName, action, usage, attackType(rangeType, isBasicAttack))
+        val keywords = extractKeywords(power)
+        val attacks = (power \ "Attacks" \ "MonsterAttack").map(extractAttack)
+        Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords, attacks: _*)
     }.toList
   }
 
@@ -198,7 +228,7 @@ class MonsterReader(inputStream: InputStream) {
   }
 
   private def getReferencedObjectName(key: String): String = {
-    (xml \ key \ "ReferencedObject" \ "Name").text
+    getReferencedObjectName((xml \ key)(0))
   }
 
   private def getReferencedObjectName(node: Node): String = {

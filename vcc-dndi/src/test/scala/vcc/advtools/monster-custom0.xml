@@ -713,7 +713,7 @@
   <HitPoints FinalValue="120">
     <AdjustmentID xsi:type="string">High</AdjustmentID>
     <Name>HitPoints</Name>
-    <DefaultBonus xsi:typ○e="PercentageNumberBonus">
+    <DefaultBonus xsi:type="PercentageNumberBonus">
       <Name>Ad hoc</Name>
       <Value>0</Value>
       <ID xsi:type="string">Ad hoc</ID>
