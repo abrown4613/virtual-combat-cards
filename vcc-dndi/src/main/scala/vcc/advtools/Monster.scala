@@ -50,7 +50,23 @@ object Monster {
 
   case object NonAttack extends AttackType
 
-  case class Power(powerName: String, action: String, usage: String, attackType: AttackType)
+  object Attack {
+    def apply(hits: List[AttackBonus], damage: Option[String]):Attack = apply(hits, damage, None)
+    def apply(hits: List[AttackBonus], damage: Option[String], description:Option[String]): Attack = {
+      Attack(hits,
+        AttackResult(List(), damage, description),
+        AttackResult(List(), None, None),
+        AttackResult(List(), None, None))
+    }
+  }
+
+  case class Attack(bonuses: List[AttackBonus], hit: AttackResult, miss: AttackResult, effect: AttackResult)
+
+  case class AttackResult(attacks: List[Attack], damage: Option[String], description: Option[String])
+
+  case class AttackBonus(defense: String, bonus: Int)
+
+  case class Power(powerName: String, action: String, usage: String, attackType: AttackType, keywords: Set[String], attacks: Attack*)
 
   trait BaseCreatureTrait
 
