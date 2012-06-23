@@ -22,6 +22,10 @@ import vcc.infra.datastore.naming.EntityID
 import javax.swing.JFileChooser
 import swing.ListView.IntervalMode
 import org.w3c.dom.Document
+import java.awt.dnd._
+import java.io.File
+import java.util
+import collection.JavaConverters
 
 object ImportToolView {
 
@@ -36,7 +40,7 @@ object ImportToolView {
   trait Presenter {
     def registerView(view: UserView)
 
-    def processFiles(files: Seq[String])
+    def processFiles(files: Seq[File])
 
     def selectStatBlock(eid: EntityID)
   }
@@ -97,6 +101,8 @@ class ImportToolView(presenter: ImportToolView.Presenter) extends Frame with Imp
         if (selection.isDefined && selection.get < listContent.length)
           presenter.selectStatBlock(listContent(selection.get)._1)
     }
+
+    setupDrop()
   }
 
   private def makeImportButton(): Button = {
@@ -105,7 +111,7 @@ class ImportToolView(presenter: ImportToolView.Presenter) extends Frame with Imp
       chooser.setDialogTitle("Select files to import")
       chooser.setMultiSelectionEnabled(true)
       chooser.showOpenDialog(peer)
-      val files = chooser.getSelectedFiles.map(x => x.getName)
+      val files = chooser.getSelectedFiles
       if (!files.isEmpty)
         presenter.processFiles(files)
     })
@@ -130,4 +136,34 @@ class ImportToolView(presenter: ImportToolView.Presenter) extends Frame with Imp
     label
   }
 
+  private def setupDrop() {
+
+    def extractFiles(rawFiles: java.util.Collection[File]): Seq[File] = {
+      val files = JavaConverters.asScalaIteratorConverter(rawFiles.iterator()).asScala
+      files.filter(_.isFile).toSeq
+    }
+
+    val listener = new DropTargetListener {
+      def dropActionChanged(dtde: DropTargetDragEvent) {}
+
+      def drop(event: DropTargetDropEvent) {
+        event.acceptDrop(DnDConstants.ACTION_COPY)
+        val transferable = event.getTransferable
+        val flavors = transferable.getTransferDataFlavors.toList
+        for (flavor <- flavors) {
+          if (flavor.isFlavorJavaFileListType) {
+            val files = transferable.getTransferData(flavor).asInstanceOf[util.Collection[File]]
+            presenter.processFiles(extractFiles(files))
+          }
+        }
+      }
+
+      def dragExit(dte: DropTargetEvent) {}
+
+      def dragOver(dtde: DropTargetDragEvent) {}
+
+      def dragEnter(dtde: DropTargetDragEvent) {}
+    }
+    new DropTarget(importedList.peer, listener)
+  }
 }

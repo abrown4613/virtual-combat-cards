@@ -28,6 +28,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers
 import vcc.infra.datastore.naming.EntityID
 import vcc.util.swing.{XHTMLPaneAgent, XHTMLPane}
+import java.io.File
 
 class ImportToolViewTest extends UISpecTestCase {
 
@@ -70,7 +71,7 @@ class ImportToolViewTest extends UISpecTestCase {
   }
 
   def testImportSomeFiles() {
-    val files = Seq("file.1", "file.2")
+    val files = Seq("file.1", "file.2").map(new File(_))
     WindowInterceptor.
       init(getImportButton.triggerClick()).
       process(fileDialogHandler.select(files.toArray)).
@@ -83,7 +84,7 @@ class ImportToolViewTest extends UISpecTestCase {
       init(getImportButton.triggerClick()).
       process(fileDialogHandler.cancelSelection()).
       run()
-    verify(presenter, never()).processFiles(Matchers.any(classOf[Seq[String]]))
+    verify(presenter, never()).processFiles(Matchers.any(classOf[Seq[File]]))
   }
 
   def testSettingContent() {
