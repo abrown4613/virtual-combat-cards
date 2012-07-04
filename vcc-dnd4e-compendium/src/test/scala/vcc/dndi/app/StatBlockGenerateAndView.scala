@@ -18,13 +18,17 @@ package vcc.dndi.app
 
 import vcc.util.swing.{MigPanel, XHTMLPaneAgent, XHTMLPane}
 import swing.{Button, Action, MainFrame}
-import vcc.dnd4e.view.dialog.FileChooserHelper
-import vcc.infra.xtemplate.{TemplateDataSource}
+import vcc.infra.xtemplate.TemplateDataSource
 import java.io.{FileInputStream, File}
 import vcc.dndi.reader.{DNDInsiderCapture, DNDIObject}
+import javax.swing.{JComponent, JFileChooser}
+import javax.swing.filechooser.FileFilter
 
 object StatBlockGenerateAndView {
-  private val baseDir: File = new File("../vcc-dnd4e/fs-wc")
+  private val baseDir: File = {
+    val possibleDirs = Seq(new File("vcc-dnd4e/fs-wc"), new File("../vcc-dnd4e/fs-wc"))
+    possibleDirs.find(dir => dir.isDirectory).get
+  }
 
   CaptureTemplateEngine.initialize(baseDir)
   XHTMLPaneAgent.createInstance(baseDir)
@@ -34,10 +38,10 @@ object StatBlockGenerateAndView {
 
   def loadMonster(file: File): DNDIObject = {
     monster = try {
-      DNDInsiderCapture.captureEntry(new FileInputStream(file),false,false,false) match {
+      DNDInsiderCapture.captureEntry(new FileInputStream(file), false, false, false) match {
         case None => null
         case Some(Left(p)) =>
-          println("Failed to load entity: "+p)
+          println("Failed to load entity: " + p)
           null
         case Some(Right(obj)) => obj
       }
@@ -50,7 +54,7 @@ object StatBlockGenerateAndView {
   }
 
   def regenerateTemplate() {
-    if(monster != null) {
+    if (monster != null) {
       try {
         val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(monster.clazz)
         val xml = template.render(monster.asInstanceOf[TemplateDataSource])
@@ -86,7 +90,7 @@ object StatBlockGenerateAndView {
   }
 
   def main(args: Array[String]) {
-    org.apache.log4j.BasicConfigurator.configure();
+    org.apache.log4j.BasicConfigurator.configure()
     if (args.length > 0) {
       val file = new File(args(0))
       if (file.exists && file.isDirectory) {
@@ -96,4 +100,30 @@ object StatBlockGenerateAndView {
 
     mainWindow.visible = true
   }
+
+  private object FileChooserHelper {
+    private var lastDirectory = new File(System.getProperty("user.dir"))
+
+    def setLastDirectory(newDirectory: File) {
+      synchronized {
+        lastDirectory = newDirectory
+      }
+    }
+
+    def chooseOpenFile(over: JComponent, filter: FileFilter): Option[File] = {
+      val fileDialog = new JFileChooser(getWorkDirectory)
+      if (filter != null) fileDialog.setFileFilter(filter)
+
+      val result = fileDialog.showOpenDialog(over)
+      if (result == JFileChooser.APPROVE_OPTION) {
+        setLastDirectory(fileDialog.getSelectedFile.getParentFile)
+        Some(fileDialog.getSelectedFile)
+      } else
+        None
+    }
+
+    private def getWorkDirectory: File = lastDirectory
+
+  }
+
 }
