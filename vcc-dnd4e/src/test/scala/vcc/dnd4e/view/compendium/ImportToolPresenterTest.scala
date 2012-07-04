@@ -24,6 +24,9 @@ import collection.immutable.Queue
 import org.specs2.specification.Scope
 import vcc.infra.datastore.naming.EntityID
 import org.w3c.dom.Document
+import vcc.util.swing.XHTMLPane
+import org.w3c.dom.ls.DOMImplementationLS
+import org.specs2.matcher.Matcher
 
 class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
@@ -58,7 +61,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       there was one(importer).importJobForFile(file1) then
         one(view).updateProgress(0, 1)
 
-      importer.finishFirst()
+      importer.finishTask()
 
       there was one(view).updateProgress(0, 0) then
         one(view).setListContent(List((entity1.eid, entity1.name.value)))
@@ -72,12 +75,12 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
       there was one(view).updateProgress(0, 2)
 
-      importer.finishFirst()
+      importer.finishTask()
 
       there was one(view).updateProgress(1, 2) then
         one(view).setListContent(entityView(1))
 
-      importer.finishFirst()
+      importer.finishTask()
 
       there was one(view).setListContent(entityView(2))
     }
@@ -91,7 +94,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
       view.progress must_== expectedProgress.take(1)
 
-      importer.finishFirst()
+      importer.finishTask()
 
       view.progress must_== expectedProgress.take(2)
       there was one(view).setListContent(entityView(1))
@@ -99,25 +102,41 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       presenter.processFiles(Seq(file3))
       view.progress must_== expectedProgress.take(3)
 
-      importer.finishFirst()
+      importer.finishTask()
 
       view.progress must_== expectedProgress.take(4)
       there was one(view).setListContent(entityView(2))
 
-      importer.finishFirst()
+      importer.finishTask()
       view.progress must_== expectedProgress
     }
 
     "have correct progress when add one file, finish one, add 1, finish" in new env {
       presenter.processFiles(Seq(file1))
       there was one(view).updateProgress(0, 1)
-      importer.finishFirst()
+      importer.finishTask()
       presenter.processFiles(Seq(file2))
       there was one(view).updateProgress(0, 0) then
         two(view).updateProgress(0, 1)
 
-      importer.finishFirst()
+      importer.finishTask()
       view.progress must_== List((0, 1), (0, 0), (0, 1), (0, 0))
+    }
+
+    "importing same entity overwrites previous" in new env {
+      val fileOnce = new File("file1.monster")
+      val fileTwice = new File("file1-bis.monster")
+      val entityOnce = makeDNDIEntry(1000, "once")
+      importer.registerTaskResult(fileOnce, entityOnce)
+      val entityTwice = makeDNDIEntry(1000, "twice")
+      importer.registerTaskResult(fileTwice, entityTwice)
+
+      presenter.processFiles(Seq(fileOnce, fileTwice))
+      importer.finishTask()
+      importer.finishTask()
+      presenter.selectStatBlock(entityOnce.eid)
+      view.currentDocument must matchDocument(entityTwice.statblock.value)
+      there was one(view).setListContent(List((entityOnce.eid, "twice")))
     }
 
     "not attempt to import unsupported file" in new env {
@@ -132,26 +151,62 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
     "import only file but report all processed" in new env {
       presenter.processFiles(Seq(fileWillFail, file1))
-      importer.finishFirst()
-      importer.finishFirst()
+      importer.finishTask()
+      importer.finishTask()
       view.progress must_== List((0, 2), (1, 2), (0, 0))
     }
 
     "import only file but report all processed last bad" in new env {
       presenter.processFiles(Seq(file1, fileWillFail))
-      importer.finishFirst()
-      importer.finishFirst()
+      importer.finishTask()
+      importer.finishTask()
       view.progress must_== List((0, 2), (1, 2), (0, 0))
     }
+
+    "show stat block after import" in new env {
+      presenter.processFiles(Seq(file1))
+      importer.finishTask()
+      presenter.selectStatBlock(entity1.eid)
+      there was one(view).setStatBlock(any[Document])
+      view.currentDocument must matchDocument(entity1.statblock.value)
+    }
+
+    "show no stat block on unexistant eid for safety" in new env {
+      presenter.selectStatBlock(EntityID.generateRandom())
+      there was no(view).setStatBlock(any[Document])
+    }
+  }
+
+
+  private def makeDNDIEntry(dndID: Int, name: String): CombatantEntity = {
+    val entity = MonsterEntity.newInstance(dndID)
+    entity.loadFromMap(makeMonsterData(name))
+    entity
+  }
+
+  private def matchDocument(expect:String): Matcher[Document] = (d: Document) => {
+    val expectDocument =  XHTMLPane.parsePanelDocument(expect)
+    docToString(d) must_== docToString(expectDocument)
+  }
+
+  private def docToString(doc:Document):String = {
+    val domImplLS = doc.getImplementation.asInstanceOf[DOMImplementationLS]
+    val serializer = domImplLS.createLSSerializer()
+    serializer.writeToString(doc)
   }
 
   private def makeEntity(name: String) = {
     val ent = MonsterEntity.newInstance()
-    ent.loadFromMap(Map(
-      "base:name" -> name, "stat:initiative" -> "2", "stat:hp" -> "30",
-      "base:role" -> "Soldier", "base:level" -> "4", "base:xp" -> "600"
-    ))
+    ent.loadFromMap(makeMonsterData(name))
     ent
+  }
+
+  private def makeMonsterData(name: String): Map[String, String] = {
+    Map(
+      "base:name" -> name, "stat:initiative" -> "2", "stat:hp" -> "30",
+      "base:role" -> "Soldier", "base:level" -> "4", "base:xp" -> "600",
+      "text:statblock" -> "<html><body>%s - %s</body></html>".format(name, System.currentTimeMillis())
+    )
   }
 
   class MockImporter extends Importer with Mockito {
@@ -167,7 +222,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       results = results + (file -> None)
     }
 
-    def finishFirst() {
+    def finishTask() {
       val ((job, callback), newQueue) = queue.dequeue
       callback(job.execute())
       queue = newQueue
@@ -189,8 +244,11 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
   class MockView extends ImportToolView.UserView {
     private var progressEvents: List[(Int, Int)] = Nil
+    private var document:Document = null
 
-    def setStatBlock(document: Document) {}
+    def setStatBlock(document: Document) {
+      this.document = document
+    }
 
     def updateProgress(done: Int, total: Int) {
       progressEvents = (done, total) :: progressEvents
@@ -199,6 +257,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
     def setListContent(content: List[(EntityID, String)]) {}
 
     def progress = progressEvents.reverse
+    def currentDocument = document
   }
 
 }

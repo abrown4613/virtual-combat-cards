@@ -20,13 +20,14 @@ import vcc.infra.datastore.naming.EntityID
 import java.io.File
 import vcc.dnd4e.view.compendium.ImportToolView.UserView
 import vcc.dnd4e.compendium.{Importer, CombatantEntity}
+import vcc.util.swing.XHTMLPane
 
 class ImportToolPresenter(importer: Importer) extends ImportToolView.Presenter {
   private var view: ImportToolView.UserView = null
 
   private var pendingJobs = 0
   private var completeJobs = 0
-  private var imported: List[(EntityID, String)] = Nil
+  private var importedMap = Map.empty[EntityID, CombatantEntity]
 
   def registerView(view: UserView) {
     this.view = view
@@ -44,6 +45,11 @@ class ImportToolPresenter(importer: Importer) extends ImportToolView.Presenter {
   }
 
   def selectStatBlock(eid: EntityID) {
+    val found = importedMap.get(eid)
+    if(found.isDefined) {
+      val doc = XHTMLPane.parsePanelDocument(found.get.statblock.value)
+      view.setStatBlock(doc)
+    }
   }
 
   private def taskComplete(resultOption: Option[CombatantEntity]) {
@@ -51,7 +57,8 @@ class ImportToolPresenter(importer: Importer) extends ImportToolView.Presenter {
 
     resultOption.map {
       result =>
-        imported = imported ::: List((result.eid, result.name.value))
+        importedMap = importedMap.updated(result.eid, result)
+        val imported = importedMap.values.map(e => (e.eid, e.name.value)).toList
         view.setListContent(imported)
     }
   }
