@@ -13,6 +13,14 @@
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>src/test/scala</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </testResource>
+        </testResources>
     </build>
 
     <dependencies>
@@ -26,6 +34,10 @@
             <artifactId>vcc-datastore</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
+            <artifactId>vcc-dndi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
-
 </project>
