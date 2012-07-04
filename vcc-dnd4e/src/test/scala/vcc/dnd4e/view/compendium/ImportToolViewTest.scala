@@ -112,8 +112,6 @@ class ImportToolViewTest extends UISpecTestCase {
 
   def testUpdateStatBlock() {
     val doc = XHTMLPane.parsePanelDocument("<html><body><h1>Title</h1></body></html>")
-    println(XHTMLPaneAgent.getInstance())
-    println(doc.getDocumentElement.getTextContent)
     view.setStatBlock(doc)
     assertTrue(getXHTMLPanel.getDocument == doc)
   }
