@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dndi.app
+package vcc.dnd4e.compendium
 
 import vcc.infra.datastore.naming._
 import vcc.infra.fields._
-import vcc.dnd4e.compendium.{TrapEntity, Compendium, MonsterEntity}
 import vcc.dndi.reader.{Trap, Monster, DNDIObject}
 
 /**
@@ -47,7 +46,7 @@ object MonsterImportService {
     logger.debug("Load D&DI Trap: {}", dndiTrap)
     processMonsterFieldSet(trap, dndiTrap)
     trap.trapClass.value = dndiTrap("base:type").get
-    val template = CaptureTemplateEngine.fetchClassTemplate(dndiTrap.clazz)
+    val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(dndiTrap.clazz)
     val xml = template.render(dndiTrap)
     trap.statblock.value = xml.toString()
     es.store(trap)
@@ -61,7 +60,7 @@ object MonsterImportService {
     logger.debug("Load D&DI Monster: {}", dndiMonster)
     processMonsterFieldSet(monster, dndiMonster)
 
-    val template = CaptureTemplateEngine.fetchClassTemplate(dndiMonster.clazz)
+    val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(dndiMonster.clazz)
     val xml = template.render(dndiMonster)
     monster.statblock.value = xml.toString()
     es.store(monster)

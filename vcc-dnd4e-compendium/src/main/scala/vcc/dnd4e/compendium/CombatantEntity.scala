@@ -19,7 +19,6 @@ package vcc.dnd4e.compendium
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
-import vcc.dndi.app.CaptureTemplateEngine
 import vcc.infra.xtemplate.MapDataSource
 
 case class EntityClassID(uri: java.net.URI) {
