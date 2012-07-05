@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,8 @@ package vcc.dnd4e.compendium.view
 import scala.swing._
 import vcc.util.swing.{MigPanel, SwingHelper}
 import vcc.dnd4e.compendium._
-import vcc.infra.xtemplate.Template
 
-trait TemplateProvider {
-  def fetchClassTemplate(clazz: String): Template
-}
-
-class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Frame {
+class CompendiumView(icon: Image) extends Frame {
 
   private val window = this
   private val entListPanel = new CompendiumEntitySelectionPanel()
@@ -34,8 +29,8 @@ class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Fr
   iconImage = icon
 
   val newEntryAction = Action("New Entry ...") {
-    val diag = new NewCombatantDialog(window)
-    val result = diag.promptUser()
+    val dialog = new NewCombatantDialog(window)
+    val result = dialog.promptUser()
     if (result.isDefined)
       doEditEntry(result.get)
   }
@@ -73,7 +68,7 @@ class CompendiumView(icon: Image, templateProvider: TemplateProvider) extends Fr
   }
 
   def doEditEntry(ent: CombatantEntity) {
-    val nd = new CombatantEditorDialog(ent, icon, templateProvider)
+    val nd = new CombatantEditorDialog(ent, icon)
     SwingHelper.centerFrameOnScreen(nd)
     nd.visible = true
   }

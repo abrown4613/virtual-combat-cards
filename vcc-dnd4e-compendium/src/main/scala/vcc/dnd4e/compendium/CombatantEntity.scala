@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ *   Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,11 @@ package vcc.dnd4e.compendium
 import vcc.infra.datastore.naming._
 import vcc.infra.datastore.DataStoreEntity
 import vcc.infra.fields._
+import vcc.dndi.app.CaptureTemplateEngine
+import vcc.infra.xtemplate.MapDataSource
 
 case class EntityClassID(uri: java.net.URI) {
-  def shortClassName() = uri.getSchemeSpecificPart()
+  def shortClassName() = uri.getSchemeSpecificPart
 }
 
 abstract class EntitySummary(val eid: EntityID, val classid: EntityClassID)
@@ -62,17 +64,27 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
   val comment = new StringField(this, "text:comment", AnyString)
 
   override def asDataStoreEntity(): DataStoreEntity = {
-    val es = super.asDataStoreEntity
+    val es = super.asDataStoreEntity()
     DataStoreEntity(es.eid, es.data + ("classid" -> classID.uri.toString))
   }
 
   protected def createInstance(eid: EntityID): CombatantEntity
 
   def copyEntity(): CombatantEntity = {
-    val original = this.asDataStoreEntity
+    val original = this.asDataStoreEntity()
     val ent = createInstance(EntityID.generateRandom())
     ent.loadFromMap(original.data.updated(name.id, name.value + " [copy]"))
     ent
+  }
+
+  def generateStatBlock(): String = {
+    if (this.statblock.isDefined) {
+      this.statblock.value
+    } else {
+      val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(this.classID.shortClassName())
+      val dse = this.asDataStoreEntity()
+      template.render(new MapDataSource(dse.data, Map(), Map())).toString()
+    }
   }
 }
 
