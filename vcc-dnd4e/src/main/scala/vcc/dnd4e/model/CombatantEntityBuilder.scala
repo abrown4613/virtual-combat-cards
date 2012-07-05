@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 package vcc.dnd4e.model
 
 import vcc.dnd4e.compendium.{CombatantEntity => CompendiumCombatantEntity, MonsterEntity, CharacterEntity}
-import vcc.dndi.app.CaptureTemplateEngine
-import vcc.infra.xtemplate.{MapDataSource}
 import vcc.dnd4e.tracker.common._
 
 object CombatantEntityBuilder {
@@ -33,13 +31,8 @@ object CombatantEntityBuilder {
       case character: CharacterEntity => CharacterHealthDefinition(comp.hp.value)
       case s => throw new Exception("Unexpected Entity type: " + s)
     }
-    val statBlock = if (comp.statblock.isDefined) {
-      comp.statblock.value
-    } else {
-      val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(comp.classID.shortClassName())
-      val dse = comp.asDataStoreEntity()
-      template.render(new MapDataSource(dse.data, Map(), Map())).toString()
-    }
-    CombatantEntity(comp.eid.asStorageString, comp.name.value, healthDef, comp.initiative.value, statBlock)
+
+    CombatantEntity(comp.eid.asStorageString, comp.name.value, healthDef,
+      comp.initiative.value, comp.generateStatBlock())
   }
 }

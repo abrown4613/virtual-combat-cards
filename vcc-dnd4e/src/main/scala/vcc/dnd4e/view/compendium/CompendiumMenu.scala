@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +22,13 @@ import java.io.FileInputStream
 import vcc.dnd4e.compendium.{CombatantEntityBuilder, Compendium}
 import vcc.dndi.reader.CharacterBuilderImporter
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
-import vcc.dnd4e.compendium.view.{TemplateProvider, CompendiumView}
-import vcc.infra.xtemplate.Template
-import vcc.dndi.app.CaptureTemplateEngine
+import vcc.dnd4e.compendium.view.CompendiumView
 import vcc.dnd4e.view.dialog.{PartyEditorView, FileChooserHelper}
 
 class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
-  private val compendiumView = new CompendiumView(IconLibrary.MetalD20.getImage, new TemplateProvider {
-    def fetchClassTemplate(clazz: String): Template = CaptureTemplateEngine.getInstance.fetchClassTemplate(clazz)
-  })
+  private val compendiumView = new CompendiumView(IconLibrary.MetalD20.getImage)
 
   this.contents += new MenuItem(Action("Import Character Builder File..."){
     val file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)

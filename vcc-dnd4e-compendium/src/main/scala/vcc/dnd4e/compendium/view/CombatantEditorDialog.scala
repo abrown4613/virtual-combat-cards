@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,10 @@ import vcc.util.swing.forms._
 
 import vcc.dnd4e.compendium._
 import vcc.infra.fields.Field
-import vcc.infra.xtemplate.{MapDataSource}
+import vcc.infra.xtemplate.MapDataSource
+import vcc.dndi.app.CaptureTemplateEngine
 
-class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templateProvider: TemplateProvider) extends Frame {
+class CombatantEditorDialog(combatant: CombatantEntity, icon: Image) extends Frame {
 
   private class MigPanelFormContainer(colLayout: String) extends MigPanel("ins 0", colLayout, "") with FormFieldContainer {
     def addFormField(comp: FormField[_]) {
@@ -113,7 +114,7 @@ class CombatantEditorDialog(combatant: CombatantEntity, icon: Image, templatePro
   private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
-      val template = templateProvider.fetchClassTemplate(combatant.classID.shortClassName())
+      val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(combatant.classID.shortClassName())
       statBlock.text = template.render(new MapDataSource(form.extractMap, Map(), Map())).toString()
       statBlock.sync()
     }
