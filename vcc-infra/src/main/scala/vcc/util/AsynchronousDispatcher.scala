@@ -33,8 +33,9 @@ object AsynchronousDispatcher {
 
 }
 
-class AsynchronousDispatcher[T](observer: AsynchronousDispatcher.Observer[T]) {
+class AsynchronousDispatcher[T]() {
 
+  private var observer: AsynchronousDispatcher.Observer[T] = null
   private val worker = actor {
     loop {
       react {
@@ -51,7 +52,13 @@ class AsynchronousDispatcher[T](observer: AsynchronousDispatcher.Observer[T]) {
 
   private case class Complete(task: AsynchronousTask[T])
 
+  def setObserver(observer: AsynchronousDispatcher.Observer[T]) {
+    this.observer = observer
+  }
+
   def queueTasks(tasks: Seq[AsynchronousTask[T]]) {
+    if (observer == null)
+      throw new IllegalStateException("Observer not set")
     tasks.foreach {
       task => worker ! task
     }

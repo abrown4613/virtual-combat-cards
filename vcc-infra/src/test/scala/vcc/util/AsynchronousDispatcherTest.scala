@@ -23,6 +23,7 @@ import concurrent.SyncVar
 class AsynchronousDispatcherTest extends SpecificationWithJUnit {
   def is =
     "  enqueue once one tasks" ! echo().e1 ^
+      "must have observer before dispatching task" ! echo().observerMustBePresent ^
       "enqueue once several tasks" ! echo().e2 ^
       "enqueue two task and get execution in order" ! echo().e3 ^
       "enqueue twice then execute" ! echo().e4 ^
@@ -31,7 +32,8 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
 
   case class echo() extends Mockito {
     private val observer = mock[AsynchronousDispatcher.Observer[Int]]
-    private val dispatcher = new AsynchronousDispatcher[Int](observer)
+    private val dispatcher = new AsynchronousDispatcher[Int]()
+    dispatcher.setObserver(observer)
     private val barrier = new Barrier
 
     def e1 = {
@@ -43,7 +45,7 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
 
     def e2 = {
       val task = new SimpleTask
-      dispatcher.queueTasks(Seq(task,barrier))
+      dispatcher.queueTasks(Seq(task, barrier))
       task.finish(10)
       barrier.waitForExecution()
       there was one(observer).taskComplete(task, 10)
@@ -85,6 +87,11 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
       there was one(observer).taskComplete(task, 21) then
         one(observer).taskFailed(task2, exception) then
         one(observer).taskComplete(task3, 110)
+    }
+
+    def observerMustBePresent = {
+      dispatcher.setObserver(null)
+      dispatcher.queueTasks(Seq(new SimpleTask)) must throwA(new IllegalStateException("Observer not set"))
     }
   }
 
