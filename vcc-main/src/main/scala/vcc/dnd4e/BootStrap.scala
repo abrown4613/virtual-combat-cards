@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e
 
-import compendium.{CompendiumRepository, Compendium}
+import compendium.{CaptureTemplateEngine, CompendiumRepository, Compendium}
 import vcc.util.{UpdateManager, PackageUtil}
 import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
@@ -27,7 +27,6 @@ import java.io.File
 import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
 import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
-import vcc.dndi.app.CaptureTemplateEngine
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
 import vcc.infra.webserver.WebServer
 import javax.swing.JOptionPane

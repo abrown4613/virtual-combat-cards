@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dndi.app
+package vcc.dnd4e.compendium
 
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import java.io.InputStream
-import vcc.dnd4e.compendium.{CharacterEntity, CombatantEntityBuilder}
 import vcc.dndi.reader.CharacterBuilderImporter
 
 class CharacterBuilderImportServiceTest extends SpecificationWithJUnit {
 
   trait someCharacter extends Scope {
-    val inputStream: InputStream = this.getClass.getResourceAsStream("/vcc/dndi/app/Fionn.xml")
+    val inputStream: InputStream = this.getClass.getResourceAsStream("/vcc/dnd4e/compendium/Fionn.xml")
   }
 
   "return entity must be loadable into a CharacterEntity" in new someCharacter {

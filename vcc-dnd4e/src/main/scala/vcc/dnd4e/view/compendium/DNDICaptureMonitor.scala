@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import vcc.util.swing.MigPanel
 import vcc.dnd4e.view.IconLibrary
 import vcc.infra.webserver.WebServer
 import vcc.dndi.reader.DNDIObject
-import vcc.dndi.app.MonsterImportService
+import vcc.dnd4e.compendium.MonsterImportService
 import vcc.dndi.servlet.CaptureHoldingArea
 
 object DNDICaptureMonitor {

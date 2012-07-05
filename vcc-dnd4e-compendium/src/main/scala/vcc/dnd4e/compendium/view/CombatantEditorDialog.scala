@@ -24,7 +24,8 @@ import vcc.util.swing.forms._
 import vcc.dnd4e.compendium._
 import vcc.infra.fields.Field
 import vcc.infra.xtemplate.MapDataSource
-import vcc.dndi.app.CaptureTemplateEngine
+import vcc.dnd4e.compendium
+import compendium.CaptureTemplateEngine
 
 class CombatantEditorDialog(combatant: CombatantEntity, icon: Image) extends Frame {
 
