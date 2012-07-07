@@ -47,7 +47,7 @@ class ImportToolPresenter(importer: Importer) extends ImportToolView.Presenter {
   def selectStatBlock(eid: EntityID) {
     val found = importedMap.get(eid)
     if(found.isDefined) {
-      val doc = XHTMLPane.parsePanelDocument(found.get.statblock.value)
+      val doc = XHTMLPane.parsePanelDocument(found.get.generateStatBlock())
       view.setStatBlock(doc)
     }
   }

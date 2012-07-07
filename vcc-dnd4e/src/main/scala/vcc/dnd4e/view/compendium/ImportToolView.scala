@@ -26,6 +26,7 @@ import java.awt.dnd._
 import java.io.File
 import java.util
 import collection.JavaConverters
+import vcc.dnd4e.view.IconLibrary
 
 object ImportToolView {
 
@@ -92,6 +93,8 @@ class ImportToolView(presenter: ImportToolView.Presenter) extends Frame with Imp
       add(new Label("Imported Stat Block"))
       add(statBlockPane, "growy 100, growx 100, spany 3")
     }
+
+    iconImage = IconLibrary.MetalD20.getImage
 
     listenTo(importedList.selection)
 
