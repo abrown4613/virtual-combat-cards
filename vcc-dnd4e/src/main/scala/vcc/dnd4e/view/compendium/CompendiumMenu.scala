@@ -19,7 +19,7 @@ package vcc.dnd4e.view.compendium
 import scala.swing._
 import vcc.util.swing.SwingHelper
 import java.io.FileInputStream
-import vcc.dnd4e.compendium.{CombatantEntityBuilder, Compendium}
+import vcc.dnd4e.compendium.{ImporterService, CombatantEntityBuilder, Compendium}
 import vcc.dndi.reader.CharacterBuilderImporter
 import vcc.dnd4e.view.{IconLibrary, PanelDirector}
 import vcc.dnd4e.compendium.view.CompendiumView
@@ -29,6 +29,14 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
   private val compendiumView = new CompendiumView(IconLibrary.MetalD20.getImage)
+
+  this.contents += new MenuItem(Action("Import tool ...") {
+    val importer = new ImporterService(Compendium.activeRepository)
+    val presenter = new ImportToolPresenter(importer)
+    val view = new ImportToolView(presenter)
+    view.pack()
+    view.visible = true
+  })
 
   this.contents += new MenuItem(Action("Import Character Builder File..."){
     val file=FileChooserHelper.chooseOpenFile(this.peer,FileChooserHelper.characterBuilderFilter)
