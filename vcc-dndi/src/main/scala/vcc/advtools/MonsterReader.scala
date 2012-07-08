@@ -20,9 +20,15 @@ import java.io.InputStream
 import xml.{NodeSeq, Node, XML}
 import vcc.advtools.Monster._
 import util.matching.Regex
+import java.util
 
 class MonsterReader(inputStream: InputStream) {
+
   val xml = XML.load(inputStream)
+
+  def getContentDigest:String = {
+    util.UUID.nameUUIDFromBytes(xml.toString().getBytes).toString
+  }
 
   def getName: String = getElementAsText("Name")
 

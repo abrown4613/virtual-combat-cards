@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,14 @@ object MonsterEntity {
   def newInstance() = new MonsterEntity(EntityID.generateRandom())
 
   /**
+   * Create a monster ID based on some content string
+   * @param monsterDigest Some kind of digest
+   */
+  def newInstance(monsterDigest: String) = new MonsterEntity(EntityID.fromName("monster-file:" + monsterDigest))
+
+  /**
    * Added a monster based ID to this entity. Will always generate the same UUID.
-   * @para dndID The DNDID of the monster
+   * @param dndID The DNDID of the monster
    */
   def newInstance(dndID: Int) = new MonsterEntity(EntityID.fromName("dndi:monster:" + dndID))
 
@@ -62,7 +68,7 @@ object MonsterSummary {
   def fromFieldMap(eid: EntityID, fields: Map[String, String]) = {
     template.clear()
     template.loadFromMap(fields)
-    //TODO This will not show invalid base fields
+
     if (fields("classid") == Compendium.monsterClassIDStorageString && template.isValid)
       MonsterSummary(eid,
         Compendium.monsterClassID,
