@@ -70,22 +70,43 @@ class CharacterEntityReaderJob(file: File) extends ImportJob {
 }
 
 class MonsterFileImportJob(file: File) extends ImportJob {
+
   def execute(): Option[CombatantEntity] = {
     val mr = new MonsterReader(new FileInputStream(file))
-    val ent = MonsterEntity.newInstance()
-    ent.loadFromMap(
-      Map(
-        "base:name" -> mr.getName, "stat:initiative" -> mr.getBaseStats.initiative.toString, "stat:hp" -> mr.getBaseStats.hitPoint.toString,
-        "base:role" -> mr.getGroupCategory.role, "base:level" -> mr.getGroupCategory.level.toString,
-        "base:xp" -> mr.getGroupCategory.experience.toString,
-        "stat:ac" -> mr.getDefense.ac.toString,
-        "stat:reflex" -> mr.getDefense.reflex.toString,
-        "stat:fortitude" -> mr.getDefense.fortitude.toString,
-        "stat:will" -> mr.getDefense.will.toString,
-        "base:senses" -> ("Perception " + mr.getSkills("Perception").toString + mr.getSenses.getOrElse("")),
-        "base:speed" -> mr.getSpeeds
-      )
-    )
+    val ent = makeBlankEntity(mr)
+
+    loadFromReader(ent, mr)
     Some(ent)
+  }
+
+  private[compendium] def makeBlankEntity(reader: MonsterReader): MonsterEntity = {
+    if (reader.getCompendiumID.isDefined)
+      MonsterEntity.newInstance(reader.getCompendiumID.get)
+    else
+      MonsterEntity.newInstance(reader.getContentDigest)
+  }
+
+  private def loadFromReader(entity: MonsterEntity, reader: MonsterReader) {
+    entity.name.value = reader.getName
+    val category = reader.getGroupCategory
+    val role = category.groupRole
+    entity.role.value = normalizeRole(role) + " " + category.role + (if(category.isLeader) " (Leader)" else "")
+    entity.level.value = category.level
+    entity.xp.value = category.experience
+
+    val stats = reader.getBaseStats
+    entity.initiative.value = stats.initiative
+    entity.hp.value = stats.hitPoint
+
+    val defense = reader.getDefense
+    entity.ac.value = defense.ac
+    entity.fortitude.value = defense.fortitude
+    entity.reflex.value = defense.reflex
+    entity.will.value = defense.will
+  }
+
+  private def normalizeRole(role:String) = role match {
+    case "Standard" => ""
+    case s => s
   }
 }

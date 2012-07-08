@@ -20,6 +20,7 @@ import org.specs2.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import concurrent.SyncVar
 import java.io.File
+import vcc.advtools.MonsterReader
 
 class ImporterServiceTest extends SpecificationWithJUnit {
   def is =
@@ -28,6 +29,8 @@ class ImporterServiceTest extends SpecificationWithJUnit {
       "import fails should return none" ! service().e3 ^
       "provide import logic for dnd4e" ! service().e4 ^
       "provide import logic for monster" ! service().e5 ^
+      "make proper compendium ID" ! service().makeProperCompendiumID ^
+      "make proper non compendium ID" ! service().makeProperNonCompendiumID ^
       end
 
   case class service() extends Mockito {
@@ -68,6 +71,21 @@ class ImporterServiceTest extends SpecificationWithJUnit {
     def e5 = {
       val job = service.importJobForFile(new File("some.monster"))
       (job.isDefined must beTrue) and (job.get.isInstanceOf[MonsterFileImportJob] must beTrue)
+    }
+
+    def makeProperCompendiumID = {
+      val job = new MonsterFileImportJob(null)
+      val reader = mock[MonsterReader]
+      reader.getCompendiumID returns Some(10)
+      job.makeBlankEntity(reader).eid must_== MonsterEntity.newInstance(10).eid
+    }
+
+    def makeProperNonCompendiumID = {
+      val job = new MonsterFileImportJob(null)
+      val reader = mock[MonsterReader]
+      reader.getCompendiumID returns None
+      reader.getContentDigest returns "Digest"
+      job.makeBlankEntity(reader).eid must_== MonsterEntity.newInstance("Digest").eid
     }
 
     private def makeJob(result: Option[CombatantEntity]) = {

@@ -30,7 +30,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   def digestTest = {
     val reader = new MonsterReader(this.getClass.getClassLoader.getResourceAsStream("vcc/advtools/" + "monster-0.xml"))
-    reader.getContentDigest must_== "5038c513-dfab-3606-9bcf-9e2d21f07d54"
+    reader.getContentDigest must_== "e1c184c2-bc8b-3276-bb1d-c8746982f594"
   }
 
   def run(monster: MonsterCase) = {
