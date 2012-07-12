@@ -30,7 +30,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   def digestTest = {
     val reader = new MonsterReader(this.getClass.getClassLoader.getResourceAsStream("vcc/advtools/" + "monster-0.xml"))
-    reader.getContentDigest must_== "e1c184c2-bc8b-3276-bb1d-c8746982f594"
+    reader.getContentDigest must_== "5038c513-dfab-3606-9bcf-9e2d21f07d54"
   }
 
   def run(monster: MonsterCase) = {
@@ -82,14 +82,14 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedBestiaryTaxonomy = BestiaryTaxonomy("Tiny", "Immortal", "Humanoid", Some("Devil, Aquatic"), None)
     val expectedDefense = Defense(21, 20, 19, 18)
     val expectedSkills = Map("Perception" -> 12, "Bluff" -> 9, "Stealth" -> 13)
-    val expectedAbilityScore = AbilityScores(12, 15, 20, 14, 18, 12)
+    val expectedAbilityScore = AbilityScores(12, 20, 15, 14, 18, 12)
     val expectedAlignment = "Evil"
     override val expectedLanguages = Some("Common, Supernal")
     val expectedBaseStats = BaseStats(63, 12, 0, 0)
     override val expectedCompendiumID = Some(99999)
     override val expectedSenses = Some("Darkvision, tremorsense 10")
     override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
-    val expectedSpeeds = "Speed 4, Fly 7 (hover)"
+    val expectedSpeeds = "4, Fly 7 (hover)"
     val expectedPowers = List(
       Power("Razor", "Standard", "At-Will", BasicAttack("Melee"), Set(),
         Attack(List(AttackBonus("AC", 12)), Some("1d4 + 4"), Some("damage"))),
@@ -113,7 +113,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedDefense = Defense(28, 27, 26, 25)
     val expectedSkills = Map("Acrobatics" -> 15, "Thievery" -> 15, "Intimidate" -> 13, "Bluff" -> 13,
       "Perception" -> 8, "Athletics" -> 13, "Stealth" -> 15)
-    val expectedAbilityScore = AbilityScores(16, 13, 20, 12, 11, 16)
+    val expectedAbilityScore = AbilityScores(16, 20, 13, 12, 11, 16)
     val expectedAlignment = "Evil"
     override val expectedLanguages = Some("Common")
     val expectedBaseStats = BaseStats(248, 12, 1, 2)
@@ -122,7 +122,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedEquipment = Some("Leather Armor, Short sword")
     override val expectedSusceptibilities = List(Resistance("Necrotic", 10), Vulnerability("Radiant", 10),
       Immune("Disease"), Immune("Poison"))
-    val expectedSpeeds = "Speed 8, Climb 4"
+    val expectedSpeeds = "8, Climb 4"
     val expectedPowers = List(
       Power("Short Sword", "Standard", "At-Will", BasicAttack("Melee"), Set("Weapon"),
         Attack(List(AttackBonus("AC", 13)), Some("1d6+8"), Some("damage"))),
@@ -135,7 +135,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Power("Dominating Gaze", "Minor", "Recharge 4", NormalAttack("Ranged"), Set("Charm"),
         Attack(List(AttackBonus("Will", 13)), None, Some("the target is dominated (save ends, with a -2 penalty on the saving throw)."))),
       Power("Mist Form", "Standard", "Encounter", NonAttack, Set("Polymorph"),
-        makeUtilityAttack("4d6 + 5","Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.")),
+        makeUtilityAttack("4d6 + 5", "Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.")),
       Power("Second Wind", "Standard", "Encounter", NonAttack, Set("Healing"),
         makeUtilityAttack("4d6 + 5", "Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.")))
     val expectedTraits = List(
@@ -156,7 +156,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedLanguages = Some("Goblin")
     val expectedAlignment = "Unaligned"
     val expectedBaseStats = BaseStats(120, 5, 1, 2)
-    val expectedSpeeds = "Speed 6"
+    val expectedSpeeds = "6"
     val expectedPowers = List(
       Power("Whip Ash", "Standard", "At-Will", BasicAttack("Melee"), Set(),
         Attack(List(AttackBonus("AC", 9)), Some("1d10 + 7"), Some("damage."))),
