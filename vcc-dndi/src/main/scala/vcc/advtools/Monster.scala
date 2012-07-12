@@ -18,9 +18,19 @@ package vcc.advtools
 
 object Monster {
 
-  case class BestiaryTaxonomy(size: String, origin: String, creatureType: String, keyword: Option[String], race: Option[String])
+  case class BestiaryTaxonomy(size: String, origin: String, creatureType: String, keyword: Option[String], race: Option[String]) {
+    def singleDescription = (size + " " + origin + " " + creatureType +
+      keyword.map(" (%s)".format(_)).getOrElse("") + race.map(", %s".format(_)).getOrElse("")).toLowerCase.capitalize
+  }
 
-  case class GroupTaxonomy(role: String, groupRole: String, isLeader: Boolean, level: Int, experience: Int)
+  case class GroupTaxonomy(role: String, groupRole: String, isLeader: Boolean, level: Int, experience: Int) {
+    def completeRole = normalizeRole(groupRole) + " " + role + (if (isLeader) " (Leader)" else "")
+
+    private def normalizeRole(role: String) = role match {
+      case "Standard" => ""
+      case s => s
+    }
+  }
 
   case class Defense(ac: Int, fortitude: Int, reflex: Int, will: Int)
 

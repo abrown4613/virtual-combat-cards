@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e.compendium
 
-import java.io.{FileInputStream, File}
+import java.io.{InputStream, FileInputStream, File}
 import vcc.util.{AsynchronousTask, AsynchronousDispatcher}
 import vcc.dndi.reader.CharacterBuilderImporter
 import org.slf4j.LoggerFactory
@@ -54,13 +54,14 @@ class ImporterService(val repository: CompendiumRepository) extends Importer wit
   }
 }
 
-class CharacterEntityReaderJob(file: File) extends ImportJob {
+abstract class SimpleImportJob(file: File) extends ImportJob {
+
+  def executeImport(is: InputStream): CombatantEntity
+
   def execute(): Option[CombatantEntity] = {
+    val is = new FileInputStream(file)
     try {
-      val is = new FileInputStream(file)
-      val dse = CharacterBuilderImporter.loadFromStream(is)
-      val ent = CombatantEntityBuilder.buildEntity(dse)
-      Some(ent)
+      Some(executeImport(is))
     } catch {
       case e =>
         LoggerFactory.getLogger("domain").error("Failed import of Character", e)
@@ -69,15 +70,41 @@ class CharacterEntityReaderJob(file: File) extends ImportJob {
   }
 }
 
-class MonsterFileImportJob(file: File) extends ImportJob {
+class CharacterEntityReaderJob(file: File) extends SimpleImportJob(file) {
 
-  def execute(): Option[CombatantEntity] = {
+  def executeImport(is: InputStream): CombatantEntity = {
+    val dse = CharacterBuilderImporter.loadFromStream(is)
+    CombatantEntityBuilder.buildEntity(dse)
+  }
+}
+
+class MonsterFileImportJob(file: File) extends SimpleImportJob(file) {
+
+  def executeImport(is: InputStream): CombatantEntity = {
     val mr = new MonsterReader(new FileInputStream(file))
     val ent = makeBlankEntity(mr)
 
     loadFromReader(ent, mr)
-    Some(ent)
+    ent
   }
+
+/*
+  def execute(): Option[CombatantEntity] = {
+    try {
+      val mr = new MonsterReader(new FileInputStream(file))
+      val ent = makeBlankEntity(mr)
+
+      loadFromReader(ent, mr)
+      Some(ent)
+    } catch {
+      case e =>
+        println(e.getMessage)
+        e.printStackTrace()
+        LoggerFactory.getLogger("domain").error("Failed import of Character", e)
+        None
+    }
+  }
+*/
 
   private[compendium] def makeBlankEntity(reader: MonsterReader): MonsterEntity = {
     if (reader.getCompendiumID.isDefined)
@@ -89,8 +116,7 @@ class MonsterFileImportJob(file: File) extends ImportJob {
   private def loadFromReader(entity: MonsterEntity, reader: MonsterReader) {
     entity.name.value = reader.getName
     val category = reader.getGroupCategory
-    val role = category.groupRole
-    entity.role.value = normalizeRole(role) + " " + category.role + (if(category.isLeader) " (Leader)" else "")
+    entity.role.value = category.completeRole
     entity.level.value = category.level
     entity.xp.value = category.experience
 
@@ -103,10 +129,7 @@ class MonsterFileImportJob(file: File) extends ImportJob {
     entity.fortitude.value = defense.fortitude
     entity.reflex.value = defense.reflex
     entity.will.value = defense.will
-  }
 
-  private def normalizeRole(role:String) = role match {
-    case "Standard" => ""
-    case s => s
+    entity.statblock.value = (new MonsterStatBlockBuilder(reader)).render()
   }
 }
