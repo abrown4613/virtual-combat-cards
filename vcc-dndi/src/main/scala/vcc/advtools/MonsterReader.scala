@@ -26,8 +26,8 @@ class MonsterReader(inputStream: InputStream) {
 
   val xml = XML.load(inputStream)
 
-  def getContentDigest:String = {
-    util.UUID.nameUUIDFromBytes(xml.toString().getBytes).toString
+  def getContentDigest: String = {
+    util.UUID.nameUUIDFromBytes(xml.toString().getBytes("UTF-8")).toString
   }
 
   def getName: String = getElementAsText("Name")
@@ -57,7 +57,7 @@ class MonsterReader(inputStream: InputStream) {
 
   def getAbilityScores = {
     val map = extractValues(xml \ "AbilityScores" \\ "AbilityScoreNumber")
-    AbilityScores(map("Strength"), map("Constitution"), map("Dexterity"),
+    AbilityScores(map("Strength"), map("Dexterity"), map("Constitution"),
       map("Intelligence"), map("Wisdom"), map("Charisma"))
   }
 
@@ -105,7 +105,7 @@ class MonsterReader(inputStream: InputStream) {
       val detail = emptyOrStringAsOption(node \ "Details" text)
       (Seq((node \ "ReferencedObject" \ "Name" text), (node \ "Speed" \ "@FinalValue" text)) ++ detail).mkString(" ")
     }
-    val speeds = "Speed " + (xml \ "LandSpeed" \ "Speed" \ "@FinalValue" text)
+    val speeds = (xml \ "LandSpeed" \ "Speed" \ "@FinalValue" text)
     (Seq(speeds) ++ (xml \ "Speeds" \ "CreatureSpeed").map(formatSpeed)).mkString(", ")
   }
 
