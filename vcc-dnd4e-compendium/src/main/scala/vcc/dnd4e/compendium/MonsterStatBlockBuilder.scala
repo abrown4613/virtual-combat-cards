@@ -20,6 +20,8 @@ import vcc.advtools.{Monster, MonsterReader}
 import vcc.infra.xtemplate.TemplateDataSource
 import xml.{Text, NodeSeq}
 import vcc.advtools.Monster.{AbilityScores, BaseStats}
+import vcc.dndi.reader.Parser.IconType
+import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 
 class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
 
@@ -42,9 +44,90 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     }
   }
 
-  class Mapper(delegate: TemplateDataSource) extends TemplateDataSource {
+  class PowerMapper(power: Monster.Power, delegate: TemplateDataSource) extends TemplateDataSource {
+    /**
+     * String value for a given key.
+     */
+    def templateVariable(key: String): Option[String] = {
+      key match {
+        case "name" => Some(power.powerName)
+        case "keyword" => if (power.keywords.isEmpty) None else Some(power.keywords.mkString("(", ", ", ")"))
+        case _ =>
+          delegate.templateVariable(key)
+      }
+    }
 
-    val defense = monsterReader.getDefense
+    /**
+     * Return a data source for a nested TemplateDataSource.
+     */
+    def templateGroup(key: String): List[TemplateDataSource] = delegate.templateGroup(key)
+
+    /**
+     * Return a XML NodeSeq for a give name.
+     */
+    def templateInlineXML(key: String): NodeSeq = {
+      def makeIcon(icon: IconType.Value) = <img src={IconType.iconToImage(icon)}/>
+      key match {
+        case "iconset-short" =>
+          power.attackType.asIcon().map(makeIcon)
+        case _ =>
+          delegate.templateInlineXML(key)
+      }
+    }
+  }
+
+  class AuraMapper(aura: Monster.Aura) extends TemplateDataSource {
+
+    def templateVariable(key: String): Option[String] = {
+      key match {
+        case "name" => Some(aura.name)
+        case "keyword" => None
+        case _ => None
+      }
+    }
+
+    def templateGroup(key: String): List[TemplateDataSource] = Nil
+
+    def templateInlineXML(key: String): NodeSeq = {
+      key match {
+        case "iconset-short" =>
+          NodeSeq.fromSeq(<img src={IconType.iconToImage(IconType.Aura)}/>)
+        case "usage" =>
+          NodeSeq.fromSeq(Seq(Text(" "), <img src={IconType.iconToImage(IconType.Separator)}/>, <b>Aura</b>, Text(" " + aura.radius)))
+        case "description" =>
+          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aura.details)))).toXHTML()
+        case _ => NodeSeq.fromSeq(Nil)
+      }
+    }
+  }
+
+  class CreatureTraitMapper(aTrait: Monster.CreatureTrait) extends TemplateDataSource {
+
+    def templateVariable(key: String): Option[String] = {
+      key match {
+        case "name" =>
+          Some(aTrait.name)
+        case _ =>
+          None
+      }
+    }
+
+    def templateGroup(key: String): List[TemplateDataSource] = Nil
+
+    def templateInlineXML(key: String): NodeSeq = {
+      key match {
+        case "description" =>
+          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aTrait.details)))).toXHTML()
+        case _ => NodeSeq.fromSeq(Nil)
+      }
+    }
+  }
+
+  class BaseMapper(delegate: TemplateDataSource) extends TemplateDataSource {
+    private val powers = monsterReader.getPowers
+
+    private val baseMap = makeBaseStat() ++ makeDefense(monsterReader.getDefense) ++ makeBaseStats(monsterReader.getBaseStats) ++
+      makeImmunity(monsterReader) ++ makeEndBlock(monsterReader) ++ makeStats(monsterReader.getAbilityScores, monsterReader.getGroupCategory.level)
 
     def makeBaseStats(stats: BaseStats) = Map(
       "stat:initiative" -> stats.initiative.toString,
@@ -65,9 +148,6 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         "stat:cha" -> formatScore(scores.charisma)
       )
     }
-
-    private val baseMap = init() ++ makeDefense(defense) ++ makeBaseStats(monsterReader.getBaseStats) ++
-      makeImmunity(monsterReader) ++ makeEndBlock(monsterReader) ++ makeStats(monsterReader.getAbilityScores, monsterReader.getGroupCategory.level)
 
     def makeDefense(defense: Monster.Defense): Map[String, String] = Map(
       "stat:ac" -> defense.ac.toString,
@@ -101,7 +181,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       )
     }
 
-    private def init(): Map[String, String] = Map(
+    private def makeBaseStat(): Map[String, String] = Map(
       "base:name" -> monsterReader.getName,
       "stat:skills" -> monsterReader.getSkills.toSeq.map(p => "%s %+d".format(p._1, p._2)).mkString(", "),
       "stat:perception" -> "%+d".format(monsterReader.getSkills.getOrElse("Perception", 0)),
@@ -133,7 +213,29 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
      * Return a data source for a nested TemplateDataSource.
      */
     def templateGroup(key: String): List[TemplateDataSource] = {
-      delegate.templateGroup(key)
+
+      def powerToTemplate(filterAction: String) = {
+        powers.filter(p => p.action == filterAction).map(power =>
+          new PowerMapper(power, new BridgeTemplate("ROOT." + power.powerName)))
+      }
+      key match {
+        case "trait" =>
+          monsterReader.getCreatureTraits.map(t => t match {
+            case a: Monster.Aura => new AuraMapper(a)
+            case ct: Monster.CreatureTrait => new CreatureTraitMapper(ct)
+          })
+        case "standard action" =>
+          powerToTemplate("Standard")
+        case "minor action" =>
+          powerToTemplate("Minor")
+        case "triggered action" =>
+          powerToTemplate("No Action")
+
+        case action =>
+          println("Action: " + action)
+          println("  vs: " + powers.map(_.action).mkString(", "))
+          Nil
+      }
     }
 
     /**
@@ -146,7 +248,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
 
   def render(): String = {
     val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(Compendium.monsterClassID.shortClassName())
-    val mySource = new Mapper(new BridgeTemplate("ROOT"))
+    val mySource = new BaseMapper(new BridgeTemplate("ROOT"))
     template.render(mySource).toString()
   }
 }

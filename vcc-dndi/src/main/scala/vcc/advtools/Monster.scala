@@ -16,6 +16,8 @@
  */
 package vcc.advtools
 
+import vcc.dndi.reader.Parser.IconType
+
 object Monster {
 
   case class BestiaryTaxonomy(size: String, origin: String, creatureType: String, keyword: Option[String], race: Option[String]) {
@@ -52,17 +54,55 @@ object Monster {
     def amount = Integer.MAX_VALUE
   }
 
-  sealed trait AttackType
+  sealed trait AttackType {
 
-  case class BasicAttack(attackType: String) extends AttackType
+    def toIcon(name: String): Option[IconType.Value] = IconType.values.find(p => p.toString.toLowerCase == name.toLowerCase)
 
-  case class NormalAttack(attackType: String) extends AttackType
+    def asIcon(): Seq[IconType.Value]
+  }
 
-  case object NonAttack extends AttackType
+  object BasicAttack {
+    private val iconMapping = Map[String, IconType.Value](
+      "melee" -> IconType.MeleeBasic,
+      "area burst" -> IconType.AreaBasic,
+      "close blast" -> IconType.CloseBasic,
+      "close burst" -> IconType.CloseBasic,
+      "ranged" -> IconType.RangeBasic,
+      "area burst" -> IconType.AreaBasic
+    )
+  }
+  case class BasicAttack(attackType: String) extends AttackType {
+    def asIcon(): Seq[IconType.Value] = {
+      attackType.split("\n").flatMap(n => BasicAttack.iconMapping.get(n.toLowerCase))
+    }
+  }
+
+  object NormalAttack {
+    private val iconMapping = Map[String, IconType.Value](
+      "melee" -> IconType.Melee,
+      "area burst" -> IconType.Melee,
+      "close blast" -> IconType.Close,
+      "close burst" -> IconType.Close,
+      "ranged" -> IconType.Range,
+      "area burst" -> IconType.Area
+    )
+  }
+
+  case class NormalAttack(attackType: String) extends AttackType {
+
+    def asIcon(): Seq[IconType.Value] = {
+      attackType.split("\n").flatMap(n => NormalAttack.iconMapping.get(n.toLowerCase))
+    }
+  }
+
+  case object NonAttack extends AttackType {
+    def asIcon(): Seq[IconType.Value] = Nil
+  }
 
   object Attack {
-    def apply(hits: List[AttackBonus], damage: Option[String]):Attack = apply(hits, damage, None)
-    def apply(hits: List[AttackBonus], damage: Option[String], description:Option[String]): Attack = {
+    def apply(hits: List[AttackBonus], damage: Option[String]): Attack = apply(hits, damage, None)
+
+    def apply(hits: List[AttackBonus], damage: Option[String], description: Option[String]): Attack = {
       Attack(hits,
         AttackResult(List(), damage, description),
         AttackResult(List(), None, None),
