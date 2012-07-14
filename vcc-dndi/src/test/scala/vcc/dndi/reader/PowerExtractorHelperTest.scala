@@ -50,12 +50,12 @@ class PowerExtractorHelperTest extends SpecificationWithJUnit {
 
     "extract simple encounter usage" in {
       val parts = List(Key("Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(1))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage(0))
     }
 
     "extract simple multiple per encounter" in {
-      val parts = List(Key("3 / Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(3))
+      val parts = List(Key("2 / Encounter"))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage(2))
 
       val parts2 = List(Key("3/Encounter"))
       SomeUsage.unapply(parts2) must_== Some(EncounterUsage(3))
@@ -70,6 +70,9 @@ class PowerExtractorHelperTest extends SpecificationWithJUnit {
 
       val parts3 = List(Text(" Recharge 6"))
       SomeUsage.unapply(parts3) must_== Some(RechargeDiceUsage(6))
+
+      val parts4 = List(Text("Recharge 4"))
+      SomeUsage.unapply(parts4) must_== Some(RechargeDiceUsage(4))
     }
 
     "handle conditional recharge" in {

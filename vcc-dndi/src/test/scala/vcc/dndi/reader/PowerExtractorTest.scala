@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ class PowerExtractorTest extends SpecificationWithJUnit {
       val parts = List(Icon(IconType.Range), Text(" "), Key("Darkfire"), Text(" "), Icon(IconType.Separator), Text(" "), Key("Encounter"))
       parts match {
         case SomePowerDefinition(d) =>
-          d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(1))
+          d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(0))
         case _ => failure("Should have matched")
       }
     }
