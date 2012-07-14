@@ -1,5 +1,5 @@
 /*
-   * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ object SomeUsage {
     def unapply(text: String): Option[Int] = {
       text.trim match {
         case this.encounterRE(i) => Some(i.toInt)
-        case "Encounter" => Some(1)
+        case "Encounter" => Some(0)
         case _ => None
       }
     }
@@ -395,8 +395,8 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
   /**
    * Takes stats from primary block, that may be aura or regeneration and promotes them to the MM3
    * trait format.
-   * @para name Key name (usually aura name or 'Regeneration')
-   * @para desc Description of aura or generation
+   * @param name Key name (usually aura name or 'Regeneration')
+   * @param desc Description of aura or generation
    * @return A new power.
    */
   private[dndi] def promoteAuraLike(name: String, desc: String): Power = {
