@@ -443,6 +443,7 @@
     <MonsterPower xsi:type="MonsterPower">
       <Action>Standard</Action>
       <Usage>At-Will</Usage>
+      <UsageDetails>1/round</UsageDetails>
       <Attacks>
         <MonsterAttack>
           <Range></Range>

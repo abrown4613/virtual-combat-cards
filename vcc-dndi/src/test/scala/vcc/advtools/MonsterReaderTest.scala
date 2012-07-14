@@ -18,6 +18,12 @@ package vcc.advtools
 
 import org.specs2.SpecificationWithJUnit
 import vcc.advtools.Monster._
+import vcc.dndi.reader.AtWillUsage
+import vcc.dndi.reader.NoUsage
+import vcc.dndi.reader.EncounterUsage
+import vcc.dndi.reader.RechargeDiceUsage
+import vcc.dndi.reader.RechargeConditionalUsage
+import vcc.advtools.Monster.Resistance
 
 class MonsterReaderTest extends SpecificationWithJUnit {
 
@@ -91,17 +97,17 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     override val expectedSusceptibilities: List[Susceptibility] = List(Resistance("Fire", 5))
     val expectedSpeeds = "4, Fly 7 (hover)"
     val expectedPowers = List(
-      Power("Razor", "Standard", "At-Will", BasicAttack("Melee"), Set(),
+      Power("Razor", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set(),
         Attack(List(AttackBonus("AC", 12)), Some("1d4 + 4"), Some("damage"))),
-      Power("Tail Sting", "Standard", "At-Will", BasicAttack("Melee"), Set("Poison"),
+      Power("Tail Sting", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Poison"),
         Attack(List(AttackBonus("AC", 12)),
           AttackResult(List(Attack(List(AttackBonus("Fortitude", 10)), None, Some("the target takes ongoing 5 poison damage and is slowed (save ends both)."))), Some("1d8 + 4"), Some("damage, and the imp makes a secondary attack against the same target")),
           AttackResult(List(), None, None),
           AttackResult(List(), None, None)
         )),
-      Power("Vanish ", "Standard", "At-Will", NonAttack, Set("Illusion"),
+      Power("Vanish ", "Standard", AtWillUsage(0), NonAttack, Set("Illusion"),
         makeUtilityAttack("3d6 + 4", "The imp becomes invisible until the end of its next turn or until it attacks.")),
-      Power("Quick Escape", "Immediate Reaction", "Encounter", NonAttack, Set(),
+      Power("Quick Escape", "Immediate Reaction", EncounterUsage(0), NonAttack, Set(),
         makeUtilityAttack("3d6 + 4", "The imp uses vanish as an immediate reaction.")))
     val expectedTraits = List(CreatureTrait("Bleed the Helpless", "When the assassin imp attacks a sleeping or helpless target, its razor attack deals +2d6 damage and ongoing 5 damage (save ends)."))
   }
@@ -124,19 +130,19 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Immune("Disease"), Immune("Poison"))
     val expectedSpeeds = "8, Climb 4"
     val expectedPowers = List(
-      Power("Short Sword", "Standard", "At-Will", BasicAttack("Melee"), Set("Weapon"),
+      Power("Short Sword", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Weapon"),
         Attack(List(AttackBonus("AC", 13)), Some("1d6+8"), Some("damage"))),
-      Power("Deft Strick", "Standard", "At-Will", NormalAttack("Melee"), Set("Weapon"),
+      Power("Deft Strick", "Standard", AtWillUsage(0), NormalAttack("Melee"), Set("Weapon"),
         Attack(List(AttackBonus("AC", 15)), Some("1d6+10"), Some("damage"))),
-      Power("Imperiling Strike", "Standard", "Encounter", NormalAttack("Melee"), Set(),
+      Power("Imperiling Strike", "Standard", EncounterUsage(0), NormalAttack("Melee"), Set(),
         Attack(List(AttackBonus("Fortitude", 15)), Some("1d6+10"), Some("damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn"))),
-      Power("Blood Drain", "Standard", "Recharge when an adjacent creature becomes bloodied", NormalAttack("Melee"), Set("Healing"),
+      Power("Blood Drain", "Standard", RechargeConditionalUsage("when an adjacent creature becomes bloodied"), NormalAttack("Melee"), Set("Healing"),
         Attack(List(AttackBonus("Will", 13)), Some("2d12+8"), Some("damage, the target is weakened (save ends), and Dude regains 46 hit points"))),
-      Power("Dominating Gaze", "Minor", "Recharge 4", NormalAttack("Ranged"), Set("Charm"),
+      Power("Dominating Gaze", "Minor", RechargeDiceUsage(4), NormalAttack("Ranged"), Set("Charm"),
         Attack(List(AttackBonus("Will", 13)), None, Some("the target is dominated (save ends, with a -2 penalty on the saving throw)."))),
-      Power("Mist Form", "Standard", "Encounter", NonAttack, Set("Polymorph"),
+      Power("Mist Form", "Standard", EncounterUsage(0), NonAttack, Set("Polymorph"),
         makeUtilityAttack("4d6 + 5", "Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.")),
-      Power("Second Wind", "Standard", "Encounter", NonAttack, Set("Healing"),
+      Power("Second Wind", "Standard", EncounterUsage(0), NonAttack, Set("Healing"),
         makeUtilityAttack("4d6 + 5", "Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.")))
     val expectedTraits = List(
       Aura("Sepulchral Stench", 3, "enemies in the aura take a -2 penalty to all defenses."),
@@ -158,9 +164,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedBaseStats = BaseStats(120, 5, 1, 2)
     val expectedSpeeds = "6"
     val expectedPowers = List(
-      Power("Whip Ash", "Standard", "At-Will", BasicAttack("Melee"), Set(),
+      Power("Whip Ash", "Standard", AtWillUsage(1), BasicAttack("Melee"), Set(),
         Attack(List(AttackBonus("AC", 9)), Some("1d10 + 7"), Some("damage."))),
-      Power("New Utility Power", "Minor", "", NonAttack, Set(),
+      Power("New Utility Power", "Minor", NoUsage, NonAttack, Set(),
         makeUtilityAttack("1d10 + 7", "Enter Power Effect Here"))
     )
     val expectedTraits = List(

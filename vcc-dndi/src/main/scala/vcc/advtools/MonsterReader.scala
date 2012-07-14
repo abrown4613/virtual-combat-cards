@@ -21,6 +21,8 @@ import xml.{NodeSeq, Node, XML}
 import vcc.advtools.Monster._
 import util.matching.Regex
 import java.util
+import vcc.dndi.reader.{SomeUsage, Usage, NoUsage}
+import vcc.dndi.reader.Parser.{Part, Text, Key}
 
 class MonsterReader(inputStream: InputStream) {
 
@@ -150,11 +152,25 @@ class MonsterReader(inputStream: InputStream) {
       )
     }
 
+    def extractUsage(usage: String, usageDetail: String): Usage = {
+
+      val detail = emptyOrStringAsOption(usageDetail)
+
+      val converted:List[Part] = (usage,detail) match {
+        case ("Recharge", Some(num)) if("123456".contains(num)) => List(Text(usage + " " + num))
+        case (s,o) => List(Key(s)) ++ o.map(Text(_))
+      }
+
+      val ret = SomeUsage.unapply(converted).getOrElse(NoUsage)
+//      println("Usage: => " + usage + " / " + usageDetail + " = " + ret)
+      ret
+    }
+
     (xml \ "Powers" \ "MonsterPower").map {
       power =>
         val powerName = (power \ "Name" text)
         val action = (power \ "Action" text)
-        val usage = (power \ "Usage" text) + format(power \ "UsageDetails" text)
+        val usage = extractUsage((power \ "Usage" text), (power \ "UsageDetails" text))
         val rangeType = (power \ "Type" text)
         val isBasicAttack = (power \ "IsBasic" text) == "true"
         val keywords = extractKeywords(power)
