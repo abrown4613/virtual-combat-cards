@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,14 @@ import vcc.infra.datastore.DataStoreFactory
 import vcc.util.UpdateManager
 import java.net.URL
 import java.lang.System
+import java.util.UUID
 
 object Configuration extends AbstractConfiguration with StartupStep {
-  val autoStartWebServer = Property[Boolean]("vcc.dnd4e.autoWebServer", "true", x => x == "true")
-  val storeLogs = Property[Boolean]("vcc.dnd4e.storeLogs", "false", x => x == "true")
-  val baseDirectory = Property[File]("vcc.dnd4e.basedir", System.getProperty("user.dir"), x => {
+  private val metricIdentifierNotDefined = UUID.nameUUIDFromBytes("NOT DEFINED".getBytes("UTF8"))
+
+  val autoStartWebServer = makeProperty[Boolean]("vcc.dnd4e.autoWebServer", "true", x => x == "true")
+  val storeLogs = makeProperty[Boolean]("vcc.dnd4e.storeLogs", "false", x => x == "true")
+  val baseDirectory = makeProperty[File]("vcc.dnd4e.basedir", System.getProperty("user.dir"), x => {
     new File(x)
   })
   //This is either the VM option (vcc.dnd4e.datadir), or default to InstallDirectory/"fs-wc"
@@ -37,10 +40,30 @@ object Configuration extends AbstractConfiguration with StartupStep {
     if (System.getProperty("vcc.dnd4e.datadir") != null) new File(System.getProperty("vcc.dnd4e.datadir"))
     else new File(UpdateManager.getInstallDirectory, "fs-wc")
   }
-  val compendiumStoreID = Property[DataStoreURI]("vcc.dnd4e.compendium", null, x => {
+
+  val compendiumStoreID = makeProperty[DataStoreURI]("vcc.dnd4e.compendium", null, x => {
     if (x != null) {
       expandDataStoreURI(DataStoreURI.fromStorageString(x))
     } else null
+  })
+
+  val metricIdentifier = makePropertyWithSerializer[Option[UUID]]("vcc.metric.identifier", "NOT DEFINED", value => {
+    value match {
+      case "NOT DEFINED" => Some(metricIdentifierNotDefined)
+      case "NO" => None
+      case s => try {
+        Some(UUID.fromString(s))
+      } catch {
+        case e: IllegalArgumentException =>
+          logger.warn("Unexpected UUID string: " + s)
+          None
+      }
+    }
+  }, value => {
+    value match {
+      case None => "NO"
+      case Some(uuid) => uuid.toString
+    }
   })
 
   def expandDataStoreURI(baseEsid: DataStoreURI): DataStoreURI = {
@@ -75,7 +98,7 @@ object Configuration extends AbstractConfiguration with StartupStep {
     true
   }
 
-  def isStartupComplete() = compendiumStoreID.value != null
+  def isStartupComplete = compendiumStoreID.value != null
 
   /**
    * String representation of the URL where VCC should search for updates
@@ -95,9 +118,16 @@ object Configuration extends AbstractConfiguration with StartupStep {
     val timeout: Long = try {
       System.getProperty("vcc.update.check").toLong
     } catch {
-      case _ => 24 * 3600
+      case _: NumberFormatException => 24 * 3600
     }
     timeout * 1000
+  }
+
+  def addMetricIdentifierIfNeeded(file: File) {
+    if (metricIdentifier.value.isDefined && metricIdentifier.value.get == metricIdentifierNotDefined) {
+      metricIdentifier.value = Some(UUID.randomUUID())
+      save(file)
+    }
   }
 }
 
@@ -151,7 +181,7 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalPromptDi
   def collectResult(): Option[Boolean] = {
     val dir = if (homeDirRadioButton.selected) userHome else vccHome
     val cFile = if (initial) new File(dir.getParentFile, ConfigurationFinder.configFilename)
-    else ConfigurationFinder.locateFile
+    else ConfigurationFinder.locateFile()
 
     if (initial) {
       if (!Configuration.createDirectoryTree(dir)) {
@@ -165,7 +195,7 @@ class ConfigurationDialog(owner: Window, initial: Boolean) extends ModalPromptDi
       DataStoreURI.fromStorageString("vcc-store:directory:file:$HOME/vcc/compendium")
     else
       DataStoreURI.fromStorageString("vcc-store:directory:file:userdata/compendium")
-    logger.debug("Setting compendium to: {}", uri.toString)
+    logger.debug("Setting compendium to: {}", uri.toString())
     Configuration.compendiumStoreID.value = uri
 
     Configuration.autoStartWebServer.value = startWebServerCheck.selected
