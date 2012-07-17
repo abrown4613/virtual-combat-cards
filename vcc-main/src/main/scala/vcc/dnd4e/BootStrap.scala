@@ -54,8 +54,8 @@ object BootStrap extends StartupRoutine {
     callStartupStep(srw, "Loading configuration") {
       if (!ConfigurationFinder.foundConfiguration) {
         logger.info("Can't find the configuration, will configure")
-        val cdiag = new ConfigurationDialog(srw.ownerWindow, true)
-        val result = cdiag.promptUser()
+        val configurationDialog = new ConfigurationDialog(srw.ownerWindow, true)
+        val result = configurationDialog.promptUser()
         if (result == None) {
           logger.warn("Failed to complete configuration, will exit")
           return null
@@ -66,6 +66,7 @@ object BootStrap extends StartupRoutine {
         }
       }
       Configuration.load(ConfigurationFinder.locateFile())
+      Configuration.addMetricIdentifierIfNeeded(ConfigurationFinder.locateFile())
       Configuration
     }
     callStartupStep(srw, "Logging") {

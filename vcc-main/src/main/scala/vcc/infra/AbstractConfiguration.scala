@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,29 +25,32 @@ abstract class AbstractConfiguration {
   private val props = new Properties()
   private var propMap = Map.empty[String, Property[_]]
 
-  protected class Property[T](propName: String, propDefault: String, conv: String => T) {
+  protected class Property[T](propName: String, propDefault: String, deSerialize: String => T, serialize: T => String) {
     private var _value: T = {
       if (propDefault != null) props.setProperty(propName, propDefault)
-      conv(propDefault)
+      deSerialize(propDefault)
     }
 
-    def fromString(v: String) {
-      value = conv(v)
+    def fromString(stringValue: String) {
+      value = deSerialize(stringValue)
     }
 
-    def value_=(v: T) {
-      props.setProperty(propName, v.toString)
-      _value = v
+    def value_=(value: T) {
+      props.setProperty(propName, serialize(value))
+      _value = value
     }
 
     def value: T = _value
 
   }
 
-  def Property[T](propName: String, propDefault: String, conv: String => T): Property[T] = {
+  def makeProperty[T](propName: String, propDefault: String, deSerialize: String => T): Property[T] =
+    makePropertyWithSerializer(propName, propDefault, deSerialize, (x:T) => x.toString)
+
+  def makePropertyWithSerializer[T](propName: String, propDefault: String, deSerialize: String => T, serialize: T => String): Property[T] = {
     if (propMap.isDefinedAt(propName))
       vcc.infra.AbnormalEnd(this, "Attempting to redefine property " + propName)
-    val p = new Property[T](propName, propDefault, conv)
+    val p = new Property[T](propName, propDefault, deSerialize, serialize)
     propMap = propMap + (propName -> p)
     p
   }
@@ -63,7 +66,7 @@ abstract class AbstractConfiguration {
           propMap(key).fromString(props.getProperty(key))
           logger.debug("Loaded configuration parameter: {} with {}", key, props.getProperty(key))
         } catch {
-          case e =>
+          case e: Throwable =>
             logger.warn("Could not read property: {} with value: {}", Array(key, props.getProperty(key)), e)
         }
       } else {
@@ -85,8 +88,6 @@ abstract class AbstractConfiguration {
   }
 }
 
-
-
 object ConfigurationFinder {
   private val searchVars = List("vcc.home", "user.dir", "user.home")
 
@@ -96,7 +97,7 @@ object ConfigurationFinder {
     for (ev <- searchVars) {
       val prop = System.getProperty(ev)
       if (prop != null) {
-        var file = new File(prop, configFilename)
+        val file = new File(prop, configFilename)
         if (file.exists && file.isFile && file.canRead) return file
       }
     }
