@@ -112,11 +112,6 @@ class MonsterReader(inputStream: InputStream) {
   }
 
   def getPowers = {
-    def format(text: String) = {
-      if (text != "") " " + text
-      else text
-    }
-
     def attackType(rangeType: String, isBasic: Boolean): AttackType = {
       if (rangeType == "None" || rangeType == "") {
         NonAttack
@@ -143,9 +138,13 @@ class MonsterReader(inputStream: InputStream) {
       )
     }
 
+    def optionalValue(ns: NodeSeq):Option[String] = if(ns.isEmpty) None else emptyOrStringAsOption(ns(0).text)
+
     def extractAttack(attack: Node): Attack = {
       Attack(
         extractAttackBonuses(attack),
+        optionalValue(attack \ "Range"),
+        optionalValue(attack \ "Targets"),
         extractResult(attack \ "Hit" head),
         extractResult(attack \ "Miss" head),
         extractResult(attack \ "Effect" head)

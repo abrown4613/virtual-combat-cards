@@ -16,35 +16,17 @@
  */
 package vcc.dnd4e.compendium
 
-import vcc.advtools.{Monster, MonsterReader}
+import vcc.advtools.{PowerDescriptionFormatter, Monster, MonsterReader}
 import vcc.infra.xtemplate.TemplateDataSource
 import xml.{Text, NodeSeq}
 import vcc.advtools.Monster.{AbilityScores, BaseStats}
 import vcc.dndi.reader.Parser.IconType
 import vcc.infra.text.{TextSegment, TextBlock, StyledText}
+import vcc.dndi.reader.UsageFormatter
 
 class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
 
-  private class BridgeTemplate(rootKey: String) extends TemplateDataSource {
-    /**
-     * Return a data source for a nested TemplateDataSource.
-     */
-    def templateGroup(key: String): List[TemplateDataSource] = List(new BridgeTemplate(rootKey + "." + key))
-
-    /**
-     * Return a XML NodeSeq for a give name.
-     */
-    def templateInlineXML(key: String): NodeSeq = Text("INLINE{" + rootKey + ":" + key + "}")
-
-    /**
-     * String value for a given key.
-     */
-    def templateVariable(key: String): Option[String] = {
-      Some("VAR[" + rootKey + "." + key + "]")
-    }
-  }
-
-  class PowerMapper(power: Monster.Power, delegate: TemplateDataSource) extends TemplateDataSource {
+  class PowerMapper(power: Monster.Power) extends TemplateDataSource {
     /**
      * String value for a given key.
      */
@@ -53,14 +35,14 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "name" => Some(power.powerName)
         case "keyword" => if (power.keywords.isEmpty) None else Some(power.keywords.mkString("(", ", ", ")"))
         case _ =>
-          delegate.templateVariable(key)
+          None
       }
     }
 
     /**
      * Return a data source for a nested TemplateDataSource.
      */
-    def templateGroup(key: String): List[TemplateDataSource] = delegate.templateGroup(key)
+    def templateGroup(key: String): List[TemplateDataSource] = Nil
 
     /**
      * Return a XML NodeSeq for a give name.
@@ -70,8 +52,12 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       key match {
         case "iconset-short" =>
           power.attackType.asIcon().map(makeIcon)
+        case "usage" =>
+          UsageFormatter.format(power.usage)
+        case "description" =>
+          PowerDescriptionFormatter.formatAttack(power.attacks(0)).toXHTML()
         case _ =>
-          delegate.templateInlineXML(key)
+          Seq()
       }
     }
   }
@@ -123,7 +109,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     }
   }
 
-  class BaseMapper(delegate: TemplateDataSource) extends TemplateDataSource {
+  class BaseMapper() extends TemplateDataSource {
     private val powers = monsterReader.getPowers
 
     private val baseMap = makeBaseStat() ++ makeDefense(monsterReader.getDefense) ++ makeBaseStats(monsterReader.getBaseStats) ++
@@ -206,7 +192,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       if (baseMap.isDefinedAt(key))
         Option(baseMap.get(key).get)
       else
-        delegate.templateVariable(key)
+        None
     }
 
     /**
@@ -214,9 +200,9 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
      */
     def templateGroup(key: String): List[TemplateDataSource] = {
 
-      def powerToTemplate(filterAction: String) = {
-        powers.filter(p => p.action == filterAction).map(power =>
-          new PowerMapper(power, new BridgeTemplate("ROOT." + power.powerName)))
+      def powerToTemplate(filterAction: String*) = {
+        powers.filter(p => filterAction.contains(p.action)).map(power =>
+          new PowerMapper(power))
       }
       key match {
         case "trait" =>
@@ -229,11 +215,11 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "minor action" =>
           powerToTemplate("Minor")
         case "triggered action" =>
-          powerToTemplate("No Action")
+          powerToTemplate("Immediate Reaction", "No Action", "Free Action")
 
         case action =>
           println("Action: " + action)
-          println("  vs: " + powers.map(_.action).mkString(", "))
+          println("  *vs: " + powers.map(_.action).mkString(", "))
           Nil
       }
     }
@@ -241,14 +227,12 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     /**
      * Return a XML NodeSeq for a give name.
      */
-    def templateInlineXML(key: String): NodeSeq = {
-      delegate.templateInlineXML(key)
-    }
+    def templateInlineXML(key: String): NodeSeq = Seq()
   }
 
   def render(): String = {
     val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(Compendium.monsterClassID.shortClassName())
-    val mySource = new BaseMapper(new BridgeTemplate("ROOT"))
+    val mySource = new BaseMapper()
     template.render(mySource).toString()
   }
 }
