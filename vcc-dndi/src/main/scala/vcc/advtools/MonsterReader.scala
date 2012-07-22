@@ -21,8 +21,6 @@ import xml.{NodeSeq, Node, XML}
 import vcc.advtools.Monster._
 import util.matching.Regex
 import java.util
-import vcc.dndi.reader.{SomeUsage, Usage, NoUsage}
-import vcc.dndi.reader.Parser.{Part, Text, Key}
 
 class MonsterReader(inputStream: InputStream) {
 
@@ -112,70 +110,7 @@ class MonsterReader(inputStream: InputStream) {
   }
 
   def getPowers = {
-    def attackType(rangeType: String, isBasic: Boolean): AttackType = {
-      if (rangeType == "None" || rangeType == "") {
-        NonAttack
-      } else {
-        if (isBasic) BasicAttack(rangeType) else NormalAttack(rangeType)
-      }
-    }
-    def extractKeywords(power: Node): Set[String] = {
-      (power \ "Keywords" \ "ObjectReference").map(getReferencedObjectName).toSet
-    }
-
-    def extractAttackBonuses(attack: Node): List[AttackBonus] = {
-      (attack \ "AttackBonuses" \ "MonsterPowerAttackNumber").map(x =>
-        AttackBonus(
-          x \ "Defense" \ "ReferencedObject" \ "DefenseName" text,
-          (x \ "@FinalValue").text.toInt)).toList
-    }
-
-    def extractResult(result: Node): AttackResult = {
-      AttackResult(
-        (result \ "Attacks" \ "MonsterAttack").map(extractAttack).toList,
-        emptyOrStringAsOption(result \ "Damage" \ "Expression" text),
-        emptyOrStringAsOption(result \ "Description" text)
-      )
-    }
-
-    def optionalValue(ns: NodeSeq):Option[String] = if(ns.isEmpty) None else emptyOrStringAsOption(ns(0).text)
-
-    def extractAttack(attack: Node): Attack = {
-      Attack(
-        extractAttackBonuses(attack),
-        optionalValue(attack \ "Range"),
-        optionalValue(attack \ "Targets"),
-        extractResult(attack \ "Hit" head),
-        extractResult(attack \ "Miss" head),
-        extractResult(attack \ "Effect" head)
-      )
-    }
-
-    def extractUsage(usage: String, usageDetail: String): Usage = {
-
-      val detail = emptyOrStringAsOption(usageDetail)
-
-      val converted:List[Part] = (usage,detail) match {
-        case ("Recharge", Some(num)) if("123456".contains(num)) => List(Text(usage + " " + num))
-        case (s,o) => List(Key(s)) ++ o.map(Text(_))
-      }
-
-      val ret = SomeUsage.unapply(converted).getOrElse(NoUsage)
-//      println("Usage: => " + usage + " / " + usageDetail + " = " + ret)
-      ret
-    }
-
-    (xml \ "Powers" \ "MonsterPower").map {
-      power =>
-        val powerName = (power \ "Name" text)
-        val action = (power \ "Action" text)
-        val usage = extractUsage((power \ "Usage" text), (power \ "UsageDetails" text))
-        val rangeType = (power \ "Type" text)
-        val isBasicAttack = (power \ "IsBasic" text) == "true"
-        val keywords = extractKeywords(power)
-        val attacks = (power \ "Attacks" \ "MonsterAttack").map(extractAttack)
-        Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords, attacks: _*)
-    }.toList
+    (xml \ "Powers" \ "MonsterPower").map(new PowerReader(_).read()).toList
   }
 
   def getCreatureTraits: List[BaseCreatureTrait] = {

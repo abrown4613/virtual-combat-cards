@@ -124,7 +124,9 @@ object Monster {
 
   case class AttackBonus(defense: String, bonus: Int)
 
-  case class Power(powerName: String, action: String, usage: Usage, attackType: AttackType, keywords: Set[String], attacks: Attack*)
+  case class Power(powerName: String,
+                   action: String, usage: Usage, attackType: AttackType,
+                   trigger: Option[String], keywords: Set[String], attacks: Attack*)
 
   trait BaseCreatureTrait
 

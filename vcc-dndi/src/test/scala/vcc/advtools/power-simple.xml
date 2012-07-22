@@ -1,0 +1,135 @@
+<MonsterPower xsi:type="MonsterPower">
+  <Action>Standard</Action>
+  <Usage>At-Will</Usage>
+  <FlavorText></FlavorText>
+  <Attacks>
+    <MonsterAttack>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="19">
+            <Type>Normal</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>1</DiceQuantity>
+          <DamageConstant FinalValue="13,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>8</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>6</DiceSides>
+          <Expression>1d6+8</Expression>
+        </Damage>
+        <Description>damage</Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="5,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="5,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Description></Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses>
+        <MonsterPowerAttackNumber FinalValue="13">
+          <Defense>
+            <id xsi:type="string">ADE5</id>
+            <ReferencedObject>
+              <DefenseName>AC</DefenseName>
+              <ID xsi:type="string">ADE5</ID>
+              <RoundToNearest>true</RoundToNearest>
+              <Name>Attack vs. AC</Name>
+            </ReferencedObject>
+          </Defense>
+          <Name>AttackBonus</Name>
+          <ID xsi:type="string">AttackBonus</ID>
+          <DefaultBonus xsi:type="AddNumberBonus">
+            <Name>Ad hoc</Name>
+            <Value>-3</Value>
+            <ID xsi:type="string">Ad hoc</ID>
+          </DefaultBonus>
+        </MonsterPowerAttackNumber>
+      </AttackBonuses>
+    </MonsterAttack>
+  </Attacks>
+  <Name>Short Sword</Name>
+  <Type>Melee</Type>
+  <IsBasic>true</IsBasic>
+  <Keywords>
+    <ObjectReference>
+      <id xsi:type="string">89</id>
+      <ReferencedObject>
+        <ID xsi:type="string">89</ID>
+        <Name>Weapon</Name>
+        <Description>Many martial powers, as well as several divine powers, can be used only if you’re wielding a weapon. (You can use an unarmed attack as your weapon.) A weapon’s reach or range determines the reach or range of a power it’s used with.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+  </Keywords>
+  <Tier>0</Tier>
+</MonsterPower>
