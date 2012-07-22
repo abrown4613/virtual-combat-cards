@@ -24,6 +24,7 @@ import vcc.dndi.reader.EncounterUsage
 import vcc.dndi.reader.RechargeDiceUsage
 import vcc.dndi.reader.RechargeConditionalUsage
 import vcc.advtools.Monster.Resistance
+import vcc.advtools.MonsterReaderHelper._
 
 class MonsterReaderTest extends SpecificationWithJUnit {
 
@@ -77,7 +78,13 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "has correct speed" ! (reader.getSpeeds must_== expectedSpeeds) ^
         "has correct base stats" ! (reader.getBaseStats must_== expectedBaseStats) ^
         "has correct susceptibilities" ! (reader.getSusceptibilities must_== expectedSusceptibilities) ^
-        "has correct powers" ! (reader.getPowers must_== expectedPowers) ^
+        "has correct powers number of power" ! ( reader.getPowers.length must_== expectedPowers.length) ^
+        "have correct powers" ^ {
+          val powers = reader.getPowers
+          for( (read,expected) <- powers.zip(expectedPowers)) yield {
+            ("match power " + expected.powerName) ! (read must_== expected)
+          }
+        } ^
         "have correct traits" ! (reader.getCreatureTraits must_== expectedTraits)
     }
   }
@@ -100,7 +107,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Power("Razor", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set(),
         Attack(List(AttackBonus("AC", 12)), Some("1d4 + 4"), Some("damage"))),
       Power("Tail Sting", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Poison"),
-        Attack(List(AttackBonus("AC", 12)),
+        Attack(List(AttackBonus("AC", 12)), None, None,
           AttackResult(List(Attack(List(AttackBonus("Fortitude", 10)), None, Some("the target takes ongoing 5 poison damage and is slowed (save ends both)."))), Some("1d8 + 4"), Some("damage, and the imp makes a secondary attack against the same target")),
           AttackResult(List(), None, None),
           AttackResult(List(), None, None)
@@ -133,13 +140,13 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Power("Short Sword", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Weapon"),
         Attack(List(AttackBonus("AC", 13)), Some("1d6+8"), Some("damage"))),
       Power("Deft Strick", "Standard", AtWillUsage(0), NormalAttack("Melee"), Set("Weapon"),
-        Attack(List(AttackBonus("AC", 15)), Some("1d6+10"), Some("damage"))),
+        Attack(List(AttackBonus("AC", 15)), Some("Dude moves up to 2 squares and makes a short sword attack"), None, Some("1d6+10"), Some("damage"))),
       Power("Imperiling Strike", "Standard", EncounterUsage(0), NormalAttack("Melee"), Set(),
         Attack(List(AttackBonus("Fortitude", 15)), Some("1d6+10"), Some("damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn"))),
       Power("Blood Drain", "Standard", RechargeConditionalUsage("when an adjacent creature becomes bloodied"), NormalAttack("Melee"), Set("Healing"),
         Attack(List(AttackBonus("Will", 13)), Some("2d12+8"), Some("damage, the target is weakened (save ends), and Dude regains 46 hit points"))),
       Power("Dominating Gaze", "Minor", RechargeDiceUsage(4), NormalAttack("Ranged"), Set("Charm"),
-        Attack(List(AttackBonus("Will", 13)), None, Some("the target is dominated (save ends, with a -2 penalty on the saving throw)."))),
+        Attack(List(AttackBonus("Will", 13)), Some("Ranged 5"), Some("one creature"), None, Some("the target is dominated (save ends, with a -2 penalty on the saving throw)."))),
       Power("Mist Form", "Standard", EncounterUsage(0), NonAttack, Set("Polymorph"),
         makeUtilityAttack("4d6 + 5", "Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.")),
       Power("Second Wind", "Standard", EncounterUsage(0), NonAttack, Set("Healing"),
@@ -174,9 +181,12 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Aura("Aura of Pain", 1, "-2 to all Attackers"))
   }
 
-  private def makeUtilityAttack(damage: String, effect: String) =
+}
+
+object MonsterReaderHelper {
+  def makeUtilityAttack(damage: String, effect: String) =
     Attack(
-      List(),
+      List(), None, None,
       AttackResult(List(), Some(damage), None),
       AttackResult(List(), None, None),
       AttackResult(List(), None, Some(effect)))

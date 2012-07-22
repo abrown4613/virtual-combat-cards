@@ -870,6 +870,7 @@
       <Attacks>
         <MonsterAttack>
           <Range>Ranged 5</Range>
+          <Targets>one creature</Targets>
           <Hit>
             <Name>Hit</Name>
             <Aftereffects>
