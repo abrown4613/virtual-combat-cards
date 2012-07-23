@@ -26,16 +26,21 @@ object PowerDescriptionFormatter {
     debug = true
   }
 
-  def formatAttack(attack: Monster.Attack): StyledText = {
+  def formatAttack(attack: Monster.Attack, action: String): StyledText = formatAttack(attack, action, None)
+
+  def formatAttack(attack: Monster.Attack, action: String, trigger: Option[String]): StyledText = {
     val builder = new TextBuilder
     try {
       var ls: List[(String, String)] = Nil
+      if (trigger.isDefined)
+        ls = "Trigger: " -> trigger.get :: ls
       if (!attack.bonuses.isEmpty) {
         ls = "Attack: " -> formatAttackDetails(attack) :: ls
-        if (attack.hit.damage.isDefined)
-          ls = "Hit: " -> (attack.hit.damage.get + attack.hit.description.map(" " + _).getOrElse(" damage.")) :: ls
+        if (attack.hit.damage.isDefined || attack.hit.description.isDefined)
+          ls = "Hit: " -> (attack.hit.damage.map(_ + " ").getOrElse("") + attack.hit.description.getOrElse("damage.")) :: ls
       } else {
-        ls = "Effect: " -> attack.effect.description.get :: ls
+        val header = trigger.map(x => "Effect (" + action + "): ").getOrElse("Effect: ")
+        ls = header -> attack.effect.description.get :: ls
       }
       ls.reverse.foreach(l => builder.append(makeEntry("flavorIndent", l._1, l._2)))
     } catch {

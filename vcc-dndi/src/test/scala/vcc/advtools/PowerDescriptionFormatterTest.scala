@@ -30,7 +30,15 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
     val block = buildBlock(
       makeEntry(tagClass, "Effect: ", "some effect"))
 
-    PowerDescriptionFormatter.formatAttack(makeUtilityAttack("some damage", "some effect")) must_== block
+    PowerDescriptionFormatter.formatAttack(makeUtilityAttack("some damage", "some effect"), "No Action") must_== block
+  }
+
+  "format utility with trigger " in {
+    val block = buildBlock(
+      makeEntry(tagClass, "Trigger: ", "A trigger"),
+      makeEntry(tagClass, "Effect (No Action): ", "some effect"))
+
+    PowerDescriptionFormatter.formatAttack(makeUtilityAttack("some damage", "some effect"), "No Action", Some("A trigger")) must_== block
   }
 
   "format attack simple" in {
@@ -40,7 +48,7 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
       makeEntry(tagClass, "Attack: ", "+11 vs. AC"),
       makeEntry(tagClass, "Hit: ", "1d8+4 damage."))
 
-    PowerDescriptionFormatter.formatAttack(attack) must_== block
+    PowerDescriptionFormatter.formatAttack(attack, "Standard") must_== block
   }
 
   "format attack with effect and range" in {
@@ -50,7 +58,17 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
       makeEntry(tagClass, "Attack: ", "Melee 3; +11 vs. AC"),
       makeEntry(tagClass, "Hit: ", "1d8+4 slowed EOT"))
 
-    PowerDescriptionFormatter.formatAttack(attack) must_== block
+    PowerDescriptionFormatter.formatAttack(attack, "Minor") must_== block
+  }
+
+  "format attack with hit but no damage" in {
+    val attack = Attack(List(AttackBonus("Reflex", 9)), Some("Close Burst 10"), Some("One in burst"), None, Some("Shift target 3"))
+
+    val block = buildBlock(
+      makeEntry(tagClass, "Attack: ", "Close Burst 10 (One in burst); +9 vs. Reflex"),
+      makeEntry(tagClass, "Hit: ", "Shift target 3"))
+
+    PowerDescriptionFormatter.formatAttack(attack, "Minor") must_== block
   }
 
   "format attack with range and targets" in {
@@ -60,7 +78,18 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
       makeEntry(tagClass, "Attack: ", "Ranged 5 (one creature); +13 vs. Will"),
       makeEntry(tagClass, "Hit: ", "2d12+8 damage and the target is dominated (save ends)."))
 
-    PowerDescriptionFormatter.formatAttack(attack) must_== block
+    PowerDescriptionFormatter.formatAttack(attack, "Standard") must_== block
+  }
+
+  "format attack with trigget" in {
+    val attack = Attack(List(AttackBonus("Will", 13)), Some("Ranged 5"), Some("one creature"), Some("2d12+8"), Some("damage and the target is dominated (save ends)."))
+
+    val block = buildBlock(
+      makeEntry(tagClass, "Trigger: ", "A trigger"),
+      makeEntry(tagClass, "Attack: ", "Ranged 5 (one creature); +13 vs. Will"),
+      makeEntry(tagClass, "Hit: ", "2d12+8 damage and the target is dominated (save ends)."))
+
+    PowerDescriptionFormatter.formatAttack(attack, "Standard", Some("A trigger")) must_== block
   }
 
   private def makeEntry(clazz: String, header: String, body: String) = TextBlock("P", clazz,
