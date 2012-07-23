@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.compendium
+package vcc.advtools
 
-import vcc.advtools.{PowerDescriptionFormatter, Monster, MonsterReader}
-import vcc.infra.xtemplate.TemplateDataSource
+import vcc.infra.xtemplate.{Template, TemplateDataSource}
 import xml.{Text, NodeSeq}
 import vcc.advtools.Monster.{AbilityScores, BaseStats}
 import vcc.dndi.reader.Parser.IconType
@@ -230,8 +229,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     def templateInlineXML(key: String): NodeSeq = Seq()
   }
 
-  def render(): String = {
-    val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(Compendium.monsterClassID.shortClassName())
+  def render(template: Template): String = {
     val mySource = new BaseMapper()
     template.render(mySource).toString()
   }
