@@ -55,7 +55,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "usage" =>
           UsageFormatter.format(power.usage)
         case "description" =>
-          PowerDescriptionFormatter.formatAttack(power.attacks(0)).toXHTML()
+          PowerDescriptionFormatter.formatAttack(power.attacks(0), power.action, power.trigger).toXHTML()
         case _ =>
           Seq()
       }
