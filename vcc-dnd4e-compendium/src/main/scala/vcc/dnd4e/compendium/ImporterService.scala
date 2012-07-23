@@ -20,7 +20,7 @@ import java.io.{InputStream, FileInputStream, File}
 import vcc.util.{AsynchronousTask, AsynchronousDispatcher}
 import vcc.dndi.reader.CharacterBuilderImporter
 import org.slf4j.LoggerFactory
-import vcc.advtools.MonsterReader
+import vcc.advtools.{MonsterStatBlockBuilder, MonsterReader}
 
 class ImporterService(val repository: CompendiumRepository) extends Importer with AsynchronousDispatcher.Observer[CombatantEntity] {
 
@@ -63,7 +63,7 @@ abstract class SimpleImportJob(file: File) extends ImportJob {
     try {
       Some(executeImport(is))
     } catch {
-      case e =>
+      case e: Throwable =>
         LoggerFactory.getLogger("domain").error("Failed import of Character", e)
         None
     }
@@ -87,24 +87,6 @@ class MonsterFileImportJob(file: File) extends SimpleImportJob(file) {
     loadFromReader(ent, mr)
     ent
   }
-
-/*
-  def execute(): Option[CombatantEntity] = {
-    try {
-      val mr = new MonsterReader(new FileInputStream(file))
-      val ent = makeBlankEntity(mr)
-
-      loadFromReader(ent, mr)
-      Some(ent)
-    } catch {
-      case e =>
-        println(e.getMessage)
-        e.printStackTrace()
-        LoggerFactory.getLogger("domain").error("Failed import of Character", e)
-        None
-    }
-  }
-*/
 
   private[compendium] def makeBlankEntity(reader: MonsterReader): MonsterEntity = {
     if (reader.getCompendiumID.isDefined)
@@ -130,6 +112,8 @@ class MonsterFileImportJob(file: File) extends SimpleImportJob(file) {
     entity.reflex.value = defense.reflex
     entity.will.value = defense.will
 
-    entity.statblock.value = (new MonsterStatBlockBuilder(reader)).render()
+    val template = CaptureTemplateEngine.getInstance.fetchClassTemplate(Compendium.monsterClassID.shortClassName())
+
+    entity.statblock.value = (new MonsterStatBlockBuilder(reader)).render(template)
   }
 }
