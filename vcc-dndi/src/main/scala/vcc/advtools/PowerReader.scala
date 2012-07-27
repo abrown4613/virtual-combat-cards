@@ -22,6 +22,31 @@ import vcc.dndi.reader.{NoUsage, SomeUsage, Usage}
 import vcc.dndi.reader.Parser.{Key, Text, Part}
 import vcc.dndi.common.FormattedText._
 
+object Attack {
+  def apply(xml: Node, hits: List[AttackBonus], damage: Option[String]): Attack = apply(xml, hits, damage, None)
+
+  def apply(xml: Node, hits: List[AttackBonus], damage: Option[String], description: Option[String]): Attack = {
+    Attack(xml, hits, None, None,
+      AttackResult(List(), damage, description),
+      AttackResult(List(), None, None),
+      AttackResult(List(), None, None))
+  }
+
+  def apply(xml: Node, hits: List[AttackBonus], range:Option[String], targets:Option[String], damage: Option[String], description: Option[String]): Attack = {
+    Attack(xml, hits, range, targets,
+      AttackResult(List(), damage, description),
+      AttackResult(List(), None, None),
+      AttackResult(List(), None, None))
+  }
+}
+
+case class Attack(xml: Node, bonuses: List[AttackBonus], range: Option[String], targets:Option[String], hit: AttackResult,
+                  miss: AttackResult, effect: AttackResult)
+
+case class AttackResult(attacks: List[Attack], damage: Option[String], description: Option[String])
+
+case class AttackBonus(defense: String, bonus: Int)
+
 class PowerReader(power: Node) {
 
   def read(): Power = {
@@ -36,14 +61,22 @@ class PowerReader(power: Node) {
     Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords, getDescription(attacks(0), action, trigger))
   }
 
-  private def getDescription(attack: Monster.Attack, action: String, trigger: Option[String]): Block = {
+  private def getDescription(attack: Attack, action: String, trigger: Option[String]): Block = {
 
-    def formatAttackDetails(attack: Monster.Attack): String = {
+    def formatAttackDetails(attack: Attack): String = {
+      val description = optionalValue(attack.xml \ "Description")
       val ms = (attack.range ++ attack.targets.map("(%s)".format(_))).mkString("", " ", "; ")
-      (if (ms == "; ") "" else ms) + formatBonus(attack.bonuses(0))
+      (if (ms == "; ") "" else ms) + formatBonus(attack.bonuses(0)) + description.getOrElse("")
     }
 
     def formatBonus(bonus: AttackBonus): String = "%+d vs. %s".format(bonus.bonus, bonus.defense)
+
+    def formatResult(header:String, result: AttackResult):Option[(String,String)] = {
+      if (result.damage.isDefined || result.description.isDefined)
+        Some(header -> (": " + result.damage.map(_ + " ").getOrElse("") + result.description.getOrElse("damage.")))
+      else
+        None
+    }
 
     var ls: List[(String, String)] = Nil
 
@@ -54,14 +87,20 @@ class PowerReader(power: Node) {
       ls = "Requirement" -> (": " + requirement.get) :: ls
     if (!attack.bonuses.isEmpty) {
       ls = "Attack" -> (": " + formatAttackDetails(attack)) :: ls
-      if (attack.hit.damage.isDefined || attack.hit.description.isDefined)
-        ls = "Hit" -> (": "+attack.hit.damage.map(_ + " ").getOrElse("") + attack.hit.description.getOrElse("damage.")) :: ls
+      ls = formatResult("Hit", attack.hit).toList ::: ls
+      ls = formatResult("Miss", attack.miss).toList ::: ls
+      (attack.xml \ "Hit" \ "Aftereffects" \ "MonsterAttackEntry").headOption.foreach{ node =>
+        ls = formatResult("\tAftereffects", extractResult(node)).toList ::: ls
+      }
     } else {
       val header = trigger.map(x => "Effect (" + action + "): ").getOrElse("Effect: ")
       ls = header -> attack.effect.description.get :: ls
     }
     if (ls.isEmpty) null
-    else Block(ls.reverse.map(l => Line(0, Seq(Italic(l._1), Normal(l._2)))))
+    else Block(ls.reverse.map(l => {
+      val indent = l._1.toSeq.takeWhile(_ == '\t').length
+      Line(indent, Seq(Italic(l._1.substring(indent)), Normal(l._2)))
+    }))
   }
 
   private def attackType(rangeType: String, isBasic: Boolean): AttackType = {
@@ -83,7 +122,8 @@ class PowerReader(power: Node) {
         (x \ "@FinalValue").text.toInt)).toList
   }
 
-  private def extractResult(result: Node): AttackResult = {
+  private def
+  extractResult(result: Node): AttackResult = {
     AttackResult(
       (result \ "Attacks" \ "MonsterAttack").map(extractAttack).toList,
       emptyOrStringAsOption(result \ "Damage" \ "Expression" text),
@@ -95,6 +135,7 @@ class PowerReader(power: Node) {
 
   private def extractAttack(attack: Node): Attack = {
     Attack(
+      attack,
       extractAttackBonuses(attack),
       optionalValue(attack \ "Range"),
       optionalValue(attack \ "Targets"),

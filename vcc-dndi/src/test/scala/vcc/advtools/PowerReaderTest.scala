@@ -50,6 +50,30 @@ class PowerReaderTest extends SpecificationWithJUnit {
           "_Effect: _As eye rays above, except the beholder makes three eye ray attacks."))
   }
 
+  "read power with miss no damage" in {
+    readPower("power-with-miss-no-damage.xml") must_==
+      Power("Bite", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Poison"),
+        b("_Attack_: Melee 3 (one creature); +24 vs. AC\n" +
+          "_Hit_: 3d10 + 14 damage, and ongoing 10 poison damage (save ends).\n" +
+          "_Miss_: 10 poison damage."))
+  }
+
+  "read power with attack detail and miss" in {
+    readPower("power-attack-description.xml") must_==
+      Power("Claw", "Standard", AtWillUsage(0), NormalAttack("Melee"), Set(),
+        b("_Attack_: Melee 3 (one or two creatures); +24 vs. AC. Some description.\n" +
+          "_Hit_: 3d8 + 13 damage, and the dragon shifts up to 2 squares.\n" +
+          "_Miss_: 1d6+2 and target pushed 1 square."))
+  }
+
+  "read power with after effect" in {
+    readPower("power-with-after-effect.xml") must_==
+      Power("Breath Weapon", "Standard", RechargeDiceUsage(5), NormalAttack("close blast"), Set("Poison"),
+        b("_Attack_: close blast 5 (enemies in the blast); +22 vs. Fortitude\n" +
+          "_Hit_: 2d12 + 12 poison damage, and the target is slowed and takes ongoing 15 poison damage (save ends both).\n" +
+          "\t_Aftereffects_: The target is slowed (save ends)."
+        ))
+  }
 
   private def b(text: String) = FormattedTextParser.parseBlock(text).get
 
