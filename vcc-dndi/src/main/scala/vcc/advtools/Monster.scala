@@ -101,30 +101,6 @@ object Monster {
     def asIcon(): Seq[IconType.Value] = Nil
   }
 
-  object Attack {
-    def apply(hits: List[AttackBonus], damage: Option[String]): Attack = apply(hits, damage, None)
-
-    def apply(hits: List[AttackBonus], damage: Option[String], description: Option[String]): Attack = {
-      Attack(hits, None, None,
-        AttackResult(List(), damage, description),
-        AttackResult(List(), None, None),
-        AttackResult(List(), None, None))
-    }
-
-    def apply(hits: List[AttackBonus], range:Option[String], targets:Option[String], damage: Option[String], description: Option[String]): Attack = {
-      Attack(hits, range, targets,
-        AttackResult(List(), damage, description),
-        AttackResult(List(), None, None),
-        AttackResult(List(), None, None))
-    }
-  }
-
-  case class Attack(bonuses: List[AttackBonus], range: Option[String], targets:Option[String], hit: AttackResult, miss: AttackResult, effect: AttackResult)
-
-  case class AttackResult(attacks: List[Attack], damage: Option[String], description: Option[String])
-
-  case class AttackBonus(defense: String, bonus: Int)
-
   case class Power(powerName: String,
                    action: String, usage: Usage, attackType: AttackType,
                    keywords: Set[String], text: Block)

@@ -179,12 +179,3 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   private def b(text:String) =  FormattedTextParser.parseBlock(text).get
 }
-
-object MonsterReaderHelper {
-  def makeUtilityAttack(damage: String, effect: String) =
-    Attack(
-      List(), None, None,
-      AttackResult(List(), Some(damage), None),
-      AttackResult(List(), None, None),
-      AttackResult(List(), None, Some(effect)))
-}
