@@ -17,7 +17,6 @@
 package vcc.advtools
 
 import vcc.infra.text.{TextSegment, TextBlock, TextBuilder, StyledText}
-import vcc.advtools.Monster.AttackBonus
 import vcc.dndi.common.FormattedText.Block
 
 object PowerDescriptionFormatter {
@@ -41,44 +40,4 @@ object PowerDescriptionFormatter {
       builder.append(TextBlock("P", "", TextSegment.makeBold("RAW"), TextSegment(block.toString)))
     builder.getDocument()
   }
-
-  @deprecated("To delete")
-  def formatAttack(attack: Monster.Attack, action: String): StyledText = formatAttack(attack, action, None)
-
-  @deprecated("To delete")
-  def formatAttack(attack: Monster.Attack, action: String, trigger: Option[String]): StyledText = {
-    val builder = new TextBuilder
-    try {
-      var ls: List[(String, String)] = Nil
-      if (trigger.isDefined)
-        ls = "Trigger: " -> trigger.get :: ls
-      if (!attack.bonuses.isEmpty) {
-        ls = "Attack: " -> formatAttackDetails(attack) :: ls
-        if (attack.hit.damage.isDefined || attack.hit.description.isDefined)
-          ls = "Hit: " -> (attack.hit.damage.map(_ + " ").getOrElse("") + attack.hit.description.getOrElse("damage.")) :: ls
-      } else {
-        val header = trigger.map(x => "Effect (" + action + "): ").getOrElse("Effect: ")
-        ls = header -> attack.effect.description.get :: ls
-      }
-      ls.reverse.foreach(l => builder.append(makeEntry("flavorIndent", l._1, l._2)))
-    } catch {
-      case _: Throwable =>
-        builder.append(TextBlock("P", "", TextSegment.makeBold("NOTFORMATTED")))
-    }
-    if (debug)
-      builder.append(TextBlock("P", "", TextSegment.makeBold("RAW"), TextSegment(attack.toString)))
-    builder.getDocument()
-  }
-
-  private def formatBonus(bonus: AttackBonus): String = "%+d vs. %s".format(bonus.bonus, bonus.defense)
-
-  private def formatAttackDetails(attack: Monster.Attack): String = {
-    val ms = (attack.range ++ attack.targets.map("(%s)".format(_))).mkString("", " ", "; ")
-    (if (ms == "; ") "" else ms) + formatBonus(attack.bonuses(0))
-  }
-
-  private def makeEntry(clazz: String, header: String, body: String) = TextBlock("P", clazz,
-    TextSegment.makeItalic(header),
-    TextSegment(body))
-
 }

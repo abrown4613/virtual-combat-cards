@@ -46,8 +46,12 @@ class PowerReader(power: Node) {
     def formatBonus(bonus: AttackBonus): String = "%+d vs. %s".format(bonus.bonus, bonus.defense)
 
     var ls: List[(String, String)] = Nil
+
+    val requirement = optionalValue(power \ "Requirements")
     if (trigger.isDefined)
       ls = "Trigger: " -> trigger.get :: ls
+    if (requirement.isDefined)
+      ls = "Requirement" -> (": " + requirement.get) :: ls
     if (!attack.bonuses.isEmpty) {
       ls = "Attack" -> (": " + formatAttackDetails(attack)) :: ls
       if (attack.hit.damage.isDefined || attack.hit.description.isDefined)

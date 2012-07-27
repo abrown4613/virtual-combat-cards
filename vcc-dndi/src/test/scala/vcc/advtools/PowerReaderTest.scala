@@ -19,7 +19,7 @@ package vcc.advtools
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.advtools.Monster._
 import xml.XML
-import vcc.dndi.reader.AtWillUsage
+import vcc.dndi.reader.{RechargeDiceUsage, AtWillUsage}
 
 class PowerReaderTest extends SpecificationWithJUnit {
 
@@ -36,9 +36,24 @@ class PowerReaderTest extends SpecificationWithJUnit {
           "_Effect (No Action): _The beholder uses one random eye ray against the triggering enemy."))
   }
 
+  "read power with range constrained and no damage" in {
+    readPower("power-ranged-constrained-no-damage.xml") must_==
+      Power("Luring Glare", "Minor", AtWillUsage(0), NormalAttack("Close Blast"), Set("Charm"),
+        b("_Attack_: Close Blast 10 (one creature in the blast); +22 vs. Will\n" +
+          "_Hit_: The dragon slides the target up to 3 squares."))
+  }
+
+  "read power with simple effect and requirement" in {
+    readPower("power-simple-effect-requirement.xml") must_==
+      Power("Eye Ray Frenzy", "Standard", RechargeDiceUsage(6), NormalAttack("Ranged"), Set(),
+        b("_Requirement_: The beholder must be bloodied\n" +
+          "_Effect: _As eye rays above, except the beholder makes three eye ray attacks."))
+  }
+
+
   private def b(text: String) = FormattedTextParser.parseBlock(text).get
 
-  def readPower(file: String): Power = {
+  private def readPower(file: String): Power = {
     val xml = XML.load(this.getClass.getClassLoader.getResourceAsStream("vcc/advtools/" + file))
     new PowerReader(xml).read()
   }
