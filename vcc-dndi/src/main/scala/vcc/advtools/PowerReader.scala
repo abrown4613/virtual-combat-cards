@@ -33,7 +33,7 @@ class PowerReader(power: Node) {
     val keywords = extractKeywords(power)
     val attacks = (power \ "Attacks" \ "MonsterAttack").map(extractAttack)
     val trigger = optionalValue(power \ "Trigger")
-    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), trigger, keywords, getDescription(attacks(0), action, trigger), attacks: _*)
+    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords, getDescription(attacks(0), action, trigger))
   }
 
   private def getDescription(attack: Monster.Attack, action: String, trigger: Option[String]): Block = {

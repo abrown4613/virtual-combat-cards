@@ -18,6 +18,7 @@ package vcc.advtools
 
 import vcc.infra.text.{TextSegment, TextBlock, TextBuilder, StyledText}
 import vcc.advtools.Monster.AttackBonus
+import vcc.dndi.common.FormattedText.Block
 
 object PowerDescriptionFormatter {
   private var debug = false
@@ -26,8 +27,25 @@ object PowerDescriptionFormatter {
     debug = true
   }
 
+  def formatAttack(block: Block): StyledText = {
+    import vcc.dndi.common.FormattedText._
+    val builder = new TextBuilder
+    for (line <- block.lines) {
+      builder.append(TextBlock("P", "flavorIndent",
+        line.parts.map(_ match {
+          case Italic(t) => TextSegment.makeItalic(t)
+          case Normal(t) => TextSegment(t)
+        }): _*))
+    }
+    if (debug)
+      builder.append(TextBlock("P", "", TextSegment.makeBold("RAW"), TextSegment(block.toString)))
+    builder.getDocument()
+  }
+
+  @deprecated("To delete")
   def formatAttack(attack: Monster.Attack, action: String): StyledText = formatAttack(attack, action, None)
 
+  @deprecated("To delete")
   def formatAttack(attack: Monster.Attack, action: String, trigger: Option[String]): StyledText = {
     val builder = new TextBuilder
     try {

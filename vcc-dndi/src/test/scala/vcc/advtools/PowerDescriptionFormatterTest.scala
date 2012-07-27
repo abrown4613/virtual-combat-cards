@@ -61,6 +61,14 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
     PowerDescriptionFormatter.formatAttack(attack, "Minor") must_== block
   }
 
+  "format a Block text" in {
+    val block = buildBlock(
+      makeEntry(tagClass, "Attack: ", "Melee 3; +11 vs. AC"),
+      makeEntry(tagClass, "Hit: ", "1d8+4 slowed EOT"))
+    val r = FormattedTextParser.parseBlock("_Attack: _Melee 3; +11 vs. AC\n_Hit: _1d8+4 slowed EOT").get
+    PowerDescriptionFormatter.formatAttack(r) must_== block
+  }
+
   "format attack with hit but no damage" in {
     val attack = Attack(List(AttackBonus("Reflex", 9)), Some("Close Burst 10"), Some("One in burst"), None, Some("Shift target 3"))
 
