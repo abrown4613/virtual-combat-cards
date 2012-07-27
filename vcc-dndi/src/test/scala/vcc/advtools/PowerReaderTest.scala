@@ -19,26 +19,30 @@ package vcc.advtools
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.advtools.Monster._
 import xml.XML
-import vcc.dndi.reader.{AtWillUsage}
+import vcc.dndi.reader.AtWillUsage
 
 class PowerReaderTest extends SpecificationWithJUnit {
-
 
   "read simple power" in {
     readPower("power-simple.xml") must_==
       Power("Short Sword", "Standard", AtWillUsage(0), BasicAttack("Melee"), None, Set("Weapon"),
+        b("_Attack_: +13 vs. AC\n_Hit_: 1d6+8 damage"),
         Attack(List(AttackBonus("AC", 13)), Some("1d6+8"), Some("damage")))
   }
 
   "read trigger" in {
     readPower("power-trigger-noaction.xml") must_==
       Power("Random Eye Ray", "No Action", AtWillUsage(0), NormalAttack("Ranged"), Some("The trigger"), Set(),
+        b("_Trigger: _The trigger\n" +
+          "_Effect (No Action): _The beholder uses one random eye ray against the triggering enemy."),
         Attack(List(), None, None,
-          AttackResult(List(), None, None),
-          AttackResult(List(), None, None),
+            AttackResult(List(), None, None),
+            AttackResult(List(), None, None),
           AttackResult(List(), None, Some("The beholder uses one random eye ray against the triggering enemy."))
         ))
   }
+
+  private def b(text:String) =  FormattedTextParser.parseBlock(text).get
 
   def readPower(file: String): Power = {
     val xml = XML.load(this.getClass.getClassLoader.getResourceAsStream("vcc/advtools/" + file))

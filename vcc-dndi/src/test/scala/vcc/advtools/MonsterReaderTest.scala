@@ -105,16 +105,20 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedSpeeds = "4, Fly 7 (hover)"
     val expectedPowers = List(
       Power("Razor", "Standard", AtWillUsage(0), BasicAttack("Melee"), None, Set(),
+        b("_Attack_: +12 vs. AC\n_Hit_: 1d4 + 4 damage"),
         Attack(List(AttackBonus("AC", 12)), Some("1d4 + 4"), Some("damage"))),
       Power("Tail Sting", "Standard", AtWillUsage(0), BasicAttack("Melee"), None, Set("Poison"),
+        b("_Attack_: +12 vs. AC\n_Hit_: 1d8 + 4 damage, and the imp makes a secondary attack against the same target"),
         Attack(List(AttackBonus("AC", 12)), None, None,
           AttackResult(List(Attack(List(AttackBonus("Fortitude", 10)), None, Some("the target takes ongoing 5 poison damage and is slowed (save ends both)."))), Some("1d8 + 4"), Some("damage, and the imp makes a secondary attack against the same target")),
           AttackResult(List(), None, None),
           AttackResult(List(), None, None)
         )),
       Power("Vanish ", "Standard", AtWillUsage(0), NonAttack, None, Set("Illusion"),
+        b("_Effect: _The imp becomes invisible until the end of its next turn or until it attacks."),
         makeUtilityAttack("3d6 + 4", "The imp becomes invisible until the end of its next turn or until it attacks.")),
       Power("Quick Escape", "Immediate Reaction", EncounterUsage(0), NonAttack, Some("when first bloodied"), Set(),
+        b("_Trigger: _when first bloodied\n_Effect (Immediate Reaction): _The imp uses vanish as an immediate reaction."),
         makeUtilityAttack("3d6 + 4", "The imp uses vanish as an immediate reaction.")))
     val expectedTraits = List(CreatureTrait("Bleed the Helpless", "When the assassin imp attacks a sleeping or helpless target, its razor attack deals +2d6 damage and ongoing 5 damage (save ends)."))
   }
@@ -138,18 +142,25 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedSpeeds = "8, Climb 4"
     val expectedPowers = List(
       Power("Short Sword", "Standard", AtWillUsage(0), BasicAttack("Melee"), None, Set("Weapon"),
+        b("_Attack_: +13 vs. AC\n_Hit_: 1d6+8 damage"),
         Attack(List(AttackBonus("AC", 13)), Some("1d6+8"), Some("damage"))),
       Power("Deft Strick", "Standard", AtWillUsage(0), NormalAttack("Melee"), None, Set("Weapon"),
+        b("_Attack_: Dude moves up to 2 squares and makes a short sword attack; +15 vs. AC\n_Hit_: 1d6+10 damage"),
         Attack(List(AttackBonus("AC", 15)), Some("Dude moves up to 2 squares and makes a short sword attack"), None, Some("1d6+10"), Some("damage"))),
       Power("Imperiling Strike", "Standard", EncounterUsage(0), NormalAttack("Melee"), None, Set(),
+        b("_Attack_: +15 vs. Fortitude\n_Hit_: 1d6+10 damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn"),
         Attack(List(AttackBonus("Fortitude", 15)), Some("1d6+10"), Some("damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn"))),
       Power("Blood Drain", "Standard", RechargeConditionalUsage("when an adjacent creature becomes bloodied"), NormalAttack("Melee"), None, Set("Healing"),
+        b("_Attack_: +13 vs. Will\n_Hit_: 2d12+8 damage, the target is weakened (save ends), and Dude regains 46 hit points"),
         Attack(List(AttackBonus("Will", 13)), Some("2d12+8"), Some("damage, the target is weakened (save ends), and Dude regains 46 hit points"))),
       Power("Dominating Gaze", "Minor", RechargeDiceUsage(4), NormalAttack("Ranged"), None, Set("Charm"),
+        b("_Attack_: Ranged 5 (one creature); +13 vs. Will\n_Hit_: the target is dominated (save ends, with a -2 penalty on the saving throw)."),
         Attack(List(AttackBonus("Will", 13)), Some("Ranged 5"), Some("one creature"), None, Some("the target is dominated (save ends, with a -2 penalty on the saving throw)."))),
       Power("Mist Form", "Standard", EncounterUsage(0), NonAttack, None, Set("Polymorph"),
+        b("_Effect: _Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action."),
         makeUtilityAttack("4d6 + 5", "Dude becomes insubstantial and gains a fl y speed of 12, but cannot make attacks. Dude can remain in mist form for up to 1 hour or end the effect as a minor action.")),
       Power("Second Wind", "Standard", EncounterUsage(0), NonAttack, None, Set("Healing"),
+        b("_Effect: _Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn."),
         makeUtilityAttack("4d6 + 5", "Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.")))
     val expectedTraits = List(
       Aura("Sepulchral Stench", 3, "enemies in the aura take a -2 penalty to all defenses."),
@@ -172,8 +183,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val expectedSpeeds = "6"
     val expectedPowers = List(
       Power("Whip Ash", "Standard", AtWillUsage(1), BasicAttack("Melee"), None, Set(),
+        b("_Attack_: +9 vs. AC\n_Hit_: 1d10 + 7 damage."),
         Attack(List(AttackBonus("AC", 9)), Some("1d10 + 7"), Some("damage."))),
       Power("New Utility Power", "Minor", NoUsage, NonAttack, None, Set(),
+        b("_Effect: _Enter Power Effect Here"),
         makeUtilityAttack("1d10 + 7", "Enter Power Effect Here"))
     )
     val expectedTraits = List(
@@ -181,6 +194,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Aura("Aura of Pain", 1, "-2 to all Attackers"))
   }
 
+  private def b(text:String) =  FormattedTextParser.parseBlock(text).get
 }
 
 object MonsterReaderHelper {
