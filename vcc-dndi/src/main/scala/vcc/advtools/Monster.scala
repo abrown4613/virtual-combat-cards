@@ -18,6 +18,7 @@ package vcc.advtools
 
 import vcc.dndi.reader.Parser.IconType
 import vcc.dndi.reader.Usage
+import vcc.dndi.common.FormattedText.Block
 
 object Monster {
 
@@ -126,7 +127,7 @@ object Monster {
 
   case class Power(powerName: String,
                    action: String, usage: Usage, attackType: AttackType,
-                   trigger: Option[String], keywords: Set[String], attacks: Attack*)
+                   trigger: Option[String], keywords: Set[String], text: Block, attacks: Attack*)
 
   trait BaseCreatureTrait
 

@@ -20,6 +20,7 @@ import xml.{NodeSeq, Node}
 import vcc.advtools.Monster._
 import vcc.dndi.reader.{NoUsage, SomeUsage, Usage}
 import vcc.dndi.reader.Parser.{Key, Text, Part}
+import vcc.dndi.common.FormattedText._
 
 class PowerReader(power: Node) {
 
@@ -32,7 +33,31 @@ class PowerReader(power: Node) {
     val keywords = extractKeywords(power)
     val attacks = (power \ "Attacks" \ "MonsterAttack").map(extractAttack)
     val trigger = optionalValue(power \ "Trigger")
-    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), trigger, keywords, attacks: _*)
+    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), trigger, keywords, getDescription(attacks(0), action, trigger), attacks: _*)
+  }
+
+  private def getDescription(attack: Monster.Attack, action: String, trigger: Option[String]): Block = {
+
+    def formatAttackDetails(attack: Monster.Attack): String = {
+      val ms = (attack.range ++ attack.targets.map("(%s)".format(_))).mkString("", " ", "; ")
+      (if (ms == "; ") "" else ms) + formatBonus(attack.bonuses(0))
+    }
+
+    def formatBonus(bonus: AttackBonus): String = "%+d vs. %s".format(bonus.bonus, bonus.defense)
+
+    var ls: List[(String, String)] = Nil
+    if (trigger.isDefined)
+      ls = "Trigger: " -> trigger.get :: ls
+    if (!attack.bonuses.isEmpty) {
+      ls = "Attack" -> (": " + formatAttackDetails(attack)) :: ls
+      if (attack.hit.damage.isDefined || attack.hit.description.isDefined)
+        ls = "Hit" -> (": "+attack.hit.damage.map(_ + " ").getOrElse("") + attack.hit.description.getOrElse("damage.")) :: ls
+    } else {
+      val header = trigger.map(x => "Effect (" + action + "): ").getOrElse("Effect: ")
+      ls = header -> attack.effect.description.get :: ls
+    }
+    if (ls.isEmpty) null
+    else Block(ls.reverse.map(l => Line(0, Seq(Italic(l._1), Normal(l._2)))))
   }
 
   private def attackType(rangeType: String, isBasic: Boolean): AttackType = {
