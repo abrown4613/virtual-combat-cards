@@ -139,7 +139,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Power("Imperiling Strike", "Standard", EncounterUsage(0), NormalAttack("Melee"), Set(),
         b("_Attack_: +15 vs. Fortitude\n_Hit_: 1d6+10 damage, and the target takes a -3 penalty to AC and Reflex defenses until the end of Dude’s next turn")),
       Power("Blood Drain", "Standard", RechargeConditionalUsage("when an adjacent creature becomes bloodied"), NormalAttack("Melee"), Set("Healing"),
-        b("_Attack_: +13 vs. Will\n_Hit_: 2d12+8 damage, the target is weakened (save ends), and Dude regains 46 hit points")),
+        b("_Requirement_: Requires combat advantage\n_Attack_: +13 vs. Will\n" +
+          "_Hit_: 2d12+8 damage, the target is weakened (save ends), and Dude regains 46 hit points")),
       Power("Dominating Gaze", "Minor", RechargeDiceUsage(4), NormalAttack("Ranged"), Set("Charm"),
         b("_Attack_: Ranged 5 (one creature); +13 vs. Will\n_Hit_: the target is dominated (save ends, with a -2 penalty on the saving throw).")),
       Power("Mist Form", "Standard", EncounterUsage(0), NonAttack, Set("Polymorph"),

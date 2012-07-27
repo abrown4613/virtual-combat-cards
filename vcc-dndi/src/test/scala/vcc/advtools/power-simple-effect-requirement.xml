@@ -1,0 +1,108 @@
+<MonsterPower xsi:type="MonsterPower">
+  <Action>Standard</Action>
+  <Usage>Recharge</Usage>
+  <UsageDetails>6</UsageDetails>
+  <Requirements>The beholder must be bloodied</Requirements>
+  <Attacks>
+    <MonsterAttack>
+      <Name>Effect</Name>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="5,25">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="5,25">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="5,25">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Description>As eye rays above, except the beholder makes three eye ray attacks.</Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses />
+    </MonsterAttack>
+  </Attacks>
+  <Name>Eye Ray Frenzy</Name>
+  <Type>Ranged</Type>
+  <IsBasic>false</IsBasic>
+  <Keywords />
+  <Tier>0</Tier>
+</MonsterPower>
