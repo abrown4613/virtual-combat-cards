@@ -86,6 +86,26 @@ class PowerReaderTest extends SpecificationWithJUnit {
           "\t\t_Second Failed Saving Throw:_ The target falls asleep for 1 hour or until woken. Poison damage from this attack does not wake a sleeping creature\n"))
   }
 
+  "read power like beholder rays" in {
+    readPower("power-beholder.xml") must_==
+      Power("Eye Rays", "Standard", AtWillUsage(0), NormalAttack("Ranged"), Set(),
+        b("_Effect:_ The beholder uses two of the following eye rays, using each against a different target. This attack does not provoke opportunity attacks.\n" +
+          "_1. Charm Ray (charm):_ Ranged 10; +14 vs. Will; the target is dominated until the end of its next turn.\n" +
+          "_2. Wounding Ray (necrotic):_ Ranged 10; +14 vs. Fortitude; 2d10 + 6 necrotic damage.\n" +
+          "_3. Sleep Ray (charm):_ Ranged 10; +14 vs. Will; the target is immobilized (save ends).\n" +
+          "\t_First Failed Saving Throw:_ The target is knocked unconscious instead of immobilized (save ends).\n" +
+          "_4. Telekinesis Ray:_ Ranged 10; +14 vs. Fortitude; the beholder slides the target up to 4 squares.\n" +
+          "_5. Slowing Ray (necrotic):_ Ranged 10; +14 vs. Reflex; 3d6 + 5 necrotic damage, and the target is slowed (save ends).\n" +
+          "_6. Brilliant Ray (radiant):_ Ranged 10; +14 vs. Will; 1d6 + 5 radiant damage, and the target is blinded (save ends).\n" +
+          "_7. Terror Ray (fear, psychic):_ Ranged 10; +14 vs. Will; 2d8 + 5 psychic damage, and the beholder pushes the target its speed.\n" +
+          "_8. Petrifying Ray:_ Ranged 10; +14 vs. Fortitude; the target is petrified (save ends).\n" +
+          "\t_Aftereffect:_ The target is immobilized (save ends).\n" +
+          "_9. Death Ray (necrotic):_ Ranged 10; +14 vs. Fortitude; 2d8 + 10 necrotic damage. If the target is bloodied before or after the attack, it is also dazed (save ends).\n" +
+          "\t_First Failed Saving Throw:_ The target is dazed and weakened (save ends both).\n" +
+          "\t_Second Failed Saving Throw:_ The target dies.\n" +
+          "_10. Disintegrate Ray:_ Ranged 10; +14 vs. Fortitude; 1d8 + 5 damage, and ongoing 10 damage (save ends)."))
+  }
+
   private def b(text: String) = FormattedTextParser.parseBlock(text).get
 
   private def readPower(file: String): Power = {
