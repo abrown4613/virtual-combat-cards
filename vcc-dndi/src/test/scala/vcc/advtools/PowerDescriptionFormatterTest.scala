@@ -22,12 +22,23 @@ import vcc.infra.text._
 class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
 
   private val tagClass = "flavorIndent"
+  private val tagClass1 = "flavorIndent1"
+  private val tagClass2 = "flavorIndent2"
 
   "format a Block text" in {
     val block = buildBlock(
       makeEntry(tagClass, "Attack: ", "Melee 3; +11 vs. AC"),
       makeEntry(tagClass, "Hit: ", "1d8+4 slowed EOT"))
     val r = FormattedTextParser.parseBlock("_Attack: _Melee 3; +11 vs. AC\n_Hit: _1d8+4 slowed EOT").get
+    PowerDescriptionFormatter.formatAttack(r) must_== block
+  }
+
+  "format with several indent" in {
+    val block = buildBlock(
+      makeEntry(tagClass, "Attack: ", "Melee 3; +11 vs. AC"),
+      makeEntry(tagClass1, "Hit: ", "1d8+4 slowed EOT"),
+      makeEntry(tagClass2, "More: ", "More indent"))
+    val r = FormattedTextParser.parseBlock("_Attack: _Melee 3; +11 vs. AC\n\t_Hit: _1d8+4 slowed EOT\n\t\t_More: _More indent").get
     PowerDescriptionFormatter.formatAttack(r) must_== block
   }
 
