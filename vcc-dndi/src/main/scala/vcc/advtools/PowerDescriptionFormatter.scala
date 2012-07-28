@@ -17,7 +17,7 @@
 package vcc.advtools
 
 import vcc.infra.text.{TextSegment, TextBlock, TextBuilder, StyledText}
-import vcc.dndi.common.FormattedText.Block
+import vcc.dndi.common.FormattedText._
 
 object PowerDescriptionFormatter {
   private var debug = false
@@ -27,10 +27,9 @@ object PowerDescriptionFormatter {
   }
 
   def formatAttack(block: Block): StyledText = {
-    import vcc.dndi.common.FormattedText._
     val builder = new TextBuilder
     for (line <- block.lines) {
-      builder.append(TextBlock("P", "flavorIndent",
+      builder.append(TextBlock("P", getIndentClass(line.indent),
         line.parts.map(_ match {
           case Italic(t) => TextSegment.makeItalic(t)
           case Normal(t) => TextSegment(t)
@@ -39,5 +38,13 @@ object PowerDescriptionFormatter {
     if (debug)
       builder.append(TextBlock("P", "", TextSegment.makeBold("RAW"), TextSegment(block.toString)))
     builder.getDocument()
+  }
+
+  private def getIndentClass(indent: Int): String = {
+    indent match {
+      case 0 => "flavorIndent"
+      case 1 => "flavorIndent1"
+      case _ => "flavorIndent2"
+    }
   }
 }
