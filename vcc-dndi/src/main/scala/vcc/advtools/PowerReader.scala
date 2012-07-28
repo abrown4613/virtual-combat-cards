@@ -70,7 +70,7 @@ class PowerReader(power: Node) {
     def nodeIfPresent(optNode: Option[Node], fmt: Node => (String, String)): Option[(String, String)] =
       optNode.map(node => fmt(node))
 
-    def extractFailedSavingThrows(attackXml: Node): List[AttackResult] = {
+    def extractFailedSavingThrows(baseNode: Node): List[AttackResult] = {
       def extractSaveResult(t: (String, Node)): AttackResult = {
         AttackResult(Nil,
           Some(t._1),
@@ -79,10 +79,18 @@ class PowerReader(power: Node) {
         )
       }
       List("First Failed Saving Throw", "Second Failed Saving Throw", "Third Failed Saving Throw").
-        zip(attackXml \ "Hit" \ "FailedSavingThrows" \ "MonsterAttackEntry").map(extractSaveResult)
+        zip(baseNode \ "FailedSavingThrows" \ "MonsterAttackEntry").map(extractSaveResult)
     }
 
-
+    def formatBeholderEffect(indent: Int, attack: Attack): List[(String, String)] = {
+      var ls: List[(String, String)] = Nil
+      val header = optionalValue(attack.xml \ "Name").getOrElse("Effect")
+      ls = ls ++ formatFixed(header, attack.effect.description.get) ++
+        extractFailedSavingThrows(attack.xml \ "Effect" head).flatMap(formatResult(_, indent + 1)) ++
+        nodeIfPresent((attack.xml \ "Effect" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
+          n => formatResult(extractResult(n), indent + 1).get)
+      ls
+    }
 
     def formatAttack(indent: Int, attack: Attack): List[(String, String)] = {
       var ls: List[(String, String)] = Nil
@@ -93,7 +101,7 @@ class PowerReader(power: Node) {
           formatResult(attack.miss, indent) ++
           nodeIfPresent((attack.xml \ "Hit" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
             n => formatResult(extractResult(n), indent + 1).get) ++
-          extractFailedSavingThrows(attack.xml).flatMap(formatResult(_, indent+1))
+          extractFailedSavingThrows(attack.xml \ "Hit" head).flatMap(formatResult(_, indent + 1))
       } else {
         val header = trigger.map(x => "Effect (" + action + ")").getOrElse("Effect")
         ls = ls ++ formatFixed(header, attack.effect.description.get)
@@ -106,7 +114,8 @@ class PowerReader(power: Node) {
     ls = formatOptional(0, "Trigger", trigger).toList ++
       formatOptional(0, "Requirement", requirement).toList
 
-    ls = ls ++ formatAttack(0, attack)
+    ls = ls ++ formatAttack(0, attack) ++
+      attack.effect.attacks.flatMap(a => formatBeholderEffect(0, a))
 
     if (ls.isEmpty) null
     else Block(ls.map(l => {
