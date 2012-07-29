@@ -42,7 +42,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       def makeIcon(icon: IconType.Value) = <img src={IconType.iconToImage(icon)}/>
       key match {
         case "iconset-short" =>
-          power.attackType.asIcon().map(makeIcon)
+          power.attackType.asIcons().map(makeIcon)
         case "usage" =>
           UsageFormatter.format(power.usage)
         case "description" =>

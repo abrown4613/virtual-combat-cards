@@ -18,6 +18,8 @@ package vcc.advtools
 
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.infra.text._
+import vcc.dndi.reader.Parser.IconType
+import vcc.advtools.Monster.{BasicAttack, NormalAttack}
 
 class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
 
@@ -40,6 +42,29 @@ class PowerDescriptionFormatterTest extends SpecificationWithJUnit {
       makeEntry(tagClass2, "More: ", "More indent"))
     val r = FormattedTextParser.parseBlock("_Attack: _Melee 3; +11 vs. AC\n\t_Hit: _1d8+4 slowed EOT\n\t\t_More: _More indent").get
     PowerDescriptionFormatter.formatAttack(r) must_== block
+  }
+
+  "extract icon correctly" in {
+    import IconType._
+    val expected = Map[String, IconType.Value](
+      "Melee" -> Melee,
+      "Ranged" -> Range,
+      "Close blast" -> Close,
+      "Close bUrst" -> Close,
+      "area burst" -> Area,
+      "area" -> Area)
+
+    for ((text, icon) <- expected) yield {
+      NormalAttack(text).asIcons() must_== Seq(icon)
+      BasicAttack(text).asIcons() must_== Seq(iconAsBasic(icon))
+    }
+    iconAsBasic(Melee) must_== MeleeBasic
+    iconAsBasic(Range) must_== RangeBasic
+    iconAsBasic(Close) must_== CloseBasic
+    iconAsBasic(Area) must_== AreaBasic
+
+    NormalAttack("melee\narea").asIcons() must_== Seq(Melee, Area)
+    BasicAttack("close BlAst\nRaNGed").asIcons() must_== Seq(CloseBasic, RangeBasic)
   }
 
   private def makeEntry(clazz: String, header: String, body: String) = TextBlock("P", clazz,

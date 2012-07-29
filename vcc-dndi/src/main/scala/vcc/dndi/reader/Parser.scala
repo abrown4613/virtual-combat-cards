@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
 import scala.util.matching.Regex
@@ -24,7 +23,7 @@ import vcc.dndi.reader.Parser.BlockElement
 
 class UntranslatableException(node: Node, e: Throwable) extends Exception("Cant translate node: " + node, e)
 
-class UnexpectedBlockElementException(msg: String, block: BlockElement) extends Exception(msg + " unexpected block: "+block)
+class UnexpectedBlockElementException(msg: String, block: BlockElement) extends Exception(msg + " unexpected block: " + block)
 
 /**
  * Converts XML nodes form DNDInsiderCapture into a series os Parts.
@@ -73,8 +72,7 @@ object Parser {
       "z4.gif" -> Area,
       "z4a.gif" -> Area,
       "bullet.gif" -> Bullet,
-      "aura.png" -> Aura
-      )
+      "aura.png" -> Aura)
 
     val iconToImage = Map(
       Separator -> "x.gif",
@@ -88,10 +86,9 @@ object Parser {
       Area -> "z4a.gif",
       Bullet -> "bullet.gif",
       Aura -> "aura.png",
-      Unknown -> "x.gif"
-      )
+      Unknown -> "x.gif")
 
-    val diceImage:Map[Int,String] = (1 to 6).map(d => (d -> d.formatted("%da.gif"))).toMap
+    val diceImage: Map[Int, String] = (1 to 6).map(d => (d -> d.formatted("%da.gif"))).toMap
 
     /**
      * Extractor to templateVariable a Icon out of a img with the proper image name.
@@ -99,7 +96,7 @@ object Parser {
      */
     def unapply(node: scala.xml.Node): Option[Value] = {
       if (node.label == "IMG" && !(node \ "@src").isEmpty) {
-        val url = (node \ "@src").head.toString
+        val url = (node \ "@src").head.toString()
         val img = url.substring(url.lastIndexOf("/") + 1)
         if (imageDirectory.contains(img.toLowerCase))
           Some(imageDirectory(img.toLowerCase))
@@ -108,15 +105,22 @@ object Parser {
       } else
         None
     }
+
+    def iconAsBasic(icon: IconType.Value):IconType.Value = icon match {
+      case Area => AreaBasic
+      case Close => CloseBasic
+      case Range => RangeBasic
+      case Melee => MeleeBasic
+    }
   }
 
   /**
-   * Extrator to replace the Dice images for text.
+   * Extractor to replace the Dice images for text.
    */
   object RechargeDice {
     def unapply(node: scala.xml.Node): Option[Text] = {
       if (node.label == "IMG") {
-        val url = (node \ "@src").head.toString
+        val url = (node \ "@src").head.toString()
         val img = url.substring(url.lastIndexOf("/") + 1)
         img match {
           case "1a.gif" => Some(Text("1"))
@@ -149,7 +153,7 @@ object Parser {
     /**
      * Applies transformation function to the text of the object. And returns a new object with the transformed text.
      * Default implementation does nothing.
-     * @para tf Transformation Function
+     * @param tf Transformation Function
      * @return A new part with the transformed function 
      */
     def transform(tf: String => String): Part = this
@@ -223,16 +227,16 @@ object Parser {
 
   case class NestedBlocks(name: String, blocks: List[BlockElement]) extends BlockElement
 
-  case class Cell(clazz:String, content:List[Part])
+  case class Cell(clazz: String, content: List[Part])
 
-  case class Table(clazz:String, cells:List[Cell]) extends BlockElement
+  case class Table(clazz: String, cells: List[Cell]) extends BlockElement
 
-  object TrimProcess extends Function1[String,String] {
+  object TrimProcess extends Function1[String, String] {
     def apply(str: String): String = str match {
       case reFlexiInt(sign, value) => if ("-" == sign) sign + value else value
       case reColonTrim(text) => text
       case nomatch => nomatch
-    } 
+    }
   }
 
   /**
@@ -318,7 +322,6 @@ object Parser {
    * Parse to text will remove links and return a text string
    */
   def parseToText(nodes: NodeSeq): String = {
-    val s = new StringBuffer("")
     val ss = nodes.map(
       _ match {
         case IconType(icon) =>  "["+icon.toString+"]"
@@ -327,7 +330,7 @@ object Parser {
         case <A>{parts @ _*}</A> => parseToText(parts)
         case <BR/> => "\n"
         case node => node.text
-       }
+      }
     )
     ss.mkString("")
   }
@@ -353,19 +356,18 @@ object Parser {
     }
   }
 
-
   private def flattenSpans(xml: scala.xml.NodeSeq): List[(String, String)] = {
     var l: List[(String, String)] = Nil
 
     l = (for (span <- xml \\ "SPAN") yield {
-      ((span \ "@class").head.toString, span.head.child(0).toString.trim)
+      ((span \ "@class").head.toString(), span.head.child(0).toString().trim)
     }).toList
-    ("name", (xml \ "#PCDATA").toString.trim) :: l
+    ("name", (xml \ "#PCDATA").toString().trim) :: l
   }
 
   private val blockElements = Set("BLOCKQUOTE", "P", "H2", "SPAN", "TD")
 
-  private def elementClassAttr(node: Node) = node.label + "#" + elementClass (node, "")
+  private def elementClassAttr(node: Node) = node.label + "#" + elementClass(node, "")
 
   private def elementClass(node: Node, default: String) = (if ((node \ "@class").isEmpty) default else (node \ "@class")(0).text)
 
@@ -431,14 +433,13 @@ object Parser {
     }
   }
 
-  def parseBlockElements (nodes: NodeSeq, strict: Boolean): List[BlockElement] = {
+  def parseBlockElements(nodes: NodeSeq, strict: Boolean): List[BlockElement] = {
     nodes.map(node => try {
       parseBlockElement(node, strict)
     } catch {
-      case e =>
+      case e: Throwable =>
         if (strict) throw e
         else null
-    }).filter(x => x != null).toList
+    }).filter(_ != null).toList
   }
 }
-
