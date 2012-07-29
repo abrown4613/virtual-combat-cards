@@ -19,7 +19,7 @@ package vcc.advtools
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.advtools.Monster._
 import xml.XML
-import vcc.dndi.reader.{RechargeDiceUsage, AtWillUsage}
+import vcc.dndi.reader.{EncounterUsage, RechargeDiceUsage, AtWillUsage}
 
 class PowerReaderTest extends SpecificationWithJUnit {
 
@@ -104,6 +104,33 @@ class PowerReaderTest extends SpecificationWithJUnit {
           "\t_First Failed Saving Throw:_ The target is dazed and weakened (save ends both).\n" +
           "\t_Second Failed Saving Throw:_ The target dies.\n" +
           "_10. Disintegrate Ray:_ Ranged 10; +14 vs. Fortitude; 1d8 + 5 damage, and ongoing 10 damage (save ends)."))
+  }
+
+  "read power with attack in effect" in {
+    readPower("power-with-attack-in-effect.xml") must_==
+      Power("Rising Burst", "Standard", AtWillUsage(0), NormalAttack("Close Burst"), Set(),
+        b(
+          "_Requirement:_ The beast must be underground.\n" +
+            "_Effect:_ The beast moves up and does this attack.\n" +
+            "\t_Attack:_ Close Burst 2 (creatures in the burst); +14 vs. AC\n" +
+            "\t_Hit:_ 2d8 + 5 damage.\n" +
+            "\t_Miss:_ Half damage.\n"))
+  }
+
+  "read power with two attacks" in {
+    readPower("power-with-2-attacks.xml") must_==
+      Power("Bloody blast", "Free Action", EncounterUsage(0), NormalAttack("Close Burst"), Set("Polymorph", "Fire", "Cold"),
+        b("_Trigger:_ The beast is first bloodied.\n" +
+          "_Effect (Free Action):_ The beast becomes a 6-square-high pillar of fire.\n" +
+          "_Attack (Free Action):_ Close Burst 2 (enemies in the burst); +22 vs. Reflex\n" +
+          "_Hit:_ 2d8 + 18  cold and fire damage.\n"))
+  }
+  "read power with two attacks" in {
+    readPower("power-with-sustain.xml") must_==
+      Power("Persistent Image", "Minor", AtWillUsage(0), NormalAttack("Triggered"), Set("Illusion"),
+        b("_Effect:_ The beast creates an illusion.\n" +
+          "\t_Sustain Minor:_ The illusion persists until the end of the beast’s next turn." +
+          ""))
   }
 
   private def b(text: String) = FormattedTextParser.parseBlock(text).get
