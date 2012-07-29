@@ -57,48 +57,34 @@ object Monster {
   }
 
   sealed trait AttackType {
-
-    def toIcon(name: String): Option[IconType.Value] = IconType.values.find(p => p.toString.toLowerCase == name.toLowerCase)
-
-    def asIcon(): Seq[IconType.Value]
+    def asIcons(): Seq[IconType.Value]
   }
 
-  object BasicAttack {
-    private val iconMapping = Map[String, IconType.Value](
-      "melee" -> IconType.MeleeBasic,
-      "area burst" -> IconType.AreaBasic,
-      "close blast" -> IconType.CloseBasic,
-      "close burst" -> IconType.CloseBasic,
-      "ranged" -> IconType.RangeBasic,
-      "area burst" -> IconType.AreaBasic
-    )
-  }
-  case class BasicAttack(attackType: String) extends AttackType {
-    def asIcon(): Seq[IconType.Value] = {
-      attackType.split("\n").flatMap(n => BasicAttack.iconMapping.get(n.toLowerCase))
-    }
-  }
-
-  object NormalAttack {
+  object AttackType {
     private val iconMapping = Map[String, IconType.Value](
       "melee" -> IconType.Melee,
-      "area burst" -> IconType.Melee,
       "close blast" -> IconType.Close,
       "close burst" -> IconType.Close,
       "ranged" -> IconType.Range,
-      "area burst" -> IconType.Area
-    )
+      "area burst" -> IconType.Area,
+      "area" -> IconType.Area)
+
+    def asNormalIcons(attackType: String): Seq[IconType.Value] =
+      attackType.split("\n").flatMap(n => iconMapping.get(n.toLowerCase))
+
+    def asBasicIcons(attackType: String) = asNormalIcons(attackType).map(IconType.iconAsBasic)
+  }
+
+  case class BasicAttack(attackType: String) extends AttackType {
+    def asIcons(): Seq[IconType.Value] = AttackType.asBasicIcons(attackType)
   }
 
   case class NormalAttack(attackType: String) extends AttackType {
-
-    def asIcon(): Seq[IconType.Value] = {
-      attackType.split("\n").flatMap(n => NormalAttack.iconMapping.get(n.toLowerCase))
-    }
+    def asIcons(): Seq[IconType.Value] = AttackType.asNormalIcons(attackType)
   }
 
   case object NonAttack extends AttackType {
-    def asIcon(): Seq[IconType.Value] = Nil
+    def asIcons(): Seq[IconType.Value] = Nil
   }
 
   case class Power(powerName: String,
