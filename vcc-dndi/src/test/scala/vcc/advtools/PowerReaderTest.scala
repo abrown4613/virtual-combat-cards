@@ -129,10 +129,21 @@ class PowerReaderTest extends SpecificationWithJUnit {
     readPower("power-with-sustain.xml") must_==
       Power("Persistent Image", "Minor", AtWillUsage(0), NormalAttack("Triggered"), Set("Illusion"),
         b("_Effect:_ The beast creates an illusion.\n" +
-          "\t_Sustain Minor:_ The illusion persists until the end of the beast’s next turn." +
-          ""))
+          "\t_Sustain Minor:_ The illusion persists until the end of the beast’s next turn."))
   }
 
+  "read power with multiple line in description and failed save in effect" in {
+    readPower("power-like-medusa.xml") must_==
+      Power("Petrifying Stare", "Opportunity Action", AtWillUsage(0), NormalAttack("Triggered"), Set(),
+        b("_Trigger:_ An enemy starts its turn within 2 squares of the medusa.\n" +
+          "_Effect (Opportunity Action):_ Close blast 2 (the triggering enemy in the blast). The target is slowed (save ends).\n" +
+          "\t_First Failed Saving Throw:_ The target is immobilized instead of slowed (save ends).\n" +
+          "\t_Second Failed Saving Throw:_ The target is petrified until one of the following conditions is satisfied.\n" +
+          "\t\t♦ Do some praying.\n" +
+          "\t\t♦ Eat the beast heart.\n" +
+          "\t\t♦ Get a kiss of the beast.\n" +
+          ""))
+  }
   private def b(text: String) = FormattedTextParser.parseBlock(text).get
 
   private def readPower(file: String): Power = {
