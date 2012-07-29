@@ -214,11 +214,8 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "minor action" =>
           powerToTemplate("Minor")
         case "triggered action" =>
-          powerToTemplate("Immediate Reaction", "No Action", "Free Action")
-
+          powerToTemplate("Immediate Reaction", "No Action", "Free Action", "Immediate Interrupt", "Opportunity Action")
         case action =>
-          println("Action: " + action)
-          println("  *vs: " + powers.map(_.action).mkString(", "))
           Nil
       }
     }
