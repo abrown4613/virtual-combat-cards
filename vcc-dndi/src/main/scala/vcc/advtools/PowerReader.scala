@@ -28,11 +28,13 @@ class PowerReader(power: Node) {
                             hit: AttackResult, miss: AttackResult, effect: AttackResult)
 
   private case class AttackResult(attacks: List[Attack], name: Option[String], damage: Option[String], description: Option[String]) {
-    def formatted(indent: Int): Option[(String, String)] =
-      if (damage.isDefined || description.isDefined)
-        Some(makeIndent(indent, name.get) -> (" " + formatOption(damage, "%s ") + description.getOrElse("damage.")))
-      else
-        None
+    def formatted(indent: Int): List[(String, String)] =
+      if (damage.isDefined || description.isDefined) {
+        val lines = description.getOrElse("damage.").split("\n")
+        List(makeIndent(indent, name.get) -> (" " + formatOption(damage, "%s ") + lines.head)) ++
+          lines.tail.map("\t" * (indent + 1) -> _)
+      } else
+        Nil
   }
 
   private case class AttackBonus(defense: String, bonus: Int) {
@@ -85,7 +87,7 @@ class PowerReader(power: Node) {
           formatFixed(indent, header, attack.effect.description.get) ++
           extractFailedSavingThrows(attack.xml \ "Effect" head).flatMap(_.formatted(indent + 1)) ++
           nodeIfPresent((attack.xml \ "Effect" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
-            n => extractResult(n).formatted(indent + 1).get)
+            n => extractResult(n).formatted(indent + 1).head)
       } else {
         formatAttack(indent + 1, attack)
       }
@@ -99,14 +101,17 @@ class PowerReader(power: Node) {
             attack.hit.formatted(indent) ++
             attack.miss.formatted(indent) ++
             nodeIfPresent((attack.xml \ "Hit" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
-              n => extractResult(n).formatted(indent + 1).get) ++
+              n => extractResult(n).formatted(indent + 1).head) ++
             extractFailedSavingThrows(attack.xml \ "Hit" head).flatMap(_.formatted(indent + 1))
         } else {
-          formatFixed(indent, "Effect" + triggerAction, attack.effect.description.get)
+          formatFixed(indent, "Effect" + triggerAction, attack.effect.description.get) ++
+            extractFailedSavingThrows(attack.xml \ "Effect" head).flatMap(_.formatted(indent + 1)) ++
+            nodeIfPresent((attack.xml \ "Effect" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
+              n => extractResult(n).formatted(indent + 1).head)
         }) ++
         attack.hit.attacks.flatMap(a => formatAttack(indent + 1, a)) ++
         nodeIfPresent(attack.xml \ "Effect" \ "Sustains" \ "MonsterSustainEffect" headOption,
-          node => extractResult(node, "Sustain " + (node \ "Action" text)).formatted(indent + 1).get)
+          node => extractResult(node, "Sustain " + (node \ "Action" text)).formatted(indent + 1).head)
     }
 
     val ls: List[(String, String)] =
@@ -118,10 +123,15 @@ class PowerReader(power: Node) {
               attack.effect.attacks.flatMap(a => formatEffectAttacks(0, a))
         }
 
-    Block(ls.map(l => {
-      val indent = l._1.toSeq.takeWhile(_ == '\t').length
-      Line(indent, Seq(Italic(l._1.substring(indent)), Normal(l._2)))
-    }))
+    Block(
+      for ((header, text) <- ls) yield {
+        val indent = header.toSeq.takeWhile(_ == '\t').length
+        val headerText = header.substring(indent)
+        if (headerText == "")
+          Line(indent, Seq(Normal(text)))
+        else
+          Line(indent, Seq(Italic(headerText), Normal(text)))
+      })
   }
 
   private def attackType(rangeType: String, isBasic: Boolean): AttackType =
