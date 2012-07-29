@@ -48,14 +48,19 @@ class PowerReader(power: Node) {
     val keywords = extractKeywords(power)
     val attacks = (power \ "Attacks" \ "MonsterAttack").map(extractAttack)
     val trigger = optionalValue(power \ "Trigger")
-    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords, getDescription(attacks(0), action, trigger))
+    Power(powerName, action, usage, attackType(rangeType, isBasicAttack), keywords,
+      getDescription(attacks, action, trigger))
   }
 
-  private def getDescription(attack: Attack, action: String, trigger: Option[String]): Block = {
+  private def getDescription(attacks: Seq[Attack], action: String, trigger: Option[String]): Block = {
+
+    val triggerAction = if (trigger.isDefined) " (%s)".format(action) else ""
 
     def formatAttackDetails(attack: Attack): String = {
       val description = optionalValue(attack.xml \ "Description")
-      val ms = emptyOrStringAsOption((optionalValue(attack.xml \ "Range") ++ optionalValue(attack.xml \ "Targets").map("(%s)".format(_))).mkString(" "))
+      val ms = emptyOrStringAsOption(
+        (optionalValue(attack.xml \ "Range") ++ optionalValue(attack.xml \ "Targets").map("(%s)".format(_))).
+          mkString(" "))
       formatOption(ms, "%s; ") + attack.bonuses(0).formatted + description.getOrElse("")
     }
 
@@ -63,51 +68,55 @@ class PowerReader(power: Node) {
       opt.map(value => makeIndent(indent, key) -> (" " + value))
     }
 
-    def formatFixed(key: String, value: String) = Some((key + ":") -> (" " + value))
+    def formatFixed(indent: Int, key: String, value: String) = Some(makeIndent(indent, key) -> (" " + value))
 
     def nodeIfPresent(optNode: Option[Node], fmt: Node => (String, String)) = optNode.map(node => fmt(node))
 
     def extractFailedSavingThrows(baseNode: Node): List[AttackResult] = {
-      def extractSaveResult(name: String, node: Node): AttackResult = {
-        AttackResult(Nil, Some(name),
-          emptyOrStringAsOption(node \ "Damage" \ "Expression" text),
-          emptyOrStringAsOption(node \ "Description" text)
-        )
-      }
       List("First Failed Saving Throw", "Second Failed Saving Throw", "Third Failed Saving Throw").
-        zip(baseNode \ "FailedSavingThrows" \ "MonsterAttackEntry").map(p => extractSaveResult(p._1, p._2))
+        zip(baseNode \ "FailedSavingThrows" \ "MonsterAttackEntry").
+        map(p => extractResult(p._2, p._1))
     }
 
-    def formatBeholderEffect(indent: Int, attack: Attack): List[(String, String)] = {
+    def formatEffectAttacks(indent: Int, attack: Attack): List[(String, String)] = {
       val header = optionalValue(attack.xml \ "Name").getOrElse("Effect")
-      Nil ++
-        formatFixed(header, attack.effect.description.get) ++
-        extractFailedSavingThrows(attack.xml \ "Effect" head).flatMap(_.formatted(indent + 1)) ++
-        nodeIfPresent((attack.xml \ "Effect" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
-          n => extractResult(n).formatted(indent + 1).get)
+      if (attack.effect.description.isDefined) {
+        Nil ++
+          formatFixed(indent, header, attack.effect.description.get) ++
+          extractFailedSavingThrows(attack.xml \ "Effect" head).flatMap(_.formatted(indent + 1)) ++
+          nodeIfPresent((attack.xml \ "Effect" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
+            n => extractResult(n).formatted(indent + 1).get)
+      } else {
+        formatAttack(indent + 1, attack)
+      }
     }
 
     def formatAttack(indent: Int, attack: Attack): List[(String, String)] = {
       Nil ++ (
         if (!attack.bonuses.isEmpty) {
-          formatFixed(if (indent > 0) "\tSecondary Attack" else "Attack", formatAttackDetails(attack)) ++
+          formatFixed(indent, formatOption(optionalValue(attack.xml \ "Name"), "%s", "Attack") + triggerAction,
+            formatAttackDetails(attack)) ++
             attack.hit.formatted(indent) ++
             attack.miss.formatted(indent) ++
             nodeIfPresent((attack.xml \ "Hit" \ "Aftereffects" \ "MonsterAttackEntry").headOption,
               n => extractResult(n).formatted(indent + 1).get) ++
             extractFailedSavingThrows(attack.xml \ "Hit" head).flatMap(_.formatted(indent + 1))
         } else {
-          val header = formatOption(trigger, "Effect (%s)".format(action), "Effect")
-          formatFixed(header, attack.effect.description.get)
+          formatFixed(indent, "Effect" + triggerAction, attack.effect.description.get)
         }) ++
-        attack.hit.attacks.flatMap(a => formatAttack(indent + 1, a))
+        attack.hit.attacks.flatMap(a => formatAttack(indent + 1, a)) ++
+        nodeIfPresent(attack.xml \ "Effect" \ "Sustains" \ "MonsterSustainEffect" headOption,
+          node => extractResult(node, "Sustain " + (node \ "Action" text)).formatted(indent + 1).get)
     }
 
     val ls: List[(String, String)] =
       formatOptional(0, "Trigger", trigger).toList ++
         formatOptional(0, "Requirement", optionalValue(power \ "Requirements")).toList ++
-        formatAttack(0, attack) ++
-        attack.effect.attacks.flatMap(a => formatBeholderEffect(0, a))
+        attacks.flatMap {
+          attack =>
+            formatAttack(0, attack) ++
+              attack.effect.attacks.flatMap(a => formatEffectAttacks(0, a))
+        }
 
     Block(ls.map(l => {
       val indent = l._1.toSeq.takeWhile(_ == '\t').length
@@ -131,16 +140,18 @@ class PowerReader(power: Node) {
         x \ "Defense" \ "ReferencedObject" \ "DefenseName" text,
         (x \ "@FinalValue").text.toInt)).toList
 
-  private def extractResult(node: Node): AttackResult = {
+  private def extractResult(node: Node): AttackResult = extractResult(node, emptyOrStringAsOption(node \ "Name" text))
+
+  private def extractResult(node: Node, name: String): AttackResult = extractResult(node, Some(name))
+
+  private def extractResult(node: Node, nameOption: Option[String]): AttackResult =
     AttackResult(
       (node \ "Attacks" \ "MonsterAttack").map(extractAttack).toList,
-      emptyOrStringAsOption(node \ "Name" text),
+      nameOption,
       emptyOrStringAsOption(node \ "Damage" \ "Expression" text),
-      emptyOrStringAsOption(node \ "Description" text)
-    )
-  }
+      emptyOrStringAsOption(node \ "Description" text))
 
-  private def formatOption(option:Option[String], fmt:String, default:String = "") =
+  private def formatOption(option: Option[String], fmt: String, default: String = "") =
     option.map(fmt.format(_)).getOrElse(default)
 
   private def optionalValue(ns: NodeSeq): Option[String] = if (ns.isEmpty) None else emptyOrStringAsOption(ns(0).text)

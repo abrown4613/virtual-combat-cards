@@ -26,9 +26,7 @@ import vcc.dndi.reader.UsageFormatter
 class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
 
   class PowerMapper(power: Monster.Power) extends TemplateDataSource {
-    /**
-     * String value for a given key.
-     */
+
     def templateVariable(key: String): Option[String] = {
       key match {
         case "name" => Some(power.powerName)
@@ -38,14 +36,8 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       }
     }
 
-    /**
-     * Return a data source for a nested TemplateDataSource.
-     */
     def templateGroup(key: String): List[TemplateDataSource] = Nil
 
-    /**
-     * Return a XML NodeSeq for a give name.
-     */
     def templateInlineXML(key: String): NodeSeq = {
       def makeIcon(icon: IconType.Value) = <img src={IconType.iconToImage(icon)}/>
       key match {
@@ -184,9 +176,6 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
       "text:comment" -> null
     )
 
-    /**
-     * String value for a given key.
-     */
     def templateVariable(key: String): Option[String] = {
       if (baseMap.isDefinedAt(key))
         Option(baseMap.get(key).get)
@@ -194,15 +183,12 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         None
     }
 
-    /**
-     * Return a data source for a nested TemplateDataSource.
-     */
     def templateGroup(key: String): List[TemplateDataSource] = {
 
-      def powerToTemplate(filterAction: String*) = {
+      def powerToTemplate(filterAction: String*) =
         powers.filter(p => filterAction.contains(p.action)).map(power =>
           new PowerMapper(power))
-      }
+
       key match {
         case "trait" =>
           monsterReader.getCreatureTraits.map(t => t match {
@@ -215,14 +201,13 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
           powerToTemplate("Minor")
         case "triggered action" =>
           powerToTemplate("Immediate Reaction", "No Action", "Free Action", "Immediate Interrupt", "Opportunity Action")
+        case "move action" =>
+          powerToTemplate("Move")
         case action =>
           Nil
       }
     }
 
-    /**
-     * Return a XML NodeSeq for a give name.
-     */
     def templateInlineXML(key: String): NodeSeq = Seq()
   }
 
