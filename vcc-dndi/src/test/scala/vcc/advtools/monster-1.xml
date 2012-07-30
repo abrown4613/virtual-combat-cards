@@ -1045,7 +1045,13 @@
       <Name>Sepulchral Stench</Name>
       <Type>Trait</Type>
       <IsBasic>false</IsBasic>
-      <Keywords />
+      <Keywords>
+        <ObjectReference>
+          <ReferencedObject>
+            <Name>Necrotic</Name>
+          </ReferencedObject>
+        </ObjectReference>
+      </Keywords>
       <Tier>0</Tier>
     </MonsterTrait>
     <MonsterTrait xsi:type="MonsterTrait">
@@ -1061,7 +1067,21 @@
       <Name>Combat Advantage</Name>
       <Type>Trait</Type>
       <IsBasic>false</IsBasic>
-      <Keywords />
+      <Keywords>
+        <ObjectReference>
+          <id xsi:type="string">609</id>
+          <ReferencedObject>
+            <ID xsi:type="string">609</ID>
+            <Name>Poison</Name>
+            <Description>Toxins that reduce a creature's hit points.</Description>
+          </ReferencedObject>
+        </ObjectReference>
+        <ObjectReference>
+          <ReferencedObject>
+            <Name>Other</Name>
+          </ReferencedObject>
+        </ObjectReference>
+      </Keywords>
       <Tier>0</Tier>
     </MonsterTrait>
     <MonsterPower xsi:type="MonsterPower">

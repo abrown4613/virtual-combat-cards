@@ -93,8 +93,8 @@ object Monster {
 
   trait BaseCreatureTrait
 
-  case class Aura(name: String, radius: Int, details: String) extends BaseCreatureTrait
+  case class Aura(name: String, radius: Int, keywords: Option[String], details: String) extends BaseCreatureTrait
 
-  case class CreatureTrait(name: String, details: String) extends BaseCreatureTrait
+  case class CreatureTrait(name: String, keywords: Option[String], details: String) extends BaseCreatureTrait
 
 }

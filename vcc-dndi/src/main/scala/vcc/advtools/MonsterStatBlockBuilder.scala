@@ -58,7 +58,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     def templateVariable(key: String): Option[String] = {
       key match {
         case "name" => Some(aura.name)
-        case "keyword" => None
+        case "keyword" => aura.keywords.map("(%s)".format(_))
         case _ => None
       }
     }
@@ -82,10 +82,9 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
 
     def templateVariable(key: String): Option[String] = {
       key match {
-        case "name" =>
-          Some(aTrait.name)
-        case _ =>
-          None
+        case "name" => Some(aTrait.name)
+        case "keyword" => aTrait.keywords.map("(%s)".format(_))
+        case _ => None
       }
     }
 
