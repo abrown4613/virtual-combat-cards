@@ -22,9 +22,9 @@ import vcc.advtools.Monster._
 import util.matching.Regex
 import java.util
 
-class MonsterReader(inputStream: InputStream) {
+class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
 
-  val xml = XML.load(inputStream)
+  private val xml = XML.load(inputStream)
 
   def getContentDigest: String = {
     util.UUID.nameUUIDFromBytes(xml.toString().getBytes("UTF-8")).toString
@@ -163,13 +163,6 @@ class MonsterReader(inputStream: InputStream) {
     emptyOrStringAsOption(name)
   }
 
-  private def emptyOrStringAsOption(name: String): Option[String] = {
-    if (name == "")
-      None
-    else
-      Some(name)
-  }
-
   private def getKeyword: Option[String] = {
     val names = (xml \ "Keywords" \\ "Name").map(_.text)
     stringSeqToCommaSeparatedStringOption(names)
@@ -185,10 +178,6 @@ class MonsterReader(inputStream: InputStream) {
 
   private def getReferencedObjectName(key: String): String = {
     getReferencedObjectName((xml \ key)(0))
-  }
-
-  private def getReferencedObjectName(node: Node): String = {
-    (node \ "ReferencedObject" \ "Name").text
   }
 
   private def getTextAtPath(pathFragments: String*): String = {
