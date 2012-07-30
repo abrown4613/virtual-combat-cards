@@ -26,9 +26,8 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
 
   private val xml = XML.load(inputStream)
 
-  def getContentDigest: String = {
+  def getContentDigest: String =
     util.UUID.nameUUIDFromBytes(xml.toString().getBytes("UTF-8")).toString
-  }
 
   def getName: String = getElementAsText("Name")
 
@@ -36,21 +35,20 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
 
   def getGroupCategory = GroupTaxonomy(getRole, getGroupRole, getIsLeader, getLevel, getExperience)
 
-  def getTaxonomy = BestiaryTaxonomy(getSize, getOrigin, getType, getKeyword, getRace)
+  def getTaxonomy = BestiaryTaxonomy(getSize, getOrigin, getType, getKeywords(xml), getRace)
 
   def getSenses: Option[String] = {
     def formatSense(item: String, qty: String): String = if (qty == "0") item else item + " " + qty
 
-    def formatSenses(ns: NodeSeq): Seq[String] = {
+    def formatSenses(ns: NodeSeq): Seq[String] =
       ns.map(node => formatSense((node \\ "Name").text, (node \ "Range").text))
-    }
-    val ns = formatSenses(xml \ "Senses" \\ "SenseReference")
-    stringSeqToCommaSeparatedStringOption(ns)
+
+    stringSeqToCommaSeparatedStringOption(formatSenses(xml \ "Senses" \\ "SenseReference"))
   }
 
   def getDefense = {
-    val map = extractValues(xml \ "Defenses" \\ "SimpleAdjustableNumber")
-    Defense(map("AC"), map("Fortitude"), map("Reflex"), map("Will"))
+    val defenses = extractValues(xml \ "Defenses" \\ "SimpleAdjustableNumber")
+    Defense(defenses("AC"), defenses("Fortitude"), defenses("Reflex"), defenses("Will"))
   }
 
   def getSkills: Map[String, Int] = extractValues(xml \ "Skills" \\ "SkillNumber")
@@ -72,10 +70,8 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
     stringSeqToCommaSeparatedStringOption(ns)
   }
 
-  def getLanguages: Option[String] = {
-    val ns = (xml \ "Languages" \\ "Name").map(_.text)
-    stringSeqToCommaSeparatedStringOption(ns)
-  }
+  def getLanguages: Option[String] =
+    stringSeqToCommaSeparatedStringOption((xml \ "Languages" \\ "Name").map(_.text))
 
   def getAlignment = getReferencedObjectName("Alignment")
 
@@ -109,36 +105,27 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
     (Seq(speeds) ++ (xml \ "Speeds" \ "CreatureSpeed").map(formatSpeed)).mkString(", ")
   }
 
-  def getPowers = {
-    (xml \ "Powers" \ "MonsterPower").map(new PowerReader(_).read()).toList
-  }
+  def getPowers = (xml \ "Powers" \ "MonsterPower").map(new PowerReader(_).read()).toList
 
   def getCreatureTraits: List[BaseCreatureTrait] = {
-    (xml \ "Powers" \ "MonsterTrait").map {
-      power =>
-        val radius = (power \ "Range" \ "@FinalValue").text.toInt
-        val name = (power \ "Name").text
-        val details = (power \ "Details").text
-        if (radius > 0)
-          Aura(name, radius, details)
-        else
-          CreatureTrait(name, details)
-    }.toList
+    def extractTrait(power: Node): BaseCreatureTrait = {
+      val radius = (power \ "Range" \ "@FinalValue").text.toInt
+      val name = (power \ "Name").text
+      val details = (power \ "Details").text
+      val keywords = getKeywords(power)
+      if (radius > 0)
+        Aura(name, radius, keywords, details)
+      else
+        CreatureTrait(name, keywords, details)
+    }
+    (xml \ "Powers" \ "MonsterTrait").map(extractTrait).toList
   }
 
-  private def extractWithRegex(text: String, re: Regex): Option[String] = {
+  private def extractWithRegex(text: String, re: Regex): Option[String] =
     text match {
       case `re`(m) => Some(m)
       case _ => None
     }
-  }
-
-  private def stringSeqToCommaSeparatedStringOption(ns: Seq[String]): Option[String] = {
-    if (ns.isEmpty)
-      None
-    else
-      Some(ns.mkString(", "))
-  }
 
   private def getLevel: Int = getIntAtPath("Level")
 
@@ -158,13 +145,10 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
 
   private def getOrigin: String = getReferencedObjectName("Origin")
 
-  private def getRace: Option[String] = {
-    val name = getReferencedObjectName("Race")
-    emptyOrStringAsOption(name)
-  }
+  private def getRace: Option[String] = emptyOrStringAsOption(getReferencedObjectName("Race"))
 
-  private def getKeyword: Option[String] = {
-    val names = (xml \ "Keywords" \\ "Name").map(_.text)
+  private def getKeywords(node: Node): Option[String] = {
+    val names = (node \ "Keywords" \\ "Name").map(_.text.trim)
     stringSeqToCommaSeparatedStringOption(names)
   }
 
@@ -172,15 +156,13 @@ class MonsterReader(inputStream: InputStream) extends XmlReaderMixin {
     ns.map(node => ((node \ "Name").text -> (node \ "@FinalValue").text.toInt)).toMap
   }
 
-  private def getElementAsText(key: String): String = {
-    (xml \ key).text
-  }
+  private def getElementAsText(key: String): String = (xml \ key).text
 
-  private def getReferencedObjectName(key: String): String = {
-    getReferencedObjectName((xml \ key)(0))
-  }
+  private def getReferencedObjectName(key: String): String = getReferencedObjectName((xml \ key)(0))
 
-  private def getTextAtPath(pathFragments: String*): String = {
+  private def getTextAtPath(pathFragments: String*): String =
     pathFragments.foldLeft[Node](xml)((node, path) => (node \ path)(0)).text
-  }
+
+  private def stringSeqToCommaSeparatedStringOption(ns: Seq[String]): Option[String] =
+    if (ns.isEmpty) None else Some(ns.mkString(", "))
 }

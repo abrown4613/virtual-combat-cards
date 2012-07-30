@@ -116,7 +116,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         b("_Effect:_ The imp becomes invisible until the end of its next turn or until it attacks.")),
       Power("Quick Escape", "Immediate Reaction", EncounterUsage(0), NonAttack, Set(),
         b("_Trigger:_ when first bloodied\n_Effect (Immediate Reaction):_ The imp uses vanish as an immediate reaction.")))
-    val expectedTraits = List(CreatureTrait("Bleed the Helpless", "When the assassin imp attacks a sleeping or helpless target, its razor attack deals +2d6 damage and ongoing 5 damage (save ends)."))
+    val expectedTraits = List(CreatureTrait("Bleed the Helpless", None, "When the assassin imp attacks a sleeping or helpless target, its razor attack deals +2d6 damage and ongoing 5 damage (save ends)."))
   }
 
   case class monster1() extends MonsterCase("monster-1.xml") {
@@ -155,8 +155,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       Power("Second Wind", "Standard", EncounterUsage(0), NonAttack, Set("Healing"),
         b("_Effect:_ Dude spends a healing surge and regains 46 hit points. She gains a +2 bonus to all defenses until the start of her next turn.")))
     val expectedTraits = List(
-      Aura("Sepulchral Stench", 3, "enemies in the aura take a -2 penalty to all defenses."),
-      CreatureTrait("Combat Advantage", "Dude deals an extra 3d6 damage with her attacks against any target she has combat advantage against."))
+      Aura("Sepulchral Stench", 3, Some("Necrotic"), "enemies in the aura take a -2 penalty to all defenses."),
+      CreatureTrait("Combat Advantage", Some("Poison, Other"), "Dude deals an extra 3d6 damage with her attacks against any target she has combat advantage against."))
   }
 
   case class monsterCustom0() extends MonsterCase("monster-custom0.xml") {
@@ -180,8 +180,8 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         b("_Effect:_ Enter Power Effect Here"))
     )
     val expectedTraits = List(
-      CreatureTrait("Goblin coolnes", "Shift for free when hit"),
-      Aura("Aura of Pain", 1, "-2 to all Attackers"))
+      CreatureTrait("Goblin coolnes", None, "Shift for free when hit"),
+      Aura("Aura of Pain", 1, None, "-2 to all Attackers"))
   }
 
   private def b(text:String) =  FormattedTextParser.parseBlock(text).get
