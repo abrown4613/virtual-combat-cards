@@ -30,6 +30,8 @@ import view.dialog.FileChooserHelper
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
 import vcc.infra.webserver.WebServer
 import javax.swing.JOptionPane
+import org.exnebula.metric.{MetricReporter, MetricCollector}
+import java.util.UUID
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -116,7 +118,7 @@ object BootStrap extends StartupRoutine {
       val compendium = try {
         new CompendiumRepository(compendiumID)
       } catch {
-        case e =>
+        case e: Throwable =>
           logger.error("Failed compendium load", e)
           val ret = JOptionPane.showConfirmDialog(srw.ownerWindow,
             "Failed to open Compendium. This may be due to missing files or directory. You may have accidentally\n" +
@@ -158,6 +160,14 @@ object BootStrap extends StartupRoutine {
       XHTMLPaneAgent.getInstance() != null
     }
 
+    callStartupSimpleBlock(srw, "Collecting information") {
+      if (Configuration.metricIdentifier.value.isDefined) {
+        val uuid = Configuration.metricIdentifier.value.get
+        new Thread(new MetricReportThread(uuid, Configuration.baseDirectory.value)).start()
+      }
+      true
+    }
+
     srw.reportProgress(this, "Initialization complete.")
     val releaseInformation = ReleaseInformation(version, Configuration.getVersionReleaseURL, Configuration.getCheckAfterAge)
     val configurationCallback = new ConfigurationPanelCallback {
@@ -167,4 +177,21 @@ object BootStrap extends StartupRoutine {
     }
     new MasterFrame(Configuration.baseDirectory.value, releaseInformation, configurationCallback)
   }
+
+  private class MetricReportThread(uuid: UUID, baseDirectory: File) extends Runnable {
+    def run() {
+      try {
+        val collector = new MetricCollector
+        val metrics = collector.collect(Configuration.baseDirectory.value)
+        for ((k, v) <- metrics) logger.info("Collected metric {} = {}", k, v)
+        val msg = MetricReporter.buildMessage(uuid, metrics)
+        val (rc, message) = MetricReporter.sendMetric(msg)
+        logger.info("Metric uploaded result: {} {}", rc, message)
+      } catch {
+        case e: Throwable =>
+          logger.error("Failed to collect metrics", e)
+      }
+    }
+  }
+
 }
