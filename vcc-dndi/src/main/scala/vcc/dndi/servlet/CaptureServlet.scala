@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,23 @@ package vcc.dndi.servlet
 
 import javax.servlet.http.HttpServlet
 import vcc.dndi.reader._
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 class CaptureServlet extends HttpServlet {
   private val logger = org.slf4j.LoggerFactory.getLogger("app")
 
   override protected def doGet(request: HttpServletRequest, response: HttpServletResponse) {
-    response.setContentType("text/html");
-    response.setStatus(HttpServletResponse.SC_OK);
+    response.setContentType("text/html")
+    response.setStatus(HttpServletResponse.SC_OK)
 
     logger.debug("Request: " + request)
     val hasQuery = request.getParameter("has")
     if (hasQuery == null) {
-      response.getWriter().println("<html><h1>D&D Insider Capture</h1><p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>");
+      response.getWriter.println("<html><h1>D&D Insider Capture</h1>" +
+        "<p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>")
     } else {
-      response.getWriter().print(if (hasQuery == "reply-text") "true" else "false")
+      response.getWriter.print(if (hasQuery == "reply-text") "true" else "false")
     }
   }
 
@@ -46,7 +47,7 @@ class CaptureServlet extends HttpServlet {
       case Some(Left((clazz, id))) =>
         response.getWriter.printf("VCC failed to capture '%s' with id=%s, please report.", clazz, id.toString)
       case Some(Right(dObject)) =>
-        response.getWriter().printf("Captured %s: %s", dObject.clazz, dObject("base:name").get);
+        response.getWriter.printf("Captured %s: %s", dObject.clazz, dObject("base:name").get)
       case None =>
         response.getWriter.println("You sent something that VCC cannot capture.")
     }
@@ -59,15 +60,15 @@ class CaptureServlet extends HttpServlet {
       case Some(Left((clazz, id))) =>
         response.getWriter.printf("Error: Failed capture of '%s' with id=%s.", clazz, id.toString)
       case Some(Right(dObject)) =>
-        response.getWriter().printf("Success: %s (%s)", dObject("base:name").get, dObject.clazz);
+        response.getWriter.printf("Success: %s (%s)", dObject("base:name").get, dObject.clazz)
       case None =>
         response.getWriter.println("FATAL: Bad Request.")
     }
   }
 
   override protected def doPost(request: HttpServletRequest, response: HttpServletResponse) {
-    response.setContentType("text/html");
-    response.setStatus(HttpServletResponse.SC_OK);
+    response.setContentType("text/html")
+    response.setStatus(HttpServletResponse.SC_OK)
     logger.debug("Request: {}", request.toString)
 
     val captureAll = System.getProperty("vcc.dndi.captureall") != null
@@ -95,7 +96,7 @@ class CaptureServlet extends HttpServlet {
     def unapply(s: String): Option[Int] = try {
       Some(s.toInt)
     } catch {
-      case _ => None
+      case _: Throwable => None
     }
   }
 
