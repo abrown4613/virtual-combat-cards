@@ -273,7 +273,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B>
         1</P>)
       val power = mr.processPower(ActionType.Trait, ts)
-      power must not beNull;
+      (power must not beNull)
 
       power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage(1))
       power.action must_== ActionType.Trait
@@ -285,9 +285,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
       </P>)
       val power = mr.processPower(ActionType.Minor, ts)
-      power must not beNull;
+      (power must not beNull)
 
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(0))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage())
       power.action must_== ActionType.Minor
       power.description must_== sampleDesc
     }
@@ -491,7 +491,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
               monster != null
             } else false
           } catch {
-            case e =>
+            case e: Throwable =>
               System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
               false
           }

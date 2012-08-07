@@ -64,7 +64,7 @@ class PowerExtractorTest extends SpecificationWithJUnit {
       val parts = List(Text(" "), Key("Fey Light"), Text(" "), Icon(IconType.Separator), Text(" "), Key("At-Will"), Text(" (1/round)"))
       parts match {
         case SomePowerDefinition(d) =>
-          d must_== CompletePowerDefinition(Seq(), "Fey Light", null, AtWillUsage(1))
+          d must_== CompletePowerDefinition(Seq(), "Fey Light", null, AtWillUsage("1/round"))
         case _ => failure("Should have matched")
       }
     }
@@ -121,12 +121,11 @@ class PowerExtractorTest extends SpecificationWithJUnit {
       val parts = List(Icon(IconType.Range), Text(" "), Key("Darkfire"), Text(" "), Icon(IconType.Separator), Text(" "), Key("Encounter"))
       parts match {
         case SomePowerDefinition(d) =>
-          d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(0))
+          d must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage())
         case _ => failure("Should have matched")
       }
     }
 
-    //TODO: Implement fail-over strategy. If nothing fits we should get a raw block of StyledText
     "read power with recharge all in bold" in {
       //<P class="flavor alt"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif"></IMG> <B>Poison Spew</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Recharge when first bloodied</B></P>
 

@@ -25,20 +25,20 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read simple power" in {
     readPower("power-simple.xml") must_==
-      Power("Short Sword", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Weapon"),
+      Power("Short Sword", "Standard", AtWillUsage(), BasicAttack("Melee"), Set("Weapon"),
         b("_Attack:_ +13 vs. AC\n_Hit:_ 1d6+8 damage"))
   }
 
   "read trigger" in {
     readPower("power-trigger-noaction.xml") must_==
-      Power("Random Eye Ray", "No Action", AtWillUsage(0), NormalAttack("Ranged"), Set(),
+      Power("Random Eye Ray", "No Action", AtWillUsage(), NormalAttack("Ranged"), Set(),
         b("_Trigger:_ The trigger\n" +
           "_Effect (No Action):_ The beholder uses one random eye ray against the triggering enemy."))
   }
 
   "read power with range constrained and no damage" in {
     readPower("power-ranged-constrained-no-damage.xml") must_==
-      Power("Luring Glare", "Minor", AtWillUsage(0), NormalAttack("Close Blast"), Set("Charm"),
+      Power("Luring Glare", "Minor", AtWillUsage(), NormalAttack("Close Blast"), Set("Charm"),
         b("_Attack:_ Close Blast 10 (one creature in the blast); +22 vs. Will\n" +
           "_Hit:_ The dragon slides the target up to 3 squares."))
   }
@@ -52,7 +52,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power with miss no damage" in {
     readPower("power-with-miss-no-damage.xml") must_==
-      Power("Bite", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Poison"),
+      Power("Bite", "Standard", AtWillUsage(), BasicAttack("Melee"), Set("Poison"),
         b("_Attack:_ Melee 3 (one creature); +24 vs. AC\n" +
           "_Hit:_ 3d10 + 14 damage, and ongoing 10 poison damage (save ends).\n" +
           "_Miss:_ 10 poison damage."))
@@ -60,7 +60,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power with attack detail and miss" in {
     readPower("power-attack-description.xml") must_==
-      Power("Claw", "Standard", AtWillUsage(0), NormalAttack("Melee"), Set(),
+      Power("Claw", "Standard", AtWillUsage(), NormalAttack("Melee"), Set(),
         b("_Attack:_ Melee 3 (one or two creatures); +24 vs. AC. Some description.\n" +
           "_Hit:_ 3d8 + 13 damage, and the dragon shifts up to 2 squares.\n" +
           "_Miss:_ 1d6+2 and target pushed 1 square."))
@@ -77,7 +77,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power with secondary and failed save" in {
     readPower("power-with-failed-save.xml") must_==
-      Power("Tail Sting", "Standard", AtWillUsage(0), BasicAttack("Melee"), Set("Poison"),
+      Power("Tail Sting", "Standard", AtWillUsage(), BasicAttack("Melee"), Set("Poison"),
         b("_Attack:_ +12 vs. AC\n" +
           "_Hit:_ 1d8 + 4 damage, and the imp makes a secondary attack against the same target\n" +
           "\t_Secondary Attack:_ +10 vs. Fortitude\n" +
@@ -88,7 +88,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power like beholder rays" in {
     readPower("power-beholder.xml") must_==
-      Power("Eye Rays", "Standard", AtWillUsage(0), NormalAttack("Ranged"), Set(),
+      Power("Eye Rays", "Standard", AtWillUsage(), NormalAttack("Ranged"), Set(),
         b("_Effect:_ The beholder uses two of the following eye rays, using each against a different target. This attack does not provoke opportunity attacks.\n" +
           "_1. Charm Ray (charm):_ Ranged 10; +14 vs. Will; the target is dominated until the end of its next turn.\n" +
           "_2. Wounding Ray (necrotic):_ Ranged 10; +14 vs. Fortitude; 2d10 + 6 necrotic damage.\n" +
@@ -108,7 +108,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power with attack in effect" in {
     readPower("power-with-attack-in-effect.xml") must_==
-      Power("Rising Burst", "Standard", AtWillUsage(0), NormalAttack("Close Burst"), Set(),
+      Power("Rising Burst", "Standard", AtWillUsage(), NormalAttack("Close Burst"), Set(),
         b(
           "_Requirement:_ The beast must be underground.\n" +
             "_Effect:_ The beast moves up and does this attack.\n" +
@@ -119,7 +119,7 @@ class PowerReaderTest extends SpecificationWithJUnit {
 
   "read power with two attacks" in {
     readPower("power-with-2-attacks.xml") must_==
-      Power("Bloody blast", "Free Action", EncounterUsage(0), NormalAttack("Close Burst"), Set("Polymorph", "Fire", "Cold"),
+      Power("Bloody blast", "Free Action", EncounterUsage(), NormalAttack("Close Burst"), Set("Polymorph", "Fire", "Cold"),
         b("_Trigger:_ The beast is first bloodied.\n" +
           "_Effect (Free Action):_ The beast becomes a 6-square-high pillar of fire.\n" +
           "_Attack (Free Action):_ Close Burst 2 (enemies in the burst); +22 vs. Reflex\n" +
@@ -127,14 +127,14 @@ class PowerReaderTest extends SpecificationWithJUnit {
   }
   "read power with two attacks" in {
     readPower("power-with-sustain.xml") must_==
-      Power("Persistent Image", "Minor", AtWillUsage(0), NormalAttack("Triggered"), Set("Illusion"),
+      Power("Persistent Image", "Minor", AtWillUsage(), NormalAttack("Triggered"), Set("Illusion"),
         b("_Effect:_ The beast creates an illusion.\n" +
           "\t_Sustain Minor:_ The illusion persists until the end of the beast’s next turn."))
   }
 
   "read power with multiple line in description and failed save in effect" in {
     readPower("power-like-medusa.xml") must_==
-      Power("Petrifying Stare", "Opportunity Action", AtWillUsage(0), NormalAttack("Triggered"), Set(),
+      Power("Petrifying Stare", "Opportunity Action", AtWillUsage(), NormalAttack("Triggered"), Set(),
         b("_Trigger:_ An enemy starts its turn within 2 squares of the medusa.\n" +
           "_Effect (Opportunity Action):_ Close blast 2 (the triggering enemy in the blast). The target is slowed (save ends).\n" +
           "\t_First Failed Saving Throw:_ The target is immobilized instead of slowed (save ends).\n" +

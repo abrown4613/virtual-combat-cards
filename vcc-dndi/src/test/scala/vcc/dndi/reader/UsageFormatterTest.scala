@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@ package vcc.dndi.reader
 import xml.{Text, Node, NodeSeq}
 import org.specs2.mutable.SpecificationWithJUnit
 
-
 class UsageFormatterTest extends SpecificationWithJUnit {
 
   def nodeSeq(node: Node*): NodeSeq = node
@@ -33,19 +32,19 @@ class UsageFormatterTest extends SpecificationWithJUnit {
     }
 
     "return unlimited At-Will" in {
-      UsageFormatter.format(AtWillUsage(0)) must_== atWillUsageXML
+      UsageFormatter.format(AtWillUsage()) must_== atWillUsageXML
     }
 
     "return limited At-Will" in {
-      UsageFormatter.format(AtWillUsage(2)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>At-Will</b>, Text(" 2/round"))
+      UsageFormatter.format(AtWillUsage("2/round")) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>At-Will</b>, Text(" 2/round"))
     }
 
     "return unlimited Encounter" in {
-      UsageFormatter.format(EncounterUsage(0)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Encounter</b>)
+      UsageFormatter.format(EncounterUsage()) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Encounter</b>)
     }
 
     "return limited Encounter" in {
-      UsageFormatter.format(EncounterUsage(2)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Encounter</b>, Text(" 2/encounter"))
+      UsageFormatter.format(EncounterUsage("2/Encounter")) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Encounter</b>, Text(" 2/Encounter"))
     }
 
     "return Daily" in {

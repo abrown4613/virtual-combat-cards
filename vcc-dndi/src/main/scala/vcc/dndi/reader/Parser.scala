@@ -339,20 +339,16 @@ object Parser {
    * Transform a list of pairs of type Key,Text and optional breaks into
    * a list of key,value pairs.
    * @param parts   List to parse
-   * @param relaxed Ignore remainder of list if not in proper format
    */
-  def partsToPairs(parts: List[Part], relaxed: Boolean): List[(String, String)] = {
+  def partsToPairs(parts: List[Part]): List[(String, String)] = {
     parts match {
-      case Text("") :: rest => partsToPairs(rest, relaxed)
-      case Key(k) :: Text(value) :: rest => (k, value) :: partsToPairs(rest, relaxed)
-      case Break :: rest => partsToPairs(rest, relaxed)
+      case Text("") :: rest => partsToPairs(rest)
+      case Key(k) :: Text(value) :: rest => (k, value) :: partsToPairs(rest)
+      case Break :: rest => partsToPairs(rest)
       case Nil => Nil
       case s =>
-        if (relaxed) {
-          logger.warn("Trimming tail block: {}", parts)
-          Nil
-        }
-        else throw new Exception("List contains unexpected parts: " + s)
+        logger.warn("Trimming tail block: {}", parts)
+        Nil
     }
   }
 
