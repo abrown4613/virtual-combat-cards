@@ -1,0 +1,169 @@
+<MonsterPower xsi:type="MonsterPower">
+  <Action>Standard</Action>
+  <Usage>Recharge</Usage>
+  <UsageDetails>5</UsageDetails>
+  <Attacks>
+    <MonsterAttack>
+      <Name>Attack</Name>
+      <Range>close blast 5</Range>
+      <Targets>enemies in the blast</Targets>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects>
+          <MonsterAttackEntry>
+            <Name>Aftereffect</Name>
+            <Aftereffects />
+            <Sustains />
+            <Damage>
+              <AverageDamage FinalValue="1">
+                <Type>None</Type>
+                <Modifier>Medium</Modifier>
+                <Name>AverageDamage</Name>
+                <DefaultBonus xsi:type="AddNumberBonus">
+                  <Name>Ad hoc</Name>
+                  <Value>0</Value>
+                  <ID xsi:type="string">Ad hoc</ID>
+                </DefaultBonus>
+              </AverageDamage>
+              <DiceQuantity>0</DiceQuantity>
+              <DamageConstant FinalValue="7,75">
+                <Name>DamageConstant</Name>
+                <DefaultBonus xsi:type="AddNumberBonus">
+                  <Name>Ad hoc</Name>
+                  <Value>0</Value>
+                  <ID xsi:type="string">Ad hoc</ID>
+                </DefaultBonus>
+              </DamageConstant>
+              <DiceSides>0</DiceSides>
+              <Expression></Expression>
+            </Damage>
+            <Description>The target is slowed (save ends).</Description>
+            <Attacks />
+            <FailedSavingThrows />
+          </MonsterAttackEntry>
+        </Aftereffects>
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="27">
+            <Type>Normal</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>2</DiceQuantity>
+          <DamageConstant FinalValue="19,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>12</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>12</DiceSides>
+          <Expression>2d12 + 12</Expression>
+        </Damage>
+        <Description>poison damage, and the target is slowed and takes ongoing 15 poison damage (save ends both).</Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses>
+        <MonsterPowerAttackNumber FinalValue="22">
+          <Defense>
+            <id xsi:type="string">ADE1</id>
+            <ReferencedObject>
+              <DefenseName>Fortitude</DefenseName>
+              <ID xsi:type="string">ADE1</ID>
+              <RoundToNearest>true</RoundToNearest>
+              <Name>Attack vs. Fortitude</Name>
+            </ReferencedObject>
+          </Defense>
+          <Name>AttackBonus</Name>
+          <ID xsi:type="string">AttackBonus</ID>
+          <DefaultBonus xsi:type="AddNumberBonus">
+            <Name>Ad hoc</Name>
+            <Value>0</Value>
+            <ID xsi:type="string">Ad hoc</ID>
+          </DefaultBonus>
+        </MonsterPowerAttackNumber>
+      </AttackBonuses>
+    </MonsterAttack>
+  </Attacks>
+  <Name>Breath Weapon</Name>
+  <Type>close blast</Type>
+  <IsBasic>false</IsBasic>
+  <Keywords>
+    <ObjectReference>
+      <id xsi:type="string">609</id>
+      <ReferencedObject>
+        <ID xsi:type="string">609</ID>
+        <Name>Poison</Name>
+        <Description>Toxins that reduce a creature's hit points.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+  </Keywords>
+  <Tier>0</Tier>
+</MonsterPower>
