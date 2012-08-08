@@ -23,8 +23,21 @@ object FormattedText {
 
   case class Normal(s: String) extends Part
 
-  case class Line(indent:Int, parts: Seq[Part])
+  case class Line(indent:Int, parts: Seq[Part]) {
+    override def toString: String = {
+      parts.map{
+        _ match {
+          case Italic(s) => "_%s_".format(s)
+          case Normal(s) => s
+        }
+      }.mkString(("\\t" * indent), "", "")
+    }
+  }
 
-  case class Block(lines: Seq[Line])
+  case class Block(lines: Seq[Line]) {
+    override def toString: String = {
+      lines.mkString("\"", "\\n", "\"")
+    }
+  }
 
 }
