@@ -28,6 +28,11 @@ class ParserTest extends SpecificationWithJUnit {
     "parser <B></B>" in {
       Parser.parseNode(<B></B>) must_== Key("")
     }
+
+    "parser <A></A>" in {
+      Parser.parseNode(<A></A>) must_== Text("")
+    }
+
     "parser <B><IMG/></B>" in {
       //Some really bad HTML here
       Parser.parseNode(<B><IMG/></B>) must_== Key("")
@@ -36,31 +41,32 @@ class ParserTest extends SpecificationWithJUnit {
 
   "parts parser" should {
     "left images from bold " in {
-      val ret = Parser.parseBlockElement(<P><BR/><I>Lead <A target="_new" href="80786952472">ref</A>.</I></P>,true)
+      val ret = Parser.parseBlockElement(<P><BR/><I>Lead <A target="_new" href="80786952472">ref</A>.</I></P>)
       ret must_== Block("P#",List(Break(),Emphasis("Lead ref.")))
     }
 
     "lift images wrapped in bold" in {
       val xml = (<SPAN class="foo"><B><IMG alt="" src="images/bullet.gif"></IMG></B>Description</SPAN>)
-      val ret = Parser.parseBlockElement(xml,true)
+      val ret = Parser.parseBlockElement(xml)
       ret must_== Block("SPAN#foo",List(Key("[*]"),Text("Description")))
     }
+
     "handle misplaced publishing information" in {
       val xml = (<SPAN class="foo"><IMG alt="" src="images/bullet.gif"></IMG> Trap.<BR></BR><P><I>First published in <A href="241787400" target="_new">Revenge of the Giants</A>.</I></P></SPAN>)
-      val ret = Parser.parseBlockElement(xml,true)
+      val ret = Parser.parseBlockElement(xml)
       ret must_== Block("SPAN#foo",List(Icon(IconType.Bullet),Text(" Trap."),Break()))
     }
 
     "parse empty Bold sections" in {
       // This is found in some traps
       val xml = (<SPAN class="foo"><B>Standard Action</B> <B></B> <BR></BR></SPAN>)
-      val ret = Parser.parseBlockElement(xml, true)
+      val ret = Parser.parseBlockElement(xml)
       ret must_== Block("SPAN#foo", List(Key("Standard Action"), Text(" "), Key(""), Text(" "), Break()))
     }
 
     "convert mm3 table to Tabular" in {
       val xml = (<TABLE class="bodytable" xmlns="http://www.w3.org/1999/xhtml"><TBODY><TR><TD><B>HP</B> 220; <B>Bloodied</B> 110</TD><TD class="rightalign"><B>Initiative</B> +7</TD></TR><TR><TD><B>AC</B> 24, <B>Fortitude</B> 22, <B>Reflex</B> 20, <B>Will</B> 22</TD><TD class="rightalign"><B>Perception</B> +15</TD></TR><TR><TD><B>Speed</B> 6</TD><TD class="rightalign">Blindsight 5</TD></TR><TR><TD colspan="2"><B>Resist</B> 5 necrotic</TD></TR><TR><TD colspan="2"><B>Saving Throws</B> +2; <B>Action Points</B> 1</TD></TR></TBODY></TABLE>)
-      val ret = Parser.parseBlockElement(xml, true)
+      val ret = Parser.parseBlockElement(xml)
       ret must_== Table("bodytable", List(
         Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
         Cell("rightalign", List(Key("Initiative"), Text(" +7"))),
@@ -70,6 +76,19 @@ class ParserTest extends SpecificationWithJUnit {
         Cell("rightalign", List(Text("Blindsight 5"))),
         Cell(null, List(Key("Resist"), Text(" 5 necrotic"))),
         Cell(null, List(Key("Saving Throws"), Text(" +2; "), Key("Action Points"), Text(" 1")))))
+    }
+
+    "parse header block with no level" in {
+      val xml = (<H1 class="monster">Pest<BR></BR><SPAN class="type">animate </SPAN><BR></BR> </H1>)
+      val ret = Parser.parseBlockElement(xml)
+      ret must_== HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "animate"), ("level", "Level 1 No Role"), ("xp", "-")))
+    }
+
+    "parse header block with no level" in {
+      val xml = (<H1 class="monster">Aboleth Overseer<BR></BR><SPAN class="type">Large aberrant magical beast (aquatic)</SPAN><BR></BR><SPAN class="level">Level 3 Elite Controller(Leader)<SPAN class="xp"> XP 40</SPAN></SPAN> </H1>)
+      val ret = Parser.parseBlockElement(xml)
+      ret must_== HeaderBlock("H1#monster", List(("name", "Aboleth Overseer"),
+        ("type", "Large aberrant magical beast (aquatic)"),("level", "Level 3 Elite Controller(Leader)"), ("xp", "XP 40")))
     }
   }
 
@@ -92,26 +111,4 @@ class ParserTest extends SpecificationWithJUnit {
       Text("Abc") + Text("Cde") must_== Text("Abc Cde")
     }
   }
-
-/*
-  if (System.getProperty("test.basedir") != null) {
-    val dir = new java.io.File(System.getProperty("test.basedir"))
-    val dirIter = new vcc.util.DirectoryIterator(dir, false)
-    "parser" should {
-      for (file <- dirIter if (file.isFile)) yield {
-        ("load " + file) in {
-          val xml = scala.xml.XML.loadFile(file)
-          val log = org.slf4j.LoggerFactory.getLogger("test")
-          DNDInsiderCapture.getTypeFromXML(xml).isDefined must beTrue
-          DNDInsiderCapture.getIdFromXML(xml).isDefined must beTrue
-          val blocks = parseBlockElements(xml.child, true)
-          (blocks must not beNull)
-          (blocks must not beEmpty)
-          //for (b <- blocks) {log.debug("Block:  " + b)}
-        }
-      }
-    }
-  }
-*/
-
 }

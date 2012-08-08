@@ -175,14 +175,14 @@ object Parser {
      * and put some whitespace when needed
      */
     def +(that: Text) = {
-      val thist = this.text
-      val thatt = that.text
-      if (thist.length == 0) that // Case for trim that return Text("")
-      else if (thatt.length == 0) this
-      else if (thatt.head.isWhitespace || thist.last.isWhitespace)
-        Text(thist + thatt)
+      val thisText = this.text
+      val thatText = that.text
+      if (thisText.length == 0) that // Case for trim that return Text("")
+      else if (thatText.length == 0) this
+      else if (thatText.head.isWhitespace || thisText.last.isWhitespace)
+        Text(thisText + thatText)
       else
-        Text(thist + " " + thatt)
+        Text(thisText + " " + thatText)
     }
 
     override def transform(tf: (String) => String): Part = {
@@ -193,7 +193,7 @@ object Parser {
   /**
    * One of the DNDInsider Icons to powers
    */
-  case class Icon(itype: IconType.Value) extends Part
+  case class Icon(iconType: IconType.Value) extends Part
 
   /**
    * Text that was surrounded in bold
@@ -231,11 +231,11 @@ object Parser {
 
   case class Table(clazz: String, cells: List[Cell]) extends BlockElement
 
-  object TrimProcess extends Function1[String, String] {
+  object TrimProcess extends ((String) => String) {
     def apply(str: String): String = str match {
       case reFlexiInt(sign, value) => if ("-" == sign) sign + value else value
       case reColonTrim(text) => text
-      case nomatch => nomatch
+      case noMatch => noMatch
     }
   }
 
@@ -249,7 +249,7 @@ object Parser {
     node match {
       case <BR></BR> => Break()
       case <B>{b @ _*}</B> => Key(parseToText(b))  //Go figure (need because o bi above)
-      case <A>{text}</A> => Text(parseToText(text))
+      case <A>{text @ _*}</A> => Text(parseToText(text))
       case <I>{i @ _*}</I> => Emphasis(parseToText(i))
       case RechargeDice(t) => t
       case IconType(itype) => Icon(itype)
@@ -301,12 +301,12 @@ object Parser {
   }
 
   /**
-   * Replace Break() in descriptin for \n and merge text. Will return a list of parts without the Break
+   * Replace Break() in description for \n and merge text. Will return a list of parts without the Break
    */
   def breakToNewLine(parts: List[Part]) = mergeText(parts.map(x => if (x == Break()) Text("\n") else x))
 
   /**
-   * Replace Break() in descriptin for \n and merge text. Will return a list of parts without the Break
+   * Replace Break() in description for \n and merge text. Will return a list of parts without the Break
    */
   def breakToSpace(parts: List[Part]) = mergeText(parts.map(x => if (x == Break()) Text(" ") else x))
 
@@ -369,11 +369,15 @@ object Parser {
 
   /**
    * This is a set of partial functions to be applied in order trying to convert the
-   * XML into a standar format. It removes some of the oddities in the DND Insider site.
+   * XML into a standard format. It removes some of the oddities in the DND Insider site.
    */
   private val blockStrategies: List[(String, PartialFunction[Node, BlockElement])] = List(
     ("H1 to HeaderBlock", {
-      case node @ <H1>{ _* }</H1> => HeaderBlock(elementClassAttr(node), flattenSpans(node))
+      case node @ <H1>{ _* }</H1> =>
+        var spans = flattenSpans(node)
+        if(!spans.exists(p => p._1 == "level")) spans = spans ::: List("level" -> "Level 1 No Role")
+        if(!spans.exists(p => p._1 == "xp")) spans = spans ::: List("xp" ->  "-")
+        HeaderBlock(elementClassAttr(node), spans)
     }),
   ("Misplaced Publish message", {
     case span @ <SPAN>{ _* }</SPAN> if ((span \\ "P" \ "I").text.startsWith ("First") ) =>
@@ -383,7 +387,7 @@ object Parser {
   }),
   ("Power Span", {
     case span @ <SPAN>{ first, _* }</SPAN > if ((span \ "@class").text == "power" && first.label == "H1") =>
-      NestedBlocks(elementClassAttr(span), parseBlockElements(span.child, true))
+      NestedBlocks(elementClassAttr(span), parseBlockElements(span.child))
   }),
     ("Block Level Elements", {
       case node if (blockElements.contains (node.label) ) => Block (elementClassAttr (node), parse (node.child) )
@@ -401,41 +405,24 @@ object Parser {
   })
   )
 
-  /**
-   *
-   */
   @throws(classOf[UntranslatableException])
-  def parseBlockElement(node: Node, strict: Boolean): BlockElement = {
-    for ((name, rule) <- blockStrategies) {
-      if (rule.isDefinedAt(node)) {
-        logger.debug("Applying rule: '{}' to: {}", name, node)
-        val ret = try {
-          rule(node)
-        } catch {
-          case e if (strict) =>
-            logger.warn("Failed to apply rule: '{}' to: {}", name, node)
-            throw new UntranslatableException(node, e)
-          case e =>
-            logger.warn("Failed to apply rule '{}' will skip reason", name, e)
-            null
-        }
-        if (ret != null) return ret
+  def parseBlockElement(node: Node): BlockElement = {
+    val ruleOption = blockStrategies.find(rp => rp._2.isDefinedAt(node))
+    if (ruleOption.isDefined) {
+      val (name,rule) = ruleOption.get
+      logger.debug("Applying rule: '{}' to: {}", name, node)
+      try {
+        rule(node)
+      } catch {
+        case e: Throwable =>
+          logger.warn("Failed to apply rule: '{}' to: {}", name, node)
+          throw new UntranslatableException(node, e)
       }
-    }
-    if (strict) throw new UntranslatableException(node, null)
-    else {
-      logger.warn("Ignoring, since no rule will convert : {}", node)
-      null
+    } else {
+      throw new UntranslatableException(node, null)
     }
   }
 
-  def parseBlockElements(nodes: NodeSeq, strict: Boolean): List[BlockElement] = {
-    nodes.map(node => try {
-      parseBlockElement(node, strict)
-    } catch {
-      case e: Throwable =>
-        if (strict) throw e
-        else null
-    }).filter(_ != null).toList
-  }
+  def parseBlockElements(nodes: NodeSeq): List[BlockElement] =
+    nodes.map(node => parseBlockElement(node)).toList
 }

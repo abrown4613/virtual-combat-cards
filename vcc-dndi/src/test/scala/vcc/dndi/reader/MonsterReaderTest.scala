@@ -32,7 +32,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   // Returns a block stream with already advanced.
   def getBlockStream(xml: Node): TokenStream[BlockElement] = {
-    val blk = Parser.parseBlockElement(xml, true)
+    val blk = Parser.parseBlockElement(xml)
     val blk2 = Block("P#flavor", List(Text("Something happens.")))
     val blk3 = Block("P#flavorIndent", List(Emphasis("Secondary")))
     val tailBlock = Block("POWEREND", Nil)
@@ -389,7 +389,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         (standard, at-will)
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Arcane, Weapon</B>
       </P>)
-      val blk = Parser.parseBlockElement(phl, true)
+      val blk = Parser.parseBlockElement(phl)
       val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
       ts.head must_== blk
@@ -472,9 +472,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       norm must not haveKey("senses")
     }
   }
+
   /*
-  * This is a conditional test that will iterate through all cached entris in a directory.
-  */
+   * This is a conditional test that will iterate through all cached files in a directory.
+   */
   if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))
     val failures = new ListBuffer[String]
@@ -482,21 +483,25 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       "load everybody in " + dir.getAbsolutePath in {
         val dirIter = new vcc.util.DirectoryIterator(dir, false)
         for (file <- dirIter if (file.isFile)) {
-          val testedOk: Boolean = try {
+          val failedLoad: Boolean = try {
             val xml = scala.xml.XML.loadFile(file)
-            val blocks = parseBlockElements(xml.child, true)
+            val blocks = parseBlockElements(xml.child)
             if (blocks != null && !blocks.isEmpty) {
-              val mReader = new MonsterReader(0)
-              val monster = mReader.process(blocks)
-              monster != null
-            } else false
+              val monster = new MonsterReader(0).process(blocks)
+              if (monster == null)
+                System.err.println("Monster is null: " + file)
+              monster == null
+            } else {
+              System.err.println("Block empty for: " + file)
+              true
+            }
           } catch {
             case e: Throwable =>
               System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
-              false
+              true
           }
-          if (testedOk) {
-            failures += ("loading failed for " + file)
+          if (failedLoad) {
+            failures += ("loading failed for " + file + "\n")
           }
         }
         failures.toList must beEmpty
