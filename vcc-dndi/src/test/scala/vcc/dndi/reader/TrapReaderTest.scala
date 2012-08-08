@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ package vcc.dndi.reader
 
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.infra.text._
-import vcc.dndi.reader.Parser.{BlockElement}
+import vcc.dndi.reader.Parser.BlockElement
 
 class TrapReaderTest extends SpecificationWithJUnit {
 
@@ -32,7 +32,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         <SPAN class="trapblockbody"><B>Attack: </B>+8 vs. Reflex</SPAN>,
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>))
 
-      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p)))
       tbs.advance()
 
       val tr = new TrapReader(0)
@@ -53,7 +53,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P xmlns="http://www.w3.org/1999/xhtml">Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/217647400">FR1 Scepter Tower of Spellgard</A>.</P>)
       )
 
-      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p, true)))
+      val tbs = new TokenStream[BlockElement](xmlChunks.map(p=> Parser.parseBlockElement(p)))
       tbs.advance()
 
       val tr = new TrapReader(0)
@@ -72,7 +72,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap("base:name") must_== Some("Razor Spores (Elite)")
       trap("base:level") must_== Some("1")
@@ -87,7 +87,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap("base:name") must_== Some("Angry Crowd")
       trap("base:level") must_== Some("1")
@@ -102,7 +102,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap("base:name") must_== Some("Spiked Swinging Gate")
       trap("base:level") must_== Some("1")
@@ -118,7 +118,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap.sections must_== List(TrapSection(null, StyledText(List(TextBlock("P","flavor",TextSegment.makeItalic("Glowing niceness."))))))    
     }
@@ -130,7 +130,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap.sections must_== List(TrapSection(null, StyledText(List(TextBlock("SPAN","traplead",TextSegment.makeBold("Initiative"),TextSegment(" +5"))))))
       trap("stat:initiative") must_== Some("5")
@@ -143,7 +143,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Footer</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap.sections must_== List(TrapSection(null, StyledText(List(TextBlock("SPAN","traplead",TextSegment.makeBold("Hazard:"),TextSegment(" Something pops."))))))
     }
@@ -154,7 +154,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/9780786950171">Seekers of the Ashen Crown</A>.</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap("text:comment") must_== Some("Published in Seekers of the Ashen Crown .")
     }
@@ -166,7 +166,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
         (<P>Bad lake,bad!</P>))
 
       val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p, true)))
+      val trap = tr.process(xmlChunks.map(p => Parser.parseBlockElement(p)))
 
       trap("text:comment") must_== Some("Bad lake,bad!")
       trap.sections.length must_== 0

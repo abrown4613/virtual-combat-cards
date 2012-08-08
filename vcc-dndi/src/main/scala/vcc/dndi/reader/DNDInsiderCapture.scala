@@ -42,7 +42,7 @@ object DNDInsiderCapture {
 
       if (reader != null) {
         try {
-          val blocks = Parser.parseBlockElements(xml.child, true)
+          val blocks = Parser.parseBlockElements(xml.child)
           val m = reader.read(blocks)
           logger.debug("Got entity: {}", m)
           m

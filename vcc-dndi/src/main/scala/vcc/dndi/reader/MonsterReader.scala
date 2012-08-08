@@ -154,7 +154,7 @@ object PowerHeaderParts {
     } else cleanPart
 
     val (icons, rest) = normalized.partition(p => p.isInstanceOf[Icon] && p != separator)
-    val iconSeq = icons.map(p => p.asInstanceOf[Icon].itype).toSeq
+    val iconSeq = icons.map(p => p.asInstanceOf[Icon].iconType).toSeq
     val sep = rest.indexOf(separator)
     if (sep > 0) {
       val split = rest.splitAt(sep)
@@ -225,7 +225,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     stream.advance()
-    var role = headMap("role")
+    var role = headMap.getOrElse("role","No Role")
     if (role == "Minion") role = "No Role"
     if (role.startsWith("Minion ")) role = role.substring(7)
     headMap + ("role" -> role)
