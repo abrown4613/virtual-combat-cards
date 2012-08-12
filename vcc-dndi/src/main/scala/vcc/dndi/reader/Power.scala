@@ -40,7 +40,7 @@ object ActionType extends Enumeration {
 
 sealed trait Usage
 
-case class AuraUsage(radius: Int) extends Usage
+case class AuraUsage(radius: String) extends Usage
 
 /**
  * At-Will usage, may be limited or unlimited
