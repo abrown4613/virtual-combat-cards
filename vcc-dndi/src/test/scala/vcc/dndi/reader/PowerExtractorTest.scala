@@ -30,7 +30,7 @@ class PowerExtractorTest extends SpecificationWithJUnit {
             case CompletePowerDefinition(icon, name, keyword, usage) =>
               name must_== "Name"
               keyword must_== "Keyword"
-              usage must_== AuraUsage(1)
+              usage must_== AuraUsage("1")
               icon must_== Seq(IconType.Melee)
             case _ => failure("Should be complete power definition")
           }
@@ -77,7 +77,7 @@ class PowerExtractorTest extends SpecificationWithJUnit {
             case CompletePowerDefinition(icon, name, keyword, usage) =>
               name must_== "Name"
               keyword must beNull
-              usage must_== AuraUsage(1)
+              usage must_== AuraUsage("1")
               icon must_== Seq(IconType.Melee)
             case _ => failure("Should be complete power definition")
           }

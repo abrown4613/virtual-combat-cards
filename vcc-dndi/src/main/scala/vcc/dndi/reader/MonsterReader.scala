@@ -57,7 +57,7 @@ object SomeUsage {
     parts match {
       case Nil => None
       case Key("") :: Nil => Some(NoUsage)
-      case Key("Aura") :: Text(range) :: Nil => Some(AuraUsage(range.trim.toInt))
+      case Key("Aura") :: Text(range) :: Nil => Some(AuraUsage(range.trim))
       case Key(`encounterLimit`(uses)) :: Nil => Some(EncounterUsage("%s/Encounter".format(uses)))
       case Key("Encounter") :: Text(detail) :: Nil => Some(EncounterUsage(detail.trim))
       case Key("Encounter") :: Nil => Some(EncounterUsage())
@@ -384,7 +384,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     desc match {
       case `auraMatcher`(keyword, range, auraDesc) =>
         Power(
-          CompletePowerDefinition(Seq(IconType.Aura), name, if (keyword != null) keyword.trim else null, AuraUsage(range.toInt)),
+          CompletePowerDefinition(Seq(IconType.Aura), name, if (keyword != null) keyword.trim else null, AuraUsage(range)),
           ActionType.Trait,
           StyledText.singleBlock("P", "flavorIndent", auraDesc.trim))
       case _ =>

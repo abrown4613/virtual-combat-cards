@@ -28,7 +28,7 @@ class UsageFormatterTest extends SpecificationWithJUnit {
   "UsageFormatter" should {
 
     "return Aura" in {
-      UsageFormatter.format(AuraUsage(2)) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Aura</b>, Text(" 2"))
+      UsageFormatter.format(AuraUsage("2")) must_== nodeSeq(<img src="x.gif"/>, Text(" "), <b>Aura</b>, Text(" 2"))
     }
 
     "return unlimited At-Will" in {

@@ -45,7 +45,7 @@ class PowerExtractorHelperTest extends SpecificationWithJUnit {
 
     "extract an aura" in {
       val parts = List(Key("Aura"), Text(" 1"))
-      SomeUsage.unapply(parts) must_== Some(AuraUsage(1))
+      SomeUsage.unapply(parts) must_== Some(AuraUsage("1"))
     }
 
     "extract simple encounter usage" in {

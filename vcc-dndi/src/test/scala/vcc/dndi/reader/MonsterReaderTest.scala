@@ -275,7 +275,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val power = mr.processPower(ActionType.Trait, ts)
       (power must not beNull)
 
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage(1))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage("1"))
       power.action must_== ActionType.Trait
       power.description must_== sampleDesc
     }
@@ -409,7 +409,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val power = reader.promoteAuraLike("Mocking Eye", "aura 10; some description.")
       (power must not beNull)
       power.action must_== ActionType.Trait
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage(10))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage("10"))
       power.description must_== auraDesc
     }
 
@@ -417,7 +417,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val power = reader.promoteAuraLike("Aura of Terror", "(Fear) aura 5; some description.")
       (power must not beNull)
       power.action must_== ActionType.Trait
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage(5))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage("5"))
       power.description must_== auraDesc
     }
 
