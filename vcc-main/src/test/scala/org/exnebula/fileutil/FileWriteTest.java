@@ -33,7 +33,7 @@ public class FileWriteTest {
     FileWriter fileWriter = new FileWriter();
     String content = "Test\n\u1230";
     File file = makeTemp();
-    fileWriter.storeFileFromStream(new ByteArrayInputStream(content.getBytes()), file);
+    fileWriter.storeFileFromStream(new ByteArrayInputStream(content.getBytes("UTF-8")), file);
     String valueRead = readFileContent(file);
     assertEquals(content, valueRead);
   }
