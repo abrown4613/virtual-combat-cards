@@ -32,6 +32,8 @@ import vcc.infra.webserver.WebServer
 import javax.swing.JOptionPane
 import org.exnebula.metric.{MetricReporter, MetricCollector}
 import java.util.UUID
+import vcc.updater.ExternalFileUpdater
+import org.exnebula.fileutil.FileWriter
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -53,6 +55,12 @@ object BootStrap extends StartupRoutine {
     logger.info("Starting VCC DND4E components...")
     logger.debug("VCC version {} starting", version)
 
+    callStartupSimpleBlock(srw, "Updating content files") {
+      val writer = new FileWriter()
+      ExternalFileUpdater.updateInfoPlist(Configuration.getInstallDirectory, writer)
+      true
+    }
+
     callStartupStep(srw, "Loading configuration") {
       if (!ConfigurationFinder.foundConfiguration) {
         logger.info("Can't find the configuration, will configure")
@@ -71,6 +79,7 @@ object BootStrap extends StartupRoutine {
       Configuration.addMetricIdentifierIfNeeded(ConfigurationFinder.locateFile())
       Configuration
     }
+
     callStartupStep(srw, "Logging") {
       val logs = Seq("org.mortbay.log", "domain", "app", "infra", "user", "fs-agent")
       val file = new File(Configuration.baseDirectory.value, "vcc.log")
