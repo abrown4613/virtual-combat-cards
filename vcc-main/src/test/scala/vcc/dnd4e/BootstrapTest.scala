@@ -21,16 +21,21 @@ import vcc.util.swing.XHTMLPaneAgent
 import org.specs2.mutable.SpecificationWithJUnit
 
 /**
- * Class to test singleton objects.
+ * Class to test singleton objects and resources
  */
 class BootstrapTest extends SpecificationWithJUnit {
   "Load XHTMLPaneAgent configured properly" in {
     XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
-    XHTMLPaneAgent.getInstance() must not beNull;
+    (XHTMLPaneAgent.getInstance() must not beNull)
   }
 
   "Inititialize CaptureTemplateEngine" in {
     CaptureTemplateEngine.initialize(Configuration.dataDirectory)
-    CaptureTemplateEngine.getInstance must not beNull;
+    (CaptureTemplateEngine.getInstance must not beNull)
+  }
+
+  "Verify Info.plist is bundled" in {
+    val resource = this.getClass.getClassLoader.getResource("external/Info.plist")
+    (resource must not beNull)
   }
 }
