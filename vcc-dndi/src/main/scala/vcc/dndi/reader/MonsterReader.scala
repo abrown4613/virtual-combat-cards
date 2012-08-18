@@ -48,18 +48,7 @@ class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
 object SomeUsage {
   val sep = Icon(IconType.Separator)
 
-  object EncounterText {
-    private val encounterRE = """(\d+)\s*/\s*Encounter""".r
-
-    def unapply(text: String): Option[Int] = {
-      text.trim match {
-        case this.encounterRE(i) => Some(i.toInt)
-        case "Encounter" => Some(0)
-        case _ => None
-      }
-    }
-  }
-
+  private val encounterLimit = """(\d+)\s*/\s*Encounter""".r
   private val rechargeWithDice = """^\s*Recharge\s+(\d+).*""".r
   private val roundLimit = """^\s*(\d+)\s*/\s*round""".r
   private val rechargeAllBold = """^\s*Recharge\s+(.*)$""".r
@@ -68,13 +57,16 @@ object SomeUsage {
     parts match {
       case Nil => None
       case Key("") :: Nil => Some(NoUsage)
-      case Key("Aura") :: Text(range) :: Nil => Some(AuraUsage(range.trim.toInt))
-      case Key(EncounterText(n)) :: Nil => Some(EncounterUsage(n))
+      case Key("Aura") :: Text(range) :: Nil => Some(AuraUsage(range.trim))
+      case Key(`encounterLimit`(uses)) :: Nil => Some(EncounterUsage("%s/Encounter".format(uses)))
+      case Key("Encounter") :: Text(detail) :: Nil => Some(EncounterUsage(detail.trim))
+      case Key("Encounter") :: Nil => Some(EncounterUsage())
       case Text(`rechargeWithDice`(min)) :: Nil => Some(RechargeDiceUsage(min.toInt))
       case Key("Recharge") :: Text(condition) :: Nil => Some(RechargeConditionalUsage(condition.trim))
       case Key(`rechargeAllBold`(WithoutParenthesis(condition))) :: Nil => Some(RechargeConditionalUsage(condition.trim))
-      case Key("At-Will") :: Nil => Some(AtWillUsage(0))
-      case Key("At-Will") :: Text(WithoutParenthesis(`roundLimit`(n))) :: Nil => Some(AtWillUsage(n.toInt))
+      case Key("At-Will") :: Nil => Some(AtWillUsage(None))
+      case Key("At-Will") :: Text(WithoutParenthesis(`roundLimit`(n))) :: Nil => Some(AtWillUsage("%s/round".format(n)))
+      case Key("At-Will") :: Text(WithoutParenthesis(detail)) :: Nil => Some(AtWillUsage(detail.trim))
       case _ => None
     }
   }
@@ -119,12 +111,7 @@ object SomePowerDefinition {
         } else null // Something failed on the keywords parse
       case _ => null
     }
-    if (pdef == null) {
-      // We ignore failed parse, maybe could try to recover.
-      None
-    } else {
-      Some(pdef)
-    }
+    Option(pdef)
   }
 }
 
@@ -167,7 +154,7 @@ object PowerHeaderParts {
     } else cleanPart
 
     val (icons, rest) = normalized.partition(p => p.isInstanceOf[Icon] && p != separator)
-    val iconSeq = icons.map(p => p.asInstanceOf[Icon].itype).toSeq
+    val iconSeq = icons.map(p => p.asInstanceOf[Icon].iconType).toSeq
     val sep = rest.indexOf(separator)
     if (sep > 0) {
       val split = rest.splitAt(sep)
@@ -198,7 +185,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     spanList match {
       case ("xp", "-") :: rest => ("xp", "0") :: normalizeTitle(rest)
       case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
-      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) :: ("role", role) :: normalizeTitle(rest)
+      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
     }
@@ -238,7 +225,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     stream.advance()
-    var role = headMap("role")
+    var role = headMap.getOrElse("role","No Role")
     if (role == "Minion") role = "No Role"
     if (role.startsWith("Minion ")) role = role.substring(7)
     headMap + ("role" -> role)
@@ -268,11 +255,11 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         }
         val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts, false))
+        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts))
         stream.advance()
         (true, stats, whatever)
       case Block("P#flavor", parts) =>
-        val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts), false))
+        val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts)))
         stream.advance()
         (false, normalizeLegacySenses(stats), auras)
       case _ =>
@@ -364,13 +351,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         stream.advance()
       case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
         val trimmedList = trimParts(parts)
-        val pairs: List[(String, String)] = try {
-          partsToPairs(trimmedList, false)
-        } catch {
-          case s =>
-            partsToPairs(trimmedList, true)
-        }
-        val normalizedParts = pairs.map(p => p._1.toLowerCase -> p._2)
+        val normalizedParts = partsToPairs(trimmedList).map(p => p._1.toLowerCase -> p._2)
         result ++= normalizedParts
         stream.advance()
       case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
@@ -403,7 +384,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     desc match {
       case `auraMatcher`(keyword, range, auraDesc) =>
         Power(
-          CompletePowerDefinition(Seq(IconType.Aura), name, if (keyword != null) keyword.trim else null, AuraUsage(range.toInt)),
+          CompletePowerDefinition(Seq(IconType.Aura), name, if (keyword != null) keyword.trim else null, AuraUsage(range)),
           ActionType.Trait,
           StyledText.singleBlock("P", "flavorIndent", auraDesc.trim))
       case _ =>

@@ -51,10 +51,10 @@ class PowerDataSourceTest extends SpecificationWithJUnit {
       })
   }
 
-  private val completePower = Power(CompletePowerDefinition(Seq(IconType.Melee), "name", "keyword", AtWillUsage(0)),
+  private val completePower = Power(CompletePowerDefinition(Seq(IconType.Melee), "name", "keyword", AtWillUsage()),
     ActionType.Standard, desc)
 
-  private val legacyPower = Power(LegacyPowerDefinition(Seq(IconType.Melee), "name", "(standart; at-will)", "keyword", AtWillUsage(0)),
+  private val legacyPower = Power(LegacyPowerDefinition(Seq(IconType.Melee), "name", "(standart; at-will)", "keyword", AtWillUsage()),
     ActionType.Standard, desc)
 
   def is = "PowerDataSource" ^
@@ -65,7 +65,7 @@ class PowerDataSourceTest extends SpecificationWithJUnit {
       legacyPower.templateVariable("action-usage") must_== Some("(standart; at-will)")
     } ^
     "usage-action must not return null" ! {
-      val pd = LegacyPowerDefinition(Seq(IconType.Melee), "name", null, "keyword", AtWillUsage(0))
+      val pd = LegacyPowerDefinition(Seq(IconType.Melee), "name", null, "keyword", AtWillUsage())
       pd.templateVariable("action-usage") must_== None
     } ^ end
 }

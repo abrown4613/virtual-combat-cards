@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,20 +45,25 @@ class PowerExtractorHelperTest extends SpecificationWithJUnit {
 
     "extract an aura" in {
       val parts = List(Key("Aura"), Text(" 1"))
-      SomeUsage.unapply(parts) must_== Some(AuraUsage(1))
+      SomeUsage.unapply(parts) must_== Some(AuraUsage("1"))
     }
 
     "extract simple encounter usage" in {
       val parts = List(Key("Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(0))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage())
     }
 
     "extract simple multiple per encounter" in {
       val parts = List(Key("2 / Encounter"))
-      SomeUsage.unapply(parts) must_== Some(EncounterUsage(2))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage("2/Encounter"))
 
       val parts2 = List(Key("3/Encounter"))
-      SomeUsage.unapply(parts2) must_== Some(EncounterUsage(3))
+      SomeUsage.unapply(parts2) must_== Some(EncounterUsage("3/Encounter"))
+    }
+
+    "extract simple multiple per encounter" in {
+      val parts = List(Key("Encounter"), Text(" some detail"))
+      SomeUsage.unapply(parts) must_== Some(EncounterUsage("some detail"))
     }
 
     "handle dice recharge" in {
@@ -87,20 +92,30 @@ class PowerExtractorHelperTest extends SpecificationWithJUnit {
 
     "handle round limited at will" in {
       val parts = List(Key("At-Will"), Text(" 2 / round"))
-      SomeUsage.unapply(parts) must_== Some(AtWillUsage(2))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage("2/round"))
 
       val parts2 = List(Key("At-Will"), Text(" 2/round"))
-      SomeUsage.unapply(parts2) must_== Some(AtWillUsage(2))
+      SomeUsage.unapply(parts2) must_== Some(AtWillUsage("2/round"))
     }
 
     "handle round limited at will in parenthesis" in {
       val parts3 = List(Key("At-Will"), Text(" (1/round)"))
-      SomeUsage.unapply(parts3) must_== Some(AtWillUsage(1))
+      SomeUsage.unapply(parts3) must_== Some(AtWillUsage("1/round"))
     }
 
     "handle unlimited at will" in {
       val parts = List(Key("At-Will"))
-      SomeUsage.unapply(parts) must_== Some(AtWillUsage(0))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage())
+    }
+
+    "handle at will with text" in {
+      val parts = List(Key("At-Will"), Text(" polymorph "))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage("polymorph"))
+    }
+
+    "handle at will with text in parenthesis" in {
+      val parts = List(Key("At-Will"), Text(" (polymorph )"))
+      SomeUsage.unapply(parts) must_== Some(AtWillUsage("polymorph"))
     }
   }
 

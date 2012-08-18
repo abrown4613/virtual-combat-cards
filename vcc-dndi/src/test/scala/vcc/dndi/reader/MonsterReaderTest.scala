@@ -32,7 +32,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   // Returns a block stream with already advanced.
   def getBlockStream(xml: Node): TokenStream[BlockElement] = {
-    val blk = Parser.parseBlockElement(xml, true)
+    val blk = Parser.parseBlockElement(xml)
     val blk2 = Block("P#flavor", List(Text("Something happens.")))
     val blk3 = Block("P#flavorIndent", List(Emphasis("Secondary")))
     val tailBlock = Block("POWEREND", Nil)
@@ -273,9 +273,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B>
         1</P>)
       val power = mr.processPower(ActionType.Trait, ts)
-      power must not beNull;
+      (power must not beNull)
 
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage(1))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage("1"))
       power.action must_== ActionType.Trait
       power.description must_== sampleDesc
     }
@@ -285,9 +285,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B>
       </P>)
       val power = mr.processPower(ActionType.Minor, ts)
-      power must not beNull;
+      (power must not beNull)
 
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage(0))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage())
       power.action must_== ActionType.Minor
       power.description must_== sampleDesc
     }
@@ -389,7 +389,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         (standard, at-will)
         <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Arcane, Weapon</B>
       </P>)
-      val blk = Parser.parseBlockElement(phl, true)
+      val blk = Parser.parseBlockElement(phl)
       val ts = new TokenStream[BlockElement](List(blk), new MonsterBlockStreamRewrite())
       ts.advance() must beTrue
       ts.head must_== blk
@@ -409,7 +409,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val power = reader.promoteAuraLike("Mocking Eye", "aura 10; some description.")
       (power must not beNull)
       power.action must_== ActionType.Trait
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage(10))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Mocking Eye", null, AuraUsage("10"))
       power.description must_== auraDesc
     }
 
@@ -417,7 +417,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       val power = reader.promoteAuraLike("Aura of Terror", "(Fear) aura 5; some description.")
       (power must not beNull)
       power.action must_== ActionType.Trait
-      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage(5))
+      power.definition must_== CompletePowerDefinition(Seq(IconType.Aura), "Aura of Terror", "(Fear)", AuraUsage("5"))
       power.description must_== auraDesc
     }
 
@@ -472,9 +472,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       norm must not haveKey("senses")
     }
   }
+
   /*
-  * This is a conditional test that will iterate through all cached entris in a directory.
-  */
+   * This is a conditional test that will iterate through all cached files in a directory.
+   */
   if (System.getProperty("test.basedir") != null) {
     val dir = new java.io.File(System.getProperty("test.basedir"))
     val failures = new ListBuffer[String]
@@ -482,21 +483,25 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       "load everybody in " + dir.getAbsolutePath in {
         val dirIter = new vcc.util.DirectoryIterator(dir, false)
         for (file <- dirIter if (file.isFile)) {
-          val testedOk: Boolean = try {
+          val failedLoad: Boolean = try {
             val xml = scala.xml.XML.loadFile(file)
-            val blocks = parseBlockElements(xml.child, true)
+            val blocks = parseBlockElements(xml.child)
             if (blocks != null && !blocks.isEmpty) {
-              val mReader = new MonsterReader(0)
-              val monster = mReader.process(blocks)
-              monster != null
-            } else false
+              val monster = new MonsterReader(0).process(blocks)
+              if (monster == null)
+                System.err.println("Monster is null: " + file)
+              monster == null
+            } else {
+              System.err.println("Block empty for: " + file)
+              true
+            }
           } catch {
-            case e =>
+            case e: Throwable =>
               System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
-              false
+              true
           }
-          if (testedOk) {
-            failures += ("loading failed for " + file)
+          if (failedLoad) {
+            failures += ("loading failed for " + file + "\n")
           }
         }
         failures.toList must beEmpty
