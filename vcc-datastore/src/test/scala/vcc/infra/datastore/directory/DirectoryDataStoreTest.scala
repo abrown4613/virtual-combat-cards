@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,15 @@ import org.specs2.specification.Scope
 class DirectoryDataStoreTest extends DataStoreSpec {
 
   def generateStoreID() = {
-    val file = new java.io.File(System.getProperty("java.io.tmpdir"),"test"+(new scala.util.Random().nextInt())+".dsd")
-    DataStoreURI.fromStorageString("vcc-store:directory:"+ file.toURI.toString)
+    val file = new java.io.File(System.getProperty("java.io.tmpdir"), "test" + (new scala.util.Random().nextInt()) + ".dsd")
+    DataStoreURI.fromStorageString("vcc-store:directory:" + file.toURI.toString)
   }
-  val testStore = new java.io.File("testdata","datastore")
-  
-  val badTestEntity = Seq("notxml","noid","extra-xml-entity","bad-encoding","missing-datum-id","bad-xml","id-mismatch").map(x=>EntityID.fromName(x))
-  
-  val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:"+testStore.toURI.toString)
+
+  val testStore = new java.io.File("testdata", "datastore")
+
+  val badTestEntity = Seq("notxml", "noid", "extra-xml-entity", "bad-encoding", "missing-datum-id", "bad-xml", "id-mismatch").map(x => EntityID.fromName(x))
+
+  val testStoreURI = DataStoreURI.fromStorageString("vcc-store:directory:" + testStore.toURI.toString)
 
   var aDataStore: DataStore = null
 
@@ -40,17 +41,19 @@ class DirectoryDataStoreTest extends DataStoreSpec {
     val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
     dsb.exists(storeID) must beTrue
     aDataStore = dsb.open(storeID)
-    aDataStore must not beNull;
+    (aDataStore must not beNull)
   }
 
   "DirectoryDataStore on a test directory" should {
-    "have list all bad files" in new storeContext{
+    "have list all bad files" in new storeContext {
       aDataStore.enumerateEntities() must haveTheSameElementsAs(badTestEntity)
     }
-    for(eid<-badTestEntity) {
-      ("process "+(eid.asStorageString)) in new storeContext{ aDataStore.loadEntity(eid) must throwAn[DataStoreIOException] }
+    for (eid <- badTestEntity) {
+      ("process " + (eid.asStorageString)) in new storeContext {
+        aDataStore.loadEntity(eid) must throwAn[DataStoreIOException]
+      }
     }
-    "provide empty field list but not exceptions" in new storeContext{
+    "provide empty field list but not exceptions" in new storeContext {
       val ef = aDataStore.extractEntityData(Set("type"))
       ef.length must beEqualTo(0)
       ef must_== Nil
@@ -63,19 +66,19 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       dsb must not beNull;
       dsb.isResolvedDataStoreURI(testStoreURI) must beTrue
     }
-    
+
     "leave absolute URI unchanged " in {
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb must not beNull;
       dsb.isResolvedDataStoreURI(testStoreURI) must beTrue
-      dsb.resolveDataStoreURI(testStoreURI,Map()) must_== testStoreURI
+      dsb.resolveDataStoreURI(testStoreURI, Map()) must_== testStoreURI
     }
     "replace a variable to become absolute" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path")
       val repl = (new java.io.File(".")).toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
-      val resolved = dsb.resolveDataStoreURI(baseURI,Map("VAL"->repl))
+      val resolved = dsb.resolveDataStoreURI(baseURI, Map("VAL" -> repl))
       resolved must not beNull;
       dsb.isResolvedDataStoreURI(resolved) must beTrue
     }
@@ -85,10 +88,10 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       val repl = (new File(System.getProperty("java.io.tmpdir"))).toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
-      val resolved = dsb.resolveDataStoreURI(baseURI,Map("VAL"->repl))
+      val resolved = dsb.resolveDataStoreURI(baseURI, Map("VAL" -> repl))
       resolved must not beNull;
       dsb.isResolvedDataStoreURI(resolved) must beTrue
-      resolved.uri.toString must_== "vcc-store:directory:"+repl.toString+"path/to/some"
+      resolved.uri.toString must_== "vcc-store:directory:" + repl.toString + "path/to/some"
     }
 
     "replace relative URL with current dir + path" in {
@@ -96,17 +99,17 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       val pwd = new File(System.getProperty("user.dir"))
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
-      val resolved = dsb.resolveDataStoreURI(baseURI,Map())
+      val resolved = dsb.resolveDataStoreURI(baseURI, Map())
       resolved must not beNull;
       dsb.isResolvedDataStoreURI(resolved) must beTrue
-      resolved.uri.toString must_== "vcc-store:directory:"+(new File(pwd,"path/to/some.sa").toURI.toString)
+      resolved.uri.toString must_== "vcc-store:directory:" + (new File(pwd, "path/to/some.sa").toURI.toString)
     }
     "must return null if it cant be resolved" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path/to/some")
       val repl = (new File(".")).toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
-      dsb.resolveDataStoreURI(baseURI,Map("OTHER"->repl)) must beNull
+      dsb.resolveDataStoreURI(baseURI, Map("OTHER" -> repl)) must beNull
     }
   }
 }
