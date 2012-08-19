@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
 
     "provide a builder" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
-      dsb must not beNull;
+      (dsb must not beNull)
     }
     "must be always the same" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
@@ -68,13 +68,13 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       adsb.open(storeID) must beNull
     }
     "create a store" in new dsbContext {
-      adsb.create(storeID) must not beNull;
+      (adsb.create(storeID) must not beNull)
     }
     "prove it exists after creation" in new dsbContext {
       adsb.exists(storeID) must beTrue
     }
     "open a store that that exists" in new dsbContext {
-      adsb.open(storeID) must not beNull;
+      (adsb.open(storeID) must not beNull)
     }
     "destroy the store" in new dsbContext {
       adsb.destroy(storeID) must beTrue
@@ -92,9 +92,9 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
     }
     dsb.exists(storeID) must beTrue
     val aDataStore: DataStore = dsb.open(storeID)
-    aDataStore must not beNull;
+    (aDataStore must not beNull)
 
-    def after = {
+    def after {
       aDataStore.close()
     }
   }
@@ -102,7 +102,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
   "a DataStore implementation" should {
 
     "be empty after creation" in new dataStoreContext {
-      val enum = aDataStore.enumerateEntities
+      val enum = aDataStore.enumerateEntities()
       enum must not beNull;
       enum must_== Nil
       val sets = aDataStore.extractEntityData(Set("name"))
@@ -116,7 +116,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       rc must beTrue
       val newSet = aDataStore.enumerateEntities()
       newSet must contain(eid1)
-      newSet must not contain (eid3);
+      (newSet must not contain (eid3))
     }
 
     "store another entity" in new dataStoreContext {
@@ -125,7 +125,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       rc must beTrue
       val newSet = aDataStore.enumerateEntities()
       newSet must contain(eid2)
-      newSet must not contain(eid3);
+      (newSet must not contain (eid3))
     }
 
     "must restore a saved entity" in new dataStoreContext {
@@ -153,6 +153,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       val ts1 = aDataStore.entityTimestamp(eid1)
       ts1 must beGreaterThan[Long](0)
       val aDataSet = DataStoreEntity(eid1, Map("name" -> "monster", "xp" -> "101"))
+      Thread.sleep(1000)
       val rc = aDataStore.storeEntity(aDataSet)
       rc must beTrue
       val ts2 = aDataStore.entityTimestamp(eid1)
