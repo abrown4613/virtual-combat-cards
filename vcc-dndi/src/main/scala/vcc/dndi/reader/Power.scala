@@ -95,7 +95,7 @@ object UsageFormatter {
   private val prefix = Seq(<img src="x.gif"/>, Text(" "))
 
   def format(usage: Usage): NodeSeq = usage match {
-    case AuraUsage(n) => prefix ++ Seq(<b>Aura</b>, Text(n.formatted(" %d")))
+    case AuraUsage(n) => prefix ++ Seq(<b>Aura</b>, Text(n.formatted(" %s")))
     case AtWillUsage(None) => prefix ++ Seq(<b>At-Will</b>)
     case AtWillUsage(detail) => prefix ++ Seq(<b>At-Will</b>, Text(" %s".format(detail.get)))
     case EncounterUsage(None) => prefix ++ Seq(<b>Encounter</b>)
