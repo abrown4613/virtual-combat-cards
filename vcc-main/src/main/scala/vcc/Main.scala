@@ -20,7 +20,7 @@ import vcc.infra.startup._
 import vcc.infra.LogService
 import vcc.util.swing.SwingHelper
 import javax.swing.JOptionPane
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import dnd4e.{ConfigurationDialog, BootStrap}
 import java.io.File
 
@@ -32,7 +32,7 @@ object Main {
 
     val logger = LoggerFactory.getLogger("startup")
 
-    assertWriteOnJarDirectory(classOf[ConfigurationDialog])
+    assertWriteOnJarDirectory(classOf[ConfigurationDialog], logger)
     val frame = SplashWindow.showSplash(BootStrap)
     if (frame != null) {
       SwingHelper.invokeLater {
@@ -52,9 +52,10 @@ object Main {
       "Initialization failed", JOptionPane.ERROR_MESSAGE)
   }
 
-  def assertWriteOnJarDirectory(clazz: java.lang.Class[_]) {
-    val jarFile = clazz.getProtectionDomain.getCodeSource.getLocation.getFile
+  def assertWriteOnJarDirectory(clazz: java.lang.Class[_], logger: Logger) {
+    val jarFile = clazz.getProtectionDomain.getCodeSource.getLocation.getFile.replaceAll("%20", " ")
     if (!new File(jarFile).getParentFile.canWrite) {
+      logger.error("Cannot write to parent of {}", jarFile)
       JOptionPane.showMessageDialog(null,
         """
           |Virtual Combat Cards must be able to write into the application folder.
@@ -63,7 +64,7 @@ object Main {
           |folder. Running from the DMG is not possible since it prevents updates.
         """.stripMargin,
         "Application Folder is Read Only", JOptionPane.ERROR_MESSAGE)
+      sys.exit(1)
     }
   }
-
 }
