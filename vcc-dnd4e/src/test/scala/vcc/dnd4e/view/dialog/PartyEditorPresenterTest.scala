@@ -133,7 +133,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
       pp.changeCombatantId(0, "ida")
       pp.changeCombatantId(0, "")
       there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA"))))) then
-        two(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1)))
+        atLeastTwo(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1)))
     }
 
     "collapse similar entries" in new spyScope {
