@@ -82,7 +82,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
 
       importer.finishTask()
 
-      there was one(view).setListContent(entityView(2))
+      there was atLeastOne(view).setListContent(entityView(2))
     }
 
     "add 2 files, finish one, add 1, finish" in new env {
@@ -105,7 +105,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       importer.finishTask()
 
       view.progress must_== expectedProgress.take(4)
-      there was one(view).setListContent(entityView(2))
+      there was atLeastOne(view).setListContent(entityView(2))
 
       importer.finishTask()
       view.progress must_== expectedProgress
@@ -136,7 +136,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       importer.finishTask()
       presenter.selectStatBlock(entityOnce.eid)
       view.currentDocument must matchDocument(entityTwice.statblock.value)
-      there was one(view).setListContent(List((entityOnce.eid, "twice")))
+      there was atLeastOne(view).setListContent(List((entityOnce.eid, "twice")))
     }
 
     "not attempt to import unsupported file" in new env {
