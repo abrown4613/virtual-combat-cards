@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,19 @@ package vcc.acceptance
 
 import org.specs2.mutable.SpecificationWithJUnit
 import java.io.File
+import org.specs2.specification.AroundExample
+import org.specs2.time.TimeConversions
+import org.specs2.execute.Result
+import org.specs2.execute.EventuallyResults._
 
-class SaveAndRestoreCombatStateTest extends SpecificationWithJUnit {
+trait RetryExamples extends AroundExample with TimeConversions {
+
+  def around[R <% Result](r: =>R) =
+    eventually(retries = 3, sleep = 10.millis)(r)
+
+}
+
+class SaveAndRestoreCombatStateTest extends SpecificationWithJUnit with RetryExamples {
   "Save and Restore Acceptance" should {
     "set comment" in {
       startApplication().
