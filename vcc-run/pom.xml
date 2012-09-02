@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-run</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2-SNAPSHOT</version>
     <inceptionYear>2009</inceptionYear>
     <packaging>jar</packaging>
     <name>VCC Launcher</name>
