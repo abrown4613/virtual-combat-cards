@@ -39,7 +39,7 @@ object LogService extends StartupStep {
     level.Error -> Level.ERROR,
     level.Fatal -> Level.FATAL,
     level.Off -> Level.OFF
-    )
+  )
 
   def initializeLog(contexts: Seq[String], filename: String, defaultLevel: level.Value, keep: Boolean) {
     val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -62,7 +62,7 @@ object LogService extends StartupStep {
           case None => defaultLevel
           case Some(l) => l
         }
-       
+
         logger.debug("Log level for {} is {}", context, lvl)
         log.setLevel(mapToLog4J(lvl))
 
@@ -76,13 +76,19 @@ object LogService extends StartupStep {
 
   def initializeStartupLog() {
     val context = "startup"
-
     if (LogManager.exists(context) == null) {
       val log = Logger.getLogger(context)
       log.setLevel(Level.DEBUG)
       if (inDebugMode) log.addAppender(new ConsoleAppender(new SimpleLayout()))
-      log.addAppender(new FileAppender(new SimpleLayout(), "launch.log", false))
+      log.addAppender(new FileAppender(new SimpleLayout(), getLaunchLogPath, false))
     }
+  }
+
+  private def getLaunchLogPath: String = {
+    if (System.getProperty("mrj.version") != null)
+      System.getProperty("user.home") + "/Library/Logs/vcclaunch.log"
+    else
+      "vcclaunch.log"
   }
 
   def isStartupComplete = LogManager.exists("infra") != null
@@ -94,6 +100,7 @@ object LogService extends StartupStep {
  * something wrong int he program, like missing resources and such.
  */
 object AbnormalEnd {
+
   import java.io._
 
   def apply(obj: AnyRef, msg: String): Nothing = apply(obj, msg, null)
