@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.exnebula</groupId>
     <artifactId>vcc-run</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.2</version>
     <inceptionYear>2009</inceptionYear>
     <packaging>jar</packaging>
     <name>VCC Launcher</name>
@@ -16,7 +16,7 @@
             <id>exnebula</id>
             <uniqueVersion>false</uniqueVersion>
             <name>ExNebula.org</name>
-            <url>scp://petra.exnebula.org/var/repo</url>
+            <url>scp://petra.exnebula.org:222/var/repo</url>
         </repository>
     </distributionManagement>
 
@@ -71,5 +71,11 @@
                 </configuration>
             </plugin>
         </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+            </extension>
+        </extensions>
     </build>
 </project>
