@@ -54,7 +54,7 @@ public class Launcher {
     File baseDir = new File(baseDirName);
 
     _log = startLogger(new File(getLaunchLogPath()));
-    _log.info("Starting VCC Lancher 1.1.1");
+    _log.info("Starting VCC Lancher 1.1.2");
     _log.debug("----- System Properties -----");
     Enumeration<?> spe = System.getProperties().propertyNames();
     while (spe.hasMoreElements()) {
