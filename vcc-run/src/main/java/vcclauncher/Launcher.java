@@ -226,6 +226,6 @@ public class Launcher {
     if (System.getProperty("mrj.version") != null)
       return System.getProperty("user.home") + "/Library/Logs/vcclaunch.log";
     else
-      return System.getProperty("user.dir", ".") + File.pathSeparator + "vcclaunch.log";
+      return System.getProperty("user.dir", ".") + File.separator + "vcclaunch.log";
   }
 }
