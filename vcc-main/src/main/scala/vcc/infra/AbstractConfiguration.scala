@@ -45,7 +45,7 @@ abstract class AbstractConfiguration {
   }
 
   def makeProperty[T](propName: String, propDefault: String, deSerialize: String => T): Property[T] =
-    makePropertyWithSerializer(propName, propDefault, deSerialize, (x:T) => x.toString)
+    makePropertyWithSerializer(propName, propDefault, deSerialize, (x: T) => x.toString)
 
   def makePropertyWithSerializer[T](propName: String, propDefault: String, deSerialize: String => T, serialize: T => String): Property[T] = {
     if (propMap.isDefinedAt(propName))
@@ -93,17 +93,22 @@ object ConfigurationFinder {
 
   val configFilename = "vcc.properties"
 
-  def locateFile(): java.io.File = {
-    for (ev <- searchVars) {
-      val prop = System.getProperty(ev)
-      if (prop != null) {
-        val file = new File(prop, configFilename)
-        if (file.exists && file.isFile && file.canRead) return file
-      }
-    }
-    null
-  }
+  def locateFile() = locateFileInternal(file => file.exists && file.isFile && file.canRead).getOrElse(null)
 
   def foundConfiguration = locateFile != null
+
+  private[infra] def locateFileInternal(validation: File => Boolean): Option[File] = {
+    allSearchFilePaths().map(new File(_)).find(validation)
+  }
+
+  private def allSearchFilePaths(): List[String] =
+    (searchVars.flatMap(makeConfigFileFromProperty) ++ List(preferenceInMacDirectory))
+
+  private def makeConfigFileFromProperty(prop: String) =
+    Option(System.getProperty(prop)).map(p => p + File.separator + configFilename)
+
+  private val preferenceInMacDirectory: String =
+    System.getProperty("user.home") + File.separator +
+      "Library" + File.separator + "Preferences" + File.separator + configFilename
 
 }
