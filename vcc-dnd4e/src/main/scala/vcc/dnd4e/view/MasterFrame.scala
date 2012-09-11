@@ -27,6 +27,7 @@ import java.net.URL
 import vcc.dnd4e.tracker.common.CombatState
 import vcc.tracker.Tracker
 import vcc.dnd4e.tracker.dispatcher.InterimController
+import org.exnebula.macify._
 
 case class ReleaseInformation(currentVersion: Version, versionReleaseURL: URL, checkAfterAge: Long)
 
@@ -51,6 +52,7 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
   registerDockableKeyStroke()
   docker.loadLayoutOrDefault()
   registerReactions()
+  registerMacSpecific()
 
   SwingHelper.invokeInEventDispatchThread {
     tracker.initializeState(CombatState.empty)
@@ -79,7 +81,7 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
     def getMaximumNumberOfPanels: Int = try {
       System.getProperty("vcc.view.efp.max").toInt
     } catch {
-      case _ => 3
+      case _: Throwable => 3
     }
 
     if (Toolkit.getDefaultToolkit.getScreenSize.getHeight > 700)
@@ -90,8 +92,8 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
 
   private def adjustPreferredSize() {
     preferredSize = {
-      val toolkit = java.awt.Toolkit.getDefaultToolkit;
-      val dimension = toolkit.getScreenSize;
+      val toolkit = java.awt.Toolkit.getDefaultToolkit
+      val dimension = toolkit.getScreenSize
       if (dimension != null)
         new java.awt.Dimension(if (dimension.getWidth >= 1150) 1150 else 800, if (dimension.getHeight >= 700) 690 else 600)
       else
@@ -140,14 +142,32 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
 
     reactions += {
       case WindowClosing(win) =>
-        if (System.getProperty("vcc.quickexit") != null ||
-          Dialog.showConfirmation(Component.wrap(this.peer.getRootPane), "Quitting Virtual Combat Cards will mean you loose all the combat information.\nAre you sure?", "Quit?", Dialog.Options.YesNo) == Dialog.Result.Yes) {
+        if (confirmTerminate()) {
           this.dispose()
           System.exit(1)
         }
       case WindowOpened(win) =>
         //Go fetch new and updates if needed
-        news.updateIfOld(releaseInformation.checkAfterAge, docker);
+        news.updateIfOld(releaseInformation.checkAfterAge, docker)
+    }
+  }
+
+  private def confirmTerminate(): Boolean = {
+    System.getProperty("vcc.quickexit") != null ||
+      Dialog.showConfirmation(Component.wrap(this.peer.getRootPane), "Quitting Virtual Combat Cards will mean you loose all the combat information.\nAre you sure?", "Quit?", Dialog.Options.YesNo) == Dialog.Result.Yes
+  }
+
+  private def registerMacSpecific() {
+    if (Macify.isMac) {
+      val app = Macify.getApplication
+      app.setQuitHandler(new QuitHandlerAdapter {
+        def handleQuitRequestWith(quitEvent: QuitEventWrapper, quitResponse: QuitResponseWrapper) {
+          if (confirmTerminate())
+            quitResponse.performQuit()
+          else
+            quitResponse.cancelQuit()
+        }
+      })
     }
   }
 }
