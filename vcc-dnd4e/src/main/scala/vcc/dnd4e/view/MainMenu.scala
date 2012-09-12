@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   extends MenuBar {
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
 
-  private val fileMenu = new Menu("File");
+  private val fileMenu = new Menu("File")
   fileMenu.contents += new MenuItem(Action("Load Party ...") {
     val file = FileChooserHelper.chooseOpenFile(this.peer, FileChooserHelper.partyFilter)
     if (file.isDefined) {
@@ -137,7 +137,6 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     dockFocusMenu.contents += item
   }
 
-  //Help menu
   private val helpMenu = new Menu("Help")
   helpMenu.contents += new MenuItem(Action("Online Manual") {
     val dsk = Desktop.getDesktop
@@ -160,13 +159,7 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
 
   helpMenu.contents += new Separator
   helpMenu.contents += new MenuItem(Action("About") {
-    Dialog.showMessage(
-      Component.wrap(parent.peer.getRootPane),
-      "This is Virtual Combant Cards version: " + releaseInformation.currentVersion.versionString +
-        "\nDesigned at: www.exnebula.org",
-      "About Virtual Combat Cards",
-      Dialog.Message.Info, IconLibrary.MetalD20
-    )
+    showAboutDialog()
   })
 
   contents += fileMenu
@@ -181,9 +174,18 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
     try {
       executionBlock
     } catch {
-      case exception =>
+      case exception: Throwable =>
         logger.warn(errorMessage, exception)
         Dialog.showMessage(null, errorMessage + ". Report was added to log.", errorMessage, messageType = Dialog.Message.Error)
     }
+  }
+
+  def showAboutDialog() {
+    Dialog.showMessage(
+      Component.wrap(parent.peer.getRootPane),
+      "This is Virtual Combant Cards version: " + releaseInformation.currentVersion.versionString +
+        "\nDesigned at: www.exnebula.org",
+      "About Virtual Combat Cards",
+      Dialog.Message.Info, IconLibrary.MetalD20)
   }
 }
