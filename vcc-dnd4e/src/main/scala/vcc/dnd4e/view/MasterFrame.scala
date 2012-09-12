@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,6 +166,18 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
             quitResponse.performQuit()
           else
             quitResponse.cancelQuit()
+        }
+      })
+
+      app.setAboutHandler(new AboutHandlerAdapter {
+        def handleAbout(aboutEvent: AboutEventWrapper) {
+          mainMenu.showAboutDialog()
+        }
+      })
+
+      app.setPreferencesHandler(new PreferenceHandlerAdapter {
+        def handlePreferences(preferencesEvent: PreferenceEventWrapper) {
+          configurationPanel.showConfiguration()
         }
       })
     }

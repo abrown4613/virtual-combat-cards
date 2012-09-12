@@ -10,6 +10,7 @@ slf4j-log4j12.jar
 core-renderer.jar
 idw-gpl.jar
 swing.jar
+macify.jar
 vcc-main.jar
 vcc-infra.jar
 vcc-dnd4e-tracker.jar
