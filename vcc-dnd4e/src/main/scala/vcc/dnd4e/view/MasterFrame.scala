@@ -175,8 +175,8 @@ class MasterFrame(baseDirectory: File, releaseInformation: ReleaseInformation, c
         }
       })
 
-      app.setPreferencesHandler(new PreferenceHandlerAdapter {
-        def handlePreferences(preferencesEvent: PreferenceEventWrapper) {
+      app.setPreferencesHandler(new PreferencesHandlerAdapter {
+        def handlePreferences(preferencesEvent: PreferencesEventWrapper) {
           configurationPanel.showConfiguration()
         }
       })
