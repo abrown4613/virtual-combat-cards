@@ -87,7 +87,9 @@ object CharacterSummaryProjection extends TableModelRowProjection[CharacterSumma
 }
 
 
-class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") with CompendiumRepositoryObserver {
+class CompendiumEntitySelectionPanel
+  extends MigPanel("fill, ins 0, hidemode 1", "", "[][][grow][]")
+  with CompendiumRepositoryObserver {
   private val monsterButton = new RadioButton("Monster")
   private val characterButton = new RadioButton("Character")
   private val trapButton = new RadioButton("Trap")
@@ -150,7 +152,7 @@ class CompendiumEntitySelectionPanel extends MigPanel("fill, ins 0,hidemode 1") 
   add(minLevelCombo, "gap unrel")
   add(new Label(" to"), "")
   add(maxLevelCombo, "wrap")
-  add(scrollPane, "span 3,wrap, growx, growy")
+  add(scrollPane, "span 3, growx, growy")
 
   listenTo(monsterButton, characterButton, trapButton, minLevelCombo.selection, maxLevelCombo.selection)
   reactions += {
