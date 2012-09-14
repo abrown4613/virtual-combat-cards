@@ -44,8 +44,8 @@ class CompendiumView(icon: Image) extends Frame {
 
   entListPanel.doubleClickAction = editAction
 
-  contents = new MigPanel("fill, ins dialog") {
-    add(entListPanel, "span 5, wrap, growx")
+  contents = new MigPanel("fill, ins dialog", "", "[grow][]") {
+    add(entListPanel, "span 5, wrap, growx, growy")
     add(new Button(newEntryAction), "")
     add(new Button(editAction))
     add(new Button(Action("Delete") {

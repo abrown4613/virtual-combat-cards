@@ -133,7 +133,7 @@ class PartyEditorView(presenter: PartyEditorPresenter, panelDirector: PanelDirec
       add(addButton, "split 3")
       add(removeButton, "growx")
       add(clearAllButton, "growx,wrap")
-      add(new MigPanel("fill,ins 0") {
+      add(new MigPanel("fill,ins 0", "", "[][][grow]") {
         add(new Label("Party Size:"), "split 3")
         add(partySizeCombo, "")
         add(totalXPLabel, "gap 20px, align right, wrap")
