@@ -35,6 +35,7 @@ object Application {
 
   def initialize(tracker: Tracker[CombatState], observer: Tracker.Observer[CombatState]) {
     tracker.addObserver(observer)
+    tracker.addObserver(PlayerViewServlet.observer)
     tracker.initializeState(CombatState.empty)
     theInstance = new Application(tracker)
   }

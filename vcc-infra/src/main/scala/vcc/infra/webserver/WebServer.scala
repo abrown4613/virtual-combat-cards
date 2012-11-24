@@ -18,10 +18,10 @@ package vcc.infra.webserver
 
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.bio.SocketConnector
-import org.mortbay.jetty.servlet.ServletHandler
 import org.mortbay.component._
+import org.mortbay.jetty.webapp.WebAppContext
 
-class WebServer(port: Int) {
+class WebServer(port: Int, webDir: String) {
 
   private val logger = org.slf4j.LoggerFactory.getLogger("infra")
 
@@ -52,17 +52,20 @@ class WebServer(port: Int) {
   }
 
   private val server = new Server()
-  private val handler = new ServletHandler()
+  private val warContext = new WebAppContext()
 
-  protected def initialize() {
+  protected def initialize(webContentURL: String) {
     val connector = new SocketConnector()
     connector.setPort(port)
     server.setConnectors(Array(connector))
-    server.addHandler(handler)
     server.addLifeCycleListener(ServerStatus)
+
+    warContext.setWar(webContentURL)
+    warContext.setContextPath("/")
+    server.addHandler(warContext)
   }
 
-  initialize()
+  initialize(webDir)
 
   def running = ServerStatus.running
 
@@ -70,7 +73,7 @@ class WebServer(port: Int) {
     try {
       server.start()
     } catch {
-      case e =>
+      case _: Throwable =>
         server.stop()
         server.join()
     }
@@ -82,7 +85,7 @@ class WebServer(port: Int) {
   }
 
   def registerServlet(classPath: String, path: String) {
-    handler.addServletWithMapping(classPath, path)
+    warContext.addServlet(classPath, path)
   }
 
 }
@@ -91,19 +94,19 @@ object WebServer {
 
   /**
    * Create a WebServer
-   * @param name Name of server in Registry
+   * @param webContentURL String of URL to web content
    * @param port Port to run server on
    * @param servletMap A map for path to Servlet class that is used to register servlet that handle each path
    */
-  def initialize(name: String, port: Int, servletMap: Map[String, Class[_]]): WebServer = {
-    val ws = new WebServer(port)
-    for((path,clazz)<-servletMap) {
-      ws.registerServlet(clazz.getName,path)
+  def initialize(webContentURL: String, port: Int, servletMap: Map[String, Class[_]]): WebServer = {
+    val ws = new WebServer(port, webContentURL)
+    for ((path, clazz) <- servletMap) {
+      ws.registerServlet(clazz.getName, path)
     }
     try {
       ws.start()
     } catch {
-      case s =>
+      case _: Throwable =>
     }
     ws
   }

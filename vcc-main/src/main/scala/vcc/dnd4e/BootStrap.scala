@@ -154,8 +154,9 @@ object BootStrap extends StartupRoutine {
     }
 
     callStartupSimpleBlock(srw, "Web Server") {
+      val webDir = this.getClass.getClassLoader.getResource("vcc").toExternalForm
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
-      webServer = WebServer.initialize("webserver", 4143, Map(
+      webServer = WebServer.initialize(webDir, 4143, Map(
         "/capture" -> classOf[CaptureServlet]
       ))
       true
