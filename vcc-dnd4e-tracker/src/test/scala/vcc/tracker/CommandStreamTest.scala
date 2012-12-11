@@ -124,7 +124,7 @@ class CommandStreamTest extends SpecificationWithJUnit {
       s1.get(any) returns (None)
       s2.get(any) returns (None)
       (composed.get(randomInt()) must_== None) and
-        (there was one(s1).get(any) then one(s2).get(any))
+        (there was one(s1).get(any)) then one(s2).get(any)
     }
   }
 

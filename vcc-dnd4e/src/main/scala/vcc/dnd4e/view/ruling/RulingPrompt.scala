@@ -69,7 +69,7 @@ class RulingPrompt private(context: RulingContext[CombatState]) {
   }
 
   private def generateRulingPanel(ruling: Ruling[CombatState, _, _]): RulingPanelWrapper[_, _] = {
-    ruling match {
+    ruling.asInstanceOf[AnyRef] match {
       case sustain@SustainEffectRuling(eid, _) =>
         makeRulingPromptPanel(sustain, makeTitleFromEffect(" - Sustain effect: ", eid),
           ("Sustain", SustainEffectRulingResult.Sustain),

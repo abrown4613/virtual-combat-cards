@@ -61,7 +61,7 @@ class InlineXMLDirectiveTest extends SpecificationWithJUnit {
     }
     "not render if groups are empty" in {
       val t = loader.resolveNode(<t:inline id="foo" />,null)
-      TemplateNode.renderNode(emptyDS, t) must_== Nil
+      TemplateNode.renderNode(emptyDS, t) must_== NodeSeq.Empty
     }
   }
 }

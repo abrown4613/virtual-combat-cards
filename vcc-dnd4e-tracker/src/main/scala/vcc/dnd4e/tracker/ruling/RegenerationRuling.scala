@@ -24,7 +24,7 @@ case class RegenerationRuling(sourceEffect: EffectID, decision: Option[Int])
   extends Ruling[CombatState, Int, RegenerationRuling] {
 
   def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case RegenerationRuling(otherSourceEffect, _) => this.sourceEffect == otherSourceEffect
       case _ => false
     }
