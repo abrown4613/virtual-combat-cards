@@ -24,7 +24,7 @@ case class NextUpRuling(candidates: NextUpCommand, decision: Option[InitiativeOr
   extends Ruling[CombatState, InitiativeOrderID, NextUpRuling] {
 
   def isRulingSameSubject(other: Ruling[CombatState, _, _]): Boolean = {
-    other match {
+    other.asInstanceOf[AnyRef] match {
       case NextUpRuling(otherCandidates, _) => this.candidates == otherCandidates
       case _ => false
     }

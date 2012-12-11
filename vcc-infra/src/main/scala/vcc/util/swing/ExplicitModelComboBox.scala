@@ -28,7 +28,6 @@ trait TypedComboBoxModel[T] extends AbstractListModel with ComboBoxModel
 /**
  * Model for ComboBox, it allows update to the contents via properties.
  * @param iv Initial value for the contents of the model
- * @param format A function that returns a string based on the value of A.
  */
 class ContainerComboBoxModel[A](iv: Seq[A]) extends TypedComboBoxModel[A] {
   var entries: Seq[A] = iv

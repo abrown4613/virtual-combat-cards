@@ -67,7 +67,7 @@ case class FlexRuling(prompt: String, decision: Option[List[Command[State]]])
   extends Ruling[State, List[Command[State]], FlexRuling] {
 
   def isRulingSameSubject(otherRuling: Ruling[State, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case FlexRuling(`prompt`, _) => true
       case _ => false
     }

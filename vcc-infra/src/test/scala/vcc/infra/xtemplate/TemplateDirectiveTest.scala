@@ -67,7 +67,7 @@ class TemplateDirectiveTest extends SpecificationWithJUnit {
 
     "render for non existant id to Nil" in {
       val tn = resolveEchoData(<t:data id="notfound"/>, Nil)
-      tn.render(simpleDS) must_== Nil
+      tn.render(simpleDS) must_== NodeSeq.Empty
     }
   }
 
@@ -116,7 +116,7 @@ class TemplateDirectiveTest extends SpecificationWithJUnit {
 
     "no render for if not present" in {
       val tn = resolveIfDefined(<t:ifdefined id="foo">bar</t:ifdefined>, Nil)
-      tn.render(emptyDS) must_== Nil
+      tn.render(emptyDS) must_== NodeSeq.Empty
     }
   }
 

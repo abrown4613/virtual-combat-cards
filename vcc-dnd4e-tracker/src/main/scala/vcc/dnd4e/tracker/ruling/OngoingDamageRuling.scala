@@ -24,7 +24,7 @@ case class OngoingDamageRuling(sourceEffect: EffectID, decision: Option[Int])
   extends Ruling[CombatState, Int, OngoingDamageRuling] {
 
   def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case OngoingDamageRuling(otherSourceEffect,_) => otherSourceEffect == this.sourceEffect
       case _ => false
     }

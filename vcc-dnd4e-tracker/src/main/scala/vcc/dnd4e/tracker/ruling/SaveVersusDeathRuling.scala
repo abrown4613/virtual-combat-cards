@@ -30,7 +30,7 @@ case class SaveVersusDeathRuling(sourceEffect: CombatantID, decision: Option[Sav
   extends Ruling[CombatState, SaveVersusDeathResult.Value, SaveVersusDeathRuling] {
 
   def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case SaveVersusDeathRuling(otherSourceEffect, _) => otherSourceEffect == this.sourceEffect
       case _ => false
     }

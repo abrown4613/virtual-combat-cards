@@ -31,7 +31,7 @@ case class SustainEffectRuling(sustainableEffect: EffectID, decision: Option[Sus
   import SustainEffectRulingResult._
 
   def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case SustainEffectRuling(otherSustainableEffect, _) => otherSustainableEffect == this.sustainableEffect
       case _ => false
     }

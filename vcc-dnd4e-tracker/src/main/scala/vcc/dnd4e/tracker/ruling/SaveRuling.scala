@@ -31,7 +31,7 @@ case class SaveRuling(sourceEffect: EffectID, decision: Option[SaveRulingResult.
   import SaveRulingResult._
 
   def isRulingSameSubject(otherRuling: Ruling[CombatState, _, _]): Boolean = {
-    otherRuling match {
+    otherRuling.asInstanceOf[AnyRef] match {
       case SaveRuling(otherSourceEffect, _) => this.sourceEffect == otherSourceEffect
       case _ => false
     }
