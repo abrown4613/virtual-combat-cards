@@ -30,7 +30,7 @@ object CaptureTemplateEngine {
   val formatterModifier = new FunctionTemplateFormatter("modifier", s => try {
     Integer.parseInt(s).formatted("%+d")
   } catch {
-    case _ => s
+    case _: Exception => s
   })
 
   def initialize(dataDirectory: File) {
@@ -68,7 +68,7 @@ class CaptureTemplateEngine(dataDirectory: File) extends UpdateableObjectStoreRe
     val t: Template = try {
       loader.load(new InputSource(new FileInputStream(file)))
     } catch {
-      case e =>
+      case e: Exception =>
         logger.error("Failed to load template from file = {}", Array(file.getAbsolutePath), e)
         val reader = new StringReader("<html><body>Failed to load template " + file.getAbsolutePath + "; reason: " + e.getMessage + "</body></html>")
         loader.load(new InputSource(reader))

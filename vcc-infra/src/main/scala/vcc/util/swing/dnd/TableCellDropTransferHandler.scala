@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ class TableCellDropTransferHandler() extends TransferHandler() {
    * Register interest on a given DataFlavor and associate a handler to receive it.
    * @param what DataFlavor to look for on the Transferable
    * @param handler Partial function that handled (row, column, Transferable), it must be defined if it will receive the Transferable
-   * and return true if import was successful.
+   *                and return true if import was successful.
    */
   def interestedIn(what: DataFlavor)(handler: PartialFunction[CellDrop, Boolean]) {
     handlers = handlers ::: List((what, handler))
@@ -79,9 +79,8 @@ class TableCellDropTransferHandler() extends TransferHandler() {
         handler(CellDrop(row, col, support.getTransferable.getTransferData(flavor)))
       }
       catch {
-        //TODO This is a temporary steup
-        case e => e.printStackTrace()
-        false
+        case e: Exception =>
+          false
       }
     } else {
       false

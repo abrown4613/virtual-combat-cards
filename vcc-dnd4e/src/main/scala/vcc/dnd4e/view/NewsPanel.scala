@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,13 +85,13 @@ class NewsPanel(baseDirectory: File, releaseInformation: ReleaseInformation) ext
         Seq()
       }
     } catch {
-      case _ => Seq()
+      case _: Exception => Seq()
     }
   }
 
   def formatFeed(items: Seq[RssItem]): String = {
     val news = items.map(x =>
-      String.format("""<h1 class="title"><a href="%s">%s</a></h1>%s""", x.link, x.title, x.description)).mkString("")
+      String.format( """<h1 class="title"><a href="%s">%s</a></h1>%s""", x.link, x.title, x.description)).mkString("")
     ("<html>" +
       "<head><link href=\"feed.css\" type=\"text/css\" rel=\"stylesheet\"></link></head>" +
       "<body>" + news + "</body></html>")
@@ -122,7 +122,7 @@ class NewsPanel(baseDirectory: File, releaseInformation: ReleaseInformation) ext
           Some((list, hasNewNews, needsUpgrade))
         }
         catch {
-          case e =>
+          case e: Exception =>
             LoggerFactory.getLogger("infra").error("Failed to fetch update.", e)
             None
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing.dnd
 
 import java.awt._
 import datatransfer.DataFlavor
 import dnd.{DragSourceDragEvent, DragSourceDropEvent, DragSourceMotionListener, DragSourceAdapter}
-import javax.swing.UIManager
 
 class DragAndDropGhost(icon: Image) extends DragSourceAdapter with DragSourceMotionListener {
 
@@ -29,7 +27,7 @@ class DragAndDropGhost(icon: Image) extends DragSourceAdapter with DragSourceMot
 
 
   def this() {
-    this (null)
+    this(null)
   }
 
   override def dragDropEnd(dsde: DragSourceDropEvent) {
@@ -52,7 +50,7 @@ class DragAndDropGhost(icon: Image) extends DragSourceAdapter with DragSourceMot
           if (sf != null) sf else "..."
         }
       } catch {
-        case _ => "..."
+        case _: Exception => "..."
       }
       win.setLabel(s)
       firstCall = false
@@ -81,5 +79,4 @@ class DragAndDropGhost(icon: Image) extends DragSourceAdapter with DragSourceMot
       g.dispose()
     }
   }
-
 }

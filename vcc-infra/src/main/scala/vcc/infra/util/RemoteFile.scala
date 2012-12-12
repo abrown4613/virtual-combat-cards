@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.util
 
 import java.net.URL
@@ -33,7 +32,7 @@ object RemoteFile {
       new ByteArrayInputStream(buffer)
     }
     catch {
-      case s =>
+      case s: Exception =>
         null
     }
     finally {
@@ -64,14 +63,14 @@ object RemoteFile {
      * Save a stream to replace current version of the file.
      */
     def saveFromStream(is: InputStream) {
-      var outChannel: FileOutputStream = null;
+      var outChannel: FileOutputStream = null
       try {
-        outChannel = new FileOutputStream(file);
+        outChannel = new FileOutputStream(file)
         val inChannel = Channels.newChannel(is)
         outChannel.getChannel.transferFrom(inChannel, 0, 1 << 24)
       }
       catch {
-        case s =>
+        case s: Exception =>
       }
       finally {
         outChannel.close()
@@ -98,7 +97,7 @@ object RemoteFile {
         loadToMemoryStream(file)
       }
       catch {
-        case e =>
+        case e: Exception =>
           null
       }
       finally {
@@ -122,7 +121,7 @@ class RemoteFile private[util](localFile: RemoteFile.LocalFile, remoteSource: Re
    * @param localFile File representation of the local cached version of the file
    * @param remoteURL Where to fetch updates from
    */
-  def this(localFile: File, remoteURL: URL) = this (new RemoteFile.LocalFile(localFile), new RemoteFile.RemoteSource(remoteURL))
+  def this(localFile: File, remoteURL: URL) = this(new RemoteFile.LocalFile(localFile), new RemoteFile.RemoteSource(remoteURL))
 
   /**
    * Return the current value of the local copy, if it exists:

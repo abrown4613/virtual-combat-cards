@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.diskcache
 
 import java.io.File
@@ -27,7 +26,7 @@ trait DiskCacheBuilder[T] {
 trait DiskCacheable {
   def saveToCache(file: File): Boolean
 
-  def getCacheFileName(): String = System.currentTimeMillis.toString + this.hashCode.toString
+  def getCacheFileName: String = System.currentTimeMillis.toString + this.hashCode.toString
 }
 
 class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T]) {
@@ -35,11 +34,11 @@ class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T])
     try {
       val file = new File(dir, obj.getCacheFileName)
       if (!file.getParentFile.exists()) {
-        file.getParentFile().mkdirs()
+        file.getParentFile.mkdirs()
       }
       obj.saveToCache(file)
     } catch {
-      case e => false
+      case e: Exception => false
     }
   }
 
@@ -54,7 +53,7 @@ class DiskCache[T <: DiskCacheable](val dir: File, builder: DiskCacheBuilder[T])
 
   def clear() {
     val dirIter = new vcc.util.DirectoryIterator(dir, false)
-    dirIter.foreach(file => if (file.isFile()) file.delete())
+    dirIter.foreach(file => if (file.isFile) file.delete())
   }
 }
 

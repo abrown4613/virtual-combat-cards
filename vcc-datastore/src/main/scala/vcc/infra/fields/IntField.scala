@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidato
       try {
         Defined(str.toInt)
       } catch {
-        case e:NumberFormatException => Invalid(str,"'"+str+"' is not a integer number")
-        case s => Invalid(str,s.getMessage)
+        case e: NumberFormatException => Invalid(str, "'" + str + "' is not a integer number")
+        case s: Exception => Invalid(str, s.getMessage)
       }
     } else Undefined
   }

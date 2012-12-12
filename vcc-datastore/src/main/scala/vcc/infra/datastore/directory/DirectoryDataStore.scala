@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ import java.io._
 import vcc.infra.datastore.{DataStoreIOException, DataStore, DataStoreEntity}
 
 class DirectoryDataStore(baseDir:File) extends DataStore {
-  import org.xml.sax.helpers.DefaultHandler
   import org.xml.sax.Attributes
   import javax.xml.parsers.SAXParserFactory
   
@@ -69,10 +68,10 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
     val sp = saxFactory.newSAXParser()
     try {
       sp.parse(file,ep)
-      ep.loadedData
+      ep.loadedData()
     } catch {
       case dsioe:DataStoreIOException => throw dsioe
-      case e => throw new DataStoreIOException("Failed to parse XML file",e)
+      case e:Exception => throw new DataStoreIOException("Failed to parse XML file",e)
     }
   }
 
@@ -120,10 +119,10 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   }
    
   def extractEntityData(keys:Set[String]):Seq[(EntityID,Map[String,String])] = {
-    enumerateEntities.map(eid => try { 
+    enumerateEntities().map(eid => try {
         loadXMLFile(eid) 
       } catch { 
-        case s => 
+        case s:Exception =>
           logger.warn("Failed to load {} reason: {}",eid,s.getMessage)
           null
       }).filter(x => x != null).map(ent=> {
@@ -138,7 +137,5 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
   def deleteEntity(eid:EntityID):Boolean = getFile(eid).delete
    
   def close() {
-    
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ class ContentCache[T](default: T, fetcher: String => T) {
 /**
  * This is our local implementation of the Flying Saucer Agent
  * @param baseDir File representing a directory that will contain images and css files (must be in images and css
- * sub-directory.
+ *                sub-directory.
  */
 class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAgent {
   private val logger = org.slf4j.LoggerFactory.getLogger("fs-agent")
@@ -55,7 +55,7 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
       if (icon == null) AbortApplication(this, "Failed to read MissingIcon image", null)
       icon
     } catch {
-      case s => AbortApplication(this, "Failed to read MissingIcon image", s)
+      case s: Throwable => AbortApplication(this, "Failed to read MissingIcon image", s)
     }
   }
 
@@ -70,7 +70,7 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
         try {
           new ImageResource(AWTFSImage.createImage((new ImageIcon(file.toURI.toURL)).getImage))
         } catch {
-          case e =>
+          case e: Exception =>
             logger.warn("SF-UA Failed to load file " + file, e)
             null
         }

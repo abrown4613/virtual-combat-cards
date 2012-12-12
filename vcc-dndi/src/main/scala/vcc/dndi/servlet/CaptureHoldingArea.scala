@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,12 +36,12 @@ object CaptureHoldingArea {
      * @param newObject If not null indicates the single object that was added. If several changed it will be null.
      * @param objects ew sequecne of objects in the holding area.
      */
-    def updateContent(newObject:T, objects: Seq[T])
+    def updateContent(newObject: T, objects: Seq[T])
   }
 
-  private var area:CaptureHoldingArea = null
+  private var area: CaptureHoldingArea = null
 
-  def initialize(cacheDir:File) {
+  def initialize(cacheDir: File) {
     area = new CaptureHoldingArea(cacheDir)
   }
 
@@ -54,6 +54,7 @@ object CaptureHoldingArea {
  * @param cacheDir Where files are caches Should be : File(vcc.dnd4e.Configuration.baseDirectory.value, "dndicache")
  */
 class CaptureHoldingArea(cacheDir: File) {
+
   import CaptureHoldingArea._
 
   private val logger = org.slf4j.LoggerFactory.getLogger("app")
@@ -62,11 +63,11 @@ class CaptureHoldingArea(cacheDir: File) {
     def loadFromFile(file: File): DNDIObjectCacheEntry = {
       try {
         val dndiObject = DNDInsiderCapture.loadEntry(new FileInputStream(file))
-        if(dndiObject != null)
+        if (dndiObject != null)
           new DNDIObjectCacheEntry(dndiObject, null) // Since this is a restore we don't need the to store again 
         else null
       } catch {
-        case e =>
+        case e: Exception =>
           logger.warn("Failed to load file {} reason: {}", file, e.getMessage)
           null
       }
@@ -75,11 +76,11 @@ class CaptureHoldingArea(cacheDir: File) {
 
   class DNDIObjectCacheEntry(val dndiObj: DNDIObject, val node: Node) extends DiskCacheable {
     def saveToCache(file: File): Boolean = {
-      if(node != null) XML.save(file.getAbsolutePath, node, "UTF-8")
+      if (node != null) XML.save(file.getAbsolutePath, node, "UTF-8")
       file.exists && file.isFile && file.canRead
     }
 
-    override def getCacheFileName(): String = {
+    override def getCacheFileName: String = {
       val id = dndiObj.id.toString
       val clazz = dndiObj.clazz
 
@@ -98,7 +99,7 @@ class CaptureHoldingArea(cacheDir: File) {
 
   /**
    * Add an entry to the holding are and notify observers.
-   * @para obj The object to be stored
+   * @param obj The object to be stored
    * @param xml The XML source of the entry
    */
   def addCapturedEntry(obj: DNDIObject, xml: scala.xml.Node) {
@@ -121,14 +122,16 @@ class CaptureHoldingArea(cacheDir: File) {
   }
 
   protected def notifyObservers(singleObject: DNDIObject) {
-    observers.foreach {obs => obs.updateContent(singleObject, entries)}
+    observers.foreach {
+      obs => obs.updateContent(singleObject, entries)
+    }
   }
 
   /**
    * This method will store an incomplete entry. This is used for capturing data for future analysis.
-   * @para clazz Class of DNDIObject
-   * @para id  Class id
-   * @para node XML representation of the object
+   * @param clazz Class of DNDIObject
+   * @param id  Class id
+   * @param node XML representation of the object
    * @return True if saved successfully.
    */
   def storeIncompleteObject(clazz: String, id: Int, node: Node): Boolean = {

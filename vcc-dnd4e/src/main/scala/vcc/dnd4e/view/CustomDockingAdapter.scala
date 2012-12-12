@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ class CustomDockingAdapter(layoutBaseDirectory: File) extends InfoNodeDockAdapte
       try {
         restoreLayout(new java.io.FileInputStream(file))
       } catch {
-        case s =>
+        case s: Exception=>
           s.printStackTrace()
           Dialog.showMessage(owner, "Failed to load " + file + ".\nThe file may be corrupt or invalid. Try saving the layout once more.", "Failed to load Layout", Dialog.Message.Error, null)
       }
@@ -96,7 +96,7 @@ class CustomDockingAdapter(layoutBaseDirectory: File) extends InfoNodeDockAdapte
       try {
         storeLayout(new FileOutputStream(file))
       } catch {
-        case s =>
+        case s: Exception =>
           Dialog.showMessage(owner, "Failed to save " + file + ".\nReason: " + s.getMessage, "Failed to save Layout", Dialog.Message.Error, null)
       }
     }
@@ -109,7 +109,7 @@ class CustomDockingAdapter(layoutBaseDirectory: File) extends InfoNodeDockAdapte
         try {
           restoreLayout(new FileInputStream(file))
         } catch {
-          case _ => this.restoreDefaultLayout()
+          case _: Exception => this.restoreDefaultLayout()
         }
       } else
         this.restoreDefaultLayout()

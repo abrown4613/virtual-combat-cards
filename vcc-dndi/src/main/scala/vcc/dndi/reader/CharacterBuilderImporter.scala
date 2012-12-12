@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,13 +34,13 @@ object CharacterBuilderImporter {
       if (xml.label != "D20Character") throw new DataStoreIOException("XML file does not represent a DND4E file", null)
 
       val cbo = new CharacterBuilderObject(xml)
-      val map = cbo.getDatum()
+      val map = cbo.getDatum
 
       new DataStoreEntity(EntityID.fromName("dndi:character:" + map("base:name") + ":" + map("base:level")), map)
     } catch {
       case se: SAXParseException => throw new DataStoreIOException("Invalid XML file", se)
       case dse: DataStoreIOException => throw dse
-      case e => throw new DataStoreIOException("Incomplete DND4E file", e)
+      case e: Exception => throw new DataStoreIOException("Incomplete DND4E file", e)
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class StoreBuilder extends DataStoreBuilder {
   
   private def writeMarker(dir:File) {
     val markFile = new File(dir,markFileName)
-    scala.xml.XML.save(markFile.toString,(<datastore version="1.0"/>),"UTF-8",true,null)
+    scala.xml.XML.save(markFile.toString,(<datastore version="1.0"/>),"UTF-8", true, null)
   }
   
   private def markExists(dir:File):Boolean = {
@@ -41,7 +41,7 @@ class StoreBuilder extends DataStoreBuilder {
       val xml = scala.xml.XML.loadFile(markFile)
       (xml \ "@version")(0).text
     } catch {
-      case s => null
+      case s:Exception => null
     }
   }
   
@@ -96,19 +96,19 @@ class StoreBuilder extends DataStoreBuilder {
   }
   
   /**
-   * This method provides a means of expanding existant DataStoreURI that are not resolved
+   * This method provides a means of expanding existent DataStoreURI that are not resolved
    */
   def resolveDataStoreURI(esid:DataStoreURI,replace:Map[String,URI]):DataStoreURI = {
     val uri = new java.net.URI(esid.getSubSchemeSpecificPart)
-    val re = """^\$(\w+)\/(.*)$""".r
-    if(!uri.isOpaque) return esid
-    val newUri:URI = uri.getRawSchemeSpecificPart match {
-      case `re`(repl,path) =>
-        if(replace.isDefinedAt(repl)) replace(repl).resolve(path)
+    val re = """^\$(\w+)/(.*)$""".r
+    if (!uri.isOpaque) return esid
+    val newUri: URI = uri.getRawSchemeSpecificPart match {
+      case `re`(repl, path) =>
+        if (replace.isDefinedAt(repl)) replace(repl).resolve(path)
         else null
       case _ => (new File(".")).toURI.resolve(uri.getRawSchemeSpecificPart)
     }
-    if(newUri != null) DataStoreURI.fromStorageString("vcc-store:directory:"+newUri.toString)
+    if (newUri != null) DataStoreURI.fromStorageString("vcc-store:directory:" + newUri.toString)
     else null
   }
 }
