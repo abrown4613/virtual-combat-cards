@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,40 +17,45 @@
 package vcc.infra.datastore.naming
 
 import java.util.UUID
-import java.net.URI
+import java.net.{URISyntaxException, URI}
 
 case class EntityID(id:UUID) {
   def uri = new java.net.URI("vcc-ent:"+id)
-  
+
   def asStorageString:String = "vcc-ent:"+id.toString
-  
+
 }
 
 object EntityID {
- 
+
   def fromName(name:String):EntityID = EntityID(UUID.nameUUIDFromBytes(name.getBytes))
-  
+
   def generateRandom():EntityID = EntityID(UUID.randomUUID())
-  
+
   def fromStorageString(s:String):EntityID = {
-    if(s.startsWith("vcc-ent:")) 
-      try { EntityID(UUID.fromString(s.substring(8))) } catch { case _ => null}
+    if(s.startsWith("vcc-ent:")) {
+      try {
+        EntityID(UUID.fromString(s.substring(8)))
+      } catch {
+        case _: IllegalArgumentException => null
+      }
+    }
     else
       null
   }
 }
 
 case class DataStoreURI(uri:URI) {
-  
+
   def asStorageString = uri.toString
 
   private val subURI = new URI(uri.getRawSchemeSpecificPart)
-  
+
   def subScheme = subURI.getScheme
-  
+
   def getSubSchemeSpecificPart = subURI.getRawSchemeSpecificPart
 
-  override def toString():String = uri.toString
+  override def toString:String = uri.toString
 
 }
 
@@ -65,10 +70,10 @@ object DataStoreURI {
 	    null
 	  }
 	} catch {
-	  case _ => null
-	}
+    case _: URISyntaxException => null
   }
-  
+  }
+
   def fromStorageString(str:String):DataStoreURI =  {
     val vuri = validateURI(str,"vcc-store")
     if(vuri != null) DataStoreURI(vuri) else null

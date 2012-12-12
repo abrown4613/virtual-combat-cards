@@ -25,7 +25,7 @@ class MonsterEntity(eid: EntityID) extends CombatantEntity(eid) {
 
   val classID = Compendium.monsterClassID
 
-  def combatantType = if (hp == 1) CombatantType.Minion else CombatantType.Monster
+  def combatantType = if (hp.value == 1) CombatantType.Minion else CombatantType.Monster
 
   val role = new StringField(this, "base:role", RequiredString)
   val level = new IntField(this, "base:level", RequiredIntGreaterZero)

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util
 
 import java.net.URL
@@ -85,16 +84,16 @@ object UpdateManager {
      */
     def fromVersionFileFromStream(resource: InputStream): Version = {
       try {
-        val vxml = XML.load(new InputSource(resource))
-        if (vxml.label == "version") this.fromString(vxml.text) else NotFoundVersion
+        val versionXml = XML.load(new InputSource(resource))
+        if (versionXml.label == "version") this.fromString(versionXml.text) else NotFoundVersion
       } catch {
-        case _ => NotFoundVersion
+        case _: Exception => NotFoundVersion
       }
     }
   }
 
   /**
-   *  Case class containing basic information on a release, based on Drupal.org
+   * Case class containing basic information on a release, based on Drupal.org
    * release-history format
    * @param version A version string, e.g. 0.99.1
    * @param download URL to download file
@@ -113,6 +112,8 @@ object UpdateManager {
     val release = XML.load(stream)
     val useUnpublished = System.getProperty("vcc.update.unpublished") != null
 
+    if (release.scope.uri != "http://purl.org/dc/elements/1.1/")
+      throw new RuntimeException("Not a drupal project file")
     val releases: Seq[Release] = (release \\ "release").map {
       release =>
         val major = XMLHelper.nodeSeq2Int(release \ "version_major", 0)
@@ -137,7 +138,7 @@ object UpdateManager {
 
   /**
    * Get version information based on an URL
-   * @param URL to the site that contains a Drupal.org release-history XML file
+   * @param url URL to the site that contains a Drupal.org release-history XML file
    * @return A valid current Version or null if something went wrong.
    */
   def checkAvailableVersions(url: URL): Seq[Release] = {
@@ -147,7 +148,7 @@ object UpdateManager {
 
   /**
    * @return ( possible release, hasMore ) hasMore indicates that some newer versions where skipped because of full
-   * upgrade policy.
+   *         upgrade policy.
    */
   protected def scanForVersions(currentVersion: Version, is: InputStream): (List[(Symbol, Release)], Boolean) = {
     val releases = checkAvailableVersions(new InputSource(is))

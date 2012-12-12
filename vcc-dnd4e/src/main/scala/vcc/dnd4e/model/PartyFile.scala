@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ object PartyFile {
 
   /**
    * Load a PEML party and return a list of PartyMembers
-   * @param Stream InputStream containing the XML for the PartyFile
+   * @param stream InputStream containing the XML for the PartyFile
    * @return A pair with the loadable PartyMember and a OK flag. If ok = false, there
    * was some error processing the file. In out is (Nil,false) the file is invalid.
    * (Nil,true) means the file is empty. And some element and false means that not all
@@ -51,7 +51,7 @@ object PartyFile {
       val node = XML.load(stream)
       loadFromXML(node)
     } catch {
-      case e =>
+      case e: Exception =>
         logger.error("Failed to load: " + e.getMessage, e)
         (Nil, false)
     }

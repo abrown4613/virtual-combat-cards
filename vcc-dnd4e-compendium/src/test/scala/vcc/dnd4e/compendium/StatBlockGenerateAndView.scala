@@ -46,7 +46,7 @@ object StatBlockGenerateAndView {
         case Some(Right(obj)) => obj
       }
     } catch {
-      case e =>
+      case e: Exception =>
         System.err.println("Failed to parse: " + file + " reason: " + e.getMessage)
         null
     }
@@ -60,7 +60,7 @@ object StatBlockGenerateAndView {
         val xml = template.render(monster.asInstanceOf[TemplateDataSource])
         xhtmlPane.setDocumentFromText(xml.toString())
       } catch {
-        case e =>
+        case e: Exception =>
           e.printStackTrace()
           xhtmlPane.setDocumentFromText("<html><body>" + e.getMessage + "</body></html>")
       }

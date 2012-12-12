@@ -93,7 +93,7 @@ object MonsterImportService {
           field.fromStorageString(s)
         } else logger.warn("Mapping failed between {} and {}", key, field.id)
       } catch {
-        case e =>
+        case e: Exception =>
           logger.error("Exception while processing key " + key, e)
       }
     }

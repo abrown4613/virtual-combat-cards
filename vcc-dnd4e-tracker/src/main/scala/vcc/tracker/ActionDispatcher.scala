@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ class ActionDispatcher[S] private(initialState: S) {
       try {
         currentState = event.transition(currentState)
       } catch {
-        case e => throw new ActionDispatcher.IllegalEventException(event, e)
+        case e: Exception => throw new ActionDispatcher.IllegalEventException(event, e)
       }
     }
   }
@@ -142,7 +142,7 @@ class ActionDispatcher[S] private(initialState: S) {
     try {
       command.generateEvents(currentState)
     } catch {
-      case e => throw new ActionDispatcher.IllegalCommandException(command, e)
+      case e: Exception => throw new ActionDispatcher.IllegalCommandException(command, e)
     }
   }
 }

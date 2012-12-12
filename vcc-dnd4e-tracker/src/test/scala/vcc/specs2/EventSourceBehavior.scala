@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ package vcc.specs2
 
 import org.specs2.execute.{Error, Result}
 import org.specs2.execute.Error.ThrowableException
-import org.specs2.{SpecificationWithJUnit}
+import org.specs2.SpecificationWithJUnit
 import org.specs2.matcher.{MustMatchers, Matcher}
 
 trait EventSourceBehavior[S, E, C] {
@@ -31,7 +31,7 @@ trait EventSourceBehavior[S, E, C] {
     val result: Either[Result, S] = try {
       Right(buildState(state, evt))
     } catch {
-      case e => Left(new Error("Failed to build given state", new ThrowableException(e)))
+      case e: Exception => Left(new Error("Failed to build given state", new ThrowableException(e)))
     }
     new Given(result)
   }
@@ -52,7 +52,7 @@ trait EventSourceBehavior[S, E, C] {
     /**
      * Compose additional given steps based on a command. This is done by executing the command (using the runner) to
      * generate a set of events, then applying the evento to the given state.
-     * @param cmd The command to be executed
+     * @param cmds The command to be executed
      */
     def given(cmds: C*)(implicit runner: (S, C) => Seq[E], buildState: (S, Seq[E]) => S): Given = {
       val n: Either[Result, S] = errorOrState match {
@@ -60,7 +60,7 @@ trait EventSourceBehavior[S, E, C] {
         case Right(state) => try {
           Right(cmds.foldLeft(state)((ns, cmd) => buildState(ns, runner(ns, cmd))))
         } catch {
-          case e => Left(new Error("Failed to build given state (with command)", new ThrowableException(e)))
+          case e: Exception => Left(new Error("Failed to build given state (with command)", new ThrowableException(e)))
         }
       }
       new Given(n)

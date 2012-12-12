@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view
 
 import dnd.UnifiedCombatantActionTransfer
@@ -28,7 +27,6 @@ import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
  * A combo box option that included the information to display and what to
  * generate as an output
  * @param text To appear on the ComboBox
- * @param generate A function form (source,target)=> Duration
  */
 abstract class DurationComboEntry(text: String) {
   def isDefinedAt(source: UnifiedCombatant, target: UnifiedCombatant): Boolean
@@ -90,7 +88,7 @@ object EffectEditor {
           logger.warn("AutoComplete[{}]: {}", term, msg)
         })
       } catch {
-        case e =>
+        case e: Exception =>
           logger.warn("Failed to open resource: /vcc/dnd4e/view/autocomplete.dict", e)
           new AutoCompleteDictionary(Nil)
       }
@@ -255,7 +253,7 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   }
 
   def clearPanel() {
-    typeCombo.selection.index = 0;
+    typeCombo.selection.index = 0
     typeCombo.selection.item.restoreMemento(("", false))
     typeCombo.repaint()
     durationCombo.selection.index = 0
@@ -286,4 +284,3 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
   }
 
 }
-

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@ package vcc.dndi.reader
 import scala.xml._
 
 object CharacterBuilderObject {
-  case class Rules(val typ: String, val value: String, val url: Option[String])
+  case class Rules(typ: String, value: String, url: Option[String])
 
-  case class PowerWeapon(val name: String, val hit: String, val dmg: String, val stat: String, val defense: String, val hitSummary: String, val dmgSummary: String, val cond: String);
+  case class PowerWeapon(name: String, hit: String, dmg: String, stat: String, defense: String, hitSummary: String, dmgSummary: String, cond: String)
 
-  case class Power(val name: String, val url: Option[String], val usage: String, val action: String, val weapons: Map[String, PowerWeapon])
+  case class Power(name: String, url: Option[String], usage: String, action: String, weapons: Map[String, PowerWeapon])
 
   case class MagicEnchantment(name: String, refUrl: String)
   case class Equipment(kind: String, name: String, count: Int, ecount: Int, refUrl: String, enchantment: Option[MagicEnchantment])
@@ -53,7 +53,7 @@ object CharacterBuilderObject {
 class CharacterBuilderObject(val char: Elem) {
   import CharacterBuilderObject._
 
-  val sheet = char \ "CharacterSheet";
+  val sheet = char \ "CharacterSheet"
 
   lazy val stats = Map() ++ (sheet \\ "Stat").flatMap(extractStat(_))
 
@@ -62,8 +62,11 @@ class CharacterBuilderObject(val char: Elem) {
     tt <- tally \ "@type"
     tn <- tally \ "@name"
   } yield {
-      val url = tally.attribute("url") match {case Some(node: Node) => Some(node.text) case None => None}
-      Rules(tt.text, tn.text, url);
+      val url = tally.attribute("url") match {
+        case Some(node) => Some(node.text)
+        case None => None
+      }
+      Rules(tt.text, tn.text, url)
     }
 
   def findPower(name: String) = tally.filter(_.value == name).toList.head
@@ -99,14 +102,14 @@ class CharacterBuilderObject(val char: Elem) {
         dmgSummary <- weapon \ "DamageComponents"
       } yield {
           val cond = weapon \ "Conditions"
-          wn.text -> PowerWeapon(wn.text.trim, hit.text.trim, dmg.text.trim, stat.text.trim, defense.text.trim, hitSummary.text.trim, dmgSummary.text.trim, cond.text.trim);
-        });
+          wn.text -> PowerWeapon(wn.text.trim, hit.text.trim, dmg.text.trim, stat.text.trim, defense.text.trim, hitSummary.text.trim, dmgSummary.text.trim, cond.text.trim)
+        })
       name.text -> Power(name.text, findPower(name.text).url, specifics("Power Usage"), specifics("Action Type"), weapons)
     })
 
   lazy val equipment = Map() ++ (for{
-    loot <- sheet \\ "loot";
-    le <- loot \ "@equip-count";
+    loot <- sheet \\ "loot"
+    le <- loot \ "@equip-count"
     lc <- loot \ "@count" if lc.text.toInt != 0
   } yield {
       val name = loot \\ "@name"
@@ -140,12 +143,12 @@ class CharacterBuilderObject(val char: Elem) {
 
   lazy val classFeature = filterTally("Class Feature").toList
   lazy val racialTrait = filterTally("Racial Trait").toList
-  lazy val feats = Map() ++ (tally.filter(_.typ == "Feat").map(kv => kv.value -> kv.url));
+  lazy val feats = Map() ++ (tally.filter(_.typ == "Feat").map(kv => kv.value -> kv.url))
   lazy val skill = Map() ++ (tally.filter(_.typ == "Skill").map(kv => kv.value -> Skill(kv.value, stats(kv.value.toLowerCase), kv.url)))
   lazy val stat = Map() ++ (CharacterObject.statOrder.map(name => name -> Stat(name, stats(name.toLowerCase), stats(name.toLowerCase + " modifier"))))
 
 
-  def getDatum(): Map[String, String] = {
+  def getDatum: Map[String, String] = {
     Map(
       "classid" -> "vcc-class:character",
       "base:class" -> clazz.value,

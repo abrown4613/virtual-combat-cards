@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.util.swing
 
 import scala.swing._
@@ -28,7 +27,6 @@ import javax.swing.ScrollPaneConstants
 import org.xhtmlrenderer.extend.UserAgentCallback
 import org.xhtmlrenderer.simple.{XHTMLPanel, FSScrollPane}
 import collection.JavaConversions
-import java.util.List
 import org.xhtmlrenderer.swing.{LinkListener, FSMouseListener}
 
 object XHTMLPane {
@@ -41,7 +39,7 @@ object XHTMLPane {
 
   if (blankDocument == null || errorDocument == null) {
     logger.error("XHTMLPane initialization failed to create default documents")
-    exit(2)
+    sys.exit(2)
   }
 
   /**
@@ -56,7 +54,7 @@ object XHTMLPane {
     try {
       builder.parse(new InputSource(new StringReader(docString)))
     } catch {
-      case e =>
+      case e: Exception =>
         logger.debug("Failed to parse document: {}")
         logger.warn("Parsing of document failed", e)
         null
@@ -89,7 +87,7 @@ class XHTMLPane(uac: UserAgentCallback) extends Component {
    * Remove all the event MouseTrackerListeners from this pane.
    */
   def removeAllMouseTrackerListeners() {
-    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[List[FSMouseListener]])
+    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[java.util.List[FSMouseListener]])
     for (l <- ml) {
       xPanel.removeMouseTrackingListener(l)
     }
@@ -99,7 +97,7 @@ class XHTMLPane(uac: UserAgentCallback) extends Component {
    * Remove only the LinkListener from the list, this keeps hover and pointer behaviour change.
    */
   def removeLinkListener() {
-    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[List[FSMouseListener]])
+    val ml = JavaConversions.asScalaBuffer(xPanel.getMouseTrackingListeners.asInstanceOf[java.util.List[FSMouseListener]])
     for (l <- ml) {
       if (l.isInstanceOf[LinkListener])
         xPanel.removeMouseTrackingListener(l)

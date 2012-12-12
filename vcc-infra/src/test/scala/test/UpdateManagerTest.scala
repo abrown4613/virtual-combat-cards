@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,51 +14,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package test
 
-import junit.framework.TestCase
 import vcc.util.UpdateManager
 import java.net.URL
+import org.junit.Test
+import org.xml.sax.InputSource
 
-class UpdateManagerTest extends TestCase {
-  
+class UpdateManagerTest {
+
+  @Test(expected = classOf[Exception])
   def testBadURL() {
-    try {
-    	var x =UpdateManager.checkAvailableVersions(new URL("http://bad.v/ac"))
-    	assert(false,"Must have exception")
-    } catch {
-      case _ => 
-    }
-  }
-  
-  def testRealURL() {
-    var x =UpdateManager.checkAvailableVersions(new URL("http://www.exnebula.org/files/release-history/vcc/vcc-all.xml"))
-    assert(x!=null)
-    assert(x.length > 1)
-    assert(x(0).version > UpdateManager.Version(0,90,0,null))
-    assert(x(0).download.toString.startsWith("http://www.exnebula.org/"))
-  }
-  
-  def testWithLocalFile() {
-    val lfile=this.getClass.getClassLoader.getResourceAsStream("test/data/vcc-all.xml")
-    val is=new org.xml.sax.InputSource(lfile)
-    val x =UpdateManager.checkAvailableVersions(is)
-    assert(x!=null)
-    assert(x.length > 1)
-    assert(x(0).version==UpdateManager.Version(2,0,1,"RC1"))
-    assert(x(0).download.toString == "http://www.exnebula.org/files/vcc-2.0.1-RC1.zip")
-    assert(x(0).info.toString == "http://www.exnebula.org/node/21")
+    UpdateManager.checkAvailableVersions(new URL("http://bad.v/ac"))
   }
 
+  @Test
+  def testRealURL() {
+    val releases = UpdateManager.checkAvailableVersions(new URL("http://www.exnebula.org/files/release-history/vcc/vcc-all.xml"))
+    assert(releases != null)
+    assert(releases.length > 1)
+    assert(releases(0).version > UpdateManager.Version(0, 90, 0, null))
+    assert(releases(0).download.toString.startsWith("http://www.exnebula.org/"))
+  }
+
+  @Test
+  def testWithLocalFile() {
+    val releases = UpdateManager.checkAvailableVersions(contentFromStream("test/data/vcc-all.xml"))
+    assert(releases != null)
+    assert(releases.length > 1)
+    assert(releases(0).version == UpdateManager.Version(2, 0, 1, "RC1"))
+    assert(releases(0).download.toString == "http://www.exnebula.org/files/vcc-2.0.1-RC1.zip")
+    assert(releases(0).info.toString == "http://www.exnebula.org/node/21")
+  }
+
+  @Test(expected = classOf[Exception])
   def testWithBadLocalFile() {
-    val lfile=this.getClass.getClassLoader.getResourceAsStream("test/data/vcc-bad.xml")
-    val is=new org.xml.sax.InputSource(lfile)
-    try {
-      val x =UpdateManager.checkAvailableVersions(is)
-      assert(false,"SHould have exception")
-    } catch {
-      case _ =>
-    }
+    UpdateManager.checkAvailableVersions(contentFromStream("test/data/vcc-bad.xml"))
+  }
+
+  def contentFromStream(resourcePath: String):InputSource = {
+    new InputSource(this.getClass.getClassLoader.getResourceAsStream(resourcePath))
   }
 }

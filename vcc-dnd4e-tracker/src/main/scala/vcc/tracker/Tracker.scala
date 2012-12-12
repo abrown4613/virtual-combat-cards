@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ class Tracker[S](controller: Controller[S]) {
       try {
         observer.stateUpdated(newState)
       } catch {
-        case s =>
+        case s: Exception =>
       }
     }
   }
