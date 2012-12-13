@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,66 +16,42 @@
  */
 package vcc.util
 
-import org.specs2.mutable.SpecificationWithJUnit
-import vcc.util.UpdateManager._
-import java.io.ByteArrayInputStream
+import java.net.URL
+import org.junit.Test
+import org.xml.sax.InputSource
 
-class UpdateManagerTest extends SpecificationWithJUnit {
-  "UpdateManager Version" should {
-    "read form string 1.2.3-RC" in {
-      Version.fromString("1.2.3-RC") must_== Version(1, 2, 3, "RC")
-    }
+class UpdateManagerTest {
 
-    "read form string 1.2.3" in {
-      Version.fromString("1.2.3") must_== Version(1, 2, 3, null)
-    }
-
-    "read form string 1.2" in {
-      Version.fromString("1.2") must_== Version(1, 2, 0, null)
-    }
-
-    "read form string 1.2-SNAPSHOT" in {
-      Version.fromString("1.2-SNAPSHOT") must_== Version(1, 2, 0, "SNAPSHOT")
-    }
-
-    "not accept strang string" in {
-      Version.fromString("foobar") must beNull
-    }
-
-    "reject non version XML" in {
-      Version.fromVersionFileFromStream(new ByteArrayInputStream("<va>1.2</va>".getBytes)) must_== UpdateManager.NotFoundVersion
-    }
-
-    "read from a version file" in {
-      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/version.xml")) must not beNull
-    }
-
-    "throw exception on strange file" in {
-      Version.fromVersionFileFromStream(this.getClass.getResourceAsStream("/vcc/Main.class")) must_== UpdateManager.NotFoundVersion
-    }
+  @Test(expected = classOf[Exception])
+  def testBadURL() {
+    UpdateManager.checkAvailableVersions(new URL("http://bad.v/ac"))
   }
 
-  "UpdateManager.Version.eligibleVersion" should {
-    // From, To, should happen
-    val versionTests = Seq[(Version, Version, Boolean)](
-      (Version(1, 1, 0, null), Version(1, 1, 2, null), true),
-      (Version(1, 1, 1, null), Version(1, 1, 2, null), true),
-      (Version(1, 1, 1, null), Version(1, 2, 0, null), true),
-      (Version(1, 1, 1, null), Version(1, 3, 0, null), true),
-      (Version(1, 1, 1, null), Version(1, 3, 1, null), false),
-      (Version(1, 1, 1, null), Version(1, 3, 0, "RC"), true),
-      (Version(1, 1, 1, null), Version(1, 3, 1, "RC"), false),
-      (Version(1, 1, 1, null), Version(1, 3, 0, "SNAPSHOT"), true),
-      // Migrate from
-      (Version(1, 1, 1, "RC"), Version(1, 1, 1, null), true),
-      (Version(1, 1, 1, "SNAPSHOT"), Version(1, 1, 1, null), true))
+  @Test
+  def testRealURL() {
+    val releases = UpdateManager.checkAvailableVersions(new URL("http://www.exnebula.org/files/release-history/vcc/vcc-all.xml"))
+    assert(releases != null)
+    assert(releases.length > 1)
+    assert(releases(0).version > UpdateManager.Version(0, 90, 0, null))
+    assert(releases(0).download.toString.startsWith("http://www.exnebula.org/"))
+  }
 
+  @Test
+  def testWithLocalFile() {
+    val releases = UpdateManager.checkAvailableVersions(contentFromStream("vcc/util/data/vcc-all.xml"))
+    assert(releases != null)
+    assert(releases.length > 1)
+    assert(releases(0).version == UpdateManager.Version(2, 0, 1, "RC1"))
+    assert(releases(0).download.toString == "http://www.exnebula.org/files/vcc-2.0.1-RC1.zip")
+    assert(releases(0).info.toString == "http://www.exnebula.org/node/21")
+  }
 
-    for((from, to, result) <- versionTests) {
-      ((if (result) "allow" else "not allow") + " migration from " + from.toString + " to " + to.toString) in {
-        to.isEligibleUpgradeFromVersion(from) must_== result
-      }
-    }
-    1 must_== 1
+  @Test(expected = classOf[Exception])
+  def testWithBadLocalFile() {
+    UpdateManager.checkAvailableVersions(contentFromStream("vcc/util/data/vcc-bad.xml"))
+  }
+
+  def contentFromStream(resourcePath: String):InputSource = {
+    new InputSource(this.getClass.getClassLoader.getResourceAsStream(resourcePath))
   }
 }
