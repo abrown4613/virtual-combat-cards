@@ -1,0 +1,312 @@
+<MonsterPower xsi:type="MonsterPower">
+  <Action>Standard</Action>
+  <Usage>At-Will</Usage>
+  <FlavorText></FlavorText>
+  <Attacks>
+    <MonsterAttack>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="9">
+            <Type>Normal</Type>
+            <Modifier>Low</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>-2,25</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>1</DiceQuantity>
+          <DamageConstant FinalValue="4,5">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0,5</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>8</DiceSides>
+          <Expression>1d8 + 4</Expression>
+        </Damage>
+        <Description>damage, and the imp makes a secondary attack against the same target</Description>
+        <Attacks>
+          <MonsterAttack>
+            <Name>Secondary Attack</Name>
+            <Hit>
+              <Name>Hit</Name>
+              <Aftereffects />
+              <Sustains />
+              <Damage>
+                <AverageDamage FinalValue="1">
+                  <Type>None</Type>
+                  <Modifier>Medium</Modifier>
+                  <Name>AverageDamage</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>-1</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </AverageDamage>
+                <DiceQuantity>0</DiceQuantity>
+                <DamageConstant FinalValue="4,25">
+                  <Name>DamageConstant</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>-0,5</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </DamageConstant>
+                <DiceSides>6</DiceSides>
+                <Expression></Expression>
+              </Damage>
+              <Description>the target takes ongoing 5 poison damage and is slowed (save ends both).</Description>
+              <Attacks />
+              <FailedSavingThrows>
+                <MonsterAttackEntry>
+                  <Aftereffects />
+                  <Sustains />
+                  <Damage>
+                    <AverageDamage FinalValue="1">
+                      <Type>None</Type>
+                      <Modifier>Medium</Modifier>
+                      <Name>AverageDamage</Name>
+                      <DefaultBonus xsi:type="AddNumberBonus">
+                        <Name>Ad hoc</Name>
+                        <Value>0</Value>
+                        <ID xsi:type="string">Ad hoc</ID>
+                      </DefaultBonus>
+                    </AverageDamage>
+                    <DiceQuantity>0</DiceQuantity>
+                    <DamageConstant FinalValue="4,75">
+                      <Name>DamageConstant</Name>
+                      <DefaultBonus xsi:type="AddNumberBonus">
+                        <Name>Ad hoc</Name>
+                        <Value>0</Value>
+                        <ID xsi:type="string">Ad hoc</ID>
+                      </DefaultBonus>
+                    </DamageConstant>
+                    <DiceSides>0</DiceSides>
+                    <Expression></Expression>
+                  </Damage>
+                  <Description>The target is immobilized instead of slowed (save ends).</Description>
+                  <Attacks />
+                  <FailedSavingThrows />
+                </MonsterAttackEntry>
+                <MonsterAttackEntry>
+                  <Aftereffects />
+                  <Sustains />
+                  <Damage>
+                    <AverageDamage FinalValue="1">
+                      <Type>None</Type>
+                      <Modifier>Medium</Modifier>
+                      <Name>AverageDamage</Name>
+                      <DefaultBonus xsi:type="AddNumberBonus">
+                        <Name>Ad hoc</Name>
+                        <Value>0</Value>
+                        <ID xsi:type="string">Ad hoc</ID>
+                      </DefaultBonus>
+                    </AverageDamage>
+                    <DiceQuantity>0</DiceQuantity>
+                    <DamageConstant FinalValue="4,75">
+                      <Name>DamageConstant</Name>
+                      <DefaultBonus xsi:type="AddNumberBonus">
+                        <Name>Ad hoc</Name>
+                        <Value>0</Value>
+                        <ID xsi:type="string">Ad hoc</ID>
+                      </DefaultBonus>
+                    </DamageConstant>
+                    <DiceSides>0</DiceSides>
+                    <Expression></Expression>
+                  </Damage>
+                  <Description>The target falls asleep for 1 hour or until woken. Poison damage from this attack does not wake a sleeping creature</Description>
+                  <Attacks />
+                  <FailedSavingThrows />
+                </MonsterAttackEntry>
+              </FailedSavingThrows>
+            </Hit>
+            <Miss>
+              <Name>Miss</Name>
+              <Aftereffects />
+              <Sustains />
+              <Damage>
+                <AverageDamage FinalValue="1">
+                  <Type>None</Type>
+                  <Modifier>Medium</Modifier>
+                  <Name>AverageDamage</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>0</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </AverageDamage>
+                <DiceQuantity>0</DiceQuantity>
+                <DamageConstant FinalValue="4,75">
+                  <Name>DamageConstant</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>0</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </DamageConstant>
+                <DiceSides>0</DiceSides>
+                <Expression></Expression>
+              </Damage>
+              <Attacks />
+              <FailedSavingThrows />
+            </Miss>
+            <Effect>
+              <Name>Effect</Name>
+              <Aftereffects />
+              <Sustains />
+              <Damage>
+                <AverageDamage FinalValue="1">
+                  <Type>None</Type>
+                  <Modifier>Medium</Modifier>
+                  <Name>AverageDamage</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>0</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </AverageDamage>
+                <DiceQuantity>0</DiceQuantity>
+                <DamageConstant FinalValue="4,75">
+                  <Name>DamageConstant</Name>
+                  <DefaultBonus xsi:type="AddNumberBonus">
+                    <Name>Ad hoc</Name>
+                    <Value>0</Value>
+                    <ID xsi:type="string">Ad hoc</ID>
+                  </DefaultBonus>
+                </DamageConstant>
+                <DiceSides>0</DiceSides>
+                <Expression></Expression>
+              </Damage>
+              <Description></Description>
+              <Attacks />
+              <FailedSavingThrows />
+            </Effect>
+            <AttackBonuses>
+              <MonsterPowerAttackNumber FinalValue="10">
+                <Defense>
+                  <id xsi:type="string">ADE1</id>
+                  <ReferencedObject>
+                    <DefenseName>Fortitude</DefenseName>
+                    <ID xsi:type="string">ADE1</ID>
+                    <RoundToNearest>true</RoundToNearest>
+                    <Name>Attack vs. Fortitude</Name>
+                  </ReferencedObject>
+                </Defense>
+                <Name>AttackBonus</Name>
+                <ID xsi:type="string">AttackBonus</ID>
+                <DefaultBonus xsi:type="AddNumberBonus">
+                  <Name>Ad hoc</Name>
+                  <Value>0</Value>
+                  <ID xsi:type="string">Ad hoc</ID>
+                </DefaultBonus>
+              </MonsterPowerAttackNumber>
+            </AttackBonuses>
+          </MonsterAttack>
+        </Attacks>
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="4,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="4,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Description></Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses>
+        <MonsterPowerAttackNumber FinalValue="12">
+          <Defense>
+            <id xsi:type="string">ADE5</id>
+            <ReferencedObject>
+              <DefenseName>AC</DefenseName>
+              <ID xsi:type="string">ADE5</ID>
+              <RoundToNearest>true</RoundToNearest>
+              <Name>Attack vs. AC</Name>
+            </ReferencedObject>
+          </Defense>
+          <Name>AttackBonus</Name>
+          <ID xsi:type="string">AttackBonus</ID>
+          <DefaultBonus xsi:type="AddNumberBonus">
+            <Name>Ad hoc</Name>
+            <Value>0</Value>
+            <ID xsi:type="string">Ad hoc</ID>
+          </DefaultBonus>
+        </MonsterPowerAttackNumber>
+      </AttackBonuses>
+    </MonsterAttack>
+  </Attacks>
+  <Name>Tail Sting</Name>
+  <Type>Melee</Type>
+  <IsBasic>true</IsBasic>
+  <Keywords>
+    <ObjectReference>
+      <id xsi:type="string">609</id>
+      <ReferencedObject>
+        <ID xsi:type="string">609</ID>
+        <Name>Poison</Name>
+        <Description>Toxins that reduce a creature's hit points.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+  </Keywords>
+  <Tier>0</Tier>
+</MonsterPower>

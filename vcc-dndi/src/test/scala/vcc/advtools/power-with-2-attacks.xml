@@ -1,0 +1,242 @@
+<MonsterPower xsi:type="MonsterPower">
+  <Action>Free Action</Action>
+  <Trigger>The beast is first bloodied.</Trigger>
+  <Usage>Encounter</Usage>
+  <Attacks>
+    <MonsterAttack>
+      <Name>Effect</Name>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="33,75">
+            <Type>Normal</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>6</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Description>The beast becomes a 6-square-high pillar of fire.</Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses />
+    </MonsterAttack>
+    <MonsterAttack>
+      <Name>Attack</Name>
+      <Range>Close Burst 2</Range>
+      <Targets>enemies in the burst</Targets>
+      <Hit>
+        <Name>Hit</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="33,75">
+            <Type>Normal</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>2</DiceQuantity>
+          <DamageConstant FinalValue="25,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>18</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>8</DiceSides>
+          <Expression>2d8 + 18</Expression>
+        </Damage>
+        <Description> cold and fire damage.</Description>
+        <Attacks />
+        <FailedSavingThrows />
+      </Hit>
+      <Miss>
+        <Name>Miss</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Miss>
+      <Effect>
+        <Name>Effect</Name>
+        <Aftereffects />
+        <Sustains />
+        <Damage>
+          <AverageDamage FinalValue="1">
+            <Type>None</Type>
+            <Modifier>Medium</Modifier>
+            <Name>AverageDamage</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </AverageDamage>
+          <DiceQuantity>0</DiceQuantity>
+          <DamageConstant FinalValue="7,75">
+            <Name>DamageConstant</Name>
+            <DefaultBonus xsi:type="AddNumberBonus">
+              <Name>Ad hoc</Name>
+              <Value>0</Value>
+              <ID xsi:type="string">Ad hoc</ID>
+            </DefaultBonus>
+          </DamageConstant>
+          <DiceSides>0</DiceSides>
+          <Expression></Expression>
+        </Damage>
+        <Attacks />
+        <FailedSavingThrows />
+      </Effect>
+      <AttackBonuses>
+        <MonsterPowerAttackNumber FinalValue="22">
+          <Defense>
+            <id xsi:type="string">ADE2</id>
+            <ReferencedObject>
+              <DefenseName>Reflex</DefenseName>
+              <ID xsi:type="string">ADE2</ID>
+              <RoundToNearest>true</RoundToNearest>
+              <Name>Attack vs. Reflex</Name>
+            </ReferencedObject>
+          </Defense>
+          <Name>AttackBonus</Name>
+          <ID xsi:type="string">AttackBonus</ID>
+          <DefaultBonus xsi:type="AddNumberBonus">
+            <Name>Ad hoc</Name>
+            <Value>0</Value>
+            <ID xsi:type="string">Ad hoc</ID>
+          </DefaultBonus>
+        </MonsterPowerAttackNumber>
+      </AttackBonuses>
+    </MonsterAttack>
+  </Attacks>
+  <Name>Bloody blast</Name>
+  <Type>Close Burst</Type>
+  <IsBasic>false</IsBasic>
+  <Keywords>
+    <ObjectReference>
+      <id xsi:type="string">196</id>
+      <ReferencedObject>
+        <ID xsi:type="string">196</ID>
+        <Name>Cold</Name>
+        <Description>Ice crystals, arctic air, or frigid liquid.</Description>
+      </ReferencedObject>
+    </ObjectReference>
+    <ObjectReference>
+      <ReferencedObject>
+        <Name>Fire</Name>
+      </ReferencedObject>
+    </ObjectReference>
+    <ObjectReference>
+      <ReferencedObject>
+        <Name>Polymorph</Name>
+      </ReferencedObject>
+    </ObjectReference>
+  </Keywords>
+  <Tier>0</Tier>
+</MonsterPower>
