@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
  */
 package vcc.infra.diskcache
 
-import org.specs2.mutable.{SpecificationWithJUnit}
+import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
-import java.io.{File}
+import java.io.File
 
 class UpdateableObjectStoreTest extends SpecificationWithJUnit with Mockito {
 
@@ -35,7 +35,7 @@ class UpdateableObjectStoreTest extends SpecificationWithJUnit with Mockito {
       mockResolver.getObjectUpdateAwareLoader(10) returns mockLoader
       mockLoader.getCurrent() returns Some("Ten")
       store.fetch(10) must_== Some("Ten")
-      there was one(mockResolver).getObjectUpdateAwareLoader(10) then
+      there was one(mockResolver).getObjectUpdateAwareLoader(10) andThen
               one(mockLoader).getCurrent()
 
     }

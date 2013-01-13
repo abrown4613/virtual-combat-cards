@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
       state.initiativeTrackerFromID(ioA1) returns mock[InitiativeTracker]
 
       rules.canInitiativeOrderPerform(state, ioA0, InitiativeAction.StartRound) must beFalse
-      there was one(state).isCombatStarted then
+      there was one(state).isCombatStarted andThen
         atLeastOne(state).nextUp
     }
 
