@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,12 @@ import org.specs2.mutable.SpecificationWithJUnit
 import java.io.File
 import org.specs2.specification.AroundExample
 import org.specs2.time.TimeConversions
-import org.specs2.execute.Result
+import org.specs2.execute.{AsResult, Result}
 import org.specs2.execute.EventuallyResults._
 
 trait RetryExamples extends AroundExample with TimeConversions {
-
-  def around[R <% Result](r: =>R) =
-    eventually(retries = 3, sleep = 10.millis)(r)
-
+  protected def around[T](t: => T)(implicit evidence$1: AsResult[T]): Result =
+    eventually(retries = 3, sleep = 10.millis)(evidence$1.asResult(t))
 }
 
 class SaveAndRestoreCombatStateTest extends SpecificationWithJUnit with RetryExamples {

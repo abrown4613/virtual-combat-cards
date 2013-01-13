@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
       task1.finish(10)
       task2.finish(20)
       barrier.waitForExecution()
-      there was one(observer).taskComplete(task1, 10) then
+      there was one(observer).taskComplete(task1, 10) andThen
         one(observer).taskComplete(task2, 20)
     }
 
@@ -70,7 +70,7 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
       task2.finish(120)
       task1.finish(20)
       barrier.waitForExecution()
-      there was one(observer).taskComplete(task1, 20) then
+      there was one(observer).taskComplete(task1, 20) andThen
         one(observer).taskComplete(task2, 120)
     }
 
@@ -84,8 +84,8 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
       task2.fail(exception)
       task.finish(21)
       barrier.waitForExecution()
-      there was one(observer).taskComplete(task, 21) then
-        one(observer).taskFailed(task2, exception) then
+      there was one(observer).taskComplete(task, 21) andThen
+        one(observer).taskFailed(task2, exception) andThen
         one(observer).taskComplete(task3, 110)
     }
 
@@ -106,11 +106,11 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
     }
 
     def finish(value: Int) {
-      result.set(Left(value))
+      result.put(Left(value))
     }
 
     def fail(exception: Exception) {
-      result.set(Right(exception))
+      result.put(Right(exception))
     }
 
   }
@@ -119,14 +119,12 @@ class AsynchronousDispatcherTest extends SpecificationWithJUnit {
     private val barrier = new SyncVar[Boolean]()
 
     def execute(): Int = {
-      barrier.set(true)
+      barrier.put(true)
       0
     }
 
     def waitForExecution() {
       barrier.get
     }
-
   }
-
 }

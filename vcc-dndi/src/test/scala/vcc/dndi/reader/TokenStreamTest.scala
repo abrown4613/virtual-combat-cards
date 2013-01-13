@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,8 +62,8 @@ class TokenStreamTest extends SpecificationWithJUnit with Mockito {
       mockFilter.rewriteToken(3) returns Nil
       val ts = new TokenStream[Int](List(1, 2, 3), mockFilter)
       streamToList(ts) must_== Nil
-      there was one(mockFilter).rewriteToken(1) then
-              one(mockFilter).rewriteToken(2) then
+      there was one(mockFilter).rewriteToken(1) andThen
+              one(mockFilter).rewriteToken(2) andThen
               one(mockFilter).rewriteToken(3)
     }
 

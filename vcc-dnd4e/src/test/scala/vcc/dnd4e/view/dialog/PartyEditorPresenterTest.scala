@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
 
       pp.changeCombatantId(0, "ida")
       pp.changeCombatantId(0, "")
-      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA"))))) then
+      there was atLeastOne(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1, cid = Some(CombatantID("IDA"))))) andThen
         atLeastTwo(mockView).setPartyTableContent(100, List(entryFromEntityID(entity1)))
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 package vcc.dnd4e.tracker.event
 
 import org.specs2.mock.Mockito
-import org.specs2.{SpecificationWithJUnit}
+import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import java.lang.Exception
@@ -161,9 +161,8 @@ class InitiativeEventTest extends SpecificationWithJUnit with EventSourceSampleE
       mRules.canInitiativeOrderPerform(mState, ioA0, mAction) returns true
       val t = InitiativeTrackerUpdateEvent(ioA0, mAction)
       val ns = t.transition(mState)
-      (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction) then
+      (there was one(mRules).canInitiativeOrderPerform(mState, ioA0, mAction) andThen
         one(mITA).transform(mITF, mAction)) and (ns must_== mState2)
     }
   }
-
 }
