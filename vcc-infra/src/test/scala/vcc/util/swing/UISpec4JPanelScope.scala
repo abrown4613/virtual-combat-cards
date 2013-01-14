@@ -47,7 +47,7 @@ trait UISpec4JPanelScope extends Scope with BeforeAfter {
   def syncWithSwing() {
     val ret = new SyncVar[Long]()
     SwingHelper.invokeLater{
-      ret.set(10L)
+      ret.put(10L)
     }
     ret.get
   }

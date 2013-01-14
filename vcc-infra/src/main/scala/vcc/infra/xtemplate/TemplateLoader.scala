@@ -21,9 +21,9 @@ import scala.xml._
 
 /**
  * Loads Templates and verifies proper binding to the engine provided.
- * @para defaultPrefix The prefix to look for in the XML Elements, any one with this prefix will be checked against the
+ * @param defaultPrefix The prefix to look for in the XML Elements, any one with this prefix will be checked against the
  * engine defined TemplateDirective
- * @para engine Engine containing the definition of TemplateDirective and TemplateFormatter
+ * @param engine Engine containing the definition of TemplateDirective and TemplateFormatter
  */
 class TemplateLoader(defaultPrefix: String, engine: TemplateEngine) {
 
@@ -42,7 +42,7 @@ class TemplateLoader(defaultPrefix: String, engine: TemplateEngine) {
       }
     } else {
       node match {
-        case e: Elem => new Elem(e.prefix, e.label, e.attributes, e.scope, rChild: _*)
+        case e: Elem => new Elem(e.prefix, e.label, e.attributes, e.scope, true, rChild: _*)
         case t => t
       }
     }
@@ -50,7 +50,7 @@ class TemplateLoader(defaultPrefix: String, engine: TemplateEngine) {
 
   /**
    * Loads an XML file from an InputSource then processes all the nodes to provided a resolved Template.
-   * @para is The InputSource for the XML data
+   * @param is The InputSource for the XML data
    * @return A Resolved template.
    * @throws IllegalTemplateDirectiveException if template expansion produced an error
    */

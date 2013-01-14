@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ class TrackerTest extends SpecificationWithJUnit {
     def getObservedState: Option[S] = state.get(70)
 
     def stateUpdated(newState: S) {
-      state.set(newState)
+      state.put(newState)
     }
   }
 

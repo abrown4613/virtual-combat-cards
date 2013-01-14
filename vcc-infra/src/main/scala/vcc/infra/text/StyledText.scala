@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.text
 
 import scala.xml._
@@ -29,7 +28,7 @@ object Style extends Enumeration {
  * Represents some structure that can be returned as a sequence of XHTML nodes. Convertible a
  */
 trait XHTMLConvertible {
-  def toXHTML():NodeSeq
+  def toXHTML:NodeSeq
 }
 
 /**
@@ -37,8 +36,8 @@ trait XHTMLConvertible {
  * purposes.
  */
 case class StyledText(blocks: List[TextBlock]) extends XHTMLConvertible {
-  def toXML(): Node = <styledText>{blocks.map(_.toXML)}</styledText>
-  def toXHTML(): NodeSeq = blocks.map(_.toXHTML)
+  def toXML: Node = <styledText>{blocks.map(_.toXML)}</styledText>
+  def toXHTML: NodeSeq = blocks.map(_.toXHTML)
 }
 
 object StyledText {
@@ -58,15 +57,15 @@ object StyledText {
 }
 
 case class TextBlock(tag: String, clazz: String, segments: List[Segment]) {
-  def toXHTML(): Node = {
+  def toXHTML: Node = {
     val attributes = {
       if (clazz != null) new UnprefixedAttribute("class", clazz, scala.xml.Null)
       else scala.xml.Null
     }
-    new Elem(null, tag.toLowerCase, attributes, scala.xml.TopScope, segments.map(_.toXHTML): _*)
+    new Elem(null, tag.toLowerCase, attributes, scala.xml.TopScope, true, segments.map(_.toXHTML): _*)
   }
 
-  def toXML(): Node = <block tag={tag} class={clazz}>{segments.map(_.toXML)}</block>
+  def toXML: Node = <block tag={tag} class={clazz}>{segments.map(_.toXML)}</block>
 }
 
 object TextBlock {
@@ -103,19 +102,19 @@ object TextBlock {
 }
 
 abstract class Segment {
-  def toXML(): Node
-  def toXHTML():Node
+  def toXML: Node
+  def toXHTML:Node
 }
 
 case class InlineImage(src:String) extends Segment {
-  def toXML() = <image url={src} />
+  def toXML = <image url={src} />
   val toXHTML = <img src={src} />
 }
 
 case class TextSegment(style: Style.Value, text: String) extends Segment {
-  def toXML() = <text style={style.toString}>{text}</text>
+  def toXML = <text style={style.toString}>{text}</text>
 
-  def toXHTML() = style match {
+  def toXHTML = style match {
     case Style.Bold => <b>{text}</b>
     case Style.None => scala.xml.Text(text)
     case Style.Italic => <i>{text}</i>
@@ -123,7 +122,7 @@ case class TextSegment(style: Style.Value, text: String) extends Segment {
 }
 
 case object LineBreak extends Segment {
-  def toXML() = <break/>
+  def toXML = <break/>
   val toXHTML = <br/>
 }
 

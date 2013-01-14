@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
 import scala.xml.{NodeSeq, Node}
 
 /**
- * Defines a macro by adding its processed childs to the Template macros.
+ * Defines a macro by adding its processed child to the Template macros.
  */
 object MacroDefineDirective extends TemplateDirective[String]("define", false) {
   def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = Nil
@@ -29,11 +28,11 @@ object MacroDefineDirective extends TemplateDirective[String]("define", false) {
    * Adds a symbol to the Template able
    */
   protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): String = {
-    val macro = validateSingleArgument("macro", node)
-    if (template.hasMacro(macro))
-      throw new IllegalTemplateDirectiveException("Macro '" + macro + "' is already defined.", node)
-    template.defineMacro(macro, child)
-    macro
+    val macroName = validateSingleArgument("macro", node)
+    if (template.hasMacro(macroName))
+      throw new IllegalTemplateDirectiveException("Macro '" + macroName + "' is already defined.", node)
+    template.defineMacro(macroName, child)
+    macroName
   }
 }
 
@@ -44,9 +43,9 @@ object MacroIncludeDirective extends TemplateDirective[(String, NodeSeq)]("inclu
   def render(ds: TemplateDataSource, node: TemplateNode[(String, NodeSeq)]): NodeSeq = renderChildren(ds,node.arguments._2)
 
   protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): (String, NodeSeq) = {
-    val macro = validateSingleArgument("macro", node)
-    if (!template.hasMacro(macro))
-      throw new IllegalTemplateDirectiveException("Macro '" + macro + "' not defined", node)
-    (macro, template.getMacro(macro))
+    val macroName = validateSingleArgument("macro", node)
+    if (!template.hasMacro(macroName))
+      throw new IllegalTemplateDirectiveException("Macro '" + macroName + "' not defined", node)
+    (macroName, template.getMacro(macroName))
   }
 }

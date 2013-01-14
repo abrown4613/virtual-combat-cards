@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@ class ApplicationDriver extends Tracker.Observer[CombatState] {
   }
 
   def stateUpdated(newState: CombatState) {
-    state.set(CombatStateViewAdapterBuilder.buildView(newState))
+    clearStateIsSet()
+    state.put(CombatStateViewAdapterBuilder.buildView(newState))
   }
 
   def close() = StandardResults.success
@@ -64,4 +65,8 @@ class ApplicationDriver extends Tracker.Observer[CombatState] {
   }
 
   private def application = Application.getInstance
+
+  private def clearStateIsSet() {
+    if (state.isSet) state.take()
+  }
 }
