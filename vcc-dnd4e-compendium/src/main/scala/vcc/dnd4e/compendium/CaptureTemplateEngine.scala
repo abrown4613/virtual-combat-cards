@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ object CaptureTemplateEngine {
 
   def getInstance: CaptureTemplateEngine = instance
 
-  @deprecated("Should user CaptureTemplateEngine.getInstance.fetchClassTemplate")
+  @deprecated("Should user CaptureTemplateEngine.getInstance.fetchClassTemplate", "1.8")
   def fetchClassTemplate(clazz: String) = getInstance.fetchClassTemplate(clazz)
 }
 

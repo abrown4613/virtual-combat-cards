@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ class ImporterServiceTest extends SpecificationWithJUnit {
       val mResult = mock[CombatantEntity]
       val job = makeJob(Some(mResult))
       val barrier = new SyncVar[Option[CombatantEntity]]
-      service.executeAndNotify(job, barrier.set(_))
+      service.executeAndNotify(job, barrier.put(_))
 
       barrier.get(500).get must_== Some(mResult)
     }
@@ -51,14 +51,14 @@ class ImporterServiceTest extends SpecificationWithJUnit {
       val mResult = mock[CombatantEntity]
       val job = makeJob(Some(mResult))
       val barrier = new SyncVar[Option[CombatantEntity]]
-      service.executeAndNotify(job, barrier.set(_))
+      service.executeAndNotify(job, barrier.put(_))
       there was one(repository).store(mResult)
     }
 
     def e3 = {
       val job = makeJob(None)
       val barrier = new SyncVar[Option[CombatantEntity]]
-      service.executeAndNotify(job, barrier.set(_))
+      service.executeAndNotify(job, barrier.put(_))
 
       barrier.get(500).get must_== None
     }

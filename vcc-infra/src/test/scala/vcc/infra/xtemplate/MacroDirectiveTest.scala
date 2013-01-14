@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ class MacroDirectiveTest extends SpecificationWithJUnit with Mockito {
       tn.label must_== "define"
       tn.arguments must_== "foo-macro"
       //Store macros
-      there was one(spyTemplate).hasMacro("foo-macro") then
+      there was one(spyTemplate).hasMacro("foo-macro") andThen
         one(spyTemplate).defineMacro("foo-macro", Text("bar"))
     }
 
@@ -82,7 +82,7 @@ class MacroDirectiveTest extends SpecificationWithJUnit with Mockito {
       tn must not beNull;
       tn.label must_== "include"
       //Store macros
-      there was one(mockTemplate).hasMacro("foo-macro") then
+      there was one(mockTemplate).hasMacro("foo-macro") andThen
         one(mockTemplate).getMacro("foo-macro")
 
       tn.arguments._1 must_== "foo-macro"

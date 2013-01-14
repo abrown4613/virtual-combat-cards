@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
 import vcc.infra.text._
@@ -36,7 +35,7 @@ class Trap(val id: Int, var attributes: Map[String, String], val sections: List[
   def templateInlineXML(key: String): NodeSeq = null
 
   def templateGroup(key: String): List[TemplateDataSource] = {
-    if(key.toLowerCase() == "sections") sections
+    if(key.toLowerCase == "sections") sections
     else Nil
   }
 }
@@ -51,13 +50,13 @@ case class TrapSection(header: String, text: StyledText) extends TemplateDataSou
 
   def templateGroup(group: String): List[TemplateDataSource] = Nil
 
-  def templateVariable(key: String): Option[String] = wrapInOption(key.toLowerCase() match {
+  def templateVariable(key: String): Option[String] = wrapInOption(key.toLowerCase match {
       case "header" => header
       case _ => null
     })
 
-  def templateInlineXML(key: String): NodeSeq = key.toLowerCase() match {
-    case "text" => text.toXHTML()
+  def templateInlineXML(key: String): NodeSeq = key.toLowerCase match {
+    case "text" => text.toXHTML
     case _ => Nil
   }
 }

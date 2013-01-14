@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
 import scala.xml._
@@ -76,7 +75,7 @@ class Template(val prefix: String) {
 
   /**
    * Generate the XML resultant of applying this template to the data source supplied.
-   * @para ds The source of information to be expanded in the template.
+   * @param ds The source of information to be expanded in the template.
    * @return A single node representing the entire template 
    */
   def render(ds: TemplateDataSource): Node = {

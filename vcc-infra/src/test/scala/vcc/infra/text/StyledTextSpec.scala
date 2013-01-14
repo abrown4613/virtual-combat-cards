@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  */
 package vcc.infra.text
 
-import org.specs2.mutable.{SpecificationWithJUnit}
+import org.specs2.mutable.SpecificationWithJUnit
 
 class StyledTextSpec extends SpecificationWithJUnit {
   "TextBuilder" should {
@@ -47,7 +47,7 @@ class StyledTextSpec extends SpecificationWithJUnit {
       ))
 
     "serialize TextSegment" in {
-      TextSegment(Style.Bold, "Hello").toXML() must_== <text style="Bold">Hello</text>
+      TextSegment(Style.Bold, "Hello").toXML must_== <text style="Bold">Hello</text>
     }
 
     "deserialize TextSegment" in {
@@ -69,7 +69,7 @@ class StyledTextSpec extends SpecificationWithJUnit {
     }
 
     "serialize to XML" in {
-      text.toXML() must_== <styledText><block tag="P" class="first"><text style="Bold">Hello</text><text style="None">darling</text><break/><text style="None">love</text></block><block tag="P" class="second"><text style="Italic">you're so fine</text></block></styledText>
+      text.toXML must_== <styledText><block tag="P" class="first"><text style="Bold">Hello</text><text style="None">darling</text><break/><text style="None">love</text></block><block tag="P" class="second"><text style="Italic">you're so fine</text></block></styledText>
     }
 
     "deserialize from XML" in {
@@ -96,7 +96,7 @@ class StyledTextSpec extends SpecificationWithJUnit {
     }
 
     "produce sequence of nodes" in {
-      val fmt = StyledText(List(blk1, blk2)).toXHTML()
+      val fmt = StyledText(List(blk1, blk2)).toXHTML
 
       fmt.size must_== 2
       fmt(0) must_== blk1.toXHTML

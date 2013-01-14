@@ -14,6 +14,7 @@
     <inceptionYear>2008</inceptionYear>
     <properties>
         <scala.version>2.10.0</scala.version>
+        <scala.versionShort>2.10</scala.versionShort>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <staging.hg.repo.url>https://code.google.com/p/virtual-combat-cards/</staging.hg.repo.url>
         <staging.mvn.repo.url>file:///tmp/maven-alt-repo</staging.mvn.repo.url>
@@ -93,7 +94,7 @@
         </dependency>
         <dependency>
             <groupId>org.specs2</groupId>
-            <artifactId>specs2_2.10</artifactId>
+            <artifactId>specs2_${scala.versionShort}</artifactId>
             <version>1.13</version>
             <scope>test</scope>
         </dependency>
@@ -172,7 +173,9 @@
                         <jvmArg>-Xss4m</jvmArg>
                     </jvmArgs>
                     <args>
-                        <arg>-target:jvm-1.5</arg>
+                        <arg>-target:jvm-1.6</arg>
+                        <arg>-feature</arg>
+                        <arg>-deprecation</arg>
                     </args>
                 </configuration>
             </plugin>

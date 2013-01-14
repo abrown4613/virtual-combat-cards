@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,8 +48,8 @@ class RemoteFileTest extends SpecificationWithJUnit with Mockito {
 
       val is = rf.fetchIfOlder(3600)
       is must_== mInputStream
-      there was one(mLocal).getModificationTime then
-        one(mRemote).fetchContent then
+      there was one(mLocal).getModificationTime andThen
+        one(mRemote).fetchContent andThen
         one(mLocal).loadToMemoryStream
       there was no(mLocal).saveFromStream(any)
     }
@@ -62,8 +62,8 @@ class RemoteFileTest extends SpecificationWithJUnit with Mockito {
       val is = rf.fetchIfOlder(3600)
 
       is must beNull
-      there was one(mLocal).getModificationTime then
-        one(mRemote).fetchContent then
+      there was one(mLocal).getModificationTime andThen
+        one(mRemote).fetchContent andThen
         one(mLocal).loadToMemoryStream
     }
 
@@ -77,9 +77,9 @@ class RemoteFileTest extends SpecificationWithJUnit with Mockito {
 
       is must_== mInputRemote
 
-      there was one(mLocal).getModificationTime then
-        one(mRemote).fetchContent then
-        atLeastOne(mLocal).saveFromStream(mInputRemote) then       //TODO this is odd should be One
+      there was one(mLocal).getModificationTime andThen
+        one(mRemote).fetchContent andThen
+        atLeastOne(mLocal).saveFromStream(mInputRemote) andThen
         one(mLocal).loadToMemoryStream
 
     }
