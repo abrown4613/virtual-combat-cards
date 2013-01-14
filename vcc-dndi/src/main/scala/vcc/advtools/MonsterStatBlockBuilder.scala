@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "usage" =>
           UsageFormatter.format(power.usage)
         case "description" =>
-          PowerDescriptionFormatter.formatAttack(power.text).toXHTML()
+          PowerDescriptionFormatter.formatAttack(power.text).toXHTML
         case _ =>
           Seq()
       }
@@ -72,7 +72,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
         case "usage" =>
           NodeSeq.fromSeq(Seq(Text(" "), <img src={IconType.iconToImage(IconType.Separator)}/>, <b>Aura</b>, Text(" " + aura.radius)))
         case "description" =>
-          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aura.details)))).toXHTML()
+          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aura.details)))).toXHTML
         case _ => NodeSeq.fromSeq(Nil)
       }
     }
@@ -93,7 +93,7 @@ class MonsterStatBlockBuilder(monsterReader: MonsterReader) {
     def templateInlineXML(key: String): NodeSeq = {
       key match {
         case "description" =>
-          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aTrait.details)))).toXHTML()
+          StyledText(List(TextBlock("P", "flavorIndent", TextSegment(aTrait.details)))).toXHTML
         case _ => NodeSeq.fromSeq(Nil)
       }
     }

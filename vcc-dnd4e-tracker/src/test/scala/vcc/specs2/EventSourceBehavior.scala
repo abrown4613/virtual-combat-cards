@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,13 +72,13 @@ trait EventSourceBehavior[S, E, C] {
     /**
      * Check if the command generates the appropriate sequence of domain events.
      */
-    def then(expected: E*): Result = then(be_==(expected))
+    def andThen(expected: E*): Result = andThen(be_==(expected))
 
     /**
      * Check if the command generates a sequence of events that matches the specified matcher
      * @param matcher A Specs2 matcher on a Iterable of domain events.
      */
-    def then(matcher: Matcher[Iterable[E]]): Result = {
+    def andThen(matcher: Matcher[Iterable[E]]): Result = {
       errorOrState match {
         case Right(state) => runner(state, cmd) must matcher
         case Left(r) => r
@@ -116,25 +116,25 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
 
   def is =
     "EventSourceBehavior".title ^
-      "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").then(10, 11) ^
-      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").then(contain(11, 12).inOrder) ^
+      "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").andThen(10, 11) ^
+      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").andThen(contain(11, 12).inOrder) ^
       "given 0 and 1,2,3 when '4,a' failWith()" ! (given(0, 1, 2, 3) when ("4,a") must throwA[NumberFormatException]) ^
-      "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").then(10) ^
-      "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").then(19) ^
-      "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").then(14) ^
+      "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").andThen(10) ^
+      "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").andThen(19) ^
+      "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").andThen(14) ^
       "given 0 and 1,-2 when '4' then 4" ! error1 ^
-      "given 0 and Seq(1,2) given(3) when '4' then 10" ! given(0, 1, 2).given("3").when("4").then(13) ^
-      "given 0 and Seq(1,2) given('1','1') when '4' then 15" ! given(0, 1, 2).given("1,1", "1").when("4").then(27) ^
+      "given 0 and Seq(1,2) given(3) when '4' then 10" ! given(0, 1, 2).given("3").when("4").andThen(13) ^
+      "given 0 and Seq(1,2) given('1','1') when '4' then 15" ! given(0, 1, 2).given("1,1", "1").when("4").andThen(27) ^
       "given 0 and Seq(1,2) given(3a) when '4' then 10" ! error2 ^
       end
 
   def error1 = {
-    val result = (given(0, 1, -2).when("4").then(4))
+    val result = (given(0, 1, -2).when("4").andThen(4))
     (result.isError must beTrue) and (result.message must_== "Failed to build given state")
   }
 
   def error2 = {
-    val result = given(0, 1, 2).given("3a").when("4").then(10)
+    val result = given(0, 1, 2).given("3a").when("4").andThen(10)
     (result.isError must beTrue) and (result.message must_== "Failed to build given state (with command)")
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@ case class Power(definition: PowerDefinition, action: ActionType.Value, descript
   def templateGroup(key: String): List[TemplateDataSource] = Nil
 
   def templateInlineXML(key: String): NodeSeq = {
-    if (key == "description") description.toXHTML()
+    if (key == "description") description.toXHTML
     else definition.templateInlineXML(key)
   }
 

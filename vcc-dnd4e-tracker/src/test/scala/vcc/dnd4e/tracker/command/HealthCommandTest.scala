@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class HealthCommandTest extends SpecificationWithJUnit with CombatStateEventSour
       "fail if not found" !
         (given(emptyState) when (cmd) failWith notFoundException) ^
       "generate event" !
-        (given(emptyState, evtAddCombA) when (cmd) then (evt)) ^
+        (given(emptyState, evtAddCombA) when (cmd) andThen (evt)) ^
       endp
 
   }
@@ -54,17 +54,17 @@ class HealthCommandTest extends SpecificationWithJUnit with CombatStateEventSour
       "simple damage" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA, meAddToOrder(comb1, 3, 3), evtStart).
           when(DamageCommand(combA, 10)).
-          then(ApplyDamageEvent(combA, 10))) ^
+          andThen(ApplyDamageEvent(combA, 10))) ^
       "damage and end combat when last acting is killed" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA,
           meAddToOrder(comb1, 3, 3), evtStart, killEvent(comb1)).
           when(DamageCommand(combA, 1000)).
-          then(ApplyDamageEvent(combA, 1000), evtEnd)) ^
+          andThen(ApplyDamageEvent(combA, 1000), evtEnd)) ^
       "killing but not the last does kill" !
         (given(emptyState, evtAddCombA, evtAddCombNoId, evtAddCombNoId, evtInitA,
           meAddToOrder(comb1, 3, 3), evtStart).
           when(DamageCommand(combA, 1000)).
-          then(ApplyDamageEvent(combA, 1000))) ^
+          andThen(ApplyDamageEvent(combA, 1000))) ^
       endp
   }
 }
