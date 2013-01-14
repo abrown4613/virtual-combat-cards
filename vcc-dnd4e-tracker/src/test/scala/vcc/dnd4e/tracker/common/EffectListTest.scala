@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ class EffectListTest extends SpecificationWithJUnit with Mockito {
 
       aBigList.transformAndFilter(mTransformation)
 
-      there was one(mTransformation).transform(aBigList.effects(0)) then
+      there was one(mTransformation).transform(aBigList.effects(0)) andThen
         one(mTransformation).transform(aBigList.effects(1))
     }
 
@@ -107,7 +107,7 @@ class EffectListTest extends SpecificationWithJUnit with Mockito {
 
       (aBigList.effects filterNot (nList.effects contains)) must_== List(aBigList.effects(1))
 
-      there was one(mTransformation).transform(aBigList.effects(0)) then
+      there was one(mTransformation).transform(aBigList.effects(0)) andThen
         one(mTransformation).transform(aBigList.effects(1))
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "start round" !
         (given(emptyState, buildEvents).
           when(StartRoundCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound), EffectListTransformEvent(EffectTransformation.startRound(ioA0)))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.StartRound), EffectListTransformEvent(EffectTransformation.startRound(ioA0)))) ^
       endp
   }
 
@@ -65,7 +65,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "end round and rotate" !
         (given(emptyState, buildEvents).
           when(EndRoundCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), RotateRobinEvent, EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), RotateRobinEvent, EffectListTransformEvent(EffectTransformation.endRound(ioA0)))) ^
       endp
   }
 
@@ -77,7 +77,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
         (given(emptyState, buildEvents).
           given(StartRoundCommand(ioA0)).
           when(DelayCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.DelayAction), RotateRobinEvent, DelayEffectListTransformEvent(ioA0))) ^
       endp
   }
 
@@ -86,7 +86,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       (given(emptyState, smallCombatBuildEvents).
         given(StartRoundCommand(ioA0), DelayCommand(ioA0), StartRoundCommand(io1_0), EndRoundCommand(io1_0)).
         when(EndRoundCommand(ioA0)).
-        then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), EffectListTransformEvent(EffectTransformation.endRound(ioA0))))
+        andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.EndRound), EffectListTransformEvent(EffectTransformation.endRound(ioA0))))
   }
 
   private def execMoveUp = {
@@ -96,7 +96,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "move up, move to first, and set robin" !
         (given(emptyState, buildEvents, evtStartRoundA, evtDelayRoundA, RotateRobinEvent).
           when(MoveUpCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp), MoveBeforeFirstEvent(ioA0), SetRobinEvent(ioA0))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.MoveUp), MoveBeforeFirstEvent(ioA0), SetRobinEvent(ioA0))) ^
       endp
 
   }
@@ -108,7 +108,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "delay and rotate" !
         (given(emptyState, buildEvents, evtStartRoundA).
           when(ReadyActionCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ReadyAction))) ^
       endp
 
   }
@@ -121,7 +121,7 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "move up, move to first, and set robin" !
         (given(emptyState, events).
           when(ExecuteReadyCommand(ioA0)).
-          then(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioA0))) ^
+          andThen(InitiativeTrackerUpdateEvent(ioA0, InitiativeAction.ExecuteReady), MoveBeforeFirstEvent(ioA0))) ^
       endp
 
   }
@@ -138,11 +138,11 @@ class InitiativeCommandTest extends SpecificationWithJUnit with CombatStateEvent
       "moving first out should move rotate then move" !
         (given(emptyState, buildEvents).
           when(MoveBeforeCommand(ioA0, io2_0)).
-          then(RotateRobinEvent, MoveBeforeOtherEvent(ioA0, io2_0))) ^
+          andThen(RotateRobinEvent, MoveBeforeOtherEvent(ioA0, io2_0))) ^
       "moving any but the first is simple" !
         (given(emptyState, buildEvents).
           when(MoveBeforeCommand(io2_0, io1_0)).
-          then(MoveBeforeOtherEvent(io2_0, io1_0))) ^
+          andThen(MoveBeforeOtherEvent(io2_0, io1_0))) ^
       endp
   }
 }

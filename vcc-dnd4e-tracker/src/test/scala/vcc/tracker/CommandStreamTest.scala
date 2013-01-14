@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ class CommandStreamTest extends SpecificationWithJUnit {
       s1.get(any) returns (None)
       s2.get(any) returns (None)
       (composed.get(randomInt()) must_== None) and
-        (there was one(s1).get(any)) then one(s2).get(any)
+        (there was one(s1).get(any)) andThen one(s2).get(any)
     }
   }
 

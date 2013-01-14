@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class TemplateLoaderTest extends SpecificationWithJUnit with Mockito {
     val spyEngine = spy(engine)
     val loader = new TemplateLoader("t", spyEngine)
     val t = loader.resolveNode(<hey class="nice"><t:ifdefined id="foo"><foo><t:data id="foo"/></foo></t:ifdefined></hey>, template)
-    there was one(spyEngine).hasDirective("data") then
+    there was one(spyEngine).hasDirective("data") andThen
       one(spyEngine).hasDirective("ifdefined")
 
     t.child(0).isInstanceOf[TemplateNode[_]] must beTrue

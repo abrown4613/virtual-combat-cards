@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
 import scala.xml._
@@ -33,11 +32,11 @@ final class TemplateNode[T](override val prefix: String, val label: String, val 
 /**
  * Several utility functions for the Template Engine.
  */
-final object TemplateNode {
+object TemplateNode {
 
   /**
    * Merge adjacent scala.xml.Text nodes.
-   * @para ns NodeSeq to be processed
+   * @param ns NodeSeq to be processed
    * @return NodeSeq with all adjacent text merged
    */
   def mergeTexts(ns: NodeSeq): NodeSeq = {
@@ -69,15 +68,15 @@ final object TemplateNode {
   /**
    * Recursively render node by expanding TemplateNode to the rendered form, and rewriting Elem to same definition with
    * renderNode applied to their children.
-   * @para ds Datasource to be unsided on the TemplateDirectives
-   * @para node Node to be formatted (will recurse through Elements)
-   * @retun A new reformatted node sequence.
+   * @param ds Datasource to be unsided on the TemplateDirectives
+   * @param node Node to be formatted (will recurse through Elements)
+   * @return A new reformatted node sequence.
    */
   def renderNode(ds: TemplateDataSource, node: Node): NodeSeq = {
     node match {
       case tn: TemplateNode[_] => tn.render(ds)
       case e: Elem =>
-        new Elem(e.prefix, e.label, e.attributes, e.scope, TemplateNode.mergeTexts(e.child.flatMap(n => renderNode(ds, n))): _*)
+        new Elem(e.prefix, e.label, e.attributes, e.scope, true, TemplateNode.mergeTexts(e.child.flatMap(n => renderNode(ds, n))): _*)
       case t => t
     }
   }

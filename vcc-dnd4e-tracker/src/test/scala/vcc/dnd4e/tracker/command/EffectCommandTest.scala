@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSour
     val brokenEffectTransition = AddEffectCommand(combB, combB, conditionGood, durationEoRA0)
     "Add Effect" ^
       "add effect" !
-        (given(emptyState, buildEvents) when (addEffectTransition) then (addedEffectEvent)) ^
+        (given(emptyState, buildEvents) when (addEffectTransition) andThen (addedEffectEvent)) ^
       "fail if target not defined" !
         (given(emptyState, buildEvents) when (brokenEffectTransition) must (throwAn[IllegalActionException])) ^
       endp
@@ -59,7 +59,7 @@ class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSour
     val badTransition = CancelEffectCommand(eidBroken)
     "Cancel Efect" ^
       "do cancel effect" !
-        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+        (given(emptyState, buildEvents) when (goodTransition) andThen (expectedEvent)) ^
       "fail because target not defined" !
         (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
       endp
@@ -71,7 +71,7 @@ class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSour
     val badTransition = SustainEffectCommand(eidBroken)
     "Sustain Efect" ^
       "do cancel effect" !
-        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+        (given(emptyState, buildEvents) when (goodTransition) andThen (expectedEvent)) ^
       "fail because target not defined" !
         (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
       endp
@@ -83,7 +83,7 @@ class EffectCommandTest extends SpecificationWithJUnit with CombatStateEventSour
     val badTransition = UpdateEffectConditionCommand(eidBroken, conditionBad)
     "Update Efect" ^
       "do cancel effect" !
-        (given(emptyState, buildEvents) when (goodTransition) then (expectedEvent)) ^
+        (given(emptyState, buildEvents) when (goodTransition) andThen (expectedEvent)) ^
       "fail because target not defined" !
         (given(emptyState, buildEvents) when (badTransition) must (throwAn[IllegalActionException])) ^
       endp

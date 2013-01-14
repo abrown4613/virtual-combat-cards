@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import vcc.dnd4e.tracker.common._
 import vcc.scalaz.Lens
 import vcc.dnd4e.tracker.event.{CombatStateEvent, AddCombatantEvent, EventSourceSampleEvents}
 import vcc.tracker.{Command, CommandStream}
+import reflect.ClassTag
 
 class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -220,7 +221,7 @@ class AutoStartDeadCommandSourceTest extends SpecificationWithJUnit with EventSo
       AutomationCommandSource.HeadStateAndHealth.unapply(state) must_== None
     }
 
-    private def mockCombatantAspect[T](state: CombatState, lens: Lens[CombatState, T])(implicit cm: ClassManifest[T]): (CombatState, T) = {
+    private def mockCombatantAspect[T](state: CombatState, lens: Lens[CombatState, T])(implicit cm: ClassTag[T]): (CombatState, T) = {
       val mockT = mock[T](cm)
       (lens.mod(state, x => mockT), mockT)
     }

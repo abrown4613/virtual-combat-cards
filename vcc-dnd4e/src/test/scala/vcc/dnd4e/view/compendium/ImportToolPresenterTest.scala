@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,26 +58,26 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
     "handle single file import" in new env {
       presenter.processFiles(Seq(file1))
 
-      there was one(importer).importJobForFile(file1) then
+      there was one(importer).importJobForFile(file1) andThen
         one(view).updateProgress(0, 1)
 
       importer.finishTask()
 
-      there was one(view).updateProgress(0, 0) then
+      there was one(view).updateProgress(0, 0) andThen
         one(view).setListContent(List((entity1.eid, entity1.name.value)))
     }
 
     "handle multiple file import" in new env {
       presenter.processFiles(Seq(file1, file2))
 
-      there was one(importer).importJobForFile(file1) then
+      there was one(importer).importJobForFile(file1) andThen
         one(importer).importJobForFile(file2)
 
       there was one(view).updateProgress(0, 2)
 
       importer.finishTask()
 
-      there was one(view).updateProgress(1, 2) then
+      there was one(view).updateProgress(1, 2) andThen
         one(view).setListContent(entityView(1))
 
       importer.finishTask()
@@ -89,7 +89,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       val expectedProgress = List((0, 2), (1, 2), (1, 3), (2, 3), (0, 0))
       presenter.processFiles(Seq(file1, file2))
 
-      there was one(importer).importJobForFile(file1) then
+      there was one(importer).importJobForFile(file1) andThen
         one(importer).importJobForFile(file2)
 
       view.progress must_== expectedProgress.take(1)
@@ -116,7 +116,7 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
       there was one(view).updateProgress(0, 1)
       importer.finishTask()
       presenter.processFiles(Seq(file2))
-      there was one(view).updateProgress(0, 0) then
+      there was one(view).updateProgress(0, 0) andThen
         two(view).updateProgress(0, 1)
 
       importer.finishTask()
@@ -259,5 +259,4 @@ class ImportToolPresenterTest extends SpecificationWithJUnit with Mockito {
     def progress = progressEvents.reverse
     def currentDocument = document
   }
-
 }

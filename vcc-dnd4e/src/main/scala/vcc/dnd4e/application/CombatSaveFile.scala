@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -319,11 +319,11 @@ class CombatSaveFile {
   }
 
   private def createSimpleDataNode(label: String, text: String): Elem = {
-    Elem(null, label, Null, TopScope, Text(text))
+    Elem(null, label, Null, TopScope, true, Text(text))
   }
 
   private def createSequenceNode(label: String, nodes: Seq[Node]): Elem = {
-    Elem(null, label, Null, TopScope, nodes: _*)
+    Elem(null, label, Null, TopScope, true, nodes: _*)
   }
 
   private def attributeOrNull(identifier: String, value: String): MetaData = {
