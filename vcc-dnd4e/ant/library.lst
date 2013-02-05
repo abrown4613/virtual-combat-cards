@@ -1,5 +1,6 @@
 scala-swing.jar
 scala-library.jar
+scala-actors.jar
 miglayout.jar
 jetty.jar
 jetty-util.jar
@@ -11,6 +12,7 @@ core-renderer.jar
 idw-gpl.jar
 swing.jar
 macify.jar
+warless.jar
 vcc-main.jar
 vcc-infra.jar
 vcc-dnd4e-tracker.jar
@@ -18,3 +20,4 @@ vcc-dnd4e.jar
 vcc-datastore.jar
 vcc-dnd4e-compendium.jar
 vcc-dndi.jar
+vcc-web.jar
