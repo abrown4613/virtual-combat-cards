@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ import org.exnebula.metric.{MetricReporter, MetricCollector}
 import java.util.UUID
 import vcc.updater.ExternalFileUpdater
 import org.exnebula.fileutil.FileWriter
+import web.VersionServlet
+import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -154,9 +156,12 @@ object BootStrap extends StartupRoutine {
     }
 
     callStartupSimpleBlock(srw, "Web Server") {
-      val webDir = this.getClass.getClassLoader.getResource("vcc").toExternalForm
+      val warLess = new WarLess(
+        WarArchive.create(classOf[VersionServlet], "webapp"),
+        new WarTarget(Configuration.baseDirectory.value))
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
-      webServer = WebServer.initialize(webDir, 4143, Map(
+      warLess.resolve()
+      webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map(
         "/capture" -> classOf[CaptureServlet]
       ))
       true
