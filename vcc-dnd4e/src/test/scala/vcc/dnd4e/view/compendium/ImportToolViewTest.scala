@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,7 +70,8 @@ class ImportToolViewTest extends UISpecTestCase {
     assertFalse(getImportingLabel.isVisible)
   }
 
-  def testImportSomeFiles() {
+  def pending_testImportSomeFiles() {
+    println("WARNING: Disable Window Interception")
     val files = Seq("file.1", "file.2").map(new File(_))
     WindowInterceptor.
       init(getImportButton.triggerClick()).
@@ -79,7 +80,7 @@ class ImportToolViewTest extends UISpecTestCase {
     verify(presenter).processFiles(files)
   }
 
-  def testClickImportAndCancel() {
+  def pending_testClickImportAndCancel() {
     WindowInterceptor.
       init(getImportButton.triggerClick()).
       process(fileDialogHandler.cancelSelection()).

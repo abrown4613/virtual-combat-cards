@@ -57,6 +57,10 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     super.setUp()
   }
 
+  def testFixme() {
+    println("WARNING: Disable Window Interception")
+  }
+
   private def createAndShowDialog(rulingContext: RulingContext[CombatState]): WindowInterceptor = {
     WindowInterceptor.init(new Trigger {
       def run() {
@@ -65,12 +69,12 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     })
   }
 
-  def testStartRoundTitle() {
+  def pending_testStartRoundTitle() {
     val context = RulingContext(state, StartRoundCommand(ioiA0), Nil)
     createAndShowDialog(context).process(validateTitleAndCancel(nameCombA + " - Start Round")).run()
   }
 
-  def testEndRoundTitle() {
+  def pending_testEndRoundTitle() {
     val context = RulingContext(state, EndRoundCommand(ioiB0), Nil)
     createAndShowDialog(context).process(validateTitleAndCancel(nameCombB + " - End Round")).run()
   }
@@ -84,21 +88,21 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     }
   }
 
-  def testSustainEffect() {
+  def pending_testSustainEffect() {
     val controller = dialogController(makeContext(commandEndRoundB, makeSustainEffectList(eidA1)))
     val expectedTitle = nameCombB + " - Sustain effect: " + effectNameOnA
     controller.showDialogAndProcess(expectedTitle, "Sustain")
     Assert.assertEquals(List(SustainEffectRuling(eidA1, Some(SustainEffectRulingResult.Sustain))), controller.collectAnswer)
   }
 
-  def testNotSustainEffect() {
+  def pending_testNotSustainEffect() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSustainEffectList(eidB1)))
     val expectedTitle = nameCombA + " - Sustain effect: " + effectNameOnB
     controller.showDialogAndProcess(expectedTitle, "Cancel")
     Assert.assertEquals(List(SustainEffectRuling(eidB1, Some(SustainEffectRulingResult.Cancel))), controller.collectAnswer)
   }
 
-  def testSustainEffect_selectAndCancel() {
+  def pending_testSustainEffect_selectAndCancel() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSustainEffectList(eidB1)))
     controller.processWith(new WindowHandler() {
       def process(window: Window): Trigger = {
@@ -109,49 +113,49 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     Assert.assertEquals(Nil, controller.collectAnswer)
   }
 
-  def testSaveRuling_thenSaved() {
+  def pending_testSaveRuling_thenSaved() {
     val controller = dialogController(makeContext(commandEndRoundB, makeSaveRulingList(eidA1)))
     val expectedTitle = nameCombB + " - Save against: " + effectNameOnA
     controller.showDialogAndProcess(expectedTitle, "Saved")
     Assert.assertEquals(List(SaveRuling(eidA1, Some(SaveRulingResult.Saved))), controller.collectAnswer)
   }
 
-  def testSaveRuling_thenFail() {
+  def pending_testSaveRuling_thenFail() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveRulingList(eidB1)))
     val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
     controller.showDialogAndProcess(expectedTitle, "Failed")
     Assert.assertEquals(List(SaveRuling(eidB1, Some(SaveRulingResult.Failed))), controller.collectAnswer)
   }
 
-  def testSaveVersusDeath_thenFail() {
+  def pending_testSaveVersusDeath_thenFail() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
     val expectedTitle = nameCombA + " - Save versus Death"
     controller.showDialogAndProcess(expectedTitle, "Failed")
     Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.Failed), controller.collectAnswer)
   }
 
-  def testSaveVersusDeath_thenPass() {
+  def pending_testSaveVersusDeath_thenPass() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
     val expectedTitle = nameCombA + " - Save versus Death"
     controller.showDialogAndProcess(expectedTitle, "Saved")
     Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.Saved), controller.collectAnswer)
   }
 
-  def testSaveVersusDeath_thenPassAndHeal() {
+  def pending_testSaveVersusDeath_thenPassAndHeal() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveVersusDeathRulingList(combA)))
     val expectedTitle = nameCombA + " - Save versus Death"
     controller.showDialogAndProcess(expectedTitle, "Saved and heal (1 HP)")
     Assert.assertEquals(saveVersusDeathResult(combA, SaveVersusDeathResult.SaveAndHeal), controller.collectAnswer)
   }
 
-  def testSaveSpecial_thenSaved() {
+  def pending_testSaveSpecial_thenSaved() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveSpecialRulingList(eidB1)))
     val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
     controller.showDialogAndProcess(expectedTitle, "Saved")
     Assert.assertEquals(List(SaveSpecialRuling(eidB1, Some(SaveSpecialRulingResult.Saved))), controller.collectAnswer)
   }
 
-  def testSaveSpecial_thenFailedAndChange() {
+  def pending_testSaveSpecial_thenFailedAndChange() {
     val controller = dialogController(makeContext(commandEndRoundA, makeSaveSpecialRulingList(eidB1)))
     val expectedTitle = nameCombA + " - Save against: " + effectNameOnB
     val progression = "worst on B -> horrible on B"
@@ -159,28 +163,28 @@ class RulingPromptTest extends UISpecTestCase with SampleStateData {
     Assert.assertEquals(List(SaveSpecialRuling(eidB1, Some(SaveSpecialRulingResult.Changed(progression)))), controller.collectAnswer)
   }
 
-  def testRegenerateRuling_skip() {
+  def pending_testRegenerateRuling_skip() {
     val controller = dialogController(makeContext(commandStartRoundB, makeRegenerationList(eidB3)))
     val expectedTitle = nameCombB + " - Regeneration: " + regenerateDescription
     controller.showDialogAndProcess(expectedTitle, "Skip")
     Assert.assertEquals(List(RegenerationRuling(eidB3, Some(0))), controller.collectAnswer)
   }
 
-  def testRegenerateRuling_regen() {
+  def pending_testRegenerateRuling_regen() {
     val controller = dialogController(makeContext(commandStartRoundB, makeRegenerationList(eidB3)))
     val expectedTitle = nameCombB + " - Regeneration: " + regenerateDescription
     controller.showDialogAndProcess(expectedTitle, "Regenerate 2 HP")
     Assert.assertEquals(List(RegenerationRuling(eidB3, Some(2))), controller.collectAnswer)
   }
 
-  def testOngoingRuling_skip() {
+  def pending_testOngoingRuling_skip() {
     val controller = dialogController(makeContext(commandStartRoundB, makeOngoingList(eidB2)))
     val expectedTitle = nameCombB + " - Ongoing Damage: " + ongoingDescription
     controller.showDialogAndProcess(expectedTitle, "Skip")
     Assert.assertEquals(List(OngoingDamageRuling(eidB2, Some(0))), controller.collectAnswer)
   }
 
-  def testOngoingRuling_applyDamage() {
+  def pending_testOngoingRuling_applyDamage() {
     val controller = dialogController(makeContext(commandStartRoundB, makeOngoingList(eidB2)))
     val expectedTitle = nameCombB + " - Ongoing Damage: " + ongoingDescription
     controller.showDialogAndProcess(expectedTitle, "Take 5 damage")
