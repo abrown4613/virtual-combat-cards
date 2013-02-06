@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
 trait TemplateFormatter {
@@ -23,13 +22,13 @@ trait TemplateFormatter {
   def format(raw: String): String
 }
 
-case class FunctionTemplateFormatter(val name:String, fmt: String=>String) extends TemplateFormatter {
+case class FunctionTemplateFormatter(name:String, fmt: String=>String) extends TemplateFormatter {
   if(fmt == null) throw new IllegalArgumentException("Must specify format function.")
   def format(raw: String): String = fmt(raw)
 }
 
 /**
- * This class is essencially a symbol table to hold TemplateFormatter and TemplateDirective for the loader resolution.
+ * This class is essentially a symbol table to hold TemplateFormatter and TemplateDirective for the loader resolution.
  */
 class TemplateEngine {
   private val formatter = scala.collection.mutable.Map.empty[String, TemplateFormatter]

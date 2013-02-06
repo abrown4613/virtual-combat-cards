@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
 import scala.xml.{Node, NodeSeq}
@@ -33,8 +32,8 @@ abstract class TemplateDirective[T](val name: String, val empty: Boolean) {
   /**
    * This method is used to validate and rearrange the arguments in the TemplateDirective. Implementation should validate
    * input node to make sure it can be rendered.
-   * @para node The node that represents the template directive call in the template, should have all the arguments in it.
-   * @para engine This is the engine that contains all define TemplateDirective and Formatter
+   * @param node The node that represents the template directive call in the template, should have all the arguments in it.
+   * @param engine This is the engine that contains all define TemplateDirective and Formatter
    * @return Returns expected parameters for the future invocation of the template directive. null is a valid option.
    * @throws IllegalTemplateDirectiveException If the node not correctly formatted, this exception should be thrown.
    */
@@ -52,16 +51,16 @@ abstract class TemplateDirective[T](val name: String, val empty: Boolean) {
 
   /**
    * This method is called when processing a template to expand the TemplateNode in the template.
-   * @para ds This TemplateDataSource that will be used to provide data to the rendering process.
+   * @param ds This TemplateDataSource that will be used to provide data to the rendering process.
    * @return A NodeSeq without any TemplateNode in it.
    */
   def render(ds: TemplateDataSource, node: TemplateNode[T]): NodeSeq
 
   /**
    * Helper function to extract an Attribute or a default value.
-   * @para node To check for the attribute
-   * @para name Attribute name
-   * @para default Value to use if not found, can be null
+   * @param node To check for the attribute
+   * @param name Attribute name
+   * @param default Value to use if not found, can be null
    * @return Text of the attribute or default value if not found 
    */
   final protected def getAttribute(node: Node, name: String, default: String): String = {

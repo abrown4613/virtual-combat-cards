@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import scala.xml.{NodeSeq}
+import scala.xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
 
 /**
@@ -39,7 +38,7 @@ class Monster(val id: Int,
     case _ => Nil
   }
 
-  // No inlines yet
+  // No inline yet
   def templateInlineXML(key: String): NodeSeq = Nil
 
 
