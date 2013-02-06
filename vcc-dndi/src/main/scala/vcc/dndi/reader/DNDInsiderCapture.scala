@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
 import org.slf4j.LoggerFactory
-import vcc.dndi.servlet.CaptureHoldingArea
 import xml.{XML, Node}
 import java.io.{FileOutputStream, File, InputStream}
 
@@ -28,7 +26,25 @@ object DNDInsiderCapture {
   private val fixBadXML1 = " \\\\=\"\"".r
   private val handles = Set("monster", "trap")
 
-  private def load(xml: scala.xml.Node): DNDIObject = {
+  sealed trait Result
+
+  case class UnsupportedEntity(id: Int, clazz: String) extends Result
+
+  case class CapturedEntity(dndiObject: DNDIObject) extends Result
+
+  trait EntityStore {
+    def storeCorrectEntity(dndiObject: DNDIObject, xml: Node)
+
+    def storeInvalidEntity(clazz: String, id: Int, xml: Node)
+  }
+
+  object NullEntityStore extends EntityStore {
+    def storeCorrectEntity(dndiObject: DNDIObject, xml: Node) {}
+
+    def storeInvalidEntity(clazz: String, id: Int, xml: Node) {}
+  }
+
+  private def load(xml: Node): DNDIObject = {
     if (xml == null) return null
 
     val id = getIdFromXML(xml)
@@ -83,7 +99,7 @@ object DNDInsiderCapture {
   }
 
 
-  private def parseXML(is: InputStream, storeBadInput: Boolean): (Option[String], Option[Int], Node) = {
+  private def parseXML(is: InputStream): (Option[String], Option[Int], Node) = {
     // Capture XML
     var xmlRaw: String = null
     try {
@@ -95,13 +111,13 @@ object DNDInsiderCapture {
       case s: Throwable =>
         logger.warn("Failed to parse XML", s)
         logger.debug("XML Raw: {}", xmlRaw)
-        if (storeBadInput && xmlRaw != null) {
+        if (xmlRaw != null && System.getProperty("vcc.dndi.captureall") != null) {
           val file = File.createTempFile("capture", ".xml")
           try {
             val os = new FileOutputStream(file)
             os.write(xmlRaw.getBytes("UTF-8"))
             os.close()
-            logger.warn("Writen to bad input to file {}", file.getAbsolutePath)
+            logger.warn("Written to bad input to file {}", file.getAbsolutePath)
           } catch {
             case s: Throwable =>
               logger.error("Failed to write bad input to {}", file.getAbsolutePath, s)
@@ -114,23 +130,18 @@ object DNDInsiderCapture {
   /**
    * Attempts to capture an entity using the default logic.
    * @param is The inputstream that contains the bytes of the supposed XML document. It will be filtered and converted
-   * @param storeFailure Indicates if this method should store valid DNDI entries that where not loaded to full DNDIObject,
-   *                     this normally happens when a type with no import logic is recieved (e.g. item, power, pc race or class).
-   * @param storeBadInput Store data that failed to be parsed into XML, check log for where the file was saved.
-   * @param sendToHoldingArea After a successful input, if true will send the captured entity to the holding area. Set
-   *                          to false for testing.
    * @return If None was returned, either the XML failed to parse, or it did not include class and ID for the entry.
    *         If <code>Some(Left(pair))</code> was sent, you have a entry with ID and Class but no import logic.
    *         If <code>Some(Right(obj))</code> was returned the entry was successfully imported.
    */
-  def captureEntry(is: InputStream, storeFailure: Boolean, storeBadInput: Boolean, sendToHoldingArea: Boolean): Option[Either[(String, Int), DNDIObject]] = {
-    val (clazz, id, node) = parseXML(is, storeBadInput)
+  def captureEntry(is: InputStream, store: EntityStore): Option[Result] = {
+    val (clazz, id, node) = parseXML(is)
     if (node == null || !(clazz.isDefined && id.isDefined)) {
       // Failed to read XML or xml does not contain required fields
       None
     } else if (!handles.contains(clazz.get)) {
-      //The object is of a class we dont capture yet.
-      Some(Left(clazz.get, -1))
+      //The object is of a class we don't capture yet.
+      Some(UnsupportedEntity(-1, clazz.get))
     } else {
       logger.debug("Parsed XML is: {}", node)
       val dndiObject = try {
@@ -141,14 +152,11 @@ object DNDInsiderCapture {
           null
       }
       if (dndiObject == null) {
-        if (storeFailure) {
-          // This is an option parameter to allow store objects that are not normally captured
-          CaptureHoldingArea.getInstance.storeIncompleteObject(clazz.get, id.get, node)
-        }
-        Some(Left(clazz.get, id.get))
+        store.storeInvalidEntity(clazz.get, id.get, node)
+        Some(UnsupportedEntity(id.get, clazz.get))
       } else {
-        if (sendToHoldingArea) CaptureHoldingArea.getInstance.addCapturedEntry(dndiObject, node)
-        Some(Right(dndiObject))
+        store.storeCorrectEntity(dndiObject, node)
+        Some(CapturedEntity(dndiObject))
       }
     }
   }
@@ -161,10 +169,9 @@ object DNDInsiderCapture {
    */
   def loadEntry(is: InputStream): DNDIObject = {
     try {
-      DNDInsiderCapture.captureEntry(is, false, false, false) match {
-        case None => null
-        case Some(Left(p)) => null
-        case Some(Right(obj)) => obj
+      DNDInsiderCapture.captureEntry(is, NullEntityStore) match {
+        case Some(CapturedEntity(obj)) => obj
+        case _ => null
       }
     } catch {
       case _: Throwable => null
@@ -177,7 +184,7 @@ object DNDInsiderCapture {
    * @param in InputStream, most likely from Servlet request.getInputStream
    * @return The filter UTF-8 block
    */
-  def pluginInputStreamAsFilteredString(in: java.io.InputStream): String = {
+  def pluginInputStreamAsFilteredString(in: InputStream): String = {
     val bout = new java.io.ByteArrayOutputStream()
     val buffer = new Array[Byte](1024)
     var len = 0

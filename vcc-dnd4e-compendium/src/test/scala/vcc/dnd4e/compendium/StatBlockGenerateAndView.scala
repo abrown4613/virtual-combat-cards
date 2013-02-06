@@ -38,12 +38,12 @@ object StatBlockGenerateAndView {
 
   def loadMonster(file: File): DNDIObject = {
     monster = try {
-      DNDInsiderCapture.captureEntry(new FileInputStream(file), false, false, false) match {
+      DNDInsiderCapture.captureEntry(new FileInputStream(file), DNDInsiderCapture.NullEntityStore) match {
         case None => null
-        case Some(Left(p)) =>
+        case p@Some(DNDInsiderCapture.UnsupportedEntity(_, _)) =>
           println("Failed to load entity: " + p)
           null
-        case Some(Right(obj)) => obj
+        case Some(DNDInsiderCapture.CapturedEntity(obj)) => obj
       }
     } catch {
       case e: Exception =>

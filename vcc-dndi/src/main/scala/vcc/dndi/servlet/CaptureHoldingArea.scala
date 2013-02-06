@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ object CaptureHoldingArea {
      * Informs of a change in the object in the holding area. If a single object has been added
      * the observer receives the new list and that object.
      * @param newObject If not null indicates the single object that was added. If several changed it will be null.
-     * @param objects ew sequecne of objects in the holding area.
+     * @param objects ew sequence of objects in the holding area.
      */
     def updateContent(newObject: T, objects: Seq[T])
   }
@@ -53,7 +53,7 @@ object CaptureHoldingArea {
  * Create a holding area
  * @param cacheDir Where files are caches Should be : File(vcc.dnd4e.Configuration.baseDirectory.value, "dndicache")
  */
-class CaptureHoldingArea(cacheDir: File) {
+class CaptureHoldingArea(cacheDir: File) extends DNDInsiderCapture.EntityStore {
 
   import CaptureHoldingArea._
 
@@ -140,5 +140,14 @@ class CaptureHoldingArea(cacheDir: File) {
     }
     val entry = new DNDIObjectCacheEntry(new PartialDNDIObject(clazz, id), node)
     diskCache.save(entry)
+  }
+
+  def storeCorrectEntity(dndiObject: DNDIObject, xml: Node) {
+    addCapturedEntry(dndiObject, xml)
+  }
+
+  def storeInvalidEntity(clazz: String, id: Int, xml: Node) {
+    if(System.getProperty("vcc.dndi.captureall") != null)
+      storeIncompleteObject(clazz, id, xml)
   }
 }
