@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,16 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.infra.xtemplate
 
-import scala.xml.{NodeSeq, Node}
+import xml.{NodeSeq, Node}
 
 /**
- * Directive that will render the TemplateDataSource getInlineXML element if present or nothing that inline is not defined.
+ * This directive will get a group of TemplateDataSource, from the source's group methods and render each group by
+ * successively rendering the child nodes to each data source provided.
  */
-object InlineXMLDirective extends TemplateDirective[String]("inline", true) {
-  def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = ds.templateInlineXML(node.arguments)
+object GroupDirective extends TemplateDirective[String]("foreach", false) {
+  def render(ds: TemplateDataSource, node: TemplateNode[String]): NodeSeq = {
+    val groups = ds.templateGroup(node.arguments)
+    groups.flatMap(ds => renderChildren(ds, node.child))
+  }
 
-  protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): String = validateSingleArgument("id", node)
+  protected def processArguments(node: Node, engine: TemplateEngine, template: Template, child: NodeSeq): String = validateSingleArgument("ingroup", node)
 }
