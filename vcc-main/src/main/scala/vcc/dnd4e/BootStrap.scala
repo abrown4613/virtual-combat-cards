@@ -16,6 +16,7 @@
  */
 package vcc.dnd4e
 
+import application.CaptureHoldingArea
 import compendium.{CaptureTemplateEngine, CompendiumRepository, Compendium}
 import vcc.util.{UpdateManager, PackageUtil}
 import vcc.infra.startup._
@@ -24,7 +25,7 @@ import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
 import java.io.{InputStream, File}
-import vcc.dndi.servlet.{CapturedObject, CaptureService, CaptureHoldingArea}
+import vcc.dndi.servlet.{CapturedObject, CaptureService}
 import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}

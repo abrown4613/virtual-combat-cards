@@ -22,6 +22,7 @@ import vcc.infra.text.{TextSegment, TextBlock, StyledText}
 import xml.Node
 import MonsterBlockStreamRewrite.EndOfPower
 import collection.mutable.ListBuffer
+import java.io.File
 
 class MonsterReaderTest extends SpecificationWithJUnit {
   val reader = new MonsterReader(0)
@@ -256,9 +257,9 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "reflex" -> "20",
         "speed" -> "6")
       map must beDefinedBy(expects.toSeq: _*)
-      (map must not haveKey("senses"))
-      (map must not haveKey("saving throws"))
-      (map must not haveKey("resist"))
+      (map must not haveKey ("senses"))
+      (map must not haveKey ("saving throws"))
+      (map must not haveKey ("resist"))
     }
   }
 
@@ -469,7 +470,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     "normalize Senses with no modes" in {
       val norm = reader.normalizeLegacySenses(Map("hp" -> "100", "senses" -> "Perception +10"))
       norm must_== Map("hp" -> "100", "perception" -> "10")
-      norm must not haveKey("senses")
+      norm must not haveKey ("senses")
     }
   }
 
@@ -481,7 +482,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     val failures = new ListBuffer[String]
     "DNDI Importer" should {
       "load everybody in " + dir.getAbsolutePath in {
-        val dirIter = new vcc.util.DirectoryIterator(dir, false)
+        val dirIter = new DirectoryIterator(dir)
         for (file <- dirIter if (file.isFile)) {
           val failedLoad: Boolean = try {
             val xml = scala.xml.XML.loadFile(file)
@@ -515,4 +516,40 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     List(header, blk)
   }
 
+  class DirectoryIterator(dir: File) extends Iterator[File] {
+
+    class SubIterator(subdir: File, parent: SubIterator) {
+      val iter = makeFileList()
+
+      def makeFileList(): Iterator[File] = {
+        val list: List[File] =
+          if (subdir.exists && subdir.isDirectory)
+            subdir.list().map(x => new File(subdir, x)).toList
+          else Nil
+        (list ::: List(subdir)).iterator
+      }
+
+      def hasNext: Boolean = iter.hasNext || (parent != null && parent.hasNext)
+
+      def nextRecursive: (SubIterator, File) = {
+        if (iter.hasNext) {
+          val file = iter.next()
+          if (file.exists && file.isDirectory && file != subdir) new SubIterator(file, this).nextRecursive
+          else (this, file)
+        } else {
+          parent.nextRecursive
+        }
+      }
+    }
+
+    private var si = new SubIterator(dir, null)
+
+    def hasNext = si.hasNext
+
+    def next(): File = {
+      val (nsi, file) = si.nextRecursive
+      si = nsi
+      file
+    }
+  }
 }
