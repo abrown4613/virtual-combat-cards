@@ -1,14 +1,22 @@
 <!DOCTYPE web-app PUBLIC
- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
- "http://java.sun.com/dtd/web-app_2_3.dtd" >
+        "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd" >
 <web-app>
-  <display-name>VCC Web Interface</display-name>
+    <display-name>VCC Web Interface</display-name>
     <servlet>
         <servlet-name>Version</servlet-name>
         <servlet-class>vcc.dnd4e.web.VersionServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>Capture</servlet-name>
+        <servlet-class>vcc.dndi.servlet.CaptureServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>Version</servlet-name>
         <url-pattern>/version</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Capture</servlet-name>
+        <url-pattern>/capture</url-pattern>
     </servlet-mapping>
 </web-app>

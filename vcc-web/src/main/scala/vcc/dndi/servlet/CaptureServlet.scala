@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,28 @@
 package vcc.dndi.servlet
 
 import javax.servlet.http.HttpServlet
-import vcc.dndi.reader._
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.io.InputStream
+
+trait CaptureService {
+
+  def captureEntry(is: InputStream): CaptureService.Result
+}
+
+object CaptureService {
+  type Result = Option[Either[(String, Int), CapturedObject]]
+
+  private var service: CaptureService = null
+
+  def setService(service: CaptureService) {
+    this.service = service
+  }
+
+  def getInstance() = service
+}
+
+case class CapturedObject(clazz: String, name: String, obj: AnyRef)
 
 class CaptureServlet extends HttpServlet {
   private val logger = org.slf4j.LoggerFactory.getLogger("app")
@@ -38,29 +57,27 @@ class CaptureServlet extends HttpServlet {
     }
   }
 
-  type CaptureReply = Option[Either[(String, Int), DNDIObject]]
-
-  private def humanReply(result: CaptureReply, response: HttpServletResponse) {
+  private def humanReply(result: CaptureService.Result, response: HttpServletResponse) {
     result match {
       case Some(Left((clazz, -1))) =>
         response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
       case Some(Left((clazz, id))) =>
         response.getWriter.printf("VCC failed to capture '%s' with id=%s, please report.", clazz, id.toString)
       case Some(Right(dObject)) =>
-        response.getWriter.printf("Captured %s: %s", dObject.clazz, dObject("base:name").get)
+        response.getWriter.printf("Captured %s: %s", dObject.clazz, dObject.name)
       case None =>
         response.getWriter.println("You sent something that VCC cannot capture.")
     }
   }
 
-  private def pluginReply(result: CaptureReply, response: HttpServletResponse) {
+  private def pluginReply(result: CaptureService.Result, response: HttpServletResponse) {
     result match {
       case Some(Left((clazz, -1))) =>
         response.getWriter.printf("FATAL: Unknown entry type '%s'", clazz)
       case Some(Left((clazz, id))) =>
         response.getWriter.printf("Error: Failed capture of '%s' with id=%s.", clazz, id.toString)
       case Some(Right(dObject)) =>
-        response.getWriter.printf("Success: %s (%s)", dObject("base:name").get, dObject.clazz)
+        response.getWriter.printf("Success: %s (%s)", dObject.name, dObject.clazz)
       case None =>
         response.getWriter.println("FATAL: Bad Request.")
     }
@@ -71,8 +88,7 @@ class CaptureServlet extends HttpServlet {
     response.setStatus(HttpServletResponse.SC_OK)
     logger.debug("Request: {}", request.toString)
 
-    val captureAll = System.getProperty("vcc.dndi.captureall") != null
-    val result = DNDInsiderCapture.captureEntry(request.getInputStream, captureAll, captureAll, true)
+    val result = CaptureService.getInstance().captureEntry(request.getInputStream)
 
     //Send output
     request.getParameter("reply") match {
@@ -85,7 +101,7 @@ class CaptureServlet extends HttpServlet {
 
     result match {
       case Some(Right(dObject)) =>
-        logger.info("Captured '{}': {}", dObject.clazz, dObject("base:name").get)
+        logger.info("Captured '{}': {}", dObject.clazz, dObject.name)
         logger.debug("Catured {} is: {}", dObject.clazz, dObject)
       case _ =>
         logger.warn("Capture failed.")
