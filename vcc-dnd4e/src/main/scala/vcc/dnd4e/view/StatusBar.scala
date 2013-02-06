@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@ package vcc.dnd4e.view
 
 import vcc.util.swing.MigPanel
 import scala.swing._
-import javax.swing.{Timer}
+import javax.swing.Timer
 import java.awt.event.{ActionEvent, ActionListener}
 import java.awt.Font
-import vcc.util.UpdateManager.Version
+import vcc.updater.UpdateManager
+import UpdateManager.Version
 
 class StatusBar(currentVersion: Version) extends MigPanel("ins 1, fillx", "[][][grow][][]", "[]") {
 

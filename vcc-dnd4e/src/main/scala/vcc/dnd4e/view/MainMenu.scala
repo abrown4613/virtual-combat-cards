@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@ import scala.swing._
 import vcc.dnd4e.view.dialog.FileChooserHelper
 import vcc.dnd4e.view.compendium.CompendiumMenu
 import vcc.dnd4e.view.helper.PartyLoader
-import vcc.util.UpdateManager
 import java.net.URL
 import javax.swing.KeyStroke
 import java.awt.Desktop
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.application.Application
+import vcc.updater.UpdateManager
 
 /**
  * Helper object to create MenuItem associated to PanelDirector properties

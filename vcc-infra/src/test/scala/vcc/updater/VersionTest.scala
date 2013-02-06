@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.util
+package vcc.updater
 
 import org.specs2.mutable.SpecificationWithJUnit
-import vcc.util.UpdateManager._
+import UpdateManager._
 import java.io.ByteArrayInputStream
 
 class VersionTest extends SpecificationWithJUnit {

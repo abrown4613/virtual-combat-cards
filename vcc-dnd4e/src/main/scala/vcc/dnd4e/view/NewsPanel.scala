@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@ import org.xhtmlrenderer.swing.{BasicPanel, LinkListener}
 import java.net.URL
 import vcc.infra.util.{RssItem, RemoteFile, RssLoader}
 import java.io.{InputStream, File}
-import java.awt.{Desktop, Dimension}
-import vcc.util.UpdateManager
+import java.awt.Desktop
 import swing._
 import vcc.util.swing.{SwingHelper, XHTMLPane, MigPanel}
 import org.slf4j.LoggerFactory
+import vcc.updater.UpdateManager
 
 /**
  * Visual area for displaying news and informing of version updates.

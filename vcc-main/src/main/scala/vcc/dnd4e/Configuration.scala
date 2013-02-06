@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@ import vcc.infra.startup.StartupStep
 import java.io.File
 import vcc.infra.datastore.naming.DataStoreURI
 import vcc.infra.datastore.DataStoreFactory
-import vcc.util.UpdateManager
 import java.net.URL
 import java.lang.System
 import java.util.UUID
+import vcc.updater.UpdateManager
 
 object Configuration extends AbstractConfiguration with StartupStep {
   private val metricIdentifierNotDefined = UUID.nameUUIDFromBytes("NOT DEFINED".getBytes("UTF8"))

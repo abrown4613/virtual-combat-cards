@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,16 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.util
+package vcc.updater
 
 import java.net.URL
 import org.xml.sax.InputSource
 import scala.xml.XML
 import scala.swing.Frame
-import swing.{MultiPanel, SwingHelper}
 import java.awt.Image
 import java.io.{InputStream, File}
 import vcc.infra.util.RemoteFile
+import vcc.util.XMLHelper
+import vcc.util.swing.{SwingHelper, MultiPanel}
 
 /**
  * Utility functions to help with update manager
@@ -182,7 +183,7 @@ object UpdateManager {
    */
   def runUpgradeProcess(url: URL, currentVersion: Version, dialogIcon: Image, age: Long) {
 
-    import vcc.util.swing.multipanel.ReleaseSelectPanel
+    import vcc.updater.ReleaseSelectPanel
 
     def checkFileMD5Sum(file: File, md5sum: String): Boolean = {
       val chkSum = PackageUtil.fileMD5Sum(file)
@@ -208,7 +209,7 @@ object UpdateManager {
         if (releaseOpt.isDefined) {
           val release = releaseOpt.get
 
-          val dfile = umd.downloadFile(release.download, java.io.File.createTempFile("vcc", ".zip"))
+          val dfile = umd.customPanel(new DownloadPanel(release.download, java.io.File.createTempFile("vcc", ".zip")))
           if (dfile != null) {
             umd.showMessage(false, "Checking and unpacking downloaded file...")
             // We have the file
