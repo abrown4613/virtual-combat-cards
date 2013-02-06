@@ -16,6 +16,7 @@
  */
 package vcc.dnd4e
 
+import adapter.CaptureServiceAdapter
 import application.CaptureHoldingArea
 import compendium.{CaptureTemplateEngine, CompendiumRepository, Compendium}
 import vcc.util.{UpdateManager, PackageUtil}
@@ -24,8 +25,7 @@ import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
-import java.io.{InputStream, File}
-import vcc.dndi.servlet.{CapturedObject, CaptureService}
+import java.io.File
 import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
@@ -35,9 +35,9 @@ import org.exnebula.metric.{MetricReporter, MetricCollector}
 import java.util.UUID
 import vcc.updater.ExternalFileUpdater
 import org.exnebula.fileutil.FileWriter
+import web.services.CaptureService
 import web.VersionServlet
 import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
-import vcc.dndi.reader.DNDInsiderCapture
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -162,16 +162,7 @@ object BootStrap extends StartupRoutine {
         WarArchive.create(classOf[VersionServlet], "webapp"),
         new WarTarget(Configuration.baseDirectory.value))
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
-      CaptureService.setService(new CaptureService {
-        def captureEntry(is: InputStream): CaptureService.Result = {
-          import DNDInsiderCapture._
-          DNDInsiderCapture.captureEntry(is , CaptureHoldingArea.getInstance) match {
-            case l @Some(UnsupportedEntity(id, clazz)) => Some(Left((clazz, id)))
-            case l @Some(CapturedEntity(dObject)) => Some(Right(CapturedObject(dObject.clazz, dObject("base:name").get, dObject)))
-            case None => None
-          }
-        }
-      })
+      CaptureService.setService(new CaptureServiceAdapter())
       warLess.resolve()
       webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map())
       true
