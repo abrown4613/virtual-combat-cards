@@ -22,7 +22,7 @@ import vcc.dnd4e.view.IconLibrary
 import vcc.infra.webserver.WebServer
 import vcc.dndi.reader.DNDIObject
 import vcc.dnd4e.compendium.MonsterImportService
-import vcc.dndi.servlet.CaptureHoldingArea
+import vcc.dnd4e.application.CaptureHoldingArea
 
 object DNDICaptureMonitor {
   private var webServer:DNDICaptureMonitor = null
