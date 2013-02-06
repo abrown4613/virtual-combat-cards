@@ -117,7 +117,7 @@ object DNDInsiderCapture {
    * @param storeFailure Indicates if this method should store valid DNDI entries that where not loaded to full DNDIObject,
    *                     this normally happens when a type with no import logic is recieved (e.g. item, power, pc race or class).
    * @param storeBadInput Store data that failed to be parsed into XML, check log for where the file was saved.
-   * @param sendToHoldingArea After a successfull input, if true will send the captured entity to the holding area. Set
+   * @param sendToHoldingArea After a successful input, if true will send the captured entity to the holding area. Set
    *                          to false for testing.
    * @return If None was returned, either the XML failed to parse, or it did not include class and ID for the entry.
    *         If <code>Some(Left(pair))</code> was sent, you have a entry with ID and Class but no import logic.

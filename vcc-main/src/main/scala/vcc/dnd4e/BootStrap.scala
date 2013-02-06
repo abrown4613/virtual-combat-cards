@@ -23,8 +23,8 @@ import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
-import java.io.File
-import vcc.dndi.servlet.{CaptureServlet, CaptureHoldingArea}
+import java.io.{InputStream, File}
+import vcc.dndi.servlet.{CapturedObject, CaptureService, CaptureServlet, CaptureHoldingArea}
 import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
@@ -36,6 +36,7 @@ import vcc.updater.ExternalFileUpdater
 import org.exnebula.fileutil.FileWriter
 import web.VersionServlet
 import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
+import vcc.dndi.reader.DNDInsiderCapture
 
 object BootStrap extends StartupRoutine {
   val logger = org.slf4j.LoggerFactory.getLogger("startup")
@@ -160,10 +161,19 @@ object BootStrap extends StartupRoutine {
         WarArchive.create(classOf[VersionServlet], "webapp"),
         new WarTarget(Configuration.baseDirectory.value))
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
+      CaptureService.setService(new CaptureService {
+        private val captureAll = System.getProperty("vcc.dndi.captureall") != null
+
+        def captureEntry(is: InputStream): CaptureService.Result = {
+          DNDInsiderCapture.captureEntry(is , captureAll, captureAll, true) match {
+            case l @Some(Left(left)) => Some(Left(left))
+            case l @Some(Right(dObject)) => Some(Right(CapturedObject(dObject.clazz, dObject("base:name").get, dObject)))
+            case None => None
+          }
+        }
+      })
       warLess.resolve()
-      webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map(
-        "/capture" -> classOf[CaptureServlet]
-      ))
+      webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map())
       true
     }
 
