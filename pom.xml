@@ -29,6 +29,7 @@
         <module>distribution</module>
         <module>vcc-main</module>
         <module>vcc-web</module>
+        <module>vcc-xtemplate</module>
     </modules>
 
     <scm>

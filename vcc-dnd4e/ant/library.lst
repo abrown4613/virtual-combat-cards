@@ -13,6 +13,7 @@ idw-gpl.jar
 swing.jar
 macify.jar
 warless.jar
+vcc-xtemplate.jar
 vcc-main.jar
 vcc-infra.jar
 vcc-dnd4e-tracker.jar
