@@ -30,6 +30,7 @@
         <module>vcc-main</module>
         <module>vcc-web</module>
         <module>vcc-xtemplate</module>
+        <module>vcc-updater</module>
     </modules>
 
     <scm>
