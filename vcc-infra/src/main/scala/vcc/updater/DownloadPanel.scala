@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,17 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.util.swing.multipanel
+package vcc.updater
 
 import scala.swing._
 import scala.swing.event._
 import java.net.URL
 import java.io.File
 import scala.actors.Actor
-import scala.actors.Actor.{actor,loop,react,receive}
-import vcc.util.Downloader
+import scala.actors.Actor.{actor,receive}
 import vcc.util.swing.MigPanel
+import vcc.util.swing.multipanel.AbstractPanel
 
 class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with AbstractPanel[File] {
   
@@ -85,7 +84,7 @@ class DownloadPanel(url:URL, targetFile:File) extends MigPanel("") with Abstract
       case 'COMPLETE => targetFile
       case 'CANCEL => null
       case s => 
-        logger.warn("DowloadPanel, faile download with: "+s)
+        logger.warn("DownloadPanel, faile download with: "+s)
       	null
     }
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-package vcc.util.swing.multipanel
+package vcc.updater
 
 import scala.swing._
 import scala.swing.event._
-import vcc.util.UpdateManager.Release
+import UpdateManager.Release
 import vcc.util.swing.{SwingHelper, MigPanel}
+import vcc.util.swing.multipanel.AbstractPanel
 
 /**
  * Select a version, and inform of further upgrades.
@@ -42,7 +42,7 @@ class ReleaseSelectPanel(releases: Seq[(Symbol, Release)], hasMore: Boolean) ext
   infoButton.enabled = false
 
   val opts = releases.map(x => new RadioButton(x._2.version.versionString + "(" + symbolMeaning(x._1) + ")"))
-  val radios = new ButtonGroup(opts: _*);
+  val radios = new ButtonGroup(opts: _*)
   var selected = -1
 
   add(new Label("Select the version:"), "wrap")

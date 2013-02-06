@@ -19,7 +19,6 @@ package vcc.dnd4e
 import adapter.CaptureServiceAdapter
 import application.CaptureHoldingArea
 import compendium.{CaptureTemplateEngine, CompendiumRepository, Compendium}
-import vcc.util.{UpdateManager, PackageUtil}
 import vcc.infra.startup._
 import vcc.infra.ConfigurationFinder
 import vcc.infra.LogService
@@ -33,7 +32,7 @@ import vcc.infra.webserver.WebServer
 import javax.swing.JOptionPane
 import org.exnebula.metric.{MetricReporter, MetricCollector}
 import java.util.UUID
-import vcc.updater.ExternalFileUpdater
+import vcc.updater.{PackageUtil, UpdateManager, ExternalFileUpdater}
 import org.exnebula.fileutil.FileWriter
 import web.services.CaptureService
 import web.VersionServlet

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,8 @@ import scala.swing._
 import event.{WindowOpened, WindowClosing}
 import vcc.infra.docking._
 import vcc.util.swing.{SwingHelper, KeystrokeContainer}
-import vcc.util.UpdateManager.Version
+import vcc.updater.UpdateManager
+import UpdateManager.Version
 import java.awt.Toolkit
 import java.io.File
 import java.net.URL
