@@ -24,7 +24,7 @@ import vcc.infra.LogService
 import vcc.infra.datastore.DataStoreFactory
 import vcc.util.swing.XHTMLPaneAgent
 import java.io.{InputStream, File}
-import vcc.dndi.servlet.{CapturedObject, CaptureService, CaptureServlet, CaptureHoldingArea}
+import vcc.dndi.servlet.{CapturedObject, CaptureService, CaptureHoldingArea}
 import view.compendium.DNDICaptureMonitor
 import view.dialog.FileChooserHelper
 import view.{ConfigurationPanelCallback, ReleaseInformation, MasterFrame}
@@ -162,12 +162,11 @@ object BootStrap extends StartupRoutine {
         new WarTarget(Configuration.baseDirectory.value))
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
       CaptureService.setService(new CaptureService {
-        private val captureAll = System.getProperty("vcc.dndi.captureall") != null
-
         def captureEntry(is: InputStream): CaptureService.Result = {
-          DNDInsiderCapture.captureEntry(is , captureAll, captureAll, true) match {
-            case l @Some(Left(left)) => Some(Left(left))
-            case l @Some(Right(dObject)) => Some(Right(CapturedObject(dObject.clazz, dObject("base:name").get, dObject)))
+          import DNDInsiderCapture._
+          DNDInsiderCapture.captureEntry(is , CaptureHoldingArea.getInstance) match {
+            case l @Some(UnsupportedEntity(id, clazz)) => Some(Left((clazz, id)))
+            case l @Some(CapturedEntity(dObject)) => Some(Right(CapturedObject(dObject.clazz, dObject("base:name").get, dObject)))
             case None => None
           }
         }
