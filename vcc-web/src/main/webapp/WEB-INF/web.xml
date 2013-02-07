@@ -11,6 +11,10 @@
         <servlet-name>Capture</servlet-name>
         <servlet-class>vcc.dnd4e.web.servlet.CaptureServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PlayerView</servlet-name>
+        <servlet-class>vcc.dnd4e.web.servlet.PlayerViewServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>Version</servlet-name>
         <url-pattern>/version</url-pattern>
@@ -18,5 +22,9 @@
     <servlet-mapping>
         <servlet-name>Capture</servlet-name>
         <url-pattern>/capture</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PlayerView</servlet-name>
+        <url-pattern>/player-view</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -26,7 +26,11 @@ import java.io.{FileInputStream, FileOutputStream, File}
 object Application {
   private var theInstance: Application = null
 
+  private val theLongPollObserver = new LongPollTrackerObserver[CombatState]()
+
   def getInstance: Application = theInstance
+
+  def getLongPollObserver = theLongPollObserver
 
   def initialize(observer: Tracker.Observer[CombatState]) {
     val tracker = new Tracker[CombatState](new InterimController())
@@ -35,7 +39,7 @@ object Application {
 
   def initialize(tracker: Tracker[CombatState], observer: Tracker.Observer[CombatState]) {
     tracker.addObserver(observer)
-    tracker.addObserver(PlayerViewServlet.observer)
+    tracker.addObserver(theLongPollObserver)
     tracker.initializeState(CombatState.empty)
     theInstance = new Application(tracker)
   }
@@ -43,7 +47,6 @@ object Application {
 }
 
 class Application(tracker: Tracker[CombatState]) extends Tracker.Observer[CombatState] {
-
   private var state: CombatState = CombatState.empty
 
   tracker.addObserver(this)
@@ -66,4 +69,7 @@ class Application(tracker: Tracker[CombatState]) extends Tracker.Observer[Combat
   def stateUpdated(newState: CombatState) {
     state = newState
   }
+
+  def getState = state
+
 }
