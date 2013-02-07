@@ -16,6 +16,7 @@
  */
 package vcc.dnd4e.view.compendium
 
+import language.implicitConversions
 import org.uispec4j.finder.ComponentMatcher
 import java.awt.Component
 import org.uispec4j.assertion.Assertion

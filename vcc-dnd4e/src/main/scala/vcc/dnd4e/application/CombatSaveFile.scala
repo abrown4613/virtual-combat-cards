@@ -16,6 +16,7 @@
  */
 package vcc.dnd4e.application
 
+import language.postfixOps
 import java.io._
 import scala.xml._
 import vcc.dnd4e.tracker.common._
