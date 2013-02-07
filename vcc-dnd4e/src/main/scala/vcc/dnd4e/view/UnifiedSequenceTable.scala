@@ -1,6 +1,5 @@
 /*
- *
- *  Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ *  Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +16,7 @@
  */
 package vcc.dnd4e.view
 
+import language.postfixOps
 import vcc.dnd4e.domain.tracker.common.CombatStateView
 import vcc.dnd4e.tracker.common._
 

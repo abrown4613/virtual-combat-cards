@@ -1,5 +1,5 @@
-/**
- *  Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ *  Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-
 package vcc.dndi.reader
 
-import collection.immutable.List
+import language.postfixOps
 
 /**
  * Provide a way to filtering and rewriting of token in a stream.
@@ -33,7 +32,7 @@ trait TokenStreamRewrite[T] {
 /**
  * Provides a convenient way to rewrite stream of token. It uses a partial function to rewrite a token. If the
  * partial function is applicable to the term it's rewrites. Otherwise it leaves the token untouched.
- * @para conditional Partial function that may rewrite the token, if it return Nil the token will be filtered out,
+ * @param conditional Partial function that may rewrite the token, if it return Nil the token will be filtered out,
  * otherwise the list will prepend to the original list.
  */
 class ConditionalTokenStreamRewrite[T](conditional: PartialFunction[T, List[T]]) extends TokenStreamRewrite[T] {
@@ -47,7 +46,8 @@ class ConditionalTokenStreamRewrite[T](conditional: PartialFunction[T, List[T]])
  * Utility class for recursive reader/builders. It encapsulates a lists of tokens and works as an iterator fashion.
  * Whenever an advances is issued the derived classes can add additional logic to include special tokens.
  * You MUST call advance prior to reading the head of the stream.
- * @para rewriter Optional TokenStreamRewriter that will be evoked on each of the 
+ * @param  tokens tokens to be rewritten
+ * @param  rewrite Optional TokenStreamRewriter that will be evoked on each of the
  */
 final class TokenStream[T](tokens: List[T], rewrite: TokenStreamRewrite[T]) {
   private var original = if (rewrite != null) tokens else Nil
