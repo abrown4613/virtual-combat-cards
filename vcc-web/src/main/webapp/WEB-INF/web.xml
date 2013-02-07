@@ -5,11 +5,11 @@
     <display-name>VCC Web Interface</display-name>
     <servlet>
         <servlet-name>Version</servlet-name>
-        <servlet-class>vcc.dnd4e.web.VersionServlet</servlet-class>
+        <servlet-class>vcc.dnd4e.web.servlet.VersionServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>Capture</servlet-name>
-        <servlet-class>vcc.dndi.servlet.CaptureServlet</servlet-class>
+        <servlet-class>vcc.dnd4e.web.servlet.CaptureServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>Version</servlet-name>
