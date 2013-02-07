@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.web
+package vcc.dnd4e.web.servlet
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 

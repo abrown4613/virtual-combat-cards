@@ -35,7 +35,7 @@ import java.util.UUID
 import vcc.updater.{PackageUtil, UpdateManager, ExternalFileUpdater}
 import org.exnebula.fileutil.FileWriter
 import web.services.CaptureService
-import web.VersionServlet
+import web.servlet.VersionServlet
 import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
 
 object BootStrap extends StartupRoutine {
