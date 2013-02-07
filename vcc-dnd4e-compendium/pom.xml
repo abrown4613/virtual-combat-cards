@@ -26,6 +26,11 @@
     <dependencies>
         <dependency>
             <groupId>org.exnebula</groupId>
+            <artifactId>vcc-swing</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.exnebula</groupId>
             <artifactId>vcc-infra</artifactId>
             <version>${project.version}</version>
         </dependency>
