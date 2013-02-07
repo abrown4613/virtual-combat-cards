@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2013-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,26 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.application
+package vcc.dnd4e.adapter
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 import vcc.dnd4e.tracker.common.CombatState
 import concurrent.SyncVar
+import vcc.dnd4e.application.Application
+import vcc.dnd4e.web.services.StateViewService
 
-object PlayerViewServlet {
-  val observer = new LongPollTrackerObserver[CombatState]()
-}
+class PlayerViewServiceAdapter extends StateViewService {
+  def currentState(): AnyRef = Application.getInstance.getState
 
-class PlayerViewServlet extends HttpServlet {
-  override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-    //super.doGet(req, resp)
-    val newState = new SyncVar[CombatState]
-    PlayerViewServlet.observer.waitingForState(newState)
-    newState.get(15000) match {
-      case Some(state) =>
-        resp.getWriter.append("State:" + state)
-      case None =>
-        resp.getWriter.append("No Change")
-    }
+  def stateAfterChange(timeoutInMillis: Int): Option[AnyRef] = {
+    val syncVar = new SyncVar[CombatState]
+    Application.getLongPollObserver.waitingForState(syncVar)
+    syncVar.get(timeoutInMillis)
   }
 }

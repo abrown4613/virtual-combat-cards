@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e
 
-import adapter.CaptureServiceAdapter
+import adapter.{PlayerViewServiceAdapter, CaptureServiceAdapter}
 import application.CaptureHoldingArea
 import compendium.{CaptureTemplateEngine, CompendiumRepository, Compendium}
 import vcc.infra.startup._
@@ -34,7 +34,7 @@ import org.exnebula.metric.{MetricReporter, MetricCollector}
 import java.util.UUID
 import vcc.updater.{PackageUtil, UpdateManager, ExternalFileUpdater}
 import org.exnebula.fileutil.FileWriter
-import web.services.CaptureService
+import web.services.{StateViewService, CaptureService}
 import web.servlet.VersionServlet
 import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
 
@@ -162,6 +162,7 @@ object BootStrap extends StartupRoutine {
         new WarTarget(Configuration.baseDirectory.value))
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
       CaptureService.setService(new CaptureServiceAdapter())
+      StateViewService.setInstance(new PlayerViewServiceAdapter())
       warLess.resolve()
       webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map())
       true
