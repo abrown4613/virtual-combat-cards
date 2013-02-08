@@ -20,7 +20,7 @@ package vcc.dnd4e.tracker.common
  * Provides access to immutable information on Combatant
  */
 trait CombatantStateView {
-  def healthTracker: HealthTracker
+  def health: HealthTracker
 
   def effects: EffectList
 
