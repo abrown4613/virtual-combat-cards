@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,14 @@ package vcc.dnd4e.view
 
 import scala.swing._
 import vcc.util.swing._
-import vcc.dnd4e.tracker.common.Command.AddEffect
 import vcc.dnd4e.tracker.common._
 import vcc.infra.docking._
 import vcc.dnd4e.tracker.common.CombatantEntity
-import vcc.dnd4e.domain.tracker.common.CombatantStateView
+import vcc.dnd4e.tracker.common.Command.AddEffect
+import scala.Some
+import vcc.dnd4e.tracker.common.EffectList
+import vcc.infra.docking.DockID
+import vcc.dnd4e.tracker.common.CombatantRosterDefinition
 
 class EffectEditorPanel(director: PanelDirector, numberOfEffectPanel: Int) extends MigPanel("fillx,hidemode 3")
 with CombatStateObserver with ContextObserver with ScalaDockableComponent {

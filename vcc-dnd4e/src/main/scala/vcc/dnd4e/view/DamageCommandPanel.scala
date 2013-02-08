@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import vcc.infra.docking._
 
 import vcc.dnd4e.tracker.common.Command._
 import vcc.util.swing.dnd.{DragAndDropSource, DragAndDropController}
-import vcc.dnd4e.tracker.common.CombatantID
+import vcc.dnd4e.tracker.common.{UnifiedCombatantID, UnifiedCombatant, CombatantID}
 
 class DamageCommandPanel(val director: PanelDirector)
   extends MigPanel("ins 2", "[fill][fill][fill][fill]", "") with KeystrokeContainer
@@ -90,7 +90,7 @@ class DamageCommandPanel(val director: PanelDirector)
   add(temp_btn, "wrap")
   add(undie_btn, "skip 1,align left")
   add(death_btn, "align left,span 2")
-  xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT;
+  xLayoutAlignment = java.awt.Component.LEFT_ALIGNMENT
   for (x <- controls) listenTo(x)
   listenTo(damage)
   changeTargetContext(None)
@@ -98,9 +98,9 @@ class DamageCommandPanel(val director: PanelDirector)
   reactions += {
     case ValueChanged(this.damage) =>
       damageEquation = try {
-        DamageParser.parseString(damage.text).asInstanceOf[DamageParser.Term]
+        DamageParser.parseString(damage.text)
       } catch {
-        case _ => null
+        case _: Exception => null
       }
       enableDamageControls(damageEquation != null)
     case FocusGained(this.damage, other, temporary) =>

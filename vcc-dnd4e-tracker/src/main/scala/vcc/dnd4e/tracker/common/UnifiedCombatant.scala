@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view
-
-import vcc.dnd4e.tracker.common.CombatantType
-import vcc.dnd4e.tracker.common.{InitiativeOrderID, CombatantID, InitiativeTracker}
-import vcc.dnd4e.domain.tracker.common.CombatantStateView
+package vcc.dnd4e.tracker.common
 
 
 /**
@@ -67,4 +63,3 @@ class UnifiedCombatant(val combId: CombatantID,
 
   override def toString: String = "UnifiedCombatant(" + combId.id + "/" + (if (orderId != null) orderId.toLabelString else "nio") + ")"
 }
-

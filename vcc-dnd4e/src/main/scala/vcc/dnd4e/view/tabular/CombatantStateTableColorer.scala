@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,15 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.view.tabular
 
-import vcc.util.swing.{ProjectionTableLabelFormatter}
+import vcc.util.swing.ProjectionTableLabelFormatter
 import vcc.dnd4e.tracker.common.HealthStatus._
 import vcc.dnd4e.tracker.common.InitiativeState._
-import vcc.dnd4e.view.{IconLibrary, UnifiedCombatantID, UnifiedCombatant}
+import vcc.dnd4e.view.IconLibrary
 import java.awt.Color
 import javax.swing.SwingConstants
+import vcc.dnd4e.tracker.common.{UnifiedCombatantID, UnifiedCombatant}
 
 class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCombatant] {
   private val fontSize = if (java.awt.Toolkit.getDefaultToolkit.getScreenSize.getHeight > 7000) 14 else 12
@@ -53,8 +53,8 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
   private val charBackground = (new Color(240, 255, 236), Color.BLACK)
 
   def render(label: javax.swing.JLabel, col: Int, isSelected: Boolean, isDropLocation: Boolean, cmb: UnifiedCombatant) {
-    var is = if (cmb.initiative != null) cmb.initiative.state else null
-    var hs = cmb.health.status
+    val is = if (cmb.initiative != null) cmb.initiative.state else null
+    val hs = cmb.health.status
     val normalBack = if (cmb.isCharacter) charBackground else normal
     label.setFont(if (cmb.matches(acting)) cellFontBold else cellFont)
 
@@ -85,6 +85,4 @@ class CombatantStateTableColorer extends ProjectionTableLabelFormatter[UnifiedCo
       setColorPair(label, color)
     }
   }
-
 }
-

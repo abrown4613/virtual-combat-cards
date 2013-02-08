@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,14 @@
  */
 package vcc.dnd4e.view
 
-import vcc.dnd4e.domain.tracker.common._
 import vcc.util.swing.SwingHelper
-import vcc.dnd4e.tracker.common.CombatState
+import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
 import vcc.tracker.Tracker
 import vcc.dnd4e.application.{CombatSaveFile, Application}
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import vcc.dnd4e.tracker.common.UnifiedCombatantID
 
 trait ContextObserver {
   def changeTargetContext(newContext: Option[UnifiedCombatantID]) {}
@@ -96,7 +96,7 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
           logger.debug("  - Comment equal: " + (state.comment==loadedState.comment))
         }
       } catch {
-        case e =>
+        case e:Exception =>
           logger.warn("Failed save and load operation", e)
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ package vcc.dnd4e.view
 
 import vcc.infra.docking.DockID
 import vcc.dnd4e.tracker.common.Command.SetCombatComment
+import vcc.dnd4e.tracker.common.UnifiedSequenceTable
 
 class CombatCommentPanel(director: PanelDirector) extends CommentPanel with CombatStateObserver {
   editorEnabled = true
