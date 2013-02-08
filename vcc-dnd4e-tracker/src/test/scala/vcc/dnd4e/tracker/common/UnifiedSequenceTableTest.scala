@@ -117,7 +117,7 @@ class UnifiedSequenceTableTest extends SpecificationWithJUnit {
 
     private def killCombatant(combatantStateView: CombatantStateView) {
       val dead = HealthTracker.createTracker(MinionHealthDefinition).applyDamage(1)
-      combatantStateView.healthTracker returns dead
+      combatantStateView.health returns dead
     }
 
     private def listUnifiedCombatantID(table: UnifiedSequenceTable): List[UnifiedCombatantID] = {
@@ -140,7 +140,7 @@ class UnifiedSequenceTableTest extends SpecificationWithJUnit {
     private def buildCombatantView(ids: CombatantID*): Map[CombatantID, CombatantStateView] = {
       val pairs: Seq[(CombatantID, CombatantStateView)] = for (id <- ids) yield {
         val m = mock[CombatantStateView]
-        m.healthTracker returns livingHealthTracker
+        m.health returns livingHealthTracker
         (id -> m)
       }
       pairs.toMap

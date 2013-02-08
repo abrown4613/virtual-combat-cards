@@ -25,7 +25,7 @@ object CombatStateViewAdapterBuilder {
   }
 
   private class CombatantStateViewAdapter(combatant: Combatant) extends CombatantStateView {
-    def healthTracker: HealthTracker = combatant.health
+    def health: HealthTracker = combatant.health
 
     def effects: EffectList = combatant.effects
 

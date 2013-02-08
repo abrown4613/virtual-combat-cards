@@ -42,7 +42,7 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
 
     def definition: CombatantRosterDefinition = CombatantRosterDefinition(otherId, null, terrainDefinition)
 
-    def healthTracker: HealthTracker = null
+    def health: HealthTracker = null
 
     def effects: EffectList = null
 

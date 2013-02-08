@@ -48,13 +48,13 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
 
       deadMinion.status must_== HealthStatus.Dead
 
-      mockCombA.healthTracker returns deadMinion
-      mockCombB.healthTracker returns deadMinion
+      mockCombA.health returns deadMinion
+      mockCombB.health returns deadMinion
 
       rules.areAllCombatantInOrderDead(state) must beTrue
       there was one(state).getInitiativeOrder
-      there was atLeastOne(mockCombA).healthTracker
-      there was atLeastOne(mockCombB).healthTracker
+      there was atLeastOne(mockCombA).health
+      there was atLeastOne(mockCombB).health
     }
 
     "return false if at least one is non dead" in new baseMockups {
@@ -63,13 +63,13 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
 
       deadMinion.status must_== HealthStatus.Dead
 
-      mockCombA.healthTracker returns deadMinion
-      mockCombB.healthTracker returns minion
+      mockCombA.health returns deadMinion
+      mockCombB.health returns minion
 
       rules.areAllCombatantInOrderDead(state) must beFalse
       there was one(state).getInitiativeOrder
-      there was atLeastOne(mockCombA).healthTracker
-      there was atLeastOne(mockCombB).healthTracker
+      there was atLeastOne(mockCombA).health
+      there was atLeastOne(mockCombB).health
     }
   }
 

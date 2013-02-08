@@ -35,7 +35,7 @@ class UnifiedCombatant(val combId: CombatantID,
                        combatant: CombatantStateView) {
   def isCharacter = combatant.combatantType == CombatantType.Character
 
-  def health = combatant.healthTracker
+  def health = combatant.health
 
   def effects = combatant.effects
 
