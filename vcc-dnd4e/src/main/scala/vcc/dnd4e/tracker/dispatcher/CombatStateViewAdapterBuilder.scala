@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 package vcc.dnd4e.tracker.dispatcher
 
 import vcc.dnd4e.tracker.common._
-import vcc.dnd4e.domain.tracker.common.{CombatantStateView, CombatStateView}
 
 object CombatStateViewAdapterBuilder {
 
@@ -52,5 +51,4 @@ object CombatStateViewAdapterBuilder {
 
     def nextUp: Option[InitiativeOrderID] = combatState.order.nextUp
   }
-
 }

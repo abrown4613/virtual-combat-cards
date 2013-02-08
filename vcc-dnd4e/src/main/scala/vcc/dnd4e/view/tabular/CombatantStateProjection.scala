@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008-2010 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
-
 package vcc.dnd4e.view.tabular
 
-import vcc.dnd4e.view.UnifiedCombatant
-import vcc.dnd4e.tracker.common.{HealthStatus, HealthTracker}
+import vcc.dnd4e.tracker.common.{UnifiedCombatant, HealthStatus}
 
 object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[UnifiedCombatant] {
   override val columns = List[(String, java.lang.Class[_])](
@@ -29,7 +26,7 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
     ("Status", classOf[String]),
     ("T#/R", classOf[String]),
     ("Sequence", classOf[String])
-  );
+  )
 
   def apply(col: Int, comb: UnifiedCombatant): java.lang.Object = {
     col match {
@@ -40,7 +37,7 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
         health.currentHP + " / " + health.base.totalHP + (if (health.temporaryHP > 0) " +" + health.temporaryHP else "")
       case 3 =>
         val health = comb.health
-        health.status + (if (health.status == HealthStatus.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
+        health.status.toString + (if (health.status == HealthStatus.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
       case 4 => if (comb.isInOrder) (comb.initiative.round + " / " + comb.initiative.initScore) else "-"
       case 5 => if (comb.isInOrder) comb.initiative.state else "-"
     }

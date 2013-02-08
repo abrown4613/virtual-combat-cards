@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.view
+package vcc.dnd4e.tracker.common
 
 import language.postfixOps
-import vcc.dnd4e.domain.tracker.common.CombatStateView
-import vcc.dnd4e.tracker.common._
+import scala.Some
 
 /**
  * Provides a single linear and random access table with all combatants.
@@ -147,5 +146,4 @@ object UnifiedSequenceTable {
       notInOrder.toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
     }
   }
-
 }

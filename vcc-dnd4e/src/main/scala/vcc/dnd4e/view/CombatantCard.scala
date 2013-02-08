@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import vcc.util.swing._
 import helper.CombatantStatBlockCache
 import vcc.infra.docking._
 import java.awt.Dimension
+import vcc.dnd4e.tracker.common.UnifiedCombatantID
 
 abstract class CombatantCard(director: PanelDirector)
   extends GridPanel(1, 1) with ContextObserver with SimpleCombatStateObserver with ScalaDockableComponent {

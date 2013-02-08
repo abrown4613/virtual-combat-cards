@@ -20,9 +20,8 @@ import java.lang.String
 import org.specs2.execute.StandardResults
 import org.junit.Assert
 import vcc.tracker.Tracker
-import vcc.dnd4e.tracker.common.CombatState
+import vcc.dnd4e.tracker.common.{CombatStateView, CombatState}
 import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
-import vcc.dnd4e.domain.tracker.common.CombatStateView
 import concurrent.SyncVar
 import vcc.dnd4e.application.Application
 import java.io.File

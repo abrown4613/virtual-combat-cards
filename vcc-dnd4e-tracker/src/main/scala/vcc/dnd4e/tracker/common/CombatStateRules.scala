@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-package vcc.dnd4e.domain.tracker.common
-
-import vcc.dnd4e.tracker.common._
+package vcc.dnd4e.tracker.common
 
 class CombatStateRules {
 
@@ -39,7 +37,7 @@ class CombatStateRules {
 
   /**
    * Can moveBefore if who is not acting and is different than whom
-   * @param state The current combatState
+   * @param combatState The current combatState
    * @param who Who will move
    * @param whom In front of whom who will move
    */
