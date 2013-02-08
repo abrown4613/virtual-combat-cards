@@ -33,8 +33,8 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
 
   trait baseMockups extends Scope {
     val state: CombatStateView = mock[CombatStateView]
-    val mockCombA = mock[CombatantStateView]
-    val mockCombB = mock[CombatantStateView]
+    val mockCombA = mock[Combatant]
+    val mockCombB = mock[Combatant]
 
     state.getInitiativeOrder returns List(ioA0, ioB0, ioA1)
     state.combatantViewFromID(cidA) returns mockCombA
