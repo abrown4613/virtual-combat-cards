@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  */
 package vcc.dnd4e.tracker.common
 
-import vcc.tracker.{Event}
+import vcc.tracker.Event
 
 case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, comment: Option[String]) {
   def endCombat(): CombatState = {
@@ -39,7 +39,21 @@ case class CombatState(roster: Roster[Combatant], order: InitiativeOrder, commen
 
   def getAllEffects:List[Effect] = roster.entries.values.flatMap(_.effects.effects).toList
 
+
   def combatant(cid: CombatantID):Combatant = roster.combatant(cid)
+
+  def combatantViewFromID(id: CombatantID): Combatant = roster.entries(id)
+
+  def allCombatantIDs: List[CombatantID] = roster.allCombatantIDs
+
+  def initiativeTrackerFromID(orderId: InitiativeOrderID): InitiativeTracker = order.tracker(orderId)
+
+  def getInitiativeOrder: List[InitiativeOrderID] = order.sequence
+
+  def combatComment: String = comment.getOrElse(null)
+
+  def nextUp: Option[InitiativeOrderID] = order.nextUp
+
 }
 
 object CombatState {
@@ -66,7 +80,7 @@ object CombatState {
 
     /**
      * Can moveBefore if who is not acting and is different than whom
-     * @param state The current combatState
+     * @param combatState The current combatState
      * @param who Who will move
      * @param whom In front of whom who will move
      */
@@ -96,4 +110,5 @@ object CombatState {
   }
 
   def empty = CombatState(Roster(Combatant.RosterFactory, Map()), InitiativeOrder.empty(), None)
+
 }

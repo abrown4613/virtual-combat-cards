@@ -21,17 +21,17 @@ class CombatStateRules {
   /**
    * Inform if all the Combatants with and InitiativeOrderID are not dead.
    */
-  def areAllCombatantInOrderDead(combatState: CombatStateView): Boolean = {
+  def areAllCombatantInOrderDead(combatState: CombatState): Boolean = {
     !combatState.getInitiativeOrder.exists(x => combatState.combatantViewFromID(x.combId).health.status != HealthStatus.Dead)
   }
 
-  def canCombatantRollInitiative(combatState: CombatStateView, combID: CombatantID): Boolean = {
+  def canCombatantRollInitiative(combatState: CombatState, combID: CombatantID): Boolean = {
     if (combatState.isCombatStarted) {
       !combatState.getInitiativeOrder.exists(ioi => ioi.combId == combID)
     } else true
   }
 
-  def hasActingCombatant(combatState: CombatStateView): Boolean = {
+  def hasActingCombatant(combatState: CombatState): Boolean = {
     combatState.getInitiativeOrder.length > 0
   }
 
@@ -41,7 +41,7 @@ class CombatStateRules {
    * @param who Who will move
    * @param whom In front of whom who will move
    */
-  def canMoveBefore(combatState: CombatStateView, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
+  def canMoveBefore(combatState: CombatState, who: InitiativeOrderID, whom: InitiativeOrderID): Boolean = {
     (who != whom) && combatState.isCombatStarted && combatState.initiativeTrackerFromID(who).state != InitiativeState.Acting
   }
 
@@ -49,7 +49,7 @@ class CombatStateRules {
    * Determines in a given action can be applied to an InitiativeTracker. Not that this does not cover compound
    * operations like the Delay which internally is broken into Start and Delay.
    */
-  def canInitiativeOrderPerform(combatState: CombatStateView, io: InitiativeOrderID, action: InitiativeAction.Value): Boolean = {
+  def canInitiativeOrderPerform(combatState: CombatState, io: InitiativeOrderID, action: InitiativeAction.Value): Boolean = {
     if (!combatState.isCombatStarted || !combatState.nextUp.isDefined) false
     else {
       val first = combatState.initiativeTrackerFromID(combatState.nextUp.get)
@@ -58,7 +58,7 @@ class CombatStateRules {
     }
   }
 
-  def areAllied(combatState: CombatStateView, combA: CombatantID, combB: CombatantID): Boolean = {
+  def areAllied(combatState: CombatState, combA: CombatantID, combB: CombatantID): Boolean = {
     val a = combatState.combatantViewFromID(combA).combatantType
     val b = combatState.combatantViewFromID(combB).combatantType
     (a == CombatantType.Character && b == CombatantType.Character) || (a != CombatantType.Character && b != CombatantType.Character)

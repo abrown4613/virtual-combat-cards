@@ -24,7 +24,7 @@ import scala.Some
  * @param elements The list of UnifiedCombatant in the order
  * @param state The state that was used to build the sequence
  */
-class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: CombatStateView) {
+class UnifiedSequenceTable(val elements: Array[UnifiedCombatant], val state: CombatState) {
 
   /**
    * Get UnifiedCombatant at position idx
@@ -80,17 +80,17 @@ object UnifiedSequenceTable {
 
 
   private trait InitiativeOrderViewBuilder {
-    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID]
+    def buildOrder(combatState: CombatState): Seq[InitiativeOrderID]
   }
 
   private object DirectInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
+    def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
       combatState.getInitiativeOrder
     }
   }
 
   private object RobinHeadFirstInitiativeOrderViewBuilder extends InitiativeOrderViewBuilder {
-    def buildOrder(combatState: CombatStateView): Seq[InitiativeOrderID] = {
+    def buildOrder(combatState: CombatState): Seq[InitiativeOrderID] = {
       val order = combatState.getInitiativeOrder
       val idx: Int = if (combatState.nextUp.isDefined && order.contains(combatState.nextUp.get)) order.indexOf(combatState.nextUp.get) else 0
       order.drop(idx) ++ order.take(idx)
@@ -117,7 +117,7 @@ object UnifiedSequenceTable {
       orderBuilder = DirectInitiativeOrderViewBuilder
     }
 
-    def build(combatState: CombatStateView): UnifiedSequenceTable = {
+    def build(combatState: CombatState): UnifiedSequenceTable = {
       def isAliveOrActing(combatant: UnifiedCombatant): Boolean = {
         (combatant.health.status != HealthStatus.Dead) ||
           (combatant.initiative != null && combatant.initiative.state == InitiativeState.Acting)
@@ -130,7 +130,7 @@ object UnifiedSequenceTable {
       new UnifiedSequenceTable(elements, combatState)
     }
 
-    private def makeList(combatState: CombatStateView): Array[UnifiedCombatant] = {
+    private def makeList(combatState: CombatState): Array[UnifiedCombatant] = {
       def makeUnifiedCombatant(combId: CombatantID, orderId: InitiativeOrderID): UnifiedCombatant = {
         val initiativeTracker = if (orderId != null) combatState.initiativeTrackerFromID(orderId) else null
         new UnifiedCombatant(combId, initiativeTracker, combatState.combatantViewFromID(combId))
@@ -141,7 +141,7 @@ object UnifiedSequenceTable {
       (order ++ reserve).toArray
     }
 
-    private def combatantNotInOrderSortedById(combatState: CombatStateView): Seq[CombatantID] = {
+    private def combatantNotInOrderSortedById(combatState: CombatState): Seq[CombatantID] = {
       val notInOrder = Set[CombatantID]((combatState.allCombatantIDs filterNot (combatState.getInitiativeOrder.map(_.combId) contains)): _*)
       notInOrder.toList.sortWith((a: CombatantID, b: CombatantID) => a.id < b.id)
     }

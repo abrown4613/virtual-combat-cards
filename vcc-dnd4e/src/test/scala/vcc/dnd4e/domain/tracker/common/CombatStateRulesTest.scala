@@ -32,7 +32,7 @@ class CombatStateRulesTest extends SpecificationWithJUnit with Mockito {
   val rules = new CombatStateRules
 
   trait baseMockups extends Scope {
-    val state: CombatStateView = mock[CombatStateView]
+    val state: CombatState = mock[CombatState]
     val mockCombA = mock[Combatant]
     val mockCombB = mock[Combatant]
 

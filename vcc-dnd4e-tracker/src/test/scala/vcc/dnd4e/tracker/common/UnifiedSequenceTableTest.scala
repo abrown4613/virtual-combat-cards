@@ -59,7 +59,7 @@ class UnifiedSequenceTableTest extends SpecificationWithJUnit {
 
   case class withMockView() extends Mockito {
     private val mockCombatant = buildCombatantView(combA, combB, combC, combD)
-    private val combatState = mock[CombatStateView]
+    private val combatState = mock[CombatState]
     private val builder = new UnifiedSequenceTable.Builder
 
     setup()
