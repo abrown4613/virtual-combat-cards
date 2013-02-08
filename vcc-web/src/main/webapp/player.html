@@ -1,0 +1,15 @@
+<!doctype html>
+<html ng-app>
+<head>
+    <title>Player View</title>
+    <script src="lib/angular.min.js"></script>
+    <script src="js/player.js"></script>
+</head>
+<body>
+<div ng-controller="FetchCtrl">
+    <button ng-click="fetch()">fetch</button><br>
+    <pre>http status code: {{status}}</pre>
+    <div>{{data}}</div>
+</div>
+</body>
+</html>
