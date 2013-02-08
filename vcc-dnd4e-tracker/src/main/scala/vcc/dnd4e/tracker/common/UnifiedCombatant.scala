@@ -32,7 +32,7 @@ case class UnifiedCombatantID(combId: CombatantID, orderId: InitiativeOrderID)
  */
 class UnifiedCombatant(val combId: CombatantID,
                        val initiative: InitiativeTracker,
-                       combatant: CombatantStateView) {
+                       combatant: Combatant) {
   def isCharacter = combatant.combatantType == CombatantType.Character
 
   def health = combatant.health

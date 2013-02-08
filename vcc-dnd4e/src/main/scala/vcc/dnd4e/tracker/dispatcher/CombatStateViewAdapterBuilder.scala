@@ -24,20 +24,10 @@ object CombatStateViewAdapterBuilder {
     new CombatStateViewAdapter(state)
   }
 
-  private class CombatantStateViewAdapter(combatant: Combatant) extends CombatantStateView {
-    def health: HealthTracker = combatant.health
-
-    def effects: EffectList = combatant.effects
-
-    def definition: CombatantRosterDefinition = combatant.definition
-
-    def comment: String = combatant.comment
-  }
-
   private class CombatStateViewAdapter(combatState: CombatState) extends CombatStateView {
-    private val combatantViewMap = combatState.roster.entries.map(e => (e._1, new CombatantStateViewAdapter(e._2)))
+    private val combatantViewMap = combatState.roster.entries.map(e => (e._1, e._2))
 
-    def combatantViewFromID(id: CombatantID): CombatantStateView = combatantViewMap(id)
+    def combatantViewFromID(id: CombatantID): Combatant = combatantViewMap(id)
 
     def allCombatantIDs: List[CombatantID] = combatState.roster.allCombatantIDs
 

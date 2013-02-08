@@ -23,7 +23,6 @@ import vcc.infra.docking._
 import vcc.dnd4e.tracker.common.CombatantEntity
 import vcc.dnd4e.tracker.common.Command.AddEffect
 import scala.Some
-import vcc.dnd4e.tracker.common.EffectList
 import vcc.infra.docking.DockID
 import vcc.dnd4e.tracker.common.CombatantRosterDefinition
 
@@ -37,19 +36,12 @@ with CombatStateObserver with ContextObserver with ScalaDockableComponent {
   private var target: Option[UnifiedCombatantID] = None
   private var state:UnifiedSequenceTable = null
 
-  private object TerrainCombatantStateView extends CombatantStateView {
-    private val terrainDefinition = CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, null)
-
-    def definition: CombatantRosterDefinition = CombatantRosterDefinition(otherId, null, terrainDefinition)
-
-    def health: HealthTracker = null
-
-    def effects: EffectList = null
-
-    def comment: String = null
-  }
-
   private val otherId = CombatantID.makeSpecialID("?")
+
+  private val TerrainCombatantStateView = Combatant(
+    CombatantRosterDefinition(otherId, null,
+      CombatantEntity("vcc-ent:terrain", "Terrain or Other", MinionHealthDefinition, 0, null)))
+
   private val otherCombatant = new UnifiedCombatant(otherId, null, TerrainCombatantStateView)
 
   val activeModel = new ContainerComboBoxModel[UnifiedCombatant](List(otherCombatant))

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ package vcc.dnd4e.tracker.common
  * @param definition Defining characteristics of the combatant
  * @param comment User defined comments for this combatant
  * @param health HealthTrack for this combatant
- * @param effect Effects that are currently in place.
+ * @param effects Effects that are currently in place.
  */
 case class Combatant(definition: CombatantRosterDefinition, comment: String, health: HealthTracker, effects: EffectList) {
 
