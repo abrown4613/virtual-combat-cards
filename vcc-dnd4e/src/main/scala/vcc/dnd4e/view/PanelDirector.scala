@@ -19,7 +19,6 @@ package vcc.dnd4e.view
 import vcc.util.swing.SwingHelper
 import vcc.dnd4e.tracker.common._
 import vcc.dnd4e.tracker.common.Command.CombatStateAction
-import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
 import vcc.tracker.Tracker
 import vcc.dnd4e.application.{CombatSaveFile, Application}
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
@@ -76,8 +75,7 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
   Application.initialize(tracker, new Tracker.Observer[CombatState] {
     def stateUpdated(state: CombatState) {
       logger.debug("[NT] -> " + state)
-      val newState = CombatStateViewAdapterBuilder.buildView(state)
-      buildStateAndPropagate(newState)
+      buildStateAndPropagate(state)
       testSaveFile(state)
     }
 
@@ -176,7 +174,7 @@ class PanelDirector(tracker: Tracker[CombatState], statusBar: StatusBar) {
     logger.warn("Failed to execute action, reason: " + reason)
   }
 
-  private def buildStateAndPropagate(newState: CombatStateView) {
+  private def buildStateAndPropagate(newState: CombatState) {
     SwingHelper.invokeInEventDispatchThread {
       unifiedTable = sequenceBuilder.build(newState)
       combatStateObserver.foreach(obs => obs.combatStateChanged(unifiedTable))

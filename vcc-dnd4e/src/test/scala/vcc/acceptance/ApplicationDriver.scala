@@ -20,14 +20,13 @@ import java.lang.String
 import org.specs2.execute.StandardResults
 import org.junit.Assert
 import vcc.tracker.Tracker
-import vcc.dnd4e.tracker.common.{CombatStateView, CombatState}
-import vcc.dnd4e.tracker.dispatcher.CombatStateViewAdapterBuilder
+import vcc.dnd4e.tracker.common.CombatState
 import concurrent.SyncVar
 import vcc.dnd4e.application.Application
 import java.io.File
 
 class ApplicationDriver extends Tracker.Observer[CombatState] {
-  private val state: SyncVar[CombatStateView] = new SyncVar[CombatStateView]()
+  private val state: SyncVar[CombatState] = new SyncVar[CombatState]()
 
   Application.initialize(this)
 
@@ -43,12 +42,12 @@ class ApplicationDriver extends Tracker.Observer[CombatState] {
 
   def stateUpdated(newState: CombatState) {
     clearStateIsSet()
-    state.put(CombatStateViewAdapterBuilder.buildView(newState))
+    state.put(newState)
   }
 
   def close() = StandardResults.success
 
-  def getCombatState: CombatStateView = {
+  def getCombatState: CombatState = {
     Thread.sleep(200)
     state.get
   }
