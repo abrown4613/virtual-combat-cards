@@ -15,27 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 function FetchCtrl($scope, $http) {
-  $scope.method = 'GET';
-  $scope.url = 'player-view';
+    $scope.method = 'GET';
+    $scope.url = 'player-view';
+    $scope.running = false;
 
-  $scope.fetch = function() {
-    $scope.code = null;
-    $scope.response = null;
+    $scope.fetch = function () {
+        $scope.code = null;
+        $scope.response = null;
+        $scope.running = true;
 
-    $http({method: $scope.method, url: $scope.url, cache: false}).
-      success(function(data, status) {
-        $scope.status = status;
-        $scope.data = data;
-        $scope.fetch();
-      }).
-      error(function(data, status) {
-        $scope.data = data || "Request failed";
-        $scope.status = status;
-    });
-  };
+        $http({method: $scope.method, url: $scope.url, cache: false}).
+            success(function (data, status) {
+                $scope.status = status;
+                $scope.data = data;
+                $scope.fetch();
+            }).
+            error(function (data, status) {
+                $scope.data = data || "Request failed";
+                $scope.running = false;
+                $scope.status = status;
+            });
+    };
 
-  $scope.updateModel = function(method, url) {
-    $scope.method = method;
-    $scope.url = url;
-  };
+    $scope.updateModel = function (method, url) {
+        $scope.method = method;
+        $scope.url = url;
+    };
 }

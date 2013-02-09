@@ -1,15 +1,18 @@
 <!doctype html>
 <html ng-app>
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Player View</title>
     <script src="lib/angular.min.js"></script>
     <script src="js/player.js"></script>
 </head>
 <body>
 <div ng-controller="FetchCtrl">
-    <button ng-click="fetch()">fetch</button><br>
+    <button ng-click="fetch()" ng-disabled="running">Connect to Server</button><br>
     <pre>http status code: {{status}}</pre>
-    <div>{{data}}</div>
+    <div>
+        <pre>{{data}}</pre>
+    </div>
 </div>
 </body>
 </html>
