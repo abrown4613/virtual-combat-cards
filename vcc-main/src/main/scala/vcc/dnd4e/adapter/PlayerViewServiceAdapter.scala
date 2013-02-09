@@ -22,9 +22,9 @@ import vcc.dnd4e.application.Application
 import vcc.dnd4e.web.services.StateViewService
 
 class PlayerViewServiceAdapter extends StateViewService {
-  def currentState(): AnyRef = Application.getInstance.getState
+  def currentState(): CombatState = Application.getInstance.getState
 
-  def stateAfterChange(timeoutInMillis: Int): Option[AnyRef] = {
+  def stateAfterChange(timeoutInMillis: Int): Option[CombatState] = {
     val syncVar = new SyncVar[CombatState]
     Application.getLongPollObserver.waitingForState(syncVar)
     syncVar.get(timeoutInMillis)

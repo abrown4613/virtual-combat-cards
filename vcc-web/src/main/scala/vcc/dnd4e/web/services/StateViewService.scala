@@ -16,10 +16,12 @@
  */
 package vcc.dnd4e.web.services
 
-trait StateViewService {
-  def stateAfterChange(timeoutInMillis: Int): Option[AnyRef]
+import vcc.dnd4e.tracker.common.CombatState
 
-  def currentState(): AnyRef
+trait StateViewService {
+  def stateAfterChange(timeoutInMillis: Int): Option[CombatState]
+
+  def currentState(): CombatState
 }
 
 object StateViewService {
