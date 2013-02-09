@@ -16,9 +16,10 @@
  */
 package vcc.dnd4e.view.tabular
 
-import vcc.dnd4e.tracker.common.{UnifiedCombatant, HealthStatus}
+import vcc.dnd4e.tracker.common.UnifiedCombatant
+import vcc.util.swing.TableModelRowProjection
 
-object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[UnifiedCombatant] {
+object CombatantStateProjection extends TableModelRowProjection[UnifiedCombatant] {
   override val columns = List[(String, java.lang.Class[_])](
     ("ID", classOf[java.lang.String]),
     ("Name", classOf[String]),
@@ -32,12 +33,8 @@ object CombatantStateProjection extends vcc.util.swing.TableModelRowProjection[U
     col match {
       case 0 => if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id
       case 1 => (if (comb.alias != null) "[" + comb.alias + "] " else "") + comb.name
-      case 2 =>
-        val health = comb.health
-        health.currentHP + " / " + health.base.totalHP + (if (health.temporaryHP > 0) " +" + health.temporaryHP else "")
-      case 3 =>
-        val health = comb.health
-        health.status.toString + (if (health.status == HealthStatus.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
+      case 2 => comb.health.formattedHitPoints
+      case 3 => comb.health.formattedStatus
       case 4 => if (comb.isInOrder) (comb.initiative.round + " / " + comb.initiative.initScore) else "-"
       case 5 => if (comb.isInOrder) comb.initiative.state else "-"
     }

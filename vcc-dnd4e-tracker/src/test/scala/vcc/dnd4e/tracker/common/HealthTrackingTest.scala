@@ -1,7 +1,5 @@
-package vcc.dnd4e.tracker.common
-
-/**
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+/*
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,301 +14,315 @@ package vcc.dnd4e.tracker.common
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
+package vcc.dnd4e.tracker.common
 
-import junit.framework._
+import org.junit._
+import Assert._
 
 import vcc.dnd4e.tracker.common.HealthStatus._
 
-class HealthTrackingTest extends TestCase {
+class HealthTrackingTest {
+
+  @Test
   def checkCharacterDefinitionStatus() {
     val hd = CharacterHealthDefinition(21)
 
-    assert(hd.status(HealthTracker(21, 0, 0, hd)) == Ok)
-    assert(hd.status(HealthTracker(11, 0, 0, hd)) == Ok)
-    assert(hd.status(HealthTracker(10, 0, 0, hd)) == Bloody)
-    assert(hd.status(HealthTracker(0, 0, 0, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 0, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 1, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 2, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == Dead)
-    assert(hd.status(HealthTracker(10, 0, 3, hd)) == Dead)
+    validateHealth(HealthTracker(21, 0, 0, hd), Ok)
+    validateHealth(HealthTracker(11, 0, 0, hd), Ok)
+    validateHealth(HealthTracker(10, 0, 0, hd), Bloody)
+    validateHealth(HealthTracker(10, 0, 1, hd), Bloody)
+    validateHealth(HealthTracker(0, 0, 0, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 0, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 1, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 2, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 3, hd), Dead)
+    validateHealth(HealthTracker(10, 0, 3, hd), Dead)
   }
 
+  @Test
   def checkMonsterDefinitionStatus() {
     val hd = MonsterHealthDefinition(21)
 
-    assert(hd.status(HealthTracker(21, 0, 0, hd)) == Ok)
-    assert(hd.status(HealthTracker(11, 0, 0, hd)) == Ok)
-    assert(hd.status(HealthTracker(10, 0, 0, hd)) == Bloody)
-    assert(hd.status(HealthTracker(0, 0, 0, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 0, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == Dead)
+    validateHealth(HealthTracker(21, 0, 0, hd), Ok)
+    validateHealth(HealthTracker(11, 0, 0, hd), Ok)
+    validateHealth(HealthTracker(10, 0, 0, hd), Bloody)
+    validateHealth(HealthTracker(0, 0, 0, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 0, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 3, hd), Dead)
   }
 
+  @Test
   def checkMinionDefinitionStatus() {
     val hd = MinionHealthDefinition
 
-    assert(hd.status(HealthTracker(1, 0, 0, hd)) == Ok)
-    assert(hd.status(HealthTracker(0, 0, 0, hd)) == Dying)
-    assert(hd.status(HealthTracker(-5, 0, 3, hd)) == Dead)
+    validateHealth(HealthTracker(1, 0, 0, hd), Ok)
+    validateHealth(HealthTracker(0, 0, 0, hd), Dying)
+    validateHealth(HealthTracker(-5, 0, 3, hd), Dead)
   }
 
+  @Test
   def testMinion() {
 
     var minion: HealthTracker = HealthTracker.createTracker(CombatantType.Minion, 1)
 
     // Cant get temporary HP
-    val mmod = minion.setTemporaryHitPoints(10)
-    assert(mmod eq minion, mmod)
+    val modifiedMinion = minion.setTemporaryHitPoints(10)
+    assertEquals(minion, modifiedMinion)
 
     // Any damage should become one, and cause him to be dead
     minion = minion.applyDamage(1)
-    assert(minion.currentHP == 0)
-    assert(minion.status == Dead)
+    assertEquals(0, minion.currentHP)
+    assertEquals(Dead, minion.status)
 
     // This cant raise anyone
     minion = minion.heal(10)
-    assert(minion.currentHP == 0)
-    assert(minion.status == Dead)
+    assertEquals(0, minion.currentHP)
+    assertEquals(Dead, minion.status)
   }
 
+  @Test
   def testMonster() {
     var monster: HealthTracker = HealthTracker.createTracker(CombatantType.Monster, 45)
-    monster = monster.applyDamage(10);
-    assert(monster.currentHP == 35)
-    assert(monster.status == Ok)
+    monster = monster.applyDamage(10)
+    assertEquals(35, monster.currentHP)
+    assertEquals(Ok, monster.status)
 
-    monster = monster.applyDamage(13);
-    assert(monster.currentHP == 22)
-    assert(monster.status == Bloody)
+    monster = monster.applyDamage(13)
+    assertEquals(22, monster.currentHP)
+    assertEquals(Bloody, monster.status)
 
     monster = monster.heal(11)
-    assert(monster.currentHP == 33)
-    assert(monster.status == Ok)
+    assertEquals(33, monster.currentHP)
+    assertEquals(Ok, monster.status)
 
     monster = monster.heal(20)
-    assert(monster.currentHP == 45)
-    assert(monster.status == Ok)
+    assertEquals(45, monster.currentHP)
+    assertEquals(Ok, monster.status)
 
     monster = monster.setTemporaryHitPoints(10)
-    assert(monster.currentHP == 45)
-    assert(monster.temporaryHP == 10)
-    assert(monster.status == Ok)
+    assertEquals(45, monster.currentHP)
+    assertEquals(10, monster.temporaryHP)
+    assertEquals(Ok, monster.status)
+    validateHealth(monster, Ok)
 
     monster = monster.applyDamage(7)
-    assert(monster.currentHP == monster.base.totalHP)
-    assert(monster.temporaryHP == 3)
-    assert(monster.status == Ok)
+    assertEquals(monster.base.totalHP, monster.currentHP)
+    assertEquals(3, monster.temporaryHP)
+    assertEquals(Ok, monster.status)
 
     monster = monster.setTemporaryHitPoints(5)
-    assert(monster.currentHP == monster.base.totalHP)
-    assert(monster.temporaryHP == 5)
-    assert(monster.status == Ok)
+    assertEquals(monster.base.totalHP, monster.currentHP)
+    assertEquals(5, monster.temporaryHP)
+    assertEquals(Ok, monster.status)
 
     monster = monster.applyDamage(7)
-    assert(monster.currentHP == monster.base.totalHP - 2, monster)
-    assert(monster.temporaryHP == 0)
-    assert(monster.status == Ok)
+    assertEquals(monster.base.totalHP - 2, monster.currentHP)
+    assertEquals(0, monster.temporaryHP)
+    assertEquals(Ok, monster.status)
 
     monster = monster.applyDamage(100)
-    assert(monster.currentHP == 0, monster)
-    assert(monster.status == Dead)
+    assertEquals(0, monster.currentHP)
+    assertEquals(Dead, monster.status)
 
     monster = monster.heal(10)
-    assert(monster.currentHP == 0)
-    assert(monster.status == Dead)
+    assertEquals(0, monster.currentHP)
+    assertEquals(Dead, monster.status)
 
     monster = monster.raiseFromDead()
-    assert(monster.currentHP == 0)
-    assert(monster.status == Dying)
+    assertEquals(0, monster.currentHP)
+    assertEquals(Dying, monster.status)
     monster = monster.heal(10)
-    assert(monster.currentHP == 10)
-    assert(monster.status == Bloody)
+    assertEquals(10, monster.currentHP)
+    assertEquals(Bloody, monster.status)
 
   }
 
+  @Test
   def testCharacter() {
     var pc: HealthTracker = HealthTracker.createTracker(CombatantType.Character, 45)
-    pc = pc.applyDamage(10);
-    assert(pc.currentHP == pc.base.totalHP - 10)
-    assert(pc.status == Ok)
+    pc = pc.applyDamage(10)
+    assertEquals(pc.base.totalHP - 10, pc.currentHP)
+    assertEquals(Ok, pc.status)
 
-    pc = pc.applyDamage(13);
-    assert(pc.currentHP == (pc.base.totalHP - 10 - 13))
-    assert(pc.status == Bloody)
+    pc = pc.applyDamage(13)
+    assertEquals((pc.base.totalHP - 10 - 13), pc.currentHP)
+    assertEquals(Bloody, pc.status)
 
     pc = pc.heal(11)
-    assert(pc.currentHP == 33)
-    assert(pc.status == Ok)
+    assertEquals(33, pc.currentHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.heal(20)
-    assert(pc.currentHP == pc.base.totalHP)
-    assert(pc.status == Ok)
+    assertEquals(pc.base.totalHP, pc.currentHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.setTemporaryHitPoints(10)
-    assert(pc.currentHP == pc.base.totalHP)
-    assert(pc.temporaryHP == 10)
-    assert(pc.status == Ok)
+    assertEquals(pc.base.totalHP, pc.currentHP)
+    assertEquals(10, pc.temporaryHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.applyDamage(7)
-    assert(pc.currentHP == pc.base.totalHP)
-    assert(pc.temporaryHP == 3)
-    assert(pc.status == Ok)
+    assertEquals(pc.base.totalHP, pc.currentHP)
+    assertEquals(3, pc.temporaryHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.setTemporaryHitPoints(2)
-    assert(pc.temporaryHP == 3)
-    assert(pc.status == Ok)
+    assertEquals(3, pc.temporaryHP)
+    assertEquals(Ok, pc.status)
 
 
     pc = pc.setTemporaryHitPoints(5)
-    assert(pc.currentHP == pc.base.totalHP)
-    assert(pc.temporaryHP == 5)
-    assert(pc.status == Ok)
+    assertEquals(pc.base.totalHP, pc.currentHP)
+    assertEquals(5, pc.temporaryHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.applyDamage(7)
-    assert(pc.currentHP == pc.base.totalHP - 2)
-    assert(pc.temporaryHP == 0)
-    assert(pc.status == Ok)
+    assertEquals(pc.base.totalHP - 2, pc.currentHP)
+    assertEquals(0, pc.temporaryHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.applyDamage(50)
-    assert(pc.currentHP == pc.base.totalHP - 52)
-    assert(pc.status == Dying)
+    assertEquals(pc.base.totalHP - 52, pc.currentHP)
+    assertEquals(Dying, pc.status)
 
     pc = pc.heal(10)
-    assert(pc.currentHP == 10)
-    assert(pc.status == Bloody)
+    assertEquals(10, pc.currentHP)
+    assertEquals(Bloody, pc.status)
 
     pc = pc.applyDamage(35)
-    assert(pc.currentHP == -22, pc)
-    assert(pc.status == Dead)
+    assertEquals(-22, pc.currentHP)
+    assertEquals(Dead, pc.status)
   }
 
+  @Test
   def testCharacterDeath() {
     var pc = HealthTracker.createTracker(CombatantType.Character, 40)
 
     // Bug make sure can't strike living
     pc = pc.failDeathSave()
-    assert(pc.deathStrikes == 0)
+    assertEquals(0, pc.deathStrikes)
 
 
     pc = pc.applyDamage(50)
-    assert(pc.currentHP == 40 - 50)
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 0)
+    assertEquals(40 - 50, pc.currentHP)
+    assertEquals(Dying, pc.status)
+    assertEquals(0, pc.deathStrikes)
 
     pc = pc.failDeathSave()
-    assert(pc.currentHP == 40 - 50)
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 1)
+    assertEquals(40 - 50, pc.currentHP)
+    assertEquals(Dying, pc.status)
+    assertEquals(1, pc.deathStrikes)
 
     pc = pc.heal(25)
-    assert(pc.currentHP == 25)
-    assert(pc.status == Ok)
+    assertEquals(25, pc.currentHP)
+    assertEquals(Ok, pc.status)
 
     pc = pc.applyDamage(25)
-    assert(pc.currentHP == 0)
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 1)
+    assertEquals(0, pc.currentHP)
+    assertEquals(Dying, pc.status)
+    assertEquals(1, pc.deathStrikes)
 
 
     pc = pc.failDeathSave()
-    assert(pc.currentHP == 0)
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 2)
+    assertEquals(0, pc.currentHP)
+    assertEquals(Dying, pc.status)
+    assertEquals(2, pc.deathStrikes)
 
     pc = pc.applyDamage(5)
-    assert(pc.currentHP == -5)
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 2)
+    assertEquals(-5, pc.currentHP)
+    assertEquals(Dying, pc.status)
+    assertEquals(2, pc.deathStrikes)
 
     pc = pc.failDeathSave()
-    assert(pc.currentHP == -5)
-    assert(pc.deathStrikes == 3)
-    assert(pc.status == Dead)
+    assertEquals(-5, pc.currentHP)
+    assertEquals(3, pc.deathStrikes)
+    assertEquals(Dead, pc.status)
 
-    // Healling will not raise PC
+    // Healing will not raise PC
     pc = pc.heal(10)
-    assert(pc.currentHP == -5, pc)
-    assert(pc.status == Dead)
-    assert(pc.deathStrikes == 3)
+    assertEquals(-5, pc.currentHP)
+    assertEquals(Dead, pc.status)
+    assertEquals(3, pc.deathStrikes)
 
   }
 
+  @Test
   def testUnboundHealBug() {
     var pc = HealthTracker.createTracker(CombatantType.Character, 20)
     pc = pc.applyDamage(25)
-    assert(pc.currentHP == -5)
+    assertEquals(-5, pc.currentHP)
     pc = pc.heal(300)
-    assert(pc.currentHP == 20, pc)
+    assertEquals(20, pc.currentHP)
   }
 
 
+  @Test
   def testRaiseDeadLogic() {
     var pc = HealthTracker.createTracker(CombatantType.Character, 20)
     pc = pc.applyDamage(30)
-    assert(pc.status == Dead)
+    assertEquals(Dead, pc.status)
     pc = pc.raiseFromDead()
-    assert(pc.currentHP == 0)
-    assert(pc.status != Dead)
+    assertEquals(0, pc.currentHP)
+    assertNotEquals(Dead, pc.status)
 
     var monst = HealthTracker.createTracker(CombatantType.Monster, 20)
-    monst = monst.applyDamage(20);
-    assert(monst.status == Dead)
+    monst = monst.applyDamage(20)
+    assertEquals(Dead, monst.status)
     monst = monst.raiseFromDead()
-    assert(monst.currentHP == 0)
-    assert(monst.status != Dead)
+    assertEquals(0, monst.currentHP)
+    assertNotEquals(Dead, monst.status)
 
     monst = HealthTracker.createTracker(CombatantType.Minion, 20)
-    monst = monst.applyDamage(20);
-    assert(monst.status == Dead)
+    monst = monst.applyDamage(20)
+    assertEquals(Dead, monst.status)
     monst = monst.raiseFromDead()
-    assert(monst.currentHP == 0)
-    assert(monst.status != Dead)
-
+    assertEquals(0, monst.currentHP)
+    assertNotEquals(Dead, monst.status)
   }
 
+  @Test
   def testRestLogic() {
     var pc = HealthTracker.createTracker(CombatantType.Character, 20)
 
     //Make him dying
     pc = pc.applyDamage(25)
     pc = pc.failDeathSave()
-    assert(pc.status == Dying)
-    assert(pc.deathStrikes == 1)
+    assertEquals(Dying, pc.status)
+    assertEquals(1, pc.deathStrikes)
 
     // Fork to a dead by strikes
     var dpc = pc.failDeathSave()
     dpc = dpc.failDeathSave()
-    assert(dpc.deathStrikes == 3)
-    assert(dpc.status == Dead)
+    assertEquals(3, dpc.deathStrikes)
+    assertEquals(Dead, dpc.status)
 
     // No more strikes but still dying
     val pc_short = pc.rest(false)
-    assert(pc_short.currentHP == pc.currentHP)
-    assert(pc_short.deathStrikes == 0)
-    assert(pc_short.status == Dying)
+    assertEquals(pc.currentHP, pc_short.currentHP)
+    assertEquals(0, pc_short.deathStrikes)
+    assertEquals(Dying, pc_short.status)
 
     // Dying PC should go back to ok
     val pc_extended = pc.rest(true)
-    assert(pc_extended.currentHP == pc_extended.base.totalHP)
-    assert(pc_extended.deathStrikes == 0)
-    assert(pc_extended.status == Ok)
+    assertEquals(pc_extended.base.totalHP, pc_extended.currentHP)
+    assertEquals(0, pc_extended.deathStrikes)
+    assertEquals(Ok, pc_extended.status)
 
     // Dead will not improve, and not change at all
     var ndpc = dpc.rest(false)
-    assert(ndpc eq dpc)
-    assert(ndpc.deathStrikes == 3)
-    assert(ndpc.status == Dead)
+    assertEquals(dpc, ndpc)
+    assertEquals(3, ndpc.deathStrikes)
+    assertEquals(Dead, ndpc.status)
 
     // Dead still dead after long rest
     ndpc = dpc.rest(true)
-    assert(ndpc eq dpc)
-    assert(ndpc.deathStrikes == 3)
-    assert(ndpc.status == Dead)
+    assertEquals(dpc, ndpc)
+    assertEquals(3, ndpc.deathStrikes)
+    assertEquals(Dead, ndpc.status)
 
   }
 
+  @Test
   def testDeltaApply() {
     val pc = HealthTracker.createTracker(CombatantType.Character, 20)
 
@@ -318,16 +330,27 @@ class HealthTrackingTest extends TestCase {
 
     val delta = pc_mode.getDelta
 
-    assert(delta != null)
-    assert(delta == HealthTrackerDelta(5, 4, 1))
+    assertEquals(HealthTrackerDelta(5, 4, 1), delta)
 
     val pc_mode2 = pc.applyDelta(delta)
 
-    assert(pc_mode2 == pc_mode)
+    assertEquals(pc_mode, pc_mode2)
 
     val pc30 = HealthTracker.createTracker(CombatantType.Character, 30)
     val pc30_mode = pc_mode.replaceHealthDefinition(pc30.base)
 
-    assert(pc30_mode == HealthTracker(pc30.currentHP - 5, 4, 1, pc30.base))
+    assertEquals(HealthTracker(pc30.currentHP - 5, 4, 1, pc30.base), pc30_mode)
+  }
+
+  private def validateHealth(health: HealthTracker, expectedStatus: HealthStatus.Value) {
+    val formatted = if (health.temporaryHP > 0)
+      "%d / %d +%d".format(health.currentHP, health.base.totalHP, health.temporaryHP)
+    else
+      "%d / %d".format(health.currentHP, health.base.totalHP)
+
+    assertEquals(formatted, health.formattedHitPoints)
+    val formattedDeath = health.status.toString + (if(health.status == Dying)  " (%d/3)".format(health.deathStrikes) else  "!!!".substring(0, health.deathStrikes))
+    assertEquals(formattedDeath, health.formattedStatus)
+    assertEquals(expectedStatus, health.status)
   }
 }

@@ -49,13 +49,8 @@ class PlayerViewServlet extends HttpServlet {
 
   def formatCombatant(comb: UnifiedCombatant): String = {
     """ { "id":"%s", "name":"%s", "health": "%s", "status": "%s"} """.format(
-    if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id,
-    comb.name, {
-      val health = comb.health
-      health.currentHP + " / " + health.base.totalHP + (if (health.temporaryHP > 0) " +" + health.temporaryHP else "")
-    }, {
-      val health = comb.health
-      health.status.toString + (if (health.status == HealthStatus.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
-    })
+      if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id,
+      comb.name, comb.health.formattedHitPoints,
+      comb.health.formattedStatus)
   }
 }
