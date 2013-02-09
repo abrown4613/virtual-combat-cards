@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ abstract class HealthDefinition(val totalHP: Int) {
   val hasTemporaryHP: Boolean
   val combatantType: CombatantType.Value
 
-  def status(tracker: HealthTracker): HealthStatus.Value = {
+  private[common] def status(tracker: HealthTracker): HealthStatus.Value = {
     if (tracker.deathStrikes == 3) HealthStatus.Dead
     else if (tracker.currentHP <= 0) HealthStatus.Dying
     else if (tracker.currentHP <= totalHP / 2) HealthStatus.Bloody
@@ -97,24 +97,37 @@ object HealthTracker {
 
 /**
  * Difference from base healthDefinition
- * @param currentHP Current hp
+ * @param damage Current hp
  * @param temporaryHP Temp HP
  * @param deathStrikes Current failed death saves
- * @param surges Sure
  */
 case class HealthTrackerDelta(damage: Int, temporaryHP: Int, deathStrikes: Int)
 
 /**
  * Since character are the most complex, this class implements their logic,
- * Other creatures will have different sublogics
+ * Other creatures will have different sub-logic
  * @param currentHP Current hp
  * @param temporaryHP Temp HP
  * @param deathStrikes Current failed death saves
- * @param bas
  */
 case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, base: HealthDefinition) extends CombatantAspect {
+
+  def formattedStatus: String = {
+    if (status == HealthStatus.Dying)
+      base.status(this).toString + " (%d/3)".format(deathStrikes)
+    else
+      base.status(this).toString + "!!!".substring(0, deathStrikes)
+  }
+
+  def formattedHitPoints: String = {
+    if (temporaryHP > 0)
+      "%d / %d +%d".format(currentHP, base.totalHP, temporaryHP)
+    else
+      "%d / %d".format(currentHP, base.totalHP)
+  }
+
   private def boundedChange(amount: Int): Int = {
-    val n = currentHP + amount;
+    val n = currentHP + amount
     if (n < base.lowerBound) base.lowerBound
     else if (n > base.totalHP) base.totalHP
     else n
@@ -144,9 +157,9 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, ba
    * @param amount Amount of temporary hit points
    * @return a new tracker with the modified temporary hit points.
    */
-  def setTemporaryHitPoints(amount: Int):HealthTracker = {
+  def setTemporaryHitPoints(amount: Int): HealthTracker = {
     if (base.hasTemporaryHP && amount > temporaryHP) {
-        HealthTracker(currentHP, amount, deathStrikes, base)
+      HealthTracker(currentHP, amount, deathStrikes, base)
     } else this
   }
 
