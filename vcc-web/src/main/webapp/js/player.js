@@ -19,6 +19,29 @@ function FetchCtrl($scope, $http) {
     $scope.url = 'player-view';
     $scope.running = false;
 
+    $scope.fetchInitial = function () {
+        $http({method: $scope.method, url: $scope.url + "?now=true", cache: false}).
+            success(function (data, status) {
+                $scope.status = status;
+                $scope.updateState(data);
+                $scope.fetch();
+            }).
+            error(function (data, status) {
+                $scope.stopUpdating(status);
+            });
+    };
+
+    $scope.updateState = function (data) {
+        try {
+            var dataRead = angular.fromJson(data);
+        } catch (err) {
+            console.log(err);
+        }
+        if (dataRead["state"]) {
+            $scope.data = dataRead["state"];
+        }
+    };
+
     $scope.fetch = function () {
         $scope.code = null;
         $scope.response = null;
@@ -27,18 +50,22 @@ function FetchCtrl($scope, $http) {
         $http({method: $scope.method, url: $scope.url, cache: false}).
             success(function (data, status) {
                 $scope.status = status;
-                $scope.data = data;
+                $scope.running = false;
+                $scope.updateState(data);
                 $scope.fetch();
             }).
             error(function (data, status) {
-                $scope.data = data || "Request failed";
-                $scope.running = false;
-                $scope.status = status;
+                $scope.stopUpdating(status);
             });
     };
 
     $scope.updateModel = function (method, url) {
         $scope.method = method;
         $scope.url = url;
+    };
+
+    $scope.stopUpdating = function (status) {
+        $scope.running = false;
+        $scope.status = status;
     };
 }

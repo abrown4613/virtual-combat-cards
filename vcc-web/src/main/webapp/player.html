@@ -8,11 +8,30 @@
 </head>
 <body>
 <div ng-controller="FetchCtrl">
-    <button ng-click="fetch()" ng-disabled="running">Connect to Server</button><br>
-    <pre>http status code: {{status}}</pre>
     <div>
-        <pre>{{data}}</pre>
+        <table ng-init="fetchInitial()">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Health</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="entry in data">
+                <td>{{entry.id}}</td>
+                <td>{{entry.name}}</td>
+                <td>{{entry.health}}</td>
+                <td>{{entry.status}}</td>
+            </tr>
+            </tbody>
+
+        </table>
     </div>
+    <br>
+    <button ng-click="fetchInitial()" ng-disabled="running">Reconnect to server</button>
+    <pre>http status code: {{status}}</pre>
 </div>
 </body>
 </html>

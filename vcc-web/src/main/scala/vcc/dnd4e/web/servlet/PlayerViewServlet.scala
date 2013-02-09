@@ -19,11 +19,14 @@ package vcc.dnd4e.web.servlet
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 import vcc.dnd4e.web.services.StateViewService
 import java.io.PrintWriter
-import vcc.dnd4e.tracker.common.{UnifiedSequenceTable, CombatState}
+import vcc.dnd4e.tracker.common.{HealthStatus, UnifiedCombatant, UnifiedSequenceTable, CombatState}
 
 class PlayerViewServlet extends HttpServlet {
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
-    val newState = StateViewService.getInstance.stateAfterChange(15000)
+    val newState = if (req.getParameterValues("now") == null)
+      StateViewService.getInstance.stateAfterChange(15000)
+    else
+      Some(StateViewService.getInstance.currentState())
 
     resp.setCharacterEncoding("UTF-8")
 
@@ -32,18 +35,27 @@ class PlayerViewServlet extends HttpServlet {
         val writer = resp.getWriter
         generateResponse(writer, state)
       case None =>
-        resp.getWriter.append("No Change")
+        resp.getWriter.append("{}")
     }
   }
 
   def generateResponse(writer: PrintWriter, state: CombatState) {
-    writer.append("State:" + state + "\n\n")
     val builder = new UnifiedSequenceTable.Builder
-
     val unifiedState = builder.build(state)
-    unifiedState.elements.foreach(comb =>
-      writer.println("%s \t %s \t: %s".format(
-        if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id,
-        comb.name, comb.health)))
+    writer.println( """{ "state": [""" + "\n")
+    writer.append(unifiedState.elements.map(formatCombatant).mkString(",\n"))
+    writer.println("\n]}\n")
+  }
+
+  def formatCombatant(comb: UnifiedCombatant): String = {
+    """ { "id":"%s", "name":"%s", "health": "%s", "status": "%s"} """.format(
+    if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id,
+    comb.name, {
+      val health = comb.health
+      health.currentHP + " / " + health.base.totalHP + (if (health.temporaryHP > 0) " +" + health.temporaryHP else "")
+    }, {
+      val health = comb.health
+      health.status.toString + (if (health.status == HealthStatus.Dying) ("(" + health.deathStrikes + "/3)") else "!!!".substring(0, health.deathStrikes))
+    })
   }
 }
