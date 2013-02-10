@@ -1,7 +1,5 @@
-package vcc.dnd4e.tracker.action
-
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +14,8 @@ package vcc.dnd4e.tracker.action
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+package vcc.dnd4e.tracker.action
+
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Command._
 import vcc.dnd4e.tracker.command._
@@ -42,7 +42,7 @@ class ActionTranslationTest extends SpecificationWithJUnit with SampleStateData 
     SimpleCase(SetInitiative(List(iDef1, iDef2)), SetInitiativeCommand(iDef1), SetInitiativeCommand(iDef2)),
     SimpleCase(SetComment(combA, "text"), SetCombatantCommentCommand(combA, "text")),
     SimpleCase(SetCombatComment("comment"), SetCombatCommentCommand("comment")),
-    SimpleCase(ApplyRest(true), RestCommand(true)),
+    SimpleCase(ApplyRest(RestDuration.ExtendedRest), RestCommand(RestDuration.ExtendedRest)),
     SimpleCase(EndCombat(), EndCombatCommand),
     SimpleCase(ClearRoster(true), ClearRosterCommand(false))
   )

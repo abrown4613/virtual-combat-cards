@@ -171,9 +171,9 @@ case class HealthTracker(currentHP: Int, temporaryHP: Int, deathStrikes: Int, ba
 
   def status = base.status(this)
 
-  def rest(extended: Boolean): HealthTracker = {
+  def rest(duration: RestDuration.Value): HealthTracker = {
     if (status != HealthStatus.Dead) {
-      if (extended) HealthTracker(base.totalHP, 0, 0, base)
+      if (duration == RestDuration.ExtendedRest) HealthTracker(base.totalHP, 0, 0, base)
       else HealthTracker(currentHP, 0, 0, base)
     } else
       this

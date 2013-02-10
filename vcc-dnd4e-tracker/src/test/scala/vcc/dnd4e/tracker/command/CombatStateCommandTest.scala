@@ -130,12 +130,12 @@ class CombatStateCommandTest extends SpecificationWithJUnit with EventSourceSamp
 
   private def restCombatants = {
     val exception = new IllegalActionException("Can not rest during combat")
-    val shortRest = RestCommand(false)
-    val extendedRest = RestCommand(true)
-    val sRest1: Event[CombatState] = RestCombatantEvent(comb1, false)
-    val sRestA: Event[CombatState] = RestCombatantEvent(combA, false)
-    val eRest1: Event[CombatState] = RestCombatantEvent(comb1, true)
-    val eRestA: Event[CombatState] = RestCombatantEvent(combA, true)
+    val shortRest = RestCommand(RestDuration.ShortRest)
+    val extendedRest = RestCommand(RestDuration.ExtendedRest)
+    val sRest1: Event[CombatState] = RestCombatantEvent(comb1, RestDuration.ShortRest)
+    val sRestA: Event[CombatState] = RestCombatantEvent(combA, RestDuration.ShortRest)
+    val eRest1: Event[CombatState] = RestCombatantEvent(comb1, RestDuration.ExtendedRest)
+    val eRestA: Event[CombatState] = RestCombatantEvent(combA, RestDuration.ExtendedRest)
     "Resting combatant" ^
       "rest should fail if combat is started" !
         (given(emptyState, evtAddCombA, evtInitA, StartCombatEvent) when (shortRest) failWith exception) ^

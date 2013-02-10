@@ -41,12 +41,12 @@ case class Combatant(definition: CombatantRosterDefinition, comment: String, hea
   /**
    * Apply rest to relevant fields in combatant, this include health and effects. The resulting combatant will have no
    * effect that expire at the end of the combat (Stance, EoE) and health updated accordingly.
-   * @param isExtended Indicate if the rest is extended or not
+   * @param duration Indicate if the rest is extended or not
    * @return A new combatant updated according to rest rules.
    */
-  def applyRest(isExtended: Boolean): Combatant = {
+  def applyRest(duration: RestDuration.Value): Combatant = {
     this.copy(
-      health = health.rest(isExtended),
+      health = health.rest(duration),
       effects = effects.transformAndFilter(EffectTransformation.applyRest)
     )
   }

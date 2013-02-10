@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,14 +69,14 @@ case object StartCombatCommand extends CombatStateCommand {
 
 /**
  * Apply rest to all combats.
- * @param isExtended True for Extended Rests, false if we should apply Short Rest
+ * @param restDuration True for Extended Rests, false if we should apply Short Rest
  */
-case class RestCommand(isExtended: Boolean) extends CombatStateCommand {
+case class RestCommand(restDuration: RestDuration.Value) extends CombatStateCommand {
   def generateEvents(iState: CombatState): List[Event[CombatState]] = {
     if (iState.isCombatStarted)
       throw new IllegalActionException("Can not rest during combat")
 
-    iState.roster.entries.keys.map(cid => RestCombatantEvent(cid, isExtended)).toList
+    iState.roster.entries.keys.map(cid => RestCombatantEvent(cid, restDuration)).toList
   }
 }
 

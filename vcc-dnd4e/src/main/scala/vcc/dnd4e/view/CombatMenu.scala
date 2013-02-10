@@ -19,14 +19,14 @@ package vcc.dnd4e.view
 import dialog.InitiativeDialog
 import scala.swing._
 import vcc.dnd4e.tracker.common.Command._
-import vcc.dnd4e.tracker.common.UnifiedSequenceTable
+import vcc.dnd4e.tracker.common.{RestDuration, UnifiedSequenceTable}
 
 class CombatMenu(director: PanelDirector, parent: Frame) extends Menu("Combat") with CombatStateObserver {
   private val menuStartCombat = createActionRequestMenuItem("Start Combat", StartCombat())
   private val menuRollInitiative = createInitiativeDialogMenuItem()
   private val menuEndCombat = createActionRequestMenuItem("End Combat", EndCombat())
-  private val menuShortRest = createActionRequestMenuItem("Short Rest", ApplyRest(false))
-  private val menuExtendedRest = createActionRequestMenuItem("Extended Rest", ApplyRest(true))
+  private val menuShortRest = createActionRequestMenuItem("Short Rest", ApplyRest(RestDuration.ShortRest))
+  private val menuExtendedRest = createActionRequestMenuItem("Extended Rest", ApplyRest(RestDuration.ExtendedRest))
   private val menuClearNPC = createActionRequestMenuItem("Clear Monsters", ClearRoster(false))
   private val menuClearAll = createActionRequestMenuItem("Clear All", ClearRoster(true))
   private var combatState: UnifiedSequenceTable = null
