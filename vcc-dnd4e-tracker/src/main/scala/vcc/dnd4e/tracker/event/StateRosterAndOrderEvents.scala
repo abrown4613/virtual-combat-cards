@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,18 +83,17 @@ case class SetCombatCommentEvent(comment: Option[String]) extends CombatStateEve
 /**
  * Set comment for a combatant
  * @param cid Combatant ID to update
- * @parma comment Comment to set
+ * @param comment Comment to set
  */
 case class SetCombatantCommentEvent(cid: CombatantID, comment: String) extends CombatStateEvent {
-  //TODO Move to better file
   def transition(iState: CombatState): CombatState = iState.lensFactory.combatantComment(cid).set(iState, comment)
 }
 
 /**
  * Rest a combatant
  */
-case class RestCombatantEvent(cid: CombatantID, isExtended: Boolean) extends CombatStateEvent {
+case class RestCombatantEvent(cid: CombatantID, restDuration: RestDuration.Value) extends CombatStateEvent {
   def transition(iState: CombatState): CombatState = {
-    iState.lensFactory.combatant(cid).mod(iState, c => c.applyRest(isExtended))
+    iState.lensFactory.combatant(cid).mod(iState, c => c.applyRest(restDuration))
   }
 }

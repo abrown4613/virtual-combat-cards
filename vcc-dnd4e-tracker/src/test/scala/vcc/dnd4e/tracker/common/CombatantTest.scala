@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,21 +26,21 @@ class CombatantTest extends SpecificationWithJUnit with Mockito with SampleState
 
   def is =
     "Combatant" ^
-      "can apply short rest" ! execRest(false) ^
-      "can apply extends rest" ! execRest(true) ^
+      "can apply short rest" ! execRest(RestDuration.ShortRest) ^
+      "can apply extends rest" ! execRest(RestDuration.ExtendedRest) ^
       "update definition and preserve damage" ! execChangeDefinition ^
       generateDiff ^
       end
 
-  private def execRest(isExtended: Boolean) = {
+  private def execRest(restDuration: RestDuration.Value) = {
     val mHealth = mock[HealthTracker]
     val mEffects = mock[EffectList]
     val mComb = Combatant(combDef).copy(health = mHealth, effects = mEffects)
 
-    mComb.applyRest(isExtended)
+    mComb.applyRest(restDuration)
 
     (there was one(mEffects).transformAndFilter(EffectTransformation.applyRest)) and
-      (there was one(mHealth).rest(isExtended))
+      (there was one(mHealth).rest(restDuration))
   }
 
   private def generateDiff = {

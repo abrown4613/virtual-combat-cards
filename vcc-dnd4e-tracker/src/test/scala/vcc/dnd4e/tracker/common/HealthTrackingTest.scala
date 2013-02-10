@@ -291,34 +291,34 @@ class HealthTrackingTest {
     assertEquals(1, pc.deathStrikes)
 
     // Fork to a dead by strikes
-    var dpc = pc.failDeathSave()
-    dpc = dpc.failDeathSave()
-    assertEquals(3, dpc.deathStrikes)
-    assertEquals(Dead, dpc.status)
+    var deadPC = pc.failDeathSave()
+    deadPC = deadPC.failDeathSave()
+    assertEquals(3, deadPC.deathStrikes)
+    assertEquals(Dead, deadPC.status)
 
     // No more strikes but still dying
-    val pc_short = pc.rest(false)
-    assertEquals(pc.currentHP, pc_short.currentHP)
-    assertEquals(0, pc_short.deathStrikes)
-    assertEquals(Dying, pc_short.status)
+    val pcAfterShortRest = pc.rest(RestDuration.ShortRest)
+    assertEquals(pc.currentHP, pcAfterShortRest.currentHP)
+    assertEquals(0, pcAfterShortRest.deathStrikes)
+    assertEquals(Dying, pcAfterShortRest.status)
 
     // Dying PC should go back to ok
-    val pc_extended = pc.rest(true)
-    assertEquals(pc_extended.base.totalHP, pc_extended.currentHP)
-    assertEquals(0, pc_extended.deathStrikes)
-    assertEquals(Ok, pc_extended.status)
+    val pcAfterExtendedRest = pc.rest(RestDuration.ExtendedRest)
+    assertEquals(pcAfterExtendedRest.base.totalHP, pcAfterExtendedRest.currentHP)
+    assertEquals(0, pcAfterExtendedRest.deathStrikes)
+    assertEquals(Ok, pcAfterExtendedRest.status)
 
     // Dead will not improve, and not change at all
-    var ndpc = dpc.rest(false)
-    assertEquals(dpc, ndpc)
-    assertEquals(3, ndpc.deathStrikes)
-    assertEquals(Dead, ndpc.status)
+    var restedDeadPC = deadPC.rest(RestDuration.ShortRest)
+    assertEquals(deadPC, restedDeadPC)
+    assertEquals(3, restedDeadPC.deathStrikes)
+    assertEquals(Dead, restedDeadPC.status)
 
     // Dead still dead after long rest
-    ndpc = dpc.rest(true)
-    assertEquals(dpc, ndpc)
-    assertEquals(3, ndpc.deathStrikes)
-    assertEquals(Dead, ndpc.status)
+    restedDeadPC = deadPC.rest(RestDuration.ExtendedRest)
+    assertEquals(deadPC, restedDeadPC)
+    assertEquals(3, restedDeadPC.deathStrikes)
+    assertEquals(Dead, restedDeadPC.status)
 
   }
 

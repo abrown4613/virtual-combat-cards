@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
-//$Id$
 package vcc.dnd4e.tracker.common
 
 object CombatantType extends Enumeration {
@@ -23,4 +22,9 @@ object CombatantType extends Enumeration {
   val Monster = Value("Monster")
 
   def isCharacter(combatantType: this.Value) = (combatantType == Character)
+}
+
+object RestDuration extends Enumeration {
+  val ShortRest = Value("Short Rest")
+  val ExtendedRest = Value("Short Rest")
 }

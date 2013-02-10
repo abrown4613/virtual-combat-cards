@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
       "SetCombatComment " ! execCombatComment ^
       "SetCombatCommentClear " ! execCombatCommentClear ^
       "SetCombatantComment" ! execSetCombatantComment ^
-      "Short Rest Combatant" ! execRestCombatant(false) ^
-      "Extended Rest Combatant" ! execRestCombatant(true) ^
+      "Short Rest Combatant" ! execRestCombatant(RestDuration.ShortRest) ^
+      "Extended Rest Combatant" ! execRestCombatant(RestDuration.ExtendedRest) ^
       end
 
   private def e1 = {
@@ -131,14 +131,14 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
     state.lensFactory.combatant(cid).mod(state, c => spy[Combatant](c))
   }
 
-  private def execRestCombatant(isExtended: Boolean) = {
-    val evt = RestCombatantEvent(combA, isExtended)
+
+  private def execRestCombatant(restDuration: RestDuration.Value) = {
+    val evt = RestCombatantEvent(combA, restDuration)
     val state = stateWithMockCombatantCid(combA, evtAddCombA)
     evt.transition(state)
 
     val comb = state.roster.combatant(combA)
-    (there was one(comb).applyRest(isExtended))
+    (there was one(comb).applyRest(restDuration))
   }
-
 }
 
