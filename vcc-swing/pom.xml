@@ -56,4 +56,14 @@
         </repository>
     </repositories>
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/scala</directory>
+                <includes>
+                    <include>**/*.png</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
 </project>
