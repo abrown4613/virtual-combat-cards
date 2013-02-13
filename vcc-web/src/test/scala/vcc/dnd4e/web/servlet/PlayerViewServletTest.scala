@@ -19,8 +19,11 @@ package vcc.dnd4e.web.servlet
 import org.scalatra.test.specs2.MutableScalatraSpec
 import vcc.dnd4e.web.services.StateViewService
 import vcc.dnd4e.tracker.common.CombatState
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-class PlayerViewServletTest extends MutableScalatraSpec {
+@RunWith(classOf[JUnitRunner])
+class PlayerViewServletTest extends MutableScalatraSpec  {
   args(sequential = true)
 
   addServlet(classOf[PlayerViewServlet], "/player-view")
@@ -52,7 +55,7 @@ class PlayerViewServletTest extends MutableScalatraSpec {
   }
 
   private def expectedState: String = {
-    "{ \"state\": [\n]}"
+    "{ \"state\": []}"
   }
 
   private def mockService(state: CombatState, longPoolState: Option[CombatState]) {
