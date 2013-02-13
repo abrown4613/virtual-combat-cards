@@ -64,12 +64,13 @@ object DNDInsiderCapture {
           m
         } catch {
           case e: Throwable =>
-            logger.debug("Failed to import class='{}' id='{}'.", Array(id.get, clazz.get), e)
+            logger.debug("Failed to import class='{}' id='{}'.", Array(id.get, clazz.get))
+            logger.debug("   import failure: ", e)
             //THINK Should this be thrown
             throw e
         }
       } else {
-        logger.debug("Reader for class='{}' not found.", Array(clazz.get), null)
+        logger.debug("Reader for class='{}' not found.", clazz.get)
         null
       }
     } else {
@@ -120,7 +121,7 @@ object DNDInsiderCapture {
             logger.warn("Written to bad input to file {}", file.getAbsolutePath)
           } catch {
             case s: Throwable =>
-              logger.error("Failed to write bad input to {}", file.getAbsolutePath, s)
+              logger.error("Failed to write bad input to " + file.getAbsolutePath, s)
           }
         }
         (None, None, null)
@@ -148,7 +149,8 @@ object DNDInsiderCapture {
         load(node)
       } catch {
         case e: Throwable =>
-          logger.error("Failed to import {} with id={}, reason", Array(clazz.get, id.get), e)
+          logger.error("Failed to import {} with id={}, reason", Array(clazz.get, id.get))
+          logger.error("   import failure caused by: ", e)
           null
       }
       if (dndiObject == null) {

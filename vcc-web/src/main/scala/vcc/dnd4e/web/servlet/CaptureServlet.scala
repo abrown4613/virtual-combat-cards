@@ -83,9 +83,9 @@ class CaptureServlet extends HttpServlet {
 
     result match {
       case Some(SuccessfulCapture(clazz, name, dObject)) =>
-        logger.info("Captured '{}': {}", clazz, name)
-        logger.debug("Catured {} is: {}", clazz, dObject)
-      case Some(FailedCapture(clazz, id)) if(id != -1) =>
+        logger.info("Captured '{}': {}", Array(clazz, name))
+        logger.debug("Catured {} is: {}", Array(clazz, dObject))
+      case Some(FailedCapture(clazz, id)) if (id != -1) =>
         logger.warn("Capture of object {} type {} failed", clazz, id)
       case _ =>
         logger.warn("Capture failed.")

@@ -65,7 +65,7 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
       logger.debug("SF-UA Requested load of image: {}", uri)
       val imgName = uri.substring(uri.lastIndexOf('/') + 1).toLowerCase
       val file = new File(new File(baseDir, "images"), imgName)
-      logger.debug("SF-UA Image {} mapped to {}", uri, file)
+      logger.debug("SF-UA Image {} mapped to {}", Array( uri, file))
       if (file.exists && file.canRead && file.isFile) {
         try {
           new ImageResource(AWTFSImage.createImage((new ImageIcon(file.toURI.toURL)).getImage))
@@ -88,7 +88,7 @@ class XHTMLPaneAgent(baseDir: File) extends org.xhtmlrenderer.swing.NaiveUserAge
   override def getCSSResource(uri: String): CSSResource = {
     logger.debug("SF-UA request CSSResource for URI: {}", uri)
     val file = new File(new File(baseDir, "css"), uri)
-    logger.debug("SF-UA URI {} mapped to file {}", uri, file)
+    logger.debug("SF-UA URI {} mapped to file {}", Array(uri, file))
     if (file.exists && file.canRead && file.isFile) {
       logger.debug("SF-UA Reading CSS file: {}", file)
       new CSSResource(new java.io.FileInputStream(file))

@@ -69,7 +69,7 @@ class CaptureTemplateEngine(dataDirectory: File) extends UpdateableObjectStoreRe
       loader.load(new InputSource(new FileInputStream(file)))
     } catch {
       case e: Exception =>
-        logger.error("Failed to load template from file = {}", Array(file.getAbsolutePath), e)
+        logger.error("Failed to load template from file = " + file.getAbsolutePath, e)
         val reader = new StringReader("<html><body>Failed to load template " + file.getAbsolutePath + "; reason: " + e.getMessage + "</body></html>")
         loader.load(new InputSource(reader))
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ object LogService extends StartupStep {
           case Some(l) => l
         }
 
-        logger.debug("Log level for {} is {}", context, lvl)
+        logger.debug("Log level for {} is {}", Array(context, lvl))
         log.setLevel(mapToLog4J(lvl))
 
         if (inDebugMode) {

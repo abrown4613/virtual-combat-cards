@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ class CompendiumRepository(dsuri: DataStoreURI) {
    * Store entity to the repository.
    */
   def store(entity: CombatantEntity): Boolean = {
-    val dse = entity.asDataStoreEntity
+    val dse = entity.asDataStoreEntity()
     storeSummary(dse.eid, dse.data)
     dataStore.storeEntity(dse)
   }
@@ -88,7 +88,7 @@ class CompendiumRepository(dsuri: DataStoreURI) {
    */
   def load(eid: EntityID, mustBeValid: Boolean): CombatantEntity = {
     val dse = dataStore.loadEntity(eid)
-    logger.debug("Loaded Entity {} from datastore, content: {}", eid, dse)
+    logger.debug("Loaded Entity {} from datastore, content: {}", Array(eid, dse))
 
     if (dse != null) {
       if (CombatantEntityBuilder.canHandle(dse)) {
@@ -122,11 +122,11 @@ class CompendiumRepository(dsuri: DataStoreURI) {
     ret
   }
 
-  def getMonsterSummaries(): Seq[MonsterSummary] = monsterSummaries.values.toList
+  def getMonsterSummaries: Seq[MonsterSummary] = monsterSummaries.values.toList
 
-  def getCharacterSummaries(): Seq[CharacterSummary] = characterSummaries.values.toList
+  def getCharacterSummaries: Seq[CharacterSummary] = characterSummaries.values.toList
 
-  def getTrapSummaries(): Seq[TrapSummary] = trapSummaries.values.toList
+  def getTrapSummaries: Seq[TrapSummary] = trapSummaries.values.toList
 
   def getEntitySummary(eid: EntityID): EntitySummary = {
     if (monsterSummaries.isDefinedAt(eid)) return monsterSummaries(eid)
@@ -142,7 +142,7 @@ class CompendiumRepository(dsuri: DataStoreURI) {
   private def notifyObservers() {
     observers = observers.map(obs => {
       if (obs.get.isDefined) {
-        obs.get.get.compendiumChanged
+        obs.get.get.compendiumChanged()
         obs
       } else {
         null

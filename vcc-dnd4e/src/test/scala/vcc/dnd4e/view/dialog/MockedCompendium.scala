@@ -34,9 +34,9 @@ class MockedCompendium {
 
   private def createMockCompendium(): CompendiumRepository = {
     val mockRepository: CompendiumRepository = mock(classOf[CompendiumRepository])
-    when(mockRepository.getMonsterSummaries()).thenReturn(monsterEntries)
-    when(mockRepository.getCharacterSummaries()).thenReturn(characterEntries)
-    when(mockRepository.getTrapSummaries()).thenReturn(trapEntries)
+    when(mockRepository.getMonsterSummaries).thenReturn(monsterEntries)
+    when(mockRepository.getCharacterSummaries).thenReturn(characterEntries)
+    when(mockRepository.getTrapSummaries).thenReturn(trapEntries)
 
     mockFetch(mockRepository, monsterEntries)
     mockFetch(mockRepository, trapEntries)

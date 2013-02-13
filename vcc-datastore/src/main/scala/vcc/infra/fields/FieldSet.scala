@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,15 +41,15 @@ abstract class FieldSet(eid:EntityID) {
     for((k,v)<-map) {
       if(fieldSet.contains(k)) k->fieldSet(k).fromStorageString(v)
     }
-    isValid()
+    isValid
   }
   
-  def isValid():Boolean = fieldSet.foldLeft(true)((p,kp)=>p && kp._2.isValid)
+  def isValid: Boolean = fieldSet.foldLeft(true)((p,kp)=>p && kp._2.isValid)
   
   def dump(log:Logger) {
 	log.debug("Entity {} contains:",eid)
 	for((k,v)<-fieldSet) {
-	  log.debug("  - {} = {} ",k,v.storageString)
+	  log.debug("  - {} = {} ", Array(k,v.storageString))
 	}
   }
   

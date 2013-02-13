@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ object MonsterImportService {
             }
           } else v.get
           field.fromStorageString(s)
-        } else logger.warn("Mapping failed between {} and {}", key, field.id)
+        } else logger.warn("Mapping failed between {} and {}", Array(key, field.id))
       } catch {
         case e: Exception =>
           logger.error("Exception while processing key " + key, e)
