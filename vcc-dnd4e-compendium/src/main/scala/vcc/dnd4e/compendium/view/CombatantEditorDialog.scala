@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ class CombatantEditorDialog(combatant: CombatantEntity, icon: Image) extends Fra
 
   private val saveButton: Button = new Button(Action("Save & Close") {
     combatant.loadFromMap(form.extractMap + ("text:statblock" -> statBlock.text))
-    if (combatant.isValid()) {
+    if (combatant.isValid) {
       if (Compendium.activeRepository.store(combatant)) {
         // Ok
       } else {
@@ -111,7 +111,6 @@ class CombatantEditorDialog(combatant: CombatantEntity, icon: Image) extends Fra
     List(("Comment", combatant.comment))
 
   fs.foreach(t => new FormTextField(t._1, t._2, form))
-
   private val generateAction = Action("Generate") {
     val defined = statBlock.text.length > 1
     if ((defined && Dialog.showConfirmation(statBlock, "This action will generate a minimal stat block containing information you have inputed.\n If this is an imported creature, this will lead to loss of information. \nAre you sure?", "Overwrite current statblock", Dialog.Options.YesNo) == Dialog.Result.Yes) || !defined) {
@@ -120,6 +119,7 @@ class CombatantEditorDialog(combatant: CombatantEntity, icon: Image) extends Fra
       statBlock.sync()
     }
   }
+
   private val statBlock: XHTMLEditorPane = new XHTMLEditorPane(combatant.statblock.storageString, generateAction)
   private val fc = new MigPanelFormContainer("[50][200,fill][250]")
 

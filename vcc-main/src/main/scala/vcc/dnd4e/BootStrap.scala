@@ -199,7 +199,7 @@ object BootStrap extends StartupRoutine {
       try {
         val collector = new MetricCollector
         val metrics = collector.collect(Configuration.baseDirectory.value)
-        for ((k, v) <- metrics) logger.info("Collected metric {} = {}", k, v)
+        for ((k, v) <- metrics) logger.info("Collected metric {} = {}", Array(k, v))
         val msg = MetricReporter.buildMessage(uuid, metrics)
         val (rc, message) = MetricReporter.sendMetric(msg)
         logger.info("Metric uploaded result: {} {}", rc, message)
@@ -209,5 +209,4 @@ object BootStrap extends StartupRoutine {
       }
     }
   }
-
 }

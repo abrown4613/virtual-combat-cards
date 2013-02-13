@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ class CompendiumEntitySelectionPanel
   minLevelCombo.selection.item = 1
   private val maxLevelCombo = new ComboBox[Int]((1 to 40).toSeq)
   maxLevelCombo.selection.item = 40
-  private val buttonGroup = new ButtonGroup(monsterButton, characterButton, trapButton)
+  new ButtonGroup(monsterButton, characterButton, trapButton)
   private val monsterTableModel = new ProjectionTableModel(MonsterSummaryProjection)
   private val monsterTable = new RowProjectionTable[EntitySummary]() {
     autoResizeMode = Table.AutoResizeMode.Off
@@ -191,11 +191,11 @@ class CompendiumEntitySelectionPanel
 
   def refreshList() {
     val levelRange = (minLevelCombo.selection.item to maxLevelCombo.selection.item)
-    monsterTableModel.content = sortedSummary[MonsterSummary](Compendium.activeRepository.getMonsterSummaries(),
+    monsterTableModel.content = sortedSummary[MonsterSummary](Compendium.activeRepository.getMonsterSummaries,
       x => levelRange.contains(x.level), (x, y) => x.name < y.name)
-    characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries(),
+    characterTableModel.content = sortedSummary[CharacterSummary](Compendium.activeRepository.getCharacterSummaries,
       x => levelRange.contains(x.level), (x, y) => x.name < y.name)
-    trapTableModel.content = sortedSummary[TrapSummary](Compendium.activeRepository.getTrapSummaries(),
+    trapTableModel.content = sortedSummary[TrapSummary](Compendium.activeRepository.getTrapSummaries,
       x => levelRange.contains(x.level), (x, y) => x.name < y.name)
   }
 

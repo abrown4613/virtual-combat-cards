@@ -59,7 +59,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(getMainWindow.getTable("creature-view").rowsAreSelected(0))
     getMainWindow.getButton("Add").click()
 
-    assertTrue(verify(presenter).addEntry(Compendium.activeRepository.getMonsterSummaries()(0).eid))
+    assertTrue(verify(presenter).addEntry(Compendium.activeRepository.getMonsterSummaries(0).eid))
   }
 
   def testMessageOnExperiencePoints() {
@@ -179,7 +179,7 @@ class PartyEditorViewTest extends UISpecTestCase {
 
   def pending_testLoadFile() {
     val file = new File("some.peml")
-    val memberEid = Compendium.activeRepository.getMonsterSummaries()(0).eid
+    val memberEid = Compendium.activeRepository.getMonsterSummaries(0).eid
     val member = PartyMember(null, null, memberEid)
     PartyFile.saveToFile(file, List(member, member))
     handleFileLoadMenu(handleAndVerifyLoadDialog().select(file.getName))
@@ -287,7 +287,7 @@ class PartyEditorViewTest extends UISpecTestCase {
   }
 
   private def buildBadPartyFileAndReturnGoodEntries(file: File): List[PartyMember] = {
-    val member2Eid = Compendium.activeRepository.getMonsterSummaries()(0).eid
+    val member2Eid = Compendium.activeRepository.getMonsterSummaries(0).eid
     val member2 = PartyMember(null, null, member2Eid)
     val member1 = PartyMember(null, null, EntityID.generateRandom())
     PartyFile.saveToFile(file, List(member1, member2))

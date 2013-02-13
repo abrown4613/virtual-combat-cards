@@ -68,7 +68,7 @@ class CaptureHoldingArea(cacheDir: File) extends DNDInsiderCapture.EntityStore {
         else null
       } catch {
         case e: Exception =>
-          logger.warn("Failed to load file {} reason: {}", file, e.getMessage)
+          logger.warn("Failed to load file {} reason: {}", Array(file, e.getMessage))
           null
       }
     }
@@ -147,7 +147,7 @@ class CaptureHoldingArea(cacheDir: File) extends DNDInsiderCapture.EntityStore {
   }
 
   def storeInvalidEntity(clazz: String, id: Int, xml: Node) {
-    if(System.getProperty("vcc.dndi.captureall") != null)
+    if (System.getProperty("vcc.dndi.captureall") != null)
       storeIncompleteObject(clazz, id, xml)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class UnexpectedBlockElementException(msg: String, block: BlockElement) extends 
 
 /**
  * Converts XML nodes form DNDInsiderCapture into a series os Parts.
- * This involves removing link, converting Break, extrating Keys and Text, and *
+ * This involves removing link, converting Break, extracting Keys and Text, and *
  */
 object Parser {
   private val logger = org.slf4j.LoggerFactory.getLogger("domain")
@@ -410,12 +410,12 @@ object Parser {
     val ruleOption = blockStrategies.find(rp => rp._2.isDefinedAt(node))
     if (ruleOption.isDefined) {
       val (name,rule) = ruleOption.get
-      logger.debug("Applying rule: '{}' to: {}", name, node)
+      logger.debug("Applying rule: '{}' to: {}", Array(name, node))
       try {
         rule(node)
       } catch {
         case e: Throwable =>
-          logger.warn("Failed to apply rule: '{}' to: {}", name, node)
+          logger.warn("Failed to apply rule: '{}' to: {}", Array(name, node))
           throw new UntranslatableException(node, e)
       }
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@ class MetricCollector() {
       "vcc.version" -> BootStrap.version.versionString,
       "java.spec" -> System.getProperty("java.specification.version"),
       "compendium.captured" -> getCapturedCount(baseDirectory),
-      "compendium.creatures" -> Compendium.activeRepository.getMonsterSummaries().size.toString,
-      "compendium.characters" -> Compendium.activeRepository.getCharacterSummaries().size.toString,
-      "compendium.traps" -> Compendium.activeRepository.getTrapSummaries().size.toString)
+      "compendium.creatures" -> Compendium.activeRepository.getMonsterSummaries.size.toString,
+      "compendium.characters" -> Compendium.activeRepository.getCharacterSummaries.size.toString,
+      "compendium.traps" -> Compendium.activeRepository.getTrapSummaries.size.toString)
   }
 
   private def screenSize: String = {

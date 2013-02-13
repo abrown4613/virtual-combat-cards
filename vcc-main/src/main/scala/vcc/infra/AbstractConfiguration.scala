@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,10 +64,11 @@ abstract class AbstractConfiguration {
       if (propMap.isDefinedAt(key)) {
         try {
           propMap(key).fromString(props.getProperty(key))
-          logger.debug("Loaded configuration parameter: {} with {}", key, props.getProperty(key))
+          logger.debug("Loaded configuration parameter: {} with {}", Array(key, props.getProperty(key)))
         } catch {
           case e: Throwable =>
-            logger.warn("Could not read property: {} with value: {}", Array(key, props.getProperty(key)), e)
+            logger.warn("Could not read property: {} with value: {}", Array(key, props.getProperty(key)))
+            logger.warn("   reason: ", e)
         }
       } else {
         logger.warn("Ignoring property: " + key)

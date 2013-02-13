@@ -250,15 +250,15 @@ class PartyEditorPresenterTest extends SpecificationWithJUnit with Mockito {
   }
 
   private def getMonster(index: Int): EntityID = {
-    Compendium.activeRepository.getMonsterSummaries()(index).eid
+    Compendium.activeRepository.getMonsterSummaries(index).eid
   }
 
   private def getTrap(index: Int): EntityID = {
-    Compendium.activeRepository.getTrapSummaries()(index).eid
+    Compendium.activeRepository.getTrapSummaries(index).eid
   }
 
   private def getCharacter(index: Int): EntityID = {
-    Compendium.activeRepository.getCharacterSummaries()(index).eid
+    Compendium.activeRepository.getCharacterSummaries(index).eid
   }
 
   private def getEntityDefinition(entityId: EntityID): EntryDefinition = {

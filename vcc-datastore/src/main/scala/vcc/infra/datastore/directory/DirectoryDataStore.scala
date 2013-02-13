@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@ class DirectoryDataStore(baseDir:File) extends DataStore {
         loadXMLFile(eid) 
       } catch { 
         case s:Exception =>
-          logger.warn("Failed to load {} reason: {}",eid,s.getMessage)
+          logger.warn("Failed to load {} reason: {}",Array(eid,s.getMessage))
           null
       }).filter(x => x != null).map(ent=> {
         val (eid,data) = ent
