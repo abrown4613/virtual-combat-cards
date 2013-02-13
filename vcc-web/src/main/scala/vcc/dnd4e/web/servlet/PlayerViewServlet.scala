@@ -20,6 +20,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest, HttpServlet}
 import vcc.dnd4e.web.services.StateViewService
 import java.io.PrintWriter
 import vcc.dnd4e.tracker.common.{UnifiedCombatant, UnifiedSequenceTable, CombatState}
+import vcc.dnd4e.web.util.StateFormatter
 
 class PlayerViewServlet extends HttpServlet {
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -40,11 +41,14 @@ class PlayerViewServlet extends HttpServlet {
   }
 
   def generateResponse(writer: PrintWriter, state: CombatState) {
-    val builder = new UnifiedSequenceTable.Builder
-    val unifiedState = builder.build(state)
-    writer.print( """{ "state": [""" + "\n")
-    writer.append(unifiedState.elements.map(formatCombatant).mkString(",\n"))
-    writer.print("]}")
+//    val builder = new UnifiedSequenceTable.Builder
+//    val unifiedState = builder.build(state)
+//    val fmt = unifiedState.elements.map(formatCombatant).mkString(",\n")
+    val fmt = new StateFormatter().format(state)
+    writer.append( """{ "state": """ )
+    writer.append(fmt)
+    writer.append("}")
+
   }
 
   def formatCombatant(comb: UnifiedCombatant): String = {
