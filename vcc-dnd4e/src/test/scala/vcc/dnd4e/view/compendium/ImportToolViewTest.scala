@@ -38,7 +38,7 @@ class ImportToolViewTest extends UISpecTestCase {
 
   override def setUp() {
     super.setUp()
-    XHTMLPaneAgent.createInstance(new java.io.File("./fs-wc"))
+    XHTMLPaneAgent.createInstance(new java.io.File("../vcc-web/src/main/webapp"))
 
     val frame = new ImportToolView(presenter)
     view = frame

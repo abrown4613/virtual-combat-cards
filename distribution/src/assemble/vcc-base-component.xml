@@ -3,13 +3,6 @@
            xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/component/1.1.2 http://maven.apache.org/xsd/component-1.1.2.xsd">
     <fileSets>
         <fileSet>
-            <directory>../vcc-dnd4e/fs-wc</directory>
-            <lineEnding>keep</lineEnding>
-            <outputDirectory>fs-wc</outputDirectory>
-            <fileMode>0644</fileMode>
-            <directoryMode>0755</directoryMode>
-        </fileSet>
-        <fileSet>
             <directory>../vcc-dnd4e/ant</directory>
             <lineEnding>keep</lineEnding>
             <outputDirectory>.</outputDirectory>

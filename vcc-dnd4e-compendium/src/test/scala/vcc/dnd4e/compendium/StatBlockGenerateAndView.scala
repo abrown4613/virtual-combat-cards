@@ -26,7 +26,7 @@ import javax.swing.filechooser.FileFilter
 
 object StatBlockGenerateAndView {
   private val baseDir: File = {
-    val possibleDirs = Seq(new File("vcc-dnd4e/fs-wc"), new File("../vcc-dnd4e/fs-wc"))
+    val possibleDirs = Seq(new File("vcc-web/src/main/webapp"), new File("../vcc-web/src/main/webapp"))
     possibleDirs.find(dir => dir.isDirectory).get
   }
 
@@ -125,5 +125,4 @@ object StatBlockGenerateAndView {
     private def getWorkDirectory: File = lastDirectory
 
   }
-
 }

@@ -23,7 +23,7 @@ import vcc.infra.diskcache.FileUpdateAwareLoader
 
 class CaptureTemplateEngineTest extends SpecificationWithJUnit {
 
-  private val dataDirectory: File = new File("../vcc-dnd4e/fs-wc")
+  private val dataDirectory: File = new File("../vcc-web/src/main/webapp")
   CaptureTemplateEngine.initialize(dataDirectory)
 
   def is = e1 ^ e2 ^ e3 ^ end
