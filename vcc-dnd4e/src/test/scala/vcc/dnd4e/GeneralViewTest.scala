@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,13 @@
  */
 package vcc.dnd4e
 
-import vcc.util.swing.XHTMLPaneAgent
 import view.{EffectEditor, IconLibrary}
 import org.specs2.mutable.SpecificationWithJUnit
 
 /**
  * Class to test singleton objects.
  */
-class BootstrapTest extends SpecificationWithJUnit {
+class GeneralViewTest extends SpecificationWithJUnit {
   "IconLibrary must startup" in {
     (IconLibrary.MetalD20 must not beNull)
   }

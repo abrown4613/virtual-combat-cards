@@ -156,23 +156,22 @@ object BootStrap extends StartupRoutine {
       Compendium.activeRepository != null
     }
 
+    var webAppPath: File = null
+
     callStartupSimpleBlock(srw, "Web Server") {
-      val warLess = new WarLess(
-        WarArchive.create(classOf[VersionServlet], "webapp"),
-        new WarTarget(Configuration.baseDirectory.value))
+      webAppPath = getWebApplicationDirectory
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
       CaptureService.setService(new CaptureServiceAdapter())
       StateViewService.setInstance(new PlayerViewServiceAdapter())
-      warLess.resolve()
-      webServer = WebServer.initialize(warLess.getTargetDirectory.getAbsolutePath, 4143, Map())
+      webServer = WebServer.initialize(webAppPath.getAbsolutePath, 4143, Map())
       true
     }
 
     callStartupSimpleBlock(srw, "User Interface Elements") {
       DNDICaptureMonitor.initialize(webServer)
-      XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
+      XHTMLPaneAgent.createInstance(webAppPath)
       FileChooserHelper.setLastDirectory(Configuration.baseDirectory.value)
-      CaptureTemplateEngine.initialize(Configuration.dataDirectory)
+      CaptureTemplateEngine.initialize(webAppPath)
       XHTMLPaneAgent.getInstance() != null
     }
 
@@ -194,6 +193,14 @@ object BootStrap extends StartupRoutine {
     new MasterFrame(Configuration.baseDirectory.value, releaseInformation, configurationCallback)
   }
 
+  private[dnd4e] def getWebApplicationDirectory: File = {
+    val warLess = new WarLess(
+      WarArchive.create(classOf[VersionServlet], "webapp"),
+      new WarTarget(Configuration.baseDirectory.value))
+    warLess.resolve()
+    warLess.getTargetDirectory
+  }
+
   private class MetricReportThread(uuid: UUID, baseDirectory: File) extends Runnable {
     def run() {
       try {
@@ -209,4 +216,5 @@ object BootStrap extends StartupRoutine {
       }
     }
   }
+
 }
