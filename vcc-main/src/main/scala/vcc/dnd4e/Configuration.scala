@@ -25,7 +25,6 @@ import vcc.infra.datastore.DataStoreFactory
 import java.net.URL
 import java.lang.System
 import java.util.UUID
-import vcc.updater.UpdateManager
 
 object Configuration extends AbstractConfiguration with StartupStep {
   private val metricIdentifierNotDefined = UUID.nameUUIDFromBytes("NOT DEFINED".getBytes("UTF8"))
@@ -35,11 +34,6 @@ object Configuration extends AbstractConfiguration with StartupStep {
   val baseDirectory = makeProperty[File]("vcc.dnd4e.basedir", System.getProperty("user.dir"), x => {
     new File(x)
   })
-  //This is either the VM option (vcc.dnd4e.datadir), or default to InstallDirectory/"fs-wc"
-  val dataDirectory: File = {
-    if (System.getProperty("vcc.dnd4e.datadir") != null) new File(System.getProperty("vcc.dnd4e.datadir"))
-    else new File(UpdateManager.getInstallDirectory, "fs-wc")
-  }
 
   val compendiumStoreID = makeProperty[DataStoreURI]("vcc.dnd4e.compendium", null, x => {
     if (x != null) {

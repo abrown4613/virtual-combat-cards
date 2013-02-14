@@ -19,23 +19,28 @@ package vcc.dnd4e
 import compendium.CaptureTemplateEngine
 import vcc.util.swing.XHTMLPaneAgent
 import org.specs2.mutable.SpecificationWithJUnit
+import vcc.infra.LogService
 
 /**
  * Class to test singleton objects and resources
  */
 class BootstrapTest extends SpecificationWithJUnit {
-  "Load XHTMLPaneAgent configured properly" in {
-    XHTMLPaneAgent.createInstance(Configuration.dataDirectory)
-    (XHTMLPaneAgent.getInstance() must not beNull)
-  }
+  LogService.initializeStartupLog()
+  "BootStrap" should {
+    "Load XHTMLPaneAgent configured properly" in {
+      XHTMLPaneAgent.createInstance(BootStrap.getWebApplicationDirectory)
+      (XHTMLPaneAgent.getInstance() must not beNull)
+    }
 
-  "Inititialize CaptureTemplateEngine" in {
-    CaptureTemplateEngine.initialize(Configuration.dataDirectory)
-    (CaptureTemplateEngine.getInstance must not beNull)
-  }
+    "Initialize CaptureTemplateEngine" in {
+      CaptureTemplateEngine.initialize(BootStrap.getWebApplicationDirectory)
+      (CaptureTemplateEngine.getInstance must not beNull) and
+        (CaptureTemplateEngine.getInstance.fetchClassTemplate("monster") must not beNull)
+    }
 
-  "Verify Info.plist is bundled" in {
-    val resource = this.getClass.getClassLoader.getResource("external/Info.plist")
-    (resource must not beNull)
+    "Verify Info.plist is bundled" in {
+      val resource = this.getClass.getClassLoader.getResource("external/Info.plist")
+      (resource must not beNull)
+    }
   }
 }
