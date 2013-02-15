@@ -24,7 +24,6 @@ import vcc.dnd4e.tracker.common.CharacterHealthDefinition
 import scala.Some
 import vcc.dnd4e.tracker.command.AddCombatantCommand
 import org.specs2.SpecificationWithJUnit
-import util.parsing.json.{JSONArray, Parser, JSONType}
 
 trait SampleStateData {
   val combA = CombatantID("A")
@@ -66,9 +65,8 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
 
   val finalState = buildState(stateBuildingCommands)
 
-
   def is =
-    "StateFormatter" ^
+    "StateFormatter".title ^
       "format single pc correctly" ! withCommands(singleCharacterInOrder).hasCompleteFighterAt(0) ^
       "format single monster correctly" ! withCommands(stateBuildingCommands).hasCompleteMonsterAt(0) ^
       "format empty state as an empty array" ! emptyFormat()
@@ -77,15 +75,13 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
     val format = new StateFormatter().format(buildState(commands))
 
     def hasCompleteFighterAt(position: Int) = {
-      val element = nthArray(format, position)
-      (element must /("id" -> "Aº")) and (element must /("name" -> "Fighter")) and
-        (element must /("health" -> "40 / 40")) and (element must /("status" -> "Ok"))
+      (format must /#(position) / ("id" -> "Aº")) and (format must /#(position) / ("name" -> "Fighter")) and
+        (format must /#(position) / ("health" -> "40 / 40")) and (format must /#(position) / ("status" -> "Ok"))
     }
 
     def hasCompleteMonsterAt(position: Int) = {
-      val element = nthArray(format, position)
-      (element must /("id" -> "1º")) and (element must /("name" -> "Monster")) and
-        (element must not / ("health" -> ".*".r)) and (element must /("status" -> "Ok"))
+      (format must /#(position) / ("id" -> "1º")) and (format must /#(position) / ("name" -> "Monster")) and
+        (format must not (/#(position) / ("health" -> ".*".r))) and (format must /#(position) / ("status" -> "Ok"))
     }
   }
 
@@ -98,21 +94,4 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
     commands.foldLeft(CombatState.empty)((ns, cmd) =>
       ns.transitionWith(cmd.generateEvents(ns)))
   }
-
-  private def nthArray(input: String, index: Int): String = {
-    parse(input) match {
-      case Some(JSONArray(array)) => array(index).toString
-      case _ => throw new NoSuchElementException("Not a JSON array")
-    }
-  }
-
-  private def parse(s: String): Option[JSONType] =
-    new Parser {
-      def parseRaw(input: String): Option[JSONType] =
-        phrase(root)(new lexical.Scanner(input)) match {
-          case Success(result, _) => Some(result)
-          case _ => None
-        }
-    }.parseRaw(s)
-
 }
