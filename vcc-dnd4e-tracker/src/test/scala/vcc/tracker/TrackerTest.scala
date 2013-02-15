@@ -25,6 +25,8 @@ import org.specs2.mock.Mockito
 
 class TrackerTest extends SpecificationWithJUnit {
 
+  args(sequential = true)
+
   private class ThreadedObserver[S] extends Tracker.Observer[S] {
     private val state = new SyncVar[S]
 
@@ -44,7 +46,7 @@ class TrackerTest extends SpecificationWithJUnit {
   def is =
     "ThreadedObserver" ^
       "get and answer in time out range" ! threadObserver().answerComeWithinTimeLimit ^
-      "fails if anwer does not come quick enough" ! threadObserver().answerDoesNotComeWithTimeLimit ^
+      "fails if answer does not come quick enough" ! threadObserver().answerDoesNotComeWithTimeLimit ^
       endp ^
       "Tracker notification" ^
       "  notify single observer" ! notificationCases().roundTripToSingleObserver ^

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ class ConfigurationFinderTest extends SpecificationWithJUnit {
   private val slash = File.separator
   private val configName = "vcc.properties"
   val macPath = System.getProperty("user.home") + slash + "Library" + slash + "Preferences" + slash + configName
+
+  args(sequential = true)
 
   def is = "ConfigurationFinder".title ^
     "must scan only path with defined properties" ! visitAllPathWithDefinedVCCHome ^
