@@ -23,6 +23,7 @@ import javax.swing.JOptionPane
 import org.slf4j.{Logger, LoggerFactory}
 import dnd4e.{ConfigurationDialog, BootStrap}
 import java.io.File
+import java.net.URLDecoder
 
 object Main {
 
@@ -53,7 +54,7 @@ object Main {
   }
 
   def assertWriteOnJarDirectory(clazz: java.lang.Class[_], logger: Logger) {
-    val jarFile = clazz.getProtectionDomain.getCodeSource.getLocation.getFile.replaceAll("%20", " ")
+    val jarFile = URLDecoder.decode(clazz.getProtectionDomain.getCodeSource.getLocation.getFile, "UTF-8")
     if (!new File(jarFile).getParentFile.canWrite) {
       logger.error("Cannot write to parent of {}", jarFile)
       JOptionPane.showMessageDialog(null,
