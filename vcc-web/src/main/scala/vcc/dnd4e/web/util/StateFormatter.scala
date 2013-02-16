@@ -16,34 +16,62 @@
  */
 package vcc.dnd4e.web.util
 
-import vcc.dnd4e.tracker.common.{UnifiedSequenceTable, UnifiedCombatant, CombatState}
+import vcc.dnd4e.tracker.common._
+import util.parsing.json._
+import util.parsing.json.JSONArray
 import util.parsing.json.JSONObject
+import scala.Some
 
 class StateFormatter {
   def format(state: CombatState): String = {
     val builder = new UnifiedSequenceTable.Builder
-    val unifiedState = builder.build(state)
-    if (unifiedState.elements.isEmpty)
-      "[]"
-    else
-      "[\n" + unifiedState.elements.map(formatCombatant).mkString(",\n") + "]"
+    builder.hideDead()
+    formatState(builder.build(state).elements, state)
   }
 
-  private def formatCombatant(comb: UnifiedCombatant): String = {
+
+  private def formatState(combatants: Seq[UnifiedCombatant], state: CombatState): String = {
+    if (combatants.isEmpty)
+      "[]"
+    else
+      "[\n" + formatCombatants(combatants, state).mkString(",\n") + "]"
+  }
+
+  private def formatCombatants(combatants: Seq[UnifiedCombatant], state: CombatState):Seq[String] =
+    for (combatant <- combatants if(combatant.isInOrder))
+      yield formatCombatant(state, combatant)
+
+  private def formatCombatant(state: CombatState, comb: UnifiedCombatant): String = {
     val ms: Map[String, Any] = Seq(
       makeField("id", if (comb.isInOrder) comb.orderId.toLabelString else comb.combId.id),
       makeField("name", comb.name),
       makeField("status", comb.health.formattedStatus),
-      makeOptionField("health", if (comb.isCharacter) Some(comb.health.formattedHitPoints) else None)
+      makeOptionField("isCharacter", if (comb.isCharacter) Some(true) else None),
+      makeOptionField("health", if (comb.isCharacter) Some(comb.health.formattedHitPoints) else None),
+      makeOptionField("effects", makeEffects(state, comb.effects.effects))
     ).flatMap(x => x).toMap
     JSONObject(ms).toString()
   }
 
-  private def makeField(key: String, value: String): Option[(String, Any)] = {
-    Some((key, value))
-  }
+  private def makeEffects(state: CombatState, effects: List[Effect]): Option[JSONArray] =
+    seqToJsonArrayOption(
+      for (effect <- effects if isPlayerVisible(state, effect))
+      yield formatEffect(effect))
 
-  private def makeOptionField(key: String, value: Option[String]): Option[(String, Any)] = {
-    value.map(value => (key, value))
-  }
+  private def seqToJsonArrayOption(list: List[JSONType]) = if (list.isEmpty) None else Some(JSONArray(list))
+
+  private def isPlayerVisible(state: CombatState, effect: Effect) =
+    isCharacter(state, effect.source) || isCharacter(state, effect.effectId.combId)
+
+  private def isCharacter(state: CombatState, cid: CombatantID) =
+    state.combatant(cid).combatantType == CombatantType.Character
+
+  private def formatEffect(effect: Effect) =
+    JSONObject(Map(
+      "description" -> effect.condition.description,
+      "duration" -> effect.duration.shortDescription))
+
+  private def makeField(key: String, value: Any) = Some((key, value))
+
+  private def makeOptionField(key: String, value: Option[Any]) = value.map(value => (key, value))
 }

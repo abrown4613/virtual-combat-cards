@@ -24,6 +24,7 @@ import vcc.dnd4e.tracker.common.CharacterHealthDefinition
 import scala.Some
 import vcc.dnd4e.tracker.command.AddCombatantCommand
 import org.specs2.SpecificationWithJUnit
+import vcc.dnd4e.tracker.common.Effect.Condition
 
 trait SampleStateData {
   val combA = CombatantID("A")
@@ -47,15 +48,17 @@ trait SampleStateData {
 }
 
 class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
-  val stateBuildingCommands = Seq(
+  val bigStateCommands = Seq(
     AddCombatantCommand(Some(combA), null, entityPc1),
     AddCombatantCommand(Some(combB), null, entityPc2),
     AddCombatantCommand(None, null, entityMonster),
     AddCombatantCommand(None, null, entityMinion),
     SetInitiativeCommand(InitiativeDefinition(combA, 5, List(10))),
-    SetInitiativeCommand(InitiativeDefinition(combA, 1, List(5))),
+    SetInitiativeCommand(InitiativeDefinition(combB, 1, List(5))),
     SetInitiativeCommand(InitiativeDefinition(comb1, 2, List(7))),
-    StartCombatCommand
+    StartCombatCommand,
+    DamageCommand(combB, 10),
+    SetTemporaryHPCommand(combB, 6)
   )
 
   val singleCharacterInOrder = Seq(
@@ -63,29 +66,77 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
     SetInitiativeCommand(InitiativeDefinition(combA, 5, List(10))),
     StartCombatCommand)
 
-  val finalState = buildState(stateBuildingCommands)
+  val bigStateWithDead = bigStateCommands ++ Seq(
+    DamageCommand(combB, 100),
+    DamageCommand(comb1, 100)
+  )
+
+  val stateWithEffect = bigStateCommands ++ Seq(
+    AddEffectCommand(comb1, comb1, Condition.Generic("Regen 10", true), Duration.EndOfEncounter),
+    AddEffectCommand(comb1, combA, Condition.Generic("Slowed", false), Duration.RoundBound(ioA0, Duration.Limit.EndOfNextTurn)),
+    AddEffectCommand(combA, combA, Condition.Generic("Regen 2", true), Duration.Stance),
+    AddEffectCommand(combA, comb1, Condition.Generic("Immobilized", false), Duration.SaveEnd)
+  )
+
+  val finalState = buildState(bigStateCommands)
 
   def is =
     "StateFormatter".title ^
       "format single pc correctly" ! withCommands(singleCharacterInOrder).hasCompleteFighterAt(0) ^
-      "format single monster correctly" ! withCommands(stateBuildingCommands).hasCompleteMonsterAt(0) ^
-      "format empty state as an empty array" ! emptyFormat()
+      "format monster correctly" ! withCommands(bigStateCommands).hasCompleteMonsterAt(1) ^
+      "format second pc correctly" ! withCommands(bigStateCommands).hasCompleteMageAt(2) ^
+      "format empty state as an empty array" ! emptyFormat() ^
+      "don't show creatures that are not in the order" ! withCommands(bigStateCommands).doesNotShowCombatantOutOfOrder() ^
+      "show dead combatants" ! withCommands(bigStateWithDead).hideDead() ^
+      "show all effects for character" ! withCommands(stateWithEffect).showAllOnCharacter() ^
+      "show only character generated for monster" ! withCommands(stateWithEffect).showMonsterEffects()
 
   case class withCommands(commands: Seq[CombatStateCommand]) {
     val format = new StateFormatter().format(buildState(commands))
 
     def hasCompleteFighterAt(position: Int) = {
       (format must /#(position) / ("id" -> "Aº")) and (format must /#(position) / ("name" -> "Fighter")) and
-        (format must /#(position) / ("health" -> "40 / 40")) and (format must /#(position) / ("status" -> "Ok"))
+        (format must /#(position) / ("health" -> "40 / 40")) and (format must /#(position) / ("status" -> "Ok")) and
+        (format must /#(position) / ("isCharacter" -> true))
     }
 
     def hasCompleteMonsterAt(position: Int) = {
       (format must /#(position) / ("id" -> "1º")) and (format must /#(position) / ("name" -> "Monster")) and
-        (format must not (/#(position) / ("health" -> ".*".r))) and (format must /#(position) / ("status" -> "Ok"))
+        (format must not(/#(position) / ("health" -> ".*".r))) and (format must /#(position) / ("status" -> "Ok")) and
+        (format must not(/#(position) / ("isCharacter" -> ".*".r)))
+    }
+
+    def hasCompleteMageAt(position: Int) = {
+      (format must /#(position) / ("id" -> "Bº")) and (format must /#(position) / ("name" -> "Mage")) and
+        (format must /#(position) / ("health" -> "15 / 25 +6")) and (format must /#(position) / ("status" -> "Ok"))
+    }
+
+    def doesNotShowCombatantOutOfOrder() = {
+      (format must not */ ("id" -> "2"))
+    }
+
+    def hideDead() = {
+      (format must not */ ("id" -> "1º")) and (format must not */ ("id" -> "Bº"))
+    }
+
+    def showAllOnCharacter() = {
+      matchEffect(0, 0, "Immobilized", "SE") and
+        matchEffect(0, 1, "Regen 2", "Stance") and
+        (format must not(/#(2) / "effects"))
+    }
+
+    def showMonsterEffects() = {
+      matchEffect(1, 0, "Slowed", "EoNT:Aº") and
+        matchEffect(1, 1, "Regen 10", "EoE").negate
+    }
+
+    def matchEffect(pos: Int, effectIndex: Int, description: String, duration: String) = {
+      (format must /#(pos) / ("effects") /# (effectIndex) / ("description" -> description)) and
+        (format must /#(pos) / ("effects") /# (effectIndex) / ("duration" -> duration))
     }
   }
 
-  def emptyFormat() = {
+  private def emptyFormat() = {
     val fmt = new StateFormatter()
     fmt.format(CombatState.empty) must_== "[]"
   }
