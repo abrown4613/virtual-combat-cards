@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,7 +68,6 @@ object Duration {
    * rounds.
    * @param id Combatant ID
    * @param limit Round limit (e.g StartOfNextRound, EndOfRound,EndOfNextRound)
-   * @param sustain Indicates effect is sustainable
    */
   case class RoundBound(id: InitiativeOrderID, limit: Limit.Value) extends Duration {
     override def shortDescription: String = limit.toString + ":" + id.toLabelString
@@ -90,7 +89,6 @@ object Effect {
    * Build an Effect without an EffectID, this should be added by the EffectList
    * @param source CombatantID that caused the effect
    * @param condition The condition  that is caused by the effect
-   * @param beneficial If its good for the target
    * @param duration Duration of the effect
    * @return An Effect with no EffectID
    */
