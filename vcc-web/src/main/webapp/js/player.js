@@ -68,4 +68,8 @@ function FetchCtrl($scope, $http) {
         $scope.running = false;
         $scope.status = status;
     };
+
+    $scope.filterCharacters = function(entry) {
+        return entry["isCharacter"]
+    };
 }
