@@ -5,33 +5,74 @@
     <title>Player View</title>
     <script src="lib/angular.min.js"></script>
     <script src="js/player.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet" media="screen">
+    <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" media="screen">
 </head>
 <body>
-<div ng-controller="FetchCtrl">
-    <div>
-        <table ng-init="fetchInitial()">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Health</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="entry in data">
-                <td>{{entry.id}}</td>
-                <td>{{entry.name}}</td>
-                <td>{{entry.health}}</td>
-                <td>{{entry.status}}</td>
-            </tr>
-            </tbody>
-
-        </table>
+<div ng-controller="FetchCtrl" ng-init="fetchInitial()" class="">
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="btn-toolbar">
+                <a class="brand" style="{ font-size: 12pt; padding: 5px;}" href="#">Player View</a>
+                <a class="btn btn-mini" href="/"><i class="icon-arrow-left"></i> Back</a> &nbsp;
+                <a class="btn btn-mini" ng-click="fetchInitial()" ng-disabled="running">
+                    <i class="icon-refresh"></i> Reconnect</a>
+            </div>
+        </div>
     </div>
-    <br>
-    <button ng-click="fetchInitial()" ng-disabled="running">Reconnect to server</button>
-    <pre>http status code: {{status}}</pre>
+    <div class="container">
+        <div class="row">
+            <div class="span6">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Health</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="entry in data | filter: filterCharacters">
+                        <td>{{entry.name}}
+                            <ul>
+                                <li ng-repeat="effect in entry['effects']">{{effect.description}}
+                                    {{effect.duration}}
+                                </li>
+                            </ul>
+                        </td>
+                        <td>{{entry.health}}</td>
+                        <td>{{entry.status}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="span6">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="entry in data">
+                        <td>{{entry.id}}</td>
+                        <td>{{entry.name}}
+                            <ul>
+                                <li ng-repeat="effect in entry['effects']">{{effect.description}}
+                                    {{effect.duration}}
+                                </li>
+                            </ul>
+                        </td>
+                        <td>{{entry.status}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
