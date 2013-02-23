@@ -18,6 +18,7 @@ function FetchCtrl($scope, $http) {
     $scope.method = 'GET';
     $scope.url = 'player-view';
     $scope.running = false;
+    $scope.hasData = false;
 
     $scope.fetchInitial = function () {
         $http({method: $scope.method, url: $scope.url + "?now=true", cache: false}).
@@ -39,6 +40,7 @@ function FetchCtrl($scope, $http) {
         }
         if (dataRead["state"]) {
             $scope.data = dataRead["state"];
+            $scope.hasData = (typeof $scope.data === "object" && $scope.data.length > 0);
         }
     };
 
@@ -69,7 +71,7 @@ function FetchCtrl($scope, $http) {
         $scope.status = status;
     };
 
-    $scope.filterCharacters = function(entry) {
-        return entry["isCharacter"]
+    $scope.filterCharacters = function (entry) {
+        return entry["isCharacter"];
     };
 }
