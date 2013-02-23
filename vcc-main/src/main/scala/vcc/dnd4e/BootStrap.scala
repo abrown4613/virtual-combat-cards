@@ -35,7 +35,7 @@ import java.util.UUID
 import vcc.updater.{PackageUtil, UpdateManager, ExternalFileUpdater}
 import org.exnebula.fileutil.FileWriter
 import web.services.{StateViewService, CaptureService}
-import web.servlet.VersionServlet
+import web.servlet.GreetingServlet
 import org.exnebula.warless.{WarTarget, WarArchive, WarLess}
 
 object BootStrap extends StartupRoutine {
@@ -195,7 +195,7 @@ object BootStrap extends StartupRoutine {
 
   private[dnd4e] def getWebApplicationDirectory: File = {
     val warLess = new WarLess(
-      WarArchive.create(classOf[VersionServlet], "webapp"),
+      WarArchive.create(classOf[GreetingServlet], "webapp"),
       new WarTarget(Configuration.baseDirectory.value))
     warLess.resolve()
     warLess.getTargetDirectory

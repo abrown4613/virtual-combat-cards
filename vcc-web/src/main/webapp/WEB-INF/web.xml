@@ -4,8 +4,8 @@
 <web-app>
     <display-name>VCC Web Interface</display-name>
     <servlet>
-        <servlet-name>Version</servlet-name>
-        <servlet-class>vcc.dnd4e.web.servlet.VersionServlet</servlet-class>
+        <servlet-name>Greeting</servlet-name>
+        <servlet-class>vcc.dnd4e.web.servlet.GreetingServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>Capture</servlet-name>
@@ -16,8 +16,8 @@
         <servlet-class>vcc.dnd4e.web.servlet.PlayerViewServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>Version</servlet-name>
-        <url-pattern>/version</url-pattern>
+        <servlet-name>Greeting</servlet-name>
+        <url-pattern>/index.html</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>Capture</servlet-name>
