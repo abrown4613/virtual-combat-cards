@@ -11,65 +11,84 @@
 </head>
 <body>
 <div ng-controller="FetchCtrl" ng-init="fetchInitial()" class="">
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="btn-toolbar">
-                <a class="brand" style="{ font-size: 12pt; padding: 5px;}" href="#">Player View</a>
-                <a class="btn btn-mini" href="/"><i class="icon-arrow-left"></i> Back</a> &nbsp;
-                <a class="btn btn-mini" ng-click="fetchInitial()" ng-disabled="running">
-                    <i class="icon-refresh"></i> Reconnect</a>
-            </div>
+    <div class="container" ng-hide="running">
+        <div class="hero-unit" >
+            <h3>Loading...</h3>
+            If you are stuck in this screen check the following:
+            <ul>
+                <li>You have a compatible browser.</li>
+                <li>Javascript is enabled.</li>
+                <li>VCC Web Server is running.</li>
+            </ul>
         </div>
     </div>
-    <div class="container">
-        <div class="row">
-            <div class="span6">
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Health</th>
-                        <th>Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat="entry in data | filter: filterCharacters">
-                        <td>{{entry.name}}
-                            <ul>
-                                <li ng-repeat="effect in entry['effects']">{{effect.description}}
-                                    {{effect.duration}}
-                                </li>
-                            </ul>
-                        </td>
-                        <td>{{entry.health}}</td>
-                        <td>{{entry.status}}</td>
-                    </tr>
-                    </tbody>
-                </table>
+    <div ng-show="running">
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="btn-toolbar">
+                    <a class="brand" style="{ font-size: 12pt; padding: 5px;}" href="#">Player View</a>
+                    <a class="btn btn-mini" href="/"><i class="icon-arrow-left"></i> Back</a> &nbsp;
+                    <a class="btn btn-mini" ng-click="fetchInitial()" ng-hide="running" style="display: none">
+                        <i class="icon-refresh"></i> Reconnect</a>
+                </div>
             </div>
-            <div class="span6">
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat="entry in data">
-                        <td>{{entry.id}}</td>
-                        <td>{{entry.name}}
-                            <ul>
-                                <li ng-repeat="effect in entry['effects']">{{effect.description}}
-                                    {{effect.duration}}
-                                </li>
-                            </ul>
-                        </td>
-                        <td>{{entry.status}}</td>
-                    </tr>
-                    </tbody>
-                </table>
+        </div>
+        <div class="">
+            <div class="hero-unit" ng-hide="hasData">
+                <h2>Waiting...</h2>
+                Combat has not started, please wait for you DM to get things started.
+            </div>
+        </div>
+        <div class="container" ng-show="hasData">
+            <div class="row">
+                <div class="span6">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Health</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="entry in data | filter: filterCharacters">
+                            <td>{{entry.name}}
+                                <ul>
+                                    <li ng-repeat="effect in entry['effects']">{{effect.description}}
+                                        {{effect.duration}}
+                                    </li>
+                                </ul>
+                            </td>
+                            <td>{{entry.health}}</td>
+                            <td>{{entry.status}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="span6">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="entry in data">
+                            <td>{{entry.id}}</td>
+                            <td>{{entry.name}}
+                                <ul>
+                                    <li ng-repeat="effect in entry['effects']">{{effect.description}}
+                                        {{effect.duration}}
+                                    </li>
+                                </ul>
+                            </td>
+                            <td>{{entry.status}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
