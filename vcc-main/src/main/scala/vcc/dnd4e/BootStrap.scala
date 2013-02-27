@@ -160,10 +160,12 @@ object BootStrap extends StartupRoutine {
 
     callStartupSimpleBlock(srw, "Web Server") {
       webAppPath = getWebApplicationDirectory
+      logger.info("Starting Wep App at: " + webAppPath.getAbsolutePath)
       CaptureHoldingArea.initialize(new File(Configuration.baseDirectory.value, "dndicache"))
       CaptureService.setService(new CaptureServiceAdapter())
       StateViewService.setInstance(new PlayerViewServiceAdapter())
       webServer = WebServer.initialize(webAppPath.getAbsolutePath, 4143, Map())
+      logger.info("Started web server")
       true
     }
 
@@ -196,7 +198,7 @@ object BootStrap extends StartupRoutine {
   private[dnd4e] def getWebApplicationDirectory: File = {
     val warLess = new WarLess(
       WarArchive.create(classOf[GreetingServlet], "webapp"),
-      new WarTarget(Configuration.baseDirectory.value))
+      new WarTarget(Configuration.getInstallDirectory))
     warLess.resolve()
     warLess.getTargetDirectory
   }
