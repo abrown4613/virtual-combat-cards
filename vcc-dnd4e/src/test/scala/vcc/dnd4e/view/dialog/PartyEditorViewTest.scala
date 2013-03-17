@@ -144,10 +144,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(wrapWithCheck(verify(presenter, atLeastOnce()).isValidCombatantID(0, "a")))
   }
 
-  def testFixme() {
-    println("WARNING: Disable Window Interception")
-  }
-  def pending_testChangeCombatantIDToInvalid() {
+  def testChangeCombatantIDToInvalid() {
     uiElement.setPartyTableContent(0, List(createSingleEntry(Some(CombatantID("A")), "Nick")))
     when(presenter.isValidCombatantID(0, "-")).thenReturn(false)
     WindowInterceptor.init(new Trigger {
@@ -177,7 +174,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(verify(presenter).clearAll())
   }
 
-  def pending_testLoadFile() {
+  def testLoadFile() {
     val file = new File("some.peml")
     val memberEid = Compendium.activeRepository.getMonsterSummaries(0).eid
     val member = PartyMember(null, null, memberEid)
@@ -187,7 +184,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     file.delete()
   }
 
-  def pending_testFileWithBadContent() {
+  def testFileWithBadContent() {
     val file = new File("some.peml")
     val goodList = buildBadPartyFileAndReturnGoodEntries(file)
     file.deleteOnExit()
@@ -199,7 +196,7 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(verify(presenter).loadPartyMembers(goodList))
   }
 
-  def pending_testAskForLoadButGiveUp() {
+  def testAskForLoadButGiveUp() {
     handleFileLoadMenu(handleAndVerifyLoadDialog().cancelSelection())
     assertTrue(verify(presenter, never()).loadPartyMembers(any[List[PartyMember]]))
   }
@@ -209,12 +206,12 @@ class PartyEditorViewTest extends UISpecTestCase {
     assertTrue(verify(presenter).addPartyToBattle(any[PanelDirector]))
   }
 
-  def pending_testSaveToFileAndCancel() {
+  def testSaveToFileAndCancel() {
     handleFileSaveDialog(handleAndVerifySaveDialog().cancelSelection)
     assertTrue(verify(presenter, never()).saveToFile(any[File]))
   }
 
-  def pending_testSaveToFileDoIt() {
+  def testSaveToFileDoIt() {
     val file = new File("file-to-save.peml")
     assertTrue("File must not exist", wrapWithCheck(!file.exists()))
     handleFileSaveDialog(handleAndVerifySaveDialog().select(file))

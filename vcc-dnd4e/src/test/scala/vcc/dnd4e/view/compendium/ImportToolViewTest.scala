@@ -71,8 +71,7 @@ class ImportToolViewTest extends UISpecTestCase {
     assertFalse(getImportingLabel.isVisible)
   }
 
-  def pending_testImportSomeFiles() {
-    println("WARNING: Disable Window Interception")
+  def testImportSomeFiles() {
     val files = Seq("file.1", "file.2").map(new File(_))
     WindowInterceptor.
       init(getImportButton.triggerClick()).
@@ -81,7 +80,7 @@ class ImportToolViewTest extends UISpecTestCase {
     verify(presenter).processFiles(files)
   }
 
-  def pending_testClickImportAndCancel() {
+  def testClickImportAndCancel() {
     WindowInterceptor.
       init(getImportButton.triggerClick()).
       process(fileDialogHandler.cancelSelection()).
