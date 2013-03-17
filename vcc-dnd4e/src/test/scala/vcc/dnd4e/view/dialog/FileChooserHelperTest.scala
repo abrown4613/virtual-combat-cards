@@ -31,31 +31,27 @@ class FileChooserHelperTest extends UISpecTestCase {
 
   private var result: Option[File] = None
 
-  def testPass() {
-      println("WARNING: Disable Window Interception")
-  }
-
-  def pending_testShowSaveDialogAndSetPartialFileName() {
+  def testShowSaveDialogAndSetPartialFileName() {
     runSaveOperation("file")
     validateReturnedAbsoluteFilename(new File("file.peml"))
   }
-  def pending_testShowSaveDialogAndSetCompleteFilename() {
+  def testShowSaveDialogAndSetCompleteFilename() {
     runSaveOperation("file.peml")
     validateReturnedAbsoluteFilename(new File("file.peml"))
   }
 
-  def pending_testShowSaveDialogAndSetCompleteFilename2() {
+  def testShowSaveDialogAndSetCompleteFilename2() {
     runSaveOperation("file.xml")
     validateReturnedAbsoluteFilename(new File("file.xml"))
   }
 
-  def pending_testShowSaveDialog_uponSelectingExistentFilePromptForOverwrite() {
+  def testShowSaveDialog_uponSelectingExistentFilePromptForOverwrite() {
     val preExistentFile = new File("file2.peml")
     runSaveOperationWithOverwrite(preExistentFile, yesButtonLabel)
     validateReturnedAbsoluteFilename(preExistentFile)
   }
 
-  def pending_testShowSaveDialog_uponSelectingExistentFilePromptForOverwriteButNegate() {
+  def testShowSaveDialog_uponSelectingExistentFilePromptForOverwriteButNegate() {
     val preExistentFile = new File("file2.peml")
     preExistentFile.createNewFile()
     runSaveOperationWithOverwrite(preExistentFile, noButtonLabel)
