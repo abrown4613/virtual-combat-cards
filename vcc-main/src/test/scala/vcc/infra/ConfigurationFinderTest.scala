@@ -24,9 +24,7 @@ class ConfigurationFinderTest extends SpecificationWithJUnit {
   private val configName = "vcc.properties"
   val macPath = System.getProperty("user.home") + slash + "Library" + slash + "Preferences" + slash + configName
 
-  args(sequential = true)
-
-  def is = "ConfigurationFinder".title ^
+  def is = sequential ^ "ConfigurationFinder".title ^
     "must scan only path with defined properties" ! visitAllPathWithDefinedVCCHome ^
     "must scan proper directories" ! visitAllPaths ^
     findAllFiles() ^
