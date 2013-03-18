@@ -25,8 +25,6 @@ import org.specs2.mock.Mockito
 
 class TrackerTest extends SpecificationWithJUnit {
 
-  args(sequential = true)
-
   private class ThreadedObserver[S] extends Tracker.Observer[S] {
     private val state = new SyncVar[S]
 
@@ -44,9 +42,10 @@ class TrackerTest extends SpecificationWithJUnit {
   }
 
   def is =
-    "ThreadedObserver" ^
-      "get and answer in time out range" ! threadObserver().answerComeWithinTimeLimit ^
-      "fails if answer does not come quick enough" ! threadObserver().answerDoesNotComeWithTimeLimit ^
+    sequential ^
+      "ThreadedObserver" ^
+      "  get and answer in time out range" ! threadObserver().answerComeWithinTimeLimit ^
+      "  fails if answer does not come quick enough" ! threadObserver().answerDoesNotComeWithTimeLimit ^
       endp ^
       "Tracker notification" ^
       "  notify single observer" ! notificationCases().roundTripToSingleObserver ^
@@ -159,19 +158,19 @@ class TrackerTest extends SpecificationWithJUnit {
     }
 
     def handleActionDispatchWithNoState = {
-      mockController.dispatchAction(mockAction,mockRulingProvider) returns None
-      tracker.dispatchAction(mockAction,mockRulingProvider)
+      mockController.dispatchAction(mockAction, mockRulingProvider) returns None
+      tracker.dispatchAction(mockAction, mockRulingProvider)
 
       (observer.getObservedState must_== None) and
-        (there was one(mockController).dispatchAction(mockAction,mockRulingProvider))
+        (there was one(mockController).dispatchAction(mockAction, mockRulingProvider))
     }
 
     def handleActionDispatchWithStateChange = {
-      mockController.dispatchAction(mockAction,mockRulingProvider) returns Some(State(n))
-      tracker.dispatchAction(mockAction,mockRulingProvider)
+      mockController.dispatchAction(mockAction, mockRulingProvider) returns Some(State(n))
+      tracker.dispatchAction(mockAction, mockRulingProvider)
 
       (observer.getObservedState must_== Some(State(n))) and
-        (there was one(mockController).dispatchAction(mockAction,mockRulingProvider))
+        (there was one(mockController).dispatchAction(mockAction, mockRulingProvider))
     }
   }
 
