@@ -16,26 +16,15 @@
 </head>
 <body>
 <div ng-controller="FetchCtrl" ng-init="fetchInitial()" class="">
-    <div class="container" ng-hide="running">
-        <div class="hero-unit">
-            <h3>Loading...</h3>
-            If you are stuck in this screen check the following:
-            <ul>
-                <li>You have a compatible browser.</li>
-                <li>Javascript is enabled.</li>
-                <li>VCC Web Server is running.</li>
-            </ul>
-        </div>
-    </div>
-    <div ng-show="running">
-        <div class="navbar navbar-inverse navbar-fixed-top">
+    <div ng-show="running" style="display: none">
+        <div class="navbar navbar-inverse">
             <div class="navbar-inner">
-                <div class="btn-toolbar">
-                    <a class="brand" style="{ font-size: 12pt; padding: 5px;}" href="#">Player View</a>
-                    <a class="btn btn-mini" href="/"><i class="icon-arrow-left"></i> Back</a> &nbsp;
-                    <a class="btn btn-mini" ng-click="fetchInitial()" ng-hide="running" style="display: none">
-                        <i class="icon-refresh"></i> Reconnect</a>
-                </div>
+                <a class="brand" style="{ font-size: 12pt; padding: 5px;}" href="#">Player View</a>
+                <ul class="nav">
+                    <li><a href="/"><i class="icon-arrow-left icon-white"></i> Back</a></li>
+                    <li><a ng-click="fetchInitial()" ng-hide="running" style="display: none">
+                        <i class="icon-refresh icon-white"></i> Reconnect</a></li>
+                </ul>
             </div>
         </div>
         <div class="container" ng-hide="hasData">
@@ -95,6 +84,17 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="container" ng-hide="running">
+        <div class="hero-unit">
+            <h3>Loading...</h3>
+            If you are stuck in this screen check the following:
+            <ul>
+                <li>You have a compatible browser.</li>
+                <li>Javascript is enabled.</li>
+                <li>VCC Web Server is running.</li>
+            </ul>
         </div>
     </div>
 </div>
