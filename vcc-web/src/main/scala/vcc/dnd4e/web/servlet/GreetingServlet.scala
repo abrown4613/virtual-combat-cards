@@ -71,7 +71,8 @@ class GreetingServlet extends HttpServlet {
     resp.getWriter.println("<!DOCTYPE html>")
     resp.getWriter.append(makePage(
       Seq(
-        ("/player.html", "Player View")),
+        ("/player.html", "Player View"),
+        ("/manual", "User Manual")),
       enumerateAddresses(req.getLocalPort)).toString())
   }
 
