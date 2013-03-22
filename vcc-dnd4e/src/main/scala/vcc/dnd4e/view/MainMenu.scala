@@ -52,7 +52,9 @@ trait ConfigurationPanelCallback {
 class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Frame,
                configurationPanel: ConfigurationPanelCallback, releaseInformation: ReleaseInformation)
   extends MenuBar {
+
   private val logger = org.slf4j.LoggerFactory.getLogger("user")
+  private val webServerBase = "http://127.0.0.1:4143"
 
   private val fileMenu = new Menu("File")
   fileMenu.contents += new MenuItem(Action("Load Party ...") {
@@ -111,6 +113,8 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
 
   viewMenu.contents += hideDeadMenu
   viewMenu.contents += robinViewMenu
+  viewMenu.contents += new Separator
+  viewMenu.contents += makeWebBrowserMenu("Player View", webServerBase)
 
   private val dockMenu = new Menu("Dockable")
 
@@ -138,15 +142,19 @@ class MainMenu(director: PanelDirector, docker: CustomDockingAdapter, parent: Fr
   }
 
   private val helpMenu = new Menu("Help")
-  helpMenu.contents += new MenuItem(Action("Online Manual") {
-    val dsk = Desktop.getDesktop
-    dsk.browse(new URL("http://www.exnebula.org/vcc/manual").toURI)
-  })
+  helpMenu.contents += makeWebBrowserMenu("Online Manual", "http://www.exnebula.org/vcc/manual")
 
-  helpMenu.contents += new MenuItem(Action("Firefox plugin") {
-    val dsk = Desktop.getDesktop
-    dsk.browse(new URL("http://www.exnebula.org/vcc/plugin").toURI)
-  })
+  helpMenu.contents += makeWebBrowserMenu("Manual", webServerBase + "/manual")
+
+  helpMenu.contents += makeWebBrowserMenu("Firefox plugin", "http://www.exnebula.org/vcc/plugin")
+  helpMenu.contents += makeWebBrowserMenu("Chrome plugin", "https://chrome.google.com/webstore/detail/virtual-combat-cards-capt/acaljigfeambgpaebnjigclobfepkdhe")
+
+  private def makeWebBrowserMenu(menuText: String, link: String): MenuItem = {
+    new MenuItem(Action(menuText) {
+      val dsk = Desktop.getDesktop
+      dsk.browse(new URL(link).toURI)
+    })
+  }
 
   helpMenu.contents += new MenuItem(Action("Check for Updates ...") {
     SwingHelper.invokeInOtherThread {

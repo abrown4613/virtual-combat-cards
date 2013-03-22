@@ -1,0 +1,545 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Virtual Combat Cards User Guide</title>
+    <!-- base href="http://www.exnebula.org/" -->
+    <link type="text/css" rel="stylesheet" href="print.css">
+</head>
+<body>
+
+<div id="node-133" class="section-1">
+<h1 class="book-heading">Virtual Combat Cards User Guide</h1>
+
+<p>This is the <em>Virtual Combat Cards</em> online manual, we hope it will keep improving, and help on this is always
+    welcome. </p>
+
+<p>We strive to make VCC clear and simple to use, but as it increases in
+    features and complexity the manual is designed to help explore the most
+    of the tracker.</p>
+
+<div id="node-143" class="section-2">
+    <h1 class="book-heading">Concepts and Conventions</h1>
+
+    <p>In <em>Virtual Combat Cards</em> screen and documentation there are
+        some terms and concept used. Understanding them will make it easier to
+        explore the tool and also to request support. </p>
+    <dl>
+        <dt><strong>Combatant</strong></dt>
+        <dd>Combatant include: monster, PC, and traps. Any combatant in a battle
+            has his own object in VCC. They can be in the initiative sequence or in
+            reserve, but if you are tracking information it's a <em>combatant</em>.
+        </dd>
+        <dt><strong>Combat Sequence</strong></dt>
+        <dd>This is the combatant order in the battle. In VCC this is
+            implemented as a round robin (i.e. once the first combatant ends its
+            round it goes to the very last position). Combatant that have not yet
+            joined the initiative order are in <em>reserve</em> and are always on the very bottom of the table.
+        </dd>
+        <dt><strong>Target Combatant</strong></dt>
+        <dd>This is the combatant that is currently selected in the combat
+            sequence an to which all effects or damage will be applied. You can
+            switch targets be selecting a different row in the <em>combat sequence</em> table.
+        </dd>
+        <dt><strong>Source Combatant</strong></dt>
+        <dd>This is normally the first combatant, but you can select other ones using the <code> Alt-A</code>
+            on the Combat Sequence (making the selected combatant both the target
+            and source), or using the drop box on the Effect Creation panel.
+        </dd>
+        <dt><strong>Combatant ID</strong></dt>
+        <dd>This is a small string or number that is used to identify a
+            combatant. Think of it as the number on an athlete’s shirt. Altough
+            large strings can be used, some panels expect short string, and in the
+            future we want to use them for keyboard activated commands.
+        </dd>
+        <dt><strong>Alias</strong></dt>
+        <dd>This is a way to identify a combatant by something else then it’s
+            name or ID. You can use this field to indicate the miniatures, the NPC
+            name, or some other thing that you wish to distinguish.
+        </dd>
+        <dt><strong>Effect</strong></dt>
+        <dd>This represents both conditions and effect that affect a combatant. The tracker will expire time bound
+            effects automatically.
+        </dd>
+        <dt><strong>VCC Compendium</strong></dt>
+        <dd>This is a VCC specific database that is used to collect your
+            monsters, players and traps in order to assemble encounter or parties.
+        </dd>
+    </dl>
+</div>
+<div id="node-144" class="section-2">
+    <h1 class="book-heading">Keyboard Shortcuts</h1>
+
+    <p>To improve control Virtual Combat Cards has some short cuts for common tasks.</p>
+
+    <p>These are the currently available shortcuts:</p>
+    <ul>
+        <li>Ctrl+F: Select the first combatant on the combat sequence.
+        </li>
+        <li>Ctrl+Z: Undo last operation
+        </li>
+        <li>Ctrl+Y: Redo last undo
+        </li>
+        <li>Alt+S and Alt+E: Start and end round
+        </li>
+        <li>Alt+T: Set Temporary HP to currently selected combatant on the sequence table.
+        </li>
+        <li>Alt+H: Heal currently selected combatant on the sequence table.
+        </li>
+        <li>Alt+D: Damage currently selected combatant on the sequence table.
+        </li>
+        <li>Alt+A: Set the Active Combatant on the effect panel as the currently selected combatant on the combat
+            sequence
+        </li>
+        <li>Alt+M: Mark the current combatant using the combatant on the effect panel.
+        </li>
+    </ul>
+</div>
+<div id="node-161" class="section-2">
+    <h1 class="book-heading">License</h1>
+
+    <p>This software is licensed under <a href="http://www.gnu.org/licenses/gpl-3.0.txt">GNU General Public License
+        Version 3.</a></p>
+</div>
+<div id="node-146" class="section-2">
+    <h1 class="book-heading">Managing your Parties and Encounters</h1>
+
+    <p>Creating a party is a simple activity once you have the compendium entries (the combatant definitions).<br>
+        When building encounters VCC will show how many XP of your budget you have spent.</p>
+
+    <p>To create a party or encounter: </p>
+    <ol>
+        <li>Open the party-editor window (<strong>Compendium &gt; Edit Party...</strong>.
+        </li>
+        <li>You will see all the compendium entries you have (Monster and
+            Characters) on the left. Double clicking on an entry will move it into
+            the party.
+        </li>
+        <li>Once on the encounter table, you can change the <em>quantity</em> and edit the <em>alias</em> and
+            <em>ID</em>. To change <em>ID</em>, the quantity must be one (you cannot check or uncheck the <strong>Collapse
+                similar entries</strong> to see individual entries).
+        </li>
+        <li>Once you have all the entries you want in the encounter, you can save it using <strong>File &gt; Save
+            ...</strong>.
+        </li>
+        <li>Alternatively, you can add them directly to the current combat using <strong>File &gt; Add to
+            combat</strong>.
+        </li>
+    </ol>
+    <p>You can load saved parties or encounters at any time. We recommend
+        you separate the character party and monster encounters into separate
+        files to make it easier to choose your battles. You can load previously
+        saved parties or encounters to change their build up.</p>
+
+    <p>Here are some suggestions for handling some combatants that are not basic type:</p>
+    <dl>
+        <dt><strong>Traps</strong></dt>
+        <dd>Create traps as monsters. If they cannot suffer damage to be
+            disabled, give them a huge amount of HP. Otherwise use the HP to track
+            the damage to them. If they don't have initiative, keep them in reserve
+            when starting the combat.
+        </dd>
+        <dt><strong>Hazards</strong></dt>
+        <dd>These normally define an area of threat and react to entry or
+            beginning a round in them. Create them as monsters, and keep them in
+            reserve.
+        </dd>
+        <dt><strong>Companions</strong></dt>
+        <dd>Rangers may have companions. Companions' health works just like the
+            Players, but they don't have their own initiative. So create a <em>player</em>, and when running combats
+            leave the companion in reserve.
+        </dd>
+    </dl>
+</div>
+<div id="node-147" class="section-2">
+    <h1 class="book-heading">Running a Combat</h1>
+
+    <p>In this section we assume you have the sample data (shipped with
+        1.1.0). If you don’t have that you will have to create a party yourself
+        (see <a href="http://www.exnebula.org/node/146">Managing your Parties and Encounters</a>). With the encounter
+        files ready running a battle is a simple task.</p>
+    <ol>
+        <li>Select <strong>File &gt; Load party...</strong> then select the party file (the <code>sample-enc.peml</code>
+            in case you use the sample data).<br>
+            <strong>Note:</strong> If the file is invalid or not all entries exist
+            in your compendium you will get a confirmation window. Check the party
+            files in the Party Editor to verify what is wrong
+        </li>
+        <li>All loaded combatant will appear in the <em>Combat Sequence</em> in not particular order. You can load other
+            files if necessary, not need with the sample data.
+        </li>
+        <li>Starting a combat requires two steps first you must <strong>Combat -&gt; Roll Initiative...</strong>. The
+            <em>Roll Initiative</em> windows will appear.
+            <ul>
+                <li>You can adjust the initiative score for the combatants (on the <em>Init</em> column);
+                </li>
+                <li>Place the dice roll for player or monster (on the <em>Roll</em> column), or leave the <em>r</em> to
+                    have VCC roll for you.
+                </li>
+                <li>If you specify something like: <em>r/r</em> or <em>7/13</em>,
+                    you are telling VCC that the creature should have two initiative (either
+                    rolled or specific respectively). You can use any number of initiative
+                    slots for a combatant, for example <em>r/r/10/r</em> means 4 initiative slots (one of the will have
+                    a result of 10).
+                </li>
+                <li>You can also group monsters with the same name (this will make groups of creature initially are
+                    placed together).
+                </li>
+                <li>Set them to reserve, meaning they are not take part of the battle for now (use this for companions);
+                </li>
+                <li>Pressing <strong>OK </strong> and VCC will sort and place the combatants in the correct sequence.
+                </li>
+                <li>The sequence table will now show the combatant in initiative order. You can re-roll initiatives if
+                    necessary.
+                </li>
+            </ul>
+        </li>
+        <li>To start the combat use <strong>Combat -&gt; Start Combat</strong>.
+        </li>
+        <li>From there on you can use the <em>Initiative Actions</em>, <em>Health Change</em> and <em>Effect
+            Creation</em> panels to start and end round, apply damage and healing, add effects, etc.
+        </li>
+        <li>You can go back to the initiative window to roll initiative for
+            other combatant (useful if you add combatant after the combat has
+            begun).
+        </li>
+    </ol>
+    <p>In addition to the basic running of the battle you can:</p>
+    <ul>
+        <li><strong>Combat &gt; End Combat</strong> to end the battle and place all combatant in reserve;
+        </li>
+        <li><strong>Combat &gt; Rest</strong> to clear all the effects and temporary HP;
+        </li>
+        <li><strong>Combat &gt; Extended Rest</strong> to recover all the HP
+        </li>
+        <li><strong>Combat &gt; Clear Monster</strong> to remove any combatant that is note a <em>Player Character</em>
+            from the roster.
+        </li>
+        <li><strong>History &gt; Undo</strong> to undo the last action (you can redo them again). This is the way to
+            move back in time.
+        </li>
+    </ul>
+</div>
+<div id="node-43" class="section-2">
+    <h1 class="book-heading">Tracking Effects</h1>
+
+    <p>The effect tracker is available from <em>Virtual Combat Cards</em>
+        0.90 onwards. It will allow easy tracking of individual effects and
+        includes expiring effects that end at the end or start of a combatants
+        round.</p>
+
+    <p>In order to create an effect you use the <strong>Effect Creation</strong> pane. Active effect will be visible on
+        the <strong>Active Effects</strong> pane. Starting and ending rounds will automatically expire effects as
+        needed.</p>
+
+    <div id="node-44" class="section-3">
+        <h1 class="book-heading">Creating Effects</h1>
+
+        <p><strong>Effect Creation</strong> pane is used to create and add an
+            effect to a combatant. The pane contains two identical areas that can be
+            used to create distinct effects. Notice that VCC handles effects not
+            conditions. Effect may include a set of conditions like: “Slowed and
+            Dazed”; Duration: “Save Ends”. </p>
+
+        <p>The pane looks like this (without the black and white numbers):<br>
+        </p>
+        <center><img src="vcc-90-effect.png"></center>
+        <p></p>
+
+        <p>The meaning of the numbers in the black circles:</p>
+        <dl>
+            <dt><strong>1 - Source</strong></dt>
+            <dd>Since some durations are bound to the sources' round, selection the
+                source is important. When a new combatant starts the round, it will be
+                assigned as the source. You can change this if you want add an effect
+                for some other combatant (as a result of immediate actions or
+                opportunity attacks)
+            </dd>
+            <dt><strong>2 - Condition type selection: Any</strong></dt>
+            <dd>There are two type of effect as of version 0.90, the first is the <strong>Any</strong>
+                type. This type should be used for all effect except mark (see below).
+                The text field besides the combo box should be used to specify the
+                description of the effect and/or conditions. Once the effect has been
+                added it can be edited in the <strong>Active Effects</strong> table.
+            </dd>
+            <dt><strong>3 - Beneficial check box</strong></dt>
+            <dd>This check box should be used to mark effect that are beneficial to
+                the target (such as: +2 on all attacks). This is relevant only for
+                effect that end an the end of a turn and when a <em>Delay</em> happens.
+            </dd>
+            <dt><strong>4 - Condition type selection: Mark</strong></dt>
+            <dd>The second type of effects that can be created is the <em>mark</em>.
+                Since the target can only be marked by one combatant this type should
+                be used when adding a mark. VCC will automatically remove the previous
+                mark. The <strong>cant be superseded</strong> check box is used to indicate that the mark can’t is
+                definitive. Some powers in the Martial Powers book have this property.
+            </dd>
+            <dl>
+                <p>The <strong>duration </strong> combo box is used to determine the
+                    duration of an effect. Most of the effect durations should be self
+                    explanatory (assuming you play D&amp;D 4E). The following durations have
+                    some special behavior:</p>
+                <dl>
+                    <dt><strong>End of source’s next turn, sustain</strong></dt>
+                    <dd>Effect that are sustainable should use this duration. The effect
+                        will only be sustained until the end of the next turn (of the select
+                        source, normally the acting combatant). During the next turn of the
+                        source, you must click the sustain button on the <strong>Active Effects</strong> pane.
+                    </dd>
+                    <dt><strong>Save End (Special)</strong></dt>
+                    <dd>This should be used for powers where a save ends the effect, but
+                        failing the saving throw will change the conditions in effect (like the <em>Sleep</em> Wizard
+                        power) (see <a href="http://www.exnebula.org/node/222">this page for more details</a>).
+                    </dd>
+                    <dt><strong>Stance</strong></dt>
+                    <dd>As described in the rules the effect last until the End of Encounter (that is a rest) or until a
+                        new Stance is activated.
+                    </dd>
+                    <dt><strong>Other</strong></dt>
+                    <dd>Use this for anything that does not fall in the existing durations.</dd>
+                </dl>
+                <p>As with previous version, additional information about conditions can be written in the <strong>
+                    Comments and Notes</strong> pane. This is a good option for condition like: prone and other
+                    condition that are in effect until countered.</p>
+            </dl>
+        </dl>
+    </div>
+    <div id="node-42" class="section-3">
+        <h1 class="book-heading">Viewing Effects</h1>
+
+        <p>All effects currently active on a combatant are displayed on the <strong>Active Effects</strong>
+            pane. This will provide a quick view of the effect description,
+            duration, and source. This pane also allows you to sustain effect and
+            cancel effects.</p>
+
+        <p>As shown below:<br>
+        </p>
+        <center><img src="vcc-90-effview.png"></center>
+        <p></p>
+
+        <p>The colors have a special meaning:</p>
+        <dl>
+            <dt><em>Blue</em></dt>
+            <dd>The effect is beneficial to the target, this is relevant only when
+                the source delays a round and the effect end at the end of it's turn
+            </dd>
+            <dt><em>Orange</em></dt>
+            <dd>The duration box column may have an orange color, this indicates
+                that the duration has something special. Either it's sustainable, or
+                it's a effect were failing a save will cause additional effects (like in
+                the Sleep power)
+            </dd>
+        </dl>
+        <p>At the bottom of this pane are two buttons:</p>
+        <dl>
+            <dt><strong>Sustain</strong></dt>
+            <dd>Clicking this button will sustain an effect, however this will only
+                cause effect if the effect is bound to end at the End of the current
+                Turn (duration is EoT)
+            </dd>
+            <dt><strong>Cancel Effect</strong></dt>
+            <dd>Will remove the effect from the list.</dd>
+        </dl>
+        <p>As will all tracked object, you can undo actions in case an invalid command was executed.</p>
+
+        <h3>Editing</h3>
+
+        <p>All effect descriptions (except Mark effects) can be edited by double clicking on the
+            <strong>description</strong> on the table in the <strong>Active Effects</strong> pane. Place the new text
+            and press <em>Enter</em>. This is not supported for mark, in this case simply add a new mark.</p>
+    </div>
+    <div id="node-221" class="section-3">
+        <h1 class="book-heading">Tracking ongoing damage and regeneration</h1>
+
+        <p>Starting with version 1.5.0 Virtual Combat Cards can track ongoing
+            damage and regeneration. Effect that have the proper wording will be
+            handled on the beginning of rounds and prompt the user to input the
+            effective amount of healing or damage to apply.</p>
+
+        <p>The condition text will be split into parts on the <em>and</em> work and the progression separators (<em> -&gt; </em>
+            or <em>/</em>). </p>
+
+        <p><strong>Ongoing damage</strong></p>
+
+        <p>For ongoing damage the the condition must include the text <em>ongoing</em>
+            followed by a number, text after this will be included in the prompt.
+            So these condition texts will prompt the user for amount of damage to
+            apply:</p>
+        <ul>
+            <li>ongoing 5
+            </li>
+            <li>ongoing 5 fire
+            </li>
+            <li>ongoing 5 fire &amp; thunder
+            </li>
+            <li>ongoing 1d20
+            </li>
+            <li>ongoing 5 slowed
+            </li>
+            <li>slowed ongoing 10
+            </li>
+        </ul>
+        <p>All these will trigger the ongoing damage prompt. In the 1d20 case,
+            the value suggested will be 1 hit point. Not that for effect that have
+            two damage type you must use the ampersand (&amp;) sign not and, or the
+            match will skip the <em> and</em> word.</p>
+
+        <p><strong>Regeneration</strong></p>
+
+        <p>To have VCC prompt for regeneration the condition text must include the prefix <em>regen</em> followed by a
+            number. So the following text will cause a prompt for regeneration:</p>
+        <ul>
+            <li>regen 5
+            </li>
+            <li>regenerate 2
+            </li>
+            <li>regeneration 10 while bloodied
+            </li>
+            <li>regeno 5 slowed
+            </li>
+            <li>regenarate 4 if not hit by fire or cold
+            </li>
+        </ul>
+        <p><strong>Note:</strong> regenerate will always be prompted first. In
+            some conditions this may lead to less hit point being restore. DM/User
+            discernment is necessary in these cases.</p>
+    </div>
+    <div id="node-222" class="section-3">
+        <h1 class="book-heading">Effect that change on failed saving throw</h1>
+
+        <p>Some effects like Sleep and Medusa petrification start of in one
+            condition then progress to worst conditions. To be able to handle these
+            effects Virtual Combat Cards includes two features. First there is the <em>Save ends (Special)</em> duration
+            options. Secondly starting on version 1.5.0, users can specify a set of effects that will take place on a
+            failed save.</p>
+
+        <p>To do this, users must right the condition separated by either arrows (<em>-&gt;</em>) or slash (<em>/</em>).
+            On the save prompt VCC will suggest the next condition if the save fails. </p>
+
+        <p>As examples:</p>
+        <dl>
+            <dt>Wizard's Sleep Spell</dt>
+            <dd>
+                <ul>
+                    <li>slowed -&gt; unconscious</li>
+                    <li>slowed / unconscious</li>
+                </ul>
+                <p>On the first failed save the effect will become <em>unconscious</em><br>
+                </p></dd>
+            <dt>Medusa's Gaze</dt>
+            <dd>
+                <ul>
+                    <li>slowed -&gt; immobilized -&gt; petrified</li>
+                    <li>slowed / immobilized / petrified</li>
+                </ul>
+                <p>On the first failed save the effect will become <em>immobilzed -&gt; petrified</em>, and on a
+                    subsequent failed save it becomes <em>petrified</em><br>
+                </p></dd>
+        </dl>
+        <p>Notice that the effect will still remain being prompted for change
+            after the last condition is reached. In the case of petrification, you
+            could simple pass the saving throw and place a note on the creatures
+            note box.</p>
+    </div>
+    <div id="node-45" class="section-3">
+        <h1 class="book-heading">Tips on creating effects</h1>
+
+        <p>In line with VCC general design goals tracking effects and
+            condition was done in a simple and generic way. While there are all
+            types of condition and effects, some the most common ones should work
+            well. Designing a compact and effective interface was complex, and not
+            all cases may be easy to track. In this section we present some tips and
+            trick that may make you life easier.</p>
+        <dl>
+            <dt><strong>Paladin Divine Challenge</strong></dt>
+            <dd>This is obviously a mark, but since the Paladin does not have to
+                attack to sustain the mark, you can select the duration “End of source’s
+                turn, sustain”. This way you can easily sustain the effect.
+            </dd>
+            <dt><strong>Sustainable that affect other combatant</strong></dt>
+            <dd>Some powers will give a penalty or a special condition on the target and can be sustained by the source
+                (such as Warlord’s <em>Break the Tempo</em>).
+                In the current version these are challenging effect to keep track.
+                Since the effect can be sustained only when the source is action, and
+                you may forget to look at the target (and sustain the effect). It may be
+                safer to place two effects:
+                <ol>
+                    <li>On the source of the effect add a sustainable effect with the power name;
+                    </li>
+                    <li>On the target put an effect with duration <em>Other</em>, indicating that it is linked to the
+                        source power
+                    </li>
+                </ol>
+            </dd>
+            <dt><strong>Warlock power that have Save End and Sustain</strong></dt>
+            <dd>Warlocks have a set of powers that have both <em>save end</em> and <em>sustain</em> (such as <em>Curse
+                of the Bloody Fangs</em>). This <a
+                    href="http://www.enworld.org/forum/d-d-4th-edition-rules/236843-how-would-you-write-curse-bloody-fangs-make-sense.html#post4393563">
+                discussion on EN World</a> describes a way to track these effects. The idea is to break them into:
+                <ol>
+                    <li>On the warlock add an effect that can be sustained, and point to the
+                        target and the condition it must have (in the forum discussion: “Curse
+                        of Bloody Fangs on Target”);
+                    </li>
+                    <li>Add an effect on the target with duration <em> End of source’s next turn</em> (in the forum:
+                        “Nibbled”);
+                    </li>
+                    <li>If the warlock sustains, add a new effect with duration <em> Save end</em> (in the forum:
+                        “Chewed”).
+                    </li>
+                </ol>
+                <p>This should provide the correct way to handle this. Of course you can ask for the warlock to track
+                    this, and just put the <em>Save End </em> portion of the effect on the tracker.<br>
+                </p></dd>
+        </dl>
+    </div>
+</div>
+<div id="node-29" class="section-2">
+    <h1 class="book-heading">History and Motivation</h1>
+
+    <p>Virtual Combat Cards (VCC) was created to replace my real combat
+        cards. These were blank business cards that I used to register HP and
+        other information to run my D&amp;D 4th Edition battles. This is a
+        method recommended in the Dungeon Master guide. I also use numbered
+        chips made of <a href="http://en.wikipedia.org/wiki/Cold_porcelain">Cold Porcelain</a>.
+        This option is much cheaper than miniatures (though not as pretty), and
+        the number allow for quick reference of each combatant. These two
+        aspects are key to the current VCC design.</p>
+
+    <p>You can see my old setup in the picture below.<br>
+    </p>
+    <center><br>
+        <img src="tokens-rcc.jpg"><br>
+        Numbered tokens and combat cards<br>
+    </center>
+    <p></p>
+
+    <p>While effective the cards have some short comings:</p>
+    <ul>
+        <li>You have to write and erase conditions;
+        </li>
+        <li>You have to do all the math, which takes a lot of time: "let's see how much is 173 minus 27...";
+        </li>
+        <li>You sometimes skip a card, or remove the wrong one;
+        </li>
+        <li>Tracking effects that last until the next turn can be hard;
+        </li>
+    </ul>
+    <p>All in all, this quote from a friend has made it clear that a
+        computerized version was needed: "I like playing RPG, but computer
+        should take care of all book keeping." As time to play becomes scarcer,
+        having something to help run the game really helps.</p>
+
+    <p>VCC is not the first attempt to do something like this. However keeping the design simple and loosely following
+        <a href="http://en.wikipedia.org/wiki/Agile_software_development">Agile Development</a>
+        made it a reality. The design is simple, yet effective. And with
+        experience and more time new features can be included. Help will sure be
+        welcome.</p>
+</div>
+</div>
+
+
+</body>
+</html>
