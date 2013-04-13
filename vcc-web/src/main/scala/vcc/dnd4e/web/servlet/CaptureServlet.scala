@@ -33,35 +33,9 @@ class CaptureServlet extends HttpServlet {
     val hasQuery = request.getParameter("has")
     if (hasQuery == null) {
       response.getWriter.println("<html><h1>D&D Insider Capture</h1>" +
-        "<p>This page should be used with the D&D Insider Capture Firefox plugin.</p></html>")
+        "<p>This page should be used with the D&D Insider Capture plugin.</p></html>")
     } else {
       response.getWriter.print(if (hasQuery == "reply-text") "true" else "false")
-    }
-  }
-
-  private def humanReply(result: Option[CaptureService.Result], response: HttpServletResponse) {
-    result match {
-      case Some(FailedCapture(clazz, -1)) =>
-        response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
-      case Some(FailedCapture(clazz, id)) =>
-        response.getWriter.printf("VCC failed to capture '%s' with id=%s, please report.", clazz, id.toString)
-      case Some(SuccessfulCapture(clazz, name, _)) =>
-        response.getWriter.printf("Captured %s: %s", clazz, name)
-      case None =>
-        response.getWriter.println("You sent something that VCC cannot capture.")
-    }
-  }
-
-  private def pluginReply(result: Option[CaptureService.Result], response: HttpServletResponse) {
-    result match {
-      case Some(FailedCapture(clazz, -1)) =>
-        response.getWriter.printf("FATAL: Unknown entry type '%s'", clazz)
-      case Some(FailedCapture(clazz, id)) =>
-        response.getWriter.printf("Error: Failed capture of '%s' with id=%s.", clazz, id.toString)
-      case Some(SuccessfulCapture(clazz, name, _)) =>
-        response.getWriter.printf("Success: %s (%s)", name, clazz)
-      case None =>
-        response.getWriter.println("FATAL: Bad Request.")
     }
   }
 
@@ -84,11 +58,37 @@ class CaptureServlet extends HttpServlet {
     result match {
       case Some(SuccessfulCapture(clazz, name, dObject)) =>
         logger.info("Captured '{}': {}", Array(clazz, name))
-        logger.debug("Catured {} is: {}", Array(clazz, dObject))
+        logger.debug("Captured {} is: {}", Array(clazz, dObject))
       case Some(FailedCapture(clazz, id)) if (id != -1) =>
         logger.warn("Capture of object {} type {} failed", clazz, id)
       case _ =>
         logger.warn("Capture failed.")
+    }
+  }
+
+  private def pluginReply(result: Option[CaptureService.Result], response: HttpServletResponse) {
+    result match {
+      case Some(FailedCapture(clazz, -1)) =>
+        response.getWriter.printf("FATAL: Unknown entry type '%s'", clazz)
+      case Some(FailedCapture(clazz, id)) =>
+        response.getWriter.printf("Error: Failed capture of '%s' with id=%s.", clazz, id.toString)
+      case Some(SuccessfulCapture(clazz, name, _)) =>
+        response.getWriter.printf("Success: %s (%s)", name, clazz)
+      case None =>
+        response.getWriter.println("FATAL: Bad Request.")
+    }
+  }
+
+  private def humanReply(result: Option[CaptureService.Result], response: HttpServletResponse) {
+    result match {
+      case Some(FailedCapture(clazz, -1)) =>
+        response.getWriter.printf("VCC cannot capture '%s' entries yet.", clazz)
+      case Some(FailedCapture(clazz, id)) =>
+        response.getWriter.printf("VCC failed to capture '%s' with id=%s, please report.", clazz, id.toString)
+      case Some(SuccessfulCapture(clazz, name, _)) =>
+        response.getWriter.printf("Captured %s: %s", clazz, name)
+      case None =>
+        response.getWriter.println("You sent something that VCC cannot capture.")
     }
   }
 
