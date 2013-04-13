@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class PlayerViewServletTest extends MutableScalatraSpec  {
+class PlayerViewServletTest extends MutableScalatraSpec {
   args(sequential = true)
 
   addServlet(classOf[PlayerViewServlet], "/player-view")
