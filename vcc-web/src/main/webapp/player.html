@@ -12,6 +12,9 @@
         UL.effectOffset {
             margin-left: 1em;
         }
+        .table td.center {
+           text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -54,7 +57,7 @@
                                 </ul>
                             </td>
                             <td>{{entry.health}}</td>
-                            <td>{{entry.status}}</td>
+                            <td class="center"><span ng-class="colorStatus(entry.status)">{{entry.status}}</span></td>
                         </tr>
                         </tbody>
                     </table>
@@ -78,7 +81,7 @@
                                     </li>
                                 </ul>
                             </td>
-                            <td>{{entry.status}}</td>
+                            <td class="center"><span ng-class="colorStatus(entry.status)">{{entry.status}}</span></td>
                         </tr>
                         </tbody>
                     </table>

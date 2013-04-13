@@ -74,4 +74,18 @@ function FetchCtrl($scope, $http) {
     $scope.filterCharacters = function (entry) {
         return entry["isCharacter"];
     };
+
+    $scope.colorStatus = function (status) {
+        if (status.beginsWith("Blood")) {
+            return "label label-important";
+        } else if (status.beginsWith("Ok")) {
+            return "label label-success";
+        } else {
+            return "label";
+        }
+    }
+
+    String.prototype.beginsWith = function (string) {
+        return(this.indexOf(string) === 0);
+    };
 }
