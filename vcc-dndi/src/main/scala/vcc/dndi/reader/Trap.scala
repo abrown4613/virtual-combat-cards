@@ -135,6 +135,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private[dndi] def processHeader(stream: TokenStream[BlockElement]) {
     val headMap: Map[String, String] = stream.head match {
       case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
+      case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
       case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
     }
     for (key <- List("xp", "name", "level", "role", "type")) {
