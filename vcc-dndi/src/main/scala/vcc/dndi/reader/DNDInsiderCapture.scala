@@ -22,8 +22,6 @@ import java.io.{FileOutputStream, File, InputStream}
 
 object DNDInsiderCapture {
   private val logger = LoggerFactory.getLogger("domain")
-  private val reSpaces = "[\\s\\n\\r\u00a0]+".r
-  private val fixBadXML1 = " \\\\=\"\"".r
   private val handles = Set("monster", "trap", "thHead")
 
   sealed trait Result
@@ -100,12 +98,11 @@ object DNDInsiderCapture {
     } else None
   }
 
-
   private def parseXML(is: InputStream): (Option[String], Option[Int], Node) = {
     // Capture XML
     var xmlRaw: String = null
     try {
-      xmlRaw = pluginInputStreamAsFilteredString(is)
+      xmlRaw = CaptureInputFilter.filterInput(is)
       logger.debug("Raw stream data: " + xmlRaw)
       val xml = XML.loadString(xmlRaw)
       (getTypeFromXML(xml), getIdFromXML(xml), xml)
@@ -179,40 +176,5 @@ object DNDInsiderCapture {
     } catch {
       case _: Throwable => null
     }
-  }
-
-  /**
-   * Get a Servlet request data InputStream and load it to a filtered String.
-   * It removes bad backslash and reduces several &nnbsp; (Unicode \u00a0), \n, \r to a single space.
-   * @param in InputStream, most likely from Servlet request.getInputStream
-   * @return The filter UTF-8 block
-   */
-  def pluginInputStreamAsFilteredString(in: InputStream): String = {
-    val bout = new java.io.ByteArrayOutputStream()
-    val buffer = new Array[Byte](1024)
-    var len = 0
-
-    while ( {
-      len = in.read(buffer)
-      len
-    } > 0) {
-      bout.write(buffer, 0, len)
-    }
-    val data = bout.toByteArray
-    var rawStr = new String(data, "UTF-8")
-    rawStr = reSpaces.replaceAllIn(rawStr, " ")
-    rawStr = fixBadXML1.replaceAllIn(rawStr, "")
-
-    var inTag = false
-    val chars = new Array[Char](rawStr.length)
-    rawStr.getChars(0, chars.length, chars, 0)
-    for (i <- 0 to chars.length - 1) {
-      if (inTag) {
-        if (chars(i).isLetter || chars(i) == '/') chars(i) = chars(i).toUpper
-        else inTag = false
-      } else if (chars(i) == '<') inTag = true
-    }
-    val finalStr = new String(chars)
-    finalStr
   }
 }
