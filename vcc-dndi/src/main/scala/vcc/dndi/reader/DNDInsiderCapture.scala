@@ -24,7 +24,7 @@ object DNDInsiderCapture {
   private val logger = LoggerFactory.getLogger("domain")
   private val reSpaces = "[\\s\\n\\r\u00a0]+".r
   private val fixBadXML1 = " \\\\=\"\"".r
-  private val handles = Set("monster", "trap")
+  private val handles = Set("monster", "trap", "thHead")
 
   sealed trait Result
 
@@ -53,6 +53,7 @@ object DNDInsiderCapture {
       val reader: DNDIObjectReader[_] = clazz.get match {
         case "monster" => new MonsterReader(id.get)
         case "trap" => new TrapReader(id.get)
+        case "thHead" => new TrapReader(id.get)
         case _ => null
       }
 
