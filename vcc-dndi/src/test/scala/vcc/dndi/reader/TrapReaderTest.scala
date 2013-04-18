@@ -19,7 +19,7 @@ package vcc.dndi.reader
 import org.specs2.mutable.SpecificationWithJUnit
 import vcc.infra.text._
 import vcc.dndi.reader.Parser.BlockElement
-import org.exnebula.iteratee.{Done, Empty, Chunk, repeat}
+import org.exnebula.iteratee.{Done, Empty, Chunk}
 import scala.xml.Node
 
 class TrapReaderTest extends SpecificationWithJUnit {
@@ -121,6 +121,18 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap("base:xp") must_== Some("200")
       trap("base:role") must_== Some("Elite Lurker")
       trap("base:type") must_== Some("Hazard")
+    }
+
+    "handle complete header information - iter" in {
+      val xmlChunks = parseChunks(
+        (<H1 class="trap" xmlns="http://www.w3.org/1999/xhtml">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
+        (<P>Footer</P>))
+
+      val tr = new TrapReader(0)
+      val result = tr.readHeader.consumeAll(xmlChunks)
+      result._1 must beRight
+      result._2 must_== xmlChunks.drop(1)
+      result._1.right.get must havePairs("name" -> "Razor Spores (Elite)", "role" -> "Elite Lurker", "xp" -> "200", "type" -> "Hazard", "level" -> "1")
     }
 
     "handle partial head 1" in {
@@ -249,15 +261,36 @@ class TrapReaderTest extends SpecificationWithJUnit {
     "handle blank trapblocktitle - iter" in {
       val xmlChunks = parseChunks(
         (<SPAN class="trapblocktitle"></SPAN>),
+        (<SPAN class="trapblocktitle">Attack</SPAN>),
+        (<SPAN class="trapblockbody"><B>Echo: </B>Charlie</SPAN>),
+        (<SPAN class="trapblocktitle"></SPAN>),
+        (<SPAN class="trapblocktitle"></SPAN>),
+        (<SPAN class="trapblocktitle">Lorem</SPAN>),
+        (<SPAN class="trapblockbody"><B>Echo: </B>Charlie</SPAN>),
+        (<SPAN class="trapblocktitle"></SPAN>),
         (<P>Bad lake,bad!</P>))
 
       val tr = new TrapReader(0)
-      repeat(tr.readSection).consumeAll(xmlChunks) must_== (Right(List(TrapSection(null,StyledText(List())))), xmlChunks.drop(1))
+      val result = tr.readSections.consumeAll(xmlChunks)
+      result._1 must beRight
+      val sections = result._1.right.get
+      extractSectionNames(sections) must_== List("Attack", "Lorem")
+    }
+
+    "handle blank trapblocktitle - iter" in {
+      val xmlChunks = parseChunks(
+        (<SPAN class="trapblocktitle"></SPAN>),
+        (<P>Bad lake,bad!</P>))
+
+      val tr = new TrapReader(0)
+      val r = tr.readSections.consumeAll(xmlChunks)
+      if(r._1.isLeft) r._1.left.get.printStackTrace()
+      r must_== (Right(Nil), xmlChunks.drop(1))
     }
 
     "all together for - iter" in {
       val xmlChunks = parseChunks(
-//        (<H1 class="trap">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
+        (<H1 class="trap">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
         (<P class="flavor"><I>Glowing niceness.</I></P>),
         (<SPAN class="traplead"><B>Hazard:</B> Something pops.</SPAN>),
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>),
@@ -281,7 +314,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
     "all together without initiative - iter" in {
       val xmlChunks = parseChunks(
-//        (<H1 class="trap">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
+        (<H1 class="trap">Razor Spores (Elite)<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level 1 Elite Lurker<BR></BR><SPAN class="xp">XP 200</SPAN></SPAN></H1>),
         (<P class="flavor"><I>Glowing niceness.</I></P>),
         (<SPAN class="traplead"><B>Hazard:</B> Something pops.</SPAN>),
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>),
@@ -299,8 +332,11 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       result._1 must beRight
       result._2 must_== Nil
-//      result._1.right.get must_== null
     }
+  }
+
+  def extractSectionNames(sections: List[TrapSection]): List[String] = {
+    sections.map(x => x.header)
   }
 
   private def parseChunks(xmlChunks: Node*):List[BlockElement] = xmlChunks.map(Parser.parseBlockElement).toList

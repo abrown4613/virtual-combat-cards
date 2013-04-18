@@ -25,10 +25,10 @@ import vcc.infra.xtemplate.TemplateDataSource
 import org.exnebula.iteratee._
 
 /**
- *  Represents the capture DNDI Trap
+ * Represents the capture DNDI Trap
  */
 class Trap(val id: Int, var attributes: Map[String, String], val sections: List[TrapSection])
-        extends DNDIObject with TemplateDataSource {
+  extends DNDIObject with TemplateDataSource {
   final val clazz = "trap"
 
   def templateVariable(key: String): Option[String] = apply(key)
@@ -36,7 +36,7 @@ class Trap(val id: Int, var attributes: Map[String, String], val sections: List[
   def templateInlineXML(key: String): NodeSeq = null
 
   def templateGroup(key: String): List[TemplateDataSource] = {
-    if(key.toLowerCase == "sections") sections
+    if (key.toLowerCase == "sections") sections
     else Nil
   }
 }
@@ -44,7 +44,7 @@ class Trap(val id: Int, var attributes: Map[String, String], val sections: List[
 case class TrapSection(header: String, text: StyledText) extends TemplateDataSource {
 
   /**
-   * Helper funtion to make null into None, and other values to Some
+   * Helper function to make null into None, and other values to Some
    * @param tgt What should be wrapped in an option
    */
   protected def wrapInOption[T](tgt: T): Option[T] = if (tgt != null) Some(tgt) else None
@@ -52,14 +52,16 @@ case class TrapSection(header: String, text: StyledText) extends TemplateDataSou
   def templateGroup(group: String): List[TemplateDataSource] = Nil
 
   def templateVariable(key: String): Option[String] = wrapInOption(key.toLowerCase match {
-      case "header" => header
-      case _ => null
-    })
+    case "header" => header
+    case _ => null
+  })
 
   def templateInlineXML(key: String): NodeSeq = key.toLowerCase match {
     case "text" => text.toXHTML
     case _ => Nil
   }
+
+  def isEmpty = (header == null) && (text.blocks.isEmpty)
 }
 
 /**
@@ -77,7 +79,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     "xp" -> "100",
     "initiative" -> "-99",
     "level" -> "1"
-    )
+  )
 
   private var secs: List[TrapSection] = Nil
 
@@ -92,7 +94,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     l match {
       case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("xp", ignore) :: rest => normalizeTitle(rest)
-      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) :: ("role", role) :: normalizeTitle(rest)
+      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
       case ("level", ignore) :: rest => normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
@@ -103,9 +105,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     case Block("SPAN#trapblocktitle", Text(name) :: Nil) => name
     case Block("SPAN#trapblocktitle", Nil) => null
   }
-  private[dndi] val readBlankBlockTitle: Consumer[BlockElement, TrapSection] = matchConsumerWithState("SPAN trapblocktitle") {
-    case block@Block("SPAN#trapblocktitle", Nil) => Error(new UnexpectedBlockElementException("Skipping blank block", block), Empty)
-  }
+
+  private[dndi] val ignoreEmptySection: Consumer[BlockElement, Unit] = dropWhile(block => block == Block("SPAN#trapblocktitle", Nil))
 
   private[dndi] val readTrapBlockBody = matchConsumer("SPAN trapblockbody") {
     case Block("SPAN#trapblockbody", parts) =>
@@ -117,8 +118,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private[dndi] val readDescription = readOneBlockSection("SPAN", "traplead")
 
   private[dndi] val readComment = matchConsumer("SPAN trapblocktitle") {
-    case Block(tagClass, Text(comment) :: Nil) if(tagClass.startsWith("P#")) => comment
-    case Block(tagClass, Emphasis(comment) :: Nil) if(tagClass.startsWith("P#")) => comment
+    case Block(tagClass, Text(comment) :: Nil) if (tagClass.startsWith("P#")) => comment
+    case Block(tagClass, Emphasis(comment) :: Nil) if (tagClass.startsWith("P#")) => comment
   }
 
   private[dndi] val readInitiative = matchConsumer("SPAN traplead with initiative") {
@@ -128,26 +129,25 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
       (value.trim, TrapSection(null, textBuilder.getDocument()))
   }
 
-  private def readOneBlockSection(tag:String, clazz: String) = matchConsumer(tag + " " + clazz) {
-    case Block(tagClass, parts) if(tagClass == tag + "#" + clazz) =>
+  private def dropWhile[I](p: I => Boolean) = new Consumer[I, Unit] {
+    def consume(input: Input[I]): ConsumerState[I, Unit] = input match {
+      case EOF => Done((), EOF)
+      case Empty => Continue(this)
+      case Chunk(c) if(p(c)) => Continue(this)
+      case Chunk(c) => Done((),input)
+    }
+  }
+
+  private def readOneBlockSection(tag: String, clazz: String) = matchConsumer(tag + " " + clazz) {
+    case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
       val textBuilder = new TextBuilder
       textBuilder.append(TextBlock(tag, clazz, ParserTextTranslator.partsToStyledText(parts): _*))
       TrapSection(null, textBuilder.getDocument())
   }
 
-  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement,T]) = new Consumer[BlockElement, T] {
+  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement, T]) = new Consumer[BlockElement, T] {
     def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
-      case Chunk(c) if(matcher.isDefinedAt(c)) => Done(matcher(c),Empty)
-      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
-      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
-      case Empty => Continue(this)
-    }
-  }
-
-  private def matchConsumerWithState[T](expected: String)(matcher: PartialFunction[BlockElement,ConsumerState[BlockElement, T]]) = new Consumer[BlockElement, T] {
-    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
-      case Chunk(c) if(matcher.isDefinedAt(c)) => val next = matcher(c)
-        if(next == null) Continue(this) else next
+      case Chunk(c) if (matcher.isDefinedAt(c)) => Done(matcher(c), Empty)
       case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
       case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
       case Empty => Continue(this)
@@ -161,14 +161,23 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
       tb.append(t); tb
     }).getDocument())
 
+  private[dndi] val readSections = for {
+    sections <- repeat(readSection)
+  } yield(sections.filterNot(_.isEmpty))
+
+  private[dndi] val readHeader = matchConsumer[Map[String,String]]("Trap header") {
+    case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
+  }
+
   private[dndi] val readTrapOld = for {
+    head <- readHeader
     flavor <- readFlavor
     desc <- readDescription
     sec1 <- repeat(readSection)
     inits <- repeat(readInitiative)
     sec2 <- repeat(readSection)
     comment <- repeat(readComment)
-  } yield (flavor, desc, sec1, inits, sec2, comment)
+  } yield (head, flavor, desc, sec1, inits, sec2, comment)
 
   private[dndi] def processSection(stream: TokenStream[BlockElement]): TrapSection = {
     val textBuilder = new TextBuilder()
@@ -219,8 +228,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     val stream = new TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock]))
 
     //Safe guard for some empty stream
-    if(!stream.advance) false
-    
+    if (!stream.advance) false
+
     processHeader(stream)
     while (stream.head match {
       case Block("SPAN#trapblocktitle", Nil) =>
