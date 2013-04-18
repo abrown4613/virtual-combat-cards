@@ -128,7 +128,7 @@ object DNDInsiderCapture {
 
   /**
    * Attempts to capture an entity using the default logic.
-   * @param is The inputstream that contains the bytes of the supposed XML document. It will be filtered and converted
+   * @param is The InputStream that contains the bytes of the supposed XML document. It will be filtered and converted
    * @return If None was returned, either the XML failed to parse, or it did not include class and ID for the entry.
    *         If <code>Some(Left(pair))</code> was sent, you have a entry with ID and Class but no import logic.
    *         If <code>Some(Right(obj))</code> was returned the entry was successfully imported.

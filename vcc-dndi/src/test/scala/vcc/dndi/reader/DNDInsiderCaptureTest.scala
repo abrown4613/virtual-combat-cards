@@ -17,7 +17,7 @@
 package vcc.dndi.reader
 
 import org.specs2.SpecificationWithJUnit
-import vcc.dndi.reader.DNDInsiderCapture.{CapturedEntity, NullEntityStore}
+import vcc.dndi.reader.DNDInsiderCapture.{UnsupportedEntity, CapturedEntity, NullEntityStore}
 import java.io.ByteArrayInputStream
 import org.specs2.execute.Result
 
@@ -27,10 +27,20 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
   def is = "capture logic".title ^
     "capture monster" ! capture(someMonster, "monster") ^
     "capture trap in new format" ! capture(newTrap, "trap") ^
+    "handle missing id" ! missing ^
+    "handled unsupported type" ! unsupported ^
     end
 
+  private def missing = {
+    captureContent(missingId) must_== None
+  }
+
+  private def unsupported = {
+    captureContent(otherUnsupported) must_== Some(UnsupportedEntity(-1, "someOther"))
+  }
+
   private def capture(content: String, itsClass: String): Result = {
-    val result = DNDInsiderCapture.captureEntry(new ByteArrayInputStream(content.getBytes), NullEntityStore)
+    val result = captureContent(content)
     result match {
       case Some(CapturedEntity(ent)) =>
 //        ent.dump(System.out)
@@ -38,6 +48,10 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
       case s =>
         failure
     }
+  }
+
+  private def captureContent(content: String): Option[DNDInsiderCapture.Result] = {
+    DNDInsiderCapture.captureEntry(new ByteArrayInputStream(content.getBytes), NullEntityStore)
   }
 
   private val newTrap =
@@ -67,5 +81,18 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
       |</div>
     """.stripMargin
 
+  private val otherUnsupported =
+    """
+      |<div id="1234">
+      |
+      |	 <h1 class="someOther">Monster<br/><span class="type">Tiny natural beast</span><br/><span class="level">Level 1 Minion Skirmisher<span class="xp"> XP 0</span></span></h1>
+      |</div>
+    """.stripMargin
 
+  private val missingId =
+    """
+      |<div>
+      |
+      |	 <h1 class="monster">Monster<br/><span class="type">Tiny natural beast</span><br/><span class="level">Level 1 Minion Skirmisher<span class="xp"> XP 0</span></span></h1>
+      |</div>""".stripMargin
 }
