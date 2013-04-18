@@ -22,6 +22,7 @@ import vcc.dndi.reader.Parser.{HeaderBlock, Emphasis, Key, NonBlock, Text, Block
 import java.lang.String
 import xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
+import org.exnebula.iteratee._
 
 /**
  *  Represents the capture DNDI Trap
@@ -98,6 +99,76 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     }
   }
 
+  private[dndi] val readTrapBlockTitle = matchConsumer("SPAN trapblocktitle") {
+    case Block("SPAN#trapblocktitle", Text(name) :: Nil) => name
+    case Block("SPAN#trapblocktitle", Nil) => null
+  }
+  private[dndi] val readBlankBlockTitle: Consumer[BlockElement, TrapSection] = matchConsumerWithState("SPAN trapblocktitle") {
+    case block@Block("SPAN#trapblocktitle", Nil) => Error(new UnexpectedBlockElementException("Skipping blank block", block), Empty)
+  }
+
+  private[dndi] val readTrapBlockBody = matchConsumer("SPAN trapblockbody") {
+    case Block("SPAN#trapblockbody", parts) =>
+      TextBlock("SPAN", "trapblockbody", ParserTextTranslator.partsToStyledText(parts): _*)
+  }
+
+  private[dndi] val readFlavor = readOneBlockSection("P", "flavor")
+
+  private[dndi] val readDescription = readOneBlockSection("SPAN", "traplead")
+
+  private[dndi] val readComment = matchConsumer("SPAN trapblocktitle") {
+    case Block(tagClass, Text(comment) :: Nil) if(tagClass.startsWith("P#")) => comment
+    case Block(tagClass, Emphasis(comment) :: Nil) if(tagClass.startsWith("P#")) => comment
+  }
+
+  private[dndi] val readInitiative = matchConsumer("SPAN traplead with initiative") {
+    case block@Block("SPAN#traplead", Key("Initiative") :: Text(value) :: rest) =>
+      val textBuilder = new TextBuilder
+      textBuilder.append(TextBlock("SPAN", "traplead", ParserTextTranslator.partsToStyledText(block.parts): _*))
+      (value.trim, TrapSection(null, textBuilder.getDocument()))
+  }
+
+  private def readOneBlockSection(tag:String, clazz: String) = matchConsumer(tag + " " + clazz) {
+    case Block(tagClass, parts) if(tagClass == tag + "#" + clazz) =>
+      val textBuilder = new TextBuilder
+      textBuilder.append(TextBlock(tag, clazz, ParserTextTranslator.partsToStyledText(parts): _*))
+      TrapSection(null, textBuilder.getDocument())
+  }
+
+  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement,T]) = new Consumer[BlockElement, T] {
+    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
+      case Chunk(c) if(matcher.isDefinedAt(c)) => Done(matcher(c),Empty)
+      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
+      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
+      case Empty => Continue(this)
+    }
+  }
+
+  private def matchConsumerWithState[T](expected: String)(matcher: PartialFunction[BlockElement,ConsumerState[BlockElement, T]]) = new Consumer[BlockElement, T] {
+    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
+      case Chunk(c) if(matcher.isDefinedAt(c)) => val next = matcher(c)
+        if(next == null) Continue(this) else next
+      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
+      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
+      case Empty => Continue(this)
+    }
+  }
+
+  private[dndi] val readSection = for {
+    name <- readTrapBlockTitle
+    texts <- repeat(readTrapBlockBody)
+  } yield TrapSection(name, texts.foldLeft(new TextBuilder())((tb, t) => {
+      tb.append(t); tb
+    }).getDocument())
+
+  private[dndi] val readTrapOld = for {
+    flavor <- readFlavor
+    desc <- readDescription
+    sec1 <- repeat(readSection)
+    inits <- repeat(readInitiative)
+    sec2 <- repeat(readSection)
+    comment <- repeat(readComment)
+  } yield (flavor, desc, sec1, inits, sec2, comment)
 
   private[dndi] def processSection(stream: TokenStream[BlockElement]): TrapSection = {
     val textBuilder = new TextBuilder()
