@@ -18,7 +18,7 @@ package vcc.dndi.reader
 
 import vcc.infra.text._
 import util.matching.Regex
-import vcc.dndi.reader.Parser.{HeaderBlock, Emphasis, Key, NonBlock, Text, Block, BlockElement}
+import vcc.dndi.reader.Parser.{HeaderBlock, Emphasis, Key, Text, Block, BlockElement}
 import java.lang.String
 import xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
@@ -81,8 +81,6 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     "level" -> "1"
   )
 
-  private var secs: List[TrapSection] = Nil
-
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
 
@@ -126,7 +124,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     case block@Block("SPAN#traplead", Key("Initiative") :: Text(value) :: rest) =>
       val textBuilder = new TextBuilder
       textBuilder.append(TextBlock("SPAN", "traplead", ParserTextTranslator.partsToStyledText(block.parts): _*))
-      (value.trim, TrapSection(null, textBuilder.getDocument()))
+      (Parser.TrimProcess(value.trim), TrapSection(null, textBuilder.getDocument()))
   }
 
   private def dropWhile[I](p: I => Boolean) = new Consumer[I, Unit] {
@@ -170,14 +168,37 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   }
 
   private[dndi] val readTrapOld = for {
-    head <- readHeader
+    headMap <- readHeader
     flavor <- readFlavor
     desc <- readDescription
     sec1 <- repeat(readSection)
     inits <- repeat(readInitiative)
     sec2 <- repeat(readSection)
-    comment <- repeat(readComment)
-  } yield (head, flavor, desc, sec1, inits, sec2, comment)
+    comment <- readComment
+  } yield {
+    for (key <- List("xp", "name", "level", "role", "type")) {
+      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
+    }
+    attributes = attributes + ("comment" -> comment)
+    val init = inits.headOption
+    val x = init.map(_._2).toList
+    if(init.isDefined) attributes = attributes + ("initiative" -> init.get._1)
+    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), List(flavor, desc) ++ sec1 ++ x ++ sec2)
+  }
+
+  private val readHeaderNew = matchConsumer("new head block ") {
+    case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
+  }
+
+  private[dndi] val readTrapNew = for {
+    headMap <- readHeaderNew
+    _ <- dropWhile[BlockElement](x => true)
+  } yield {
+    for (key <- List("xp", "name", "level", "role", "type")) {
+      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
+    }
+    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), Nil)
+  }
 
   private[dndi] def processSection(stream: TokenStream[BlockElement]): TrapSection = {
     val textBuilder = new TextBuilder()
@@ -200,18 +221,6 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     TrapSection(sectionName, textBuilder.getDocument())
   }
 
-  private def oneBlockSection(tag: String, clazz: String, stream: TokenStream[BlockElement]): TrapSection = {
-    val textBuilder = new TextBuilder()
-    stream.head match {
-      case blk@Block(name, parts) if (name == tag + "#" + clazz) =>
-        textBuilder.append(TextBlock(tag, clazz, ParserTextTranslator.partsToStyledText(parts): _*))
-      case s =>
-        throw new UnexpectedBlockElementException("Expect block with name '" + tag + "#" + clazz + "'", s)
-    }
-    stream.advance()
-    TrapSection(null, textBuilder.getDocument())
-  }
-
   private[dndi] def processHeader(stream: TokenStream[BlockElement]) {
     val headMap: Map[String, String] = stream.head match {
       case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
@@ -225,44 +234,10 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   }
 
   def process(blocks: List[BlockElement]): Trap = {
-    val stream = new TokenStream[BlockElement](blocks.filterNot(x => x.isInstanceOf[NonBlock]))
-
-    //Safe guard for some empty stream
-    if (!stream.advance) false
-
-    processHeader(stream)
-    while (stream.head match {
-      case Block("SPAN#trapblocktitle", Nil) =>
-        stream.advance()
-      case Block("SPAN#trapblocktitle", ignore) =>
-        val sec = processSection(stream)
-        secs = sec :: secs
-        true
-      case Block("P#flavor", parts) =>
-        secs = oneBlockSection("P", "flavor", stream) :: secs
-        true
-      case Block("SPAN#traplead", parts) =>
-        // Check for special initiative line
-        parts.map(p => p.transform(Parser.TrimProcess)) match {
-          case Key("Initiative") :: Text(value) :: rest =>
-            attributes = attributes + ("initiative" -> value)
-          case _ => // Nothing
-        }
-        secs = oneBlockSection("SPAN", "traplead", stream) :: secs
-        true
-      case Block("P#", commentPart :: Nil) =>
-        val comment: String = commentPart match {
-          case Text(text) => text
-          case Emphasis(text) => text
-          case _ => null // Dont care much for this
-        }
-        if (comment != null) attributes = attributes + ("comment" -> comment)
-        stream.advance()
-        false
-      case _ => false
-    }) {
-
+    (readTrapNew orElse readTrapOld).consumeAll(blocks) match {
+      case (Right(trap),Nil) => trap
+      case (Right(trap),rest) => throw new UnexpectedBlockElementException("Unconsumed block: ", rest.head)
+      case (Left(error),rest) => throw error
     }
-    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), secs.reverse)
   }
 }
