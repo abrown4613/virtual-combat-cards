@@ -57,7 +57,6 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
   private val newTrap =
     """
       |<div id="123">
-      |
       |		<h1 class="thHead">A trap<br/><span class="thSubHead">Object</span><br/><span class="thLevel">Level 5 Trap<span class="thXP">450</span></span></h1>
       |   <p class="thStat"><b>Detect</b> Perception or Arcana DC (hard)</p>
       |   <span class="thInit"><b>Initiative</b> +6</span>
@@ -66,7 +65,7 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
       |   <p class="th2"><img src="http://www.wizards.com/dnd/images/symbol/Z3a.gif" /><b>Effect</b>  <img src="http://www.wizards.com/dnd/images/symbol/x.gif" /> <b>Daily</b></p>
       |   <p class="tbod"><i>Trigger</i>: snap.</p><p class="tbod"><i>Effect</i>: (Immediate Reaction): Ranged 1 (the triggering corpse); something.</p>
       |   <p class="publishedIn">Published in <a href="http://url.com/" target="_new">some source</a>.</p>
-      |    </div>""".stripMargin
+      |    </div>""".stripMargin.linesWithSeparators.map(_.trim).mkString("")
 
   private val someMonster =
     """
@@ -79,7 +78,7 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
       |  <p class="flavor"><b>Alignment</b> Unaligned<b> Languages</b> -</p>
       |  <p class="publishedIn">Published in <a href="http://www.wizards.com/" target="_new">Book</a>.</p>
       |</div>
-    """.stripMargin
+    """.stripMargin.linesWithSeparators.map(_.trim).mkString("")
 
   private val otherUnsupported =
     """
@@ -87,12 +86,12 @@ class DNDInsiderCaptureTest extends SpecificationWithJUnit {
       |
       |	 <h1 class="someOther">Monster<br/><span class="type">Tiny natural beast</span><br/><span class="level">Level 1 Minion Skirmisher<span class="xp"> XP 0</span></span></h1>
       |</div>
-    """.stripMargin
+    """.stripMargin.linesWithSeparators.map(_.trim).mkString("")
 
   private val missingId =
     """
       |<div>
       |
       |	 <h1 class="monster">Monster<br/><span class="type">Tiny natural beast</span><br/><span class="level">Level 1 Minion Skirmisher<span class="xp"> XP 0</span></span></h1>
-      |</div>""".stripMargin
+      |</div>""".stripMargin.linesWithSeparators.map(_.trim).mkString("")
 }
