@@ -18,12 +18,11 @@ package vcc.dndi.reader
 
 import vcc.infra.text._
 import util.matching.Regex
-import vcc.dndi.reader.Parser.{HeaderBlock, Emphasis, Key, Text, Block, BlockElement}
-import java.lang.String
+import vcc.dndi.reader.Parser._
 import xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
 import org.exnebula.iteratee._
-
+import CompendiumCombatantEntityMapper._
 /**
  * Represents the capture DNDI Trap
  */
@@ -68,7 +67,7 @@ case class TrapSection(header: String, text: StyledText) extends TemplateDataSou
  * TrapReader is a TokenStream processor that will load a Trap from the Token Stream.
  */
 class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
-  private var attributes = Map[String, String](
+  private val attributes = Map[String, String](
     "name" -> "Unknown",
     "hp" -> "9999",
     "ac" -> "99",
@@ -85,14 +84,14 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
 
   /**
-   * Normalizes header information, will remove misformated level and xp information. In these cases will default to
+   * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
    * initial values.
    */
   private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
     l match {
-      case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
+      case ("xp", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("xp", ignore) :: rest => normalizeTitle(rest)
-      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
+      case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
       case ("level", ignore) :: rest => normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
@@ -155,15 +154,13 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private[dndi] val readSection = for {
     name <- readTrapBlockTitle
     texts <- repeat(readTrapBlockBody)
-  } yield TrapSection(name, texts.foldLeft(new TextBuilder())((tb, t) => {
-      tb.append(t); tb
-    }).getDocument())
+  } yield TrapSection(name, StyledText(texts))
 
   private[dndi] val readSections = for {
     sections <- repeat(readSection)
-  } yield(sections.filterNot(_.isEmpty))
+  } yield (sections.filterNot(_.isEmpty))
 
-  private[dndi] val readHeader = matchConsumer[Map[String,String]]("Trap header") {
+  private[dndi] val readHeader = matchConsumer[Map[String, String]]("Trap header") {
     case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
   }
 
@@ -176,14 +173,10 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     sec2 <- repeat(readSection)
     comment <- readComment
   } yield {
-    for (key <- List("xp", "name", "level", "role", "type")) {
-      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
-    }
-    attributes = attributes + ("comment" -> comment)
     val init = inits.headOption
-    val x = init.map(_._2).toList
-    if(init.isDefined) attributes = attributes + ("initiative" -> init.get._1)
-    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), List(flavor, desc) ++ sec1 ++ x ++ sec2)
+    val initSec = init.map(_._2).toList
+    val nAttributes = updateAttributes(attributes, headMap) + ("comment" -> comment) ++ init.map("initiative" -> _._1)
+    new Trap(id, normalizeCompendiumNames(nAttributes), List(flavor, desc) ++ sec1 ++ initSec ++ sec2)
   }
 
   private val readHeaderNew = matchConsumer("new head block ") {
@@ -194,50 +187,19 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     headMap <- readHeaderNew
     _ <- dropWhile[BlockElement](x => true)
   } yield {
-    for (key <- List("xp", "name", "level", "role", "type")) {
-      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
-    }
-    new Trap(id, CompendiumCombatantEntityMapper.normalizeCompendiumNames(attributes), Nil)
-  }
-
-  private[dndi] def processSection(stream: TokenStream[BlockElement]): TrapSection = {
-    val textBuilder = new TextBuilder()
-
-    val sectionName = stream.head match {
-      case Block("SPAN#trapblocktitle", Text(name) :: Nil) =>
-        stream.advance()
-        name
-      case _ =>
-        throw new UnexpectedBlockElementException("SPAN trapblocktitle expected", stream.head)
-    }
-    while (stream.head match {
-      case blk@Block("SPAN#trapblockbody", parts) =>
-        textBuilder.append(TextBlock("SPAN", "trapblockbody", ParserTextTranslator.partsToStyledText(parts): _*))
-        true
-      case _ => false
-    }) {
-      stream.advance()
-    }
-    TrapSection(sectionName, textBuilder.getDocument())
-  }
-
-  private[dndi] def processHeader(stream: TokenStream[BlockElement]) {
-    val headMap: Map[String, String] = stream.head match {
-      case HeaderBlock("H1#trap", values) => normalizeTitle(values).toMap[String, String]
-      case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
-      case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
-    }
-    for (key <- List("xp", "name", "level", "role", "type")) {
-      if (headMap.isDefinedAt(key)) attributes = attributes + (key.toLowerCase -> headMap(key))
-    }
-    stream.advance()
+    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap).updated("type", "new")), Nil)
   }
 
   def process(blocks: List[BlockElement]): Trap = {
-    (readTrapNew orElse readTrapOld).consumeAll(blocks) match {
+    (readTrapNew orElse readTrapOld).consumeAll(blocks.filterNot(_.isInstanceOf[NonBlock])) match {
       case (Right(trap),Nil) => trap
       case (Right(trap),rest) => throw new UnexpectedBlockElementException("Unconsumed block: ", rest.head)
       case (Left(error),rest) => throw error
     }
   }
+
+  private def updateAttributes(attribute: Map[String,String], newValue: Map[String,String]): Map[String,String] =
+    List("xp", "name", "level", "role", "type").
+      foldLeft(attribute)((as,key)=> if(newValue.isDefinedAt(key)) as.updated(key, newValue(key)) else as)
+
 }
