@@ -141,6 +141,17 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "xp" -> "25", "role" -> "No Role")
     }
 
+    "parse header block with no level or XP" in {
+      //<H1 class="monster">Pest<BR></BR><SPAN class="type">animate </SPAN><BR></BR> </H1>
+      val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"),("type", "animate")))))
+      ts.advance()
+      val fields = reader.processHeader(ts)
+
+      fields must_== Map(
+        "name" -> "Pest", "type" -> "animate", "level" -> "1",
+        "xp" -> "0", "role" -> "No Role")
+    }
+
     "leave other roles unchanged" in {
       val ts = new TokenStream[BlockElement](List(HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "dude"), ("level", "Level 1 Elite Brute (Leader)"), ("xp", "XP 25")))))
       ts.advance()

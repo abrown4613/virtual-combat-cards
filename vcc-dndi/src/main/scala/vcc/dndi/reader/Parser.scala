@@ -373,11 +373,7 @@ object Parser {
    */
   private val blockStrategies: List[(String, PartialFunction[Node, BlockElement])] = List(
     ("H1 to HeaderBlock", {
-      case node @ <H1>{ _* }</H1> =>
-        var spans = flattenSpans(node)
-        if(!spans.exists(p => p._1 == "level")) spans = spans ::: List("level" -> "Level 1 No Role")
-        if(!spans.exists(p => p._1 == "xp")) spans = spans ::: List("xp" ->  "-")
-        HeaderBlock(elementClassAttr(node), spans)
+      case node @ <H1>{ _* }</H1> => HeaderBlock(elementClassAttr(node), flattenSpans(node))
     }),
   ("Misplaced Publish message", {
     case span @ <SPAN>{ _* }</SPAN> if ((span \\ "P" \ "I").text.startsWith ("First") ) =>
