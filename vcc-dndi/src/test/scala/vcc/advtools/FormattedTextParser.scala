@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +21,16 @@ import vcc.dndi.common.FormattedText._
 
 object FormattedTextParser {
 
-  def parseBlock(input:String):Option[Block] = {
-    val parser = new FormattedTextParser
+  def parseBlock(input: String): Option[Block] = parseBlock(input, identity)
+
+  def parseBlock(input: String, imageProcessor: String => String): Option[Block] = {
+    val parser = new FormattedTextParser(imageProcessor: String => String)
     val r = parser.parseAll(parser.block, input)
     if (r.isEmpty) None else Some(r.get)
   }
-
 }
 
-private class FormattedTextParser extends RegexParsers {
+private class FormattedTextParser(imageProcessor: String => String) extends RegexParsers {
   override val whiteSpace = "".r
 
   def block: Parser[Block] = repsep(line, lineBreak) ~ opt(lineBreak) ^^ {
@@ -41,17 +42,25 @@ private class FormattedTextParser extends RegexParsers {
     case i ~ x ~ xs => Line(i.length, x :: xs)
   }
 
-  private def part: Parser[Part] = italic | normal
+  private def part: Parser[Part] = italic | bold | image | normal
 
   private def italic: Parser[Part] = "_" ~ text ~ "_" ^^ {
     case _ ~ x ~ _ => Italic(x)
+  }
+
+  private def bold: Parser[Part] = "*" ~ text ~ "*" ^^ {
+    case _ ~ x ~ _ => Bold(x)
+  }
+
+  private def image: Parser[Part] = "{" ~ text ~ "}" ^^ {
+    case _ ~ src ~ _ => Image(imageProcessor(src))
   }
 
   private def normal: Parser[Part] = text ^^ {
     x => Normal(x)
   }
 
-  private def text: Parser[String] = """([^_\n\r\t]+)""".r
+  private def text: Parser[String] = """([^_{}\*\n\r\t]+)""".r
 
   private def lineBreak: Parser[String] = """([\n\r]+)""".r
 
