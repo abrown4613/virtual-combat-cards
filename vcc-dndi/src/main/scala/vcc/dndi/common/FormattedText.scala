@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,19 @@ object FormattedText {
 
   case class Italic(s: String) extends Part
 
+  case class Bold(s: String) extends Part
+
   case class Normal(s: String) extends Part
+
+  case class Image(src: String) extends Part
 
   case class Line(indent:Int, parts: Seq[Part]) {
     override def toString: String = {
       parts.map{
         _ match {
           case Italic(s) => "_%s_".format(s)
+          case Bold(s) => "*%s*".format(s)
+          case Image(s) => "{%s}".format(s)
           case Normal(s) => s
         }
       }.mkString(("\\t" * indent), "", "")
