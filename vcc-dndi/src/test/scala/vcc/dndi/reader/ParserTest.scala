@@ -78,13 +78,7 @@ class ParserTest extends SpecificationWithJUnit {
         Cell(null, List(Key("Saving Throws"), Text(" +2; "), Key("Action Points"), Text(" 1")))))
     }
 
-    "parse header block with no level" in {
-      val xml = (<H1 class="monster">Pest<BR></BR><SPAN class="type">animate </SPAN><BR></BR> </H1>)
-      val ret = Parser.parseBlockElement(xml)
-      ret must_== HeaderBlock("H1#monster", List(("name", "Pest"), ("type", "animate"), ("level", "Level 1 No Role"), ("xp", "-")))
-    }
-
-    "parse header block with no level" in {
+    "parse header block with break in header" in {
       val xml = (<H1 class="monster">Aboleth Overseer<BR></BR><SPAN class="type">Large aberrant magical beast (aquatic)</SPAN><BR></BR><SPAN class="level">Level 3 Elite Controller(Leader)<SPAN class="xp"> XP 40</SPAN></SPAN> </H1>)
       val ret = Parser.parseBlockElement(xml)
       ret must_== HeaderBlock("H1#monster", List(("name", "Aboleth Overseer"),

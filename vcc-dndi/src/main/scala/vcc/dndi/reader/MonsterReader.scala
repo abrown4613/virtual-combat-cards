@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -228,7 +228,10 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     var role = headMap.getOrElse("role","No Role")
     if (role == "Minion") role = "No Role"
     if (role.startsWith("Minion ")) role = role.substring(7)
-    headMap + ("role" -> role)
+    var adjustments:List[(String,String)] = List("role" -> role)
+    if(!headMap.isDefinedAt("xp")) adjustments = ("xp" -> "0") :: adjustments
+    if(!headMap.isDefinedAt("level")) adjustments = ("level" -> "1") :: adjustments
+    headMap ++ adjustments.toMap
   }
 
   /**
