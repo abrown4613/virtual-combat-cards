@@ -81,7 +81,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   )
 
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
-  final val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
+  final val reLevel = """^\s*Level\s+(\d+)\s+(.*)$""".r
+  final val reLevelNew = """^\s*Level\s+(\d+)\s+(.*)\s+(\w+)$""".r
 
   /**
    * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
@@ -90,9 +91,11 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
     l match {
       case ("xp", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
+      case ("thXP", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("xp", ignore) :: rest => normalizeTitle(rest)
       case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
-      case ("level", ignore) :: rest => normalizeTitle(rest)
+      case ("thLevel", reLevelNew(lvl, role, aType)) :: rest => ("level", lvl) ::("role", role) :: ("type", aType) :: normalizeTitle(rest)
+      case ("level", _) :: rest => normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
     }
@@ -185,9 +188,13 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   private[dndi] val readTrapNew = for {
     headMap <- readHeaderNew
-    _ <- dropWhile[BlockElement](x => true)
+    _ <- dropWhile[BlockElement](_ match {
+      case Block("P#publishedIn", _) => false
+      case _ => true
+    })
+    comment <- readComment
   } yield {
-    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap).updated("type", "new")), Nil)
+    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment)), Nil)
   }
 
   def process(blocks: List[BlockElement]): Trap = {
