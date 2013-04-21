@@ -28,9 +28,9 @@ class TrapReaderTest extends SpecificationWithJUnit {
   private val xmlFlavor = (<P class="flavor"><I>Glowing niceness.</I></P>)
   private val xmlTrapLead = (<SPAN class="traplead"><B>Hazard:</B> Something pops.</SPAN>)
 
-  "TrapSectionReader" should {
+  "TrapSectionReader with old format" should {
 
-    "read attack section -iteratee" in {
+    "read attack section" in {
       val xmlChunks = parseChunks(
         <SPAN class="trapblocktitle">Attack</SPAN>,
         <SPAN class="trapblockbody"><B>Immediate Reaction</B> <B>Melee</B> <BR></BR></SPAN>,
@@ -56,7 +56,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       tr.readSection.consumeAll(xmlChunks) must_== (Right(expected),xmlChunks.drop(4))
     }
 
-    "read section with Image ending with a P- iter" in {
+    "read section with Image ending with a P" in {
       val xmlChunks = parseChunks(
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>),
         (<SPAN class="trapblockbody"><IMG src="images/bullet.gif" alt=""></IMG> Thievery DC 5: Sneaky.<BR></BR><IMG src="images/bullet.gif" alt=""></IMG> Thievery DC 20: Almost.<BR></BR></SPAN>),
@@ -92,7 +92,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap("base:name") must_== Some("Razor Spores (Elite)")
     }
 
-    "handle complete header information - iter" in {
+    "handle complete header information" in {
       val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead, xmlComment)
 
       val tr = new TrapReader(0)
@@ -144,7 +144,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       )
     }
 
-    "handle flavor line - iter" in {
+    "handle flavor line" in {
       val xmlChunks = parseChunks(xmlFlavor, xmlComment)
 
       val tr = new TrapReader(0)
@@ -164,7 +164,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap("stat:initiative") must_== Some("5")
     }
 
-    "handle initiative line - iter " in {
+    "handle initiative line" in {
       val xmlChunks = parseChunks(
         (<SPAN class="traplead"><B>Initiative</B> +11</SPAN>), xmlComment)
 
@@ -183,7 +183,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap.sections.last must_== TrapSection(null, StyledText(List(TextBlock("SPAN","traplead",TextSegment.makeBold("Hazard:"),TextSegment(" Something pops.")))))
     }
 
-    "handle description line - iter" in {
+    "handle description line single" in {
       val xmlChunks = parseChunks(xmlTrapLead, xmlComment)
 
       val tr = new TrapReader(0)
@@ -192,7 +192,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       tr.readDescription.consumeAll(xmlChunks) must_== (Right(expected), xmlChunks.drop(1))
     }
 
-    "handle comment line " in {
+    "handle comment line" in {
       val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead,
         (<P>Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/9780786950171">Seekers of the Ashen Crown</A>.</P>))
 
@@ -202,7 +202,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap("text:comment") must_== Some("Published in Seekers of the Ashen Crown .")
     }
 
-    "handle blank trapblocktitle - iter" in {
+    "handle blank trapblocktitle" in {
       val xmlChunks = parseChunks(
         (<SPAN class="trapblocktitle"></SPAN>),
         (<SPAN class="trapblocktitle">Attack</SPAN>),
@@ -221,7 +221,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       extractSectionNames(sections) must_== List("Attack", "Lorem")
     }
 
-    "handle blank trapblocktitle with no other sections - iter" in {
+    "handle blank trapblocktitle with no other sections" in {
       val xmlChunks = parseChunks(
         (<SPAN class="trapblocktitle"></SPAN>),
         (<P>Bad lake,bad!</P>))
@@ -232,7 +232,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       r must_== (Right(Nil), xmlChunks.drop(1))
     }
 
-    "all together for - iter" in {
+    "all together for with initiative" in {
       val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead,
         (<SPAN class="trapblocktitle">Countermeasures</SPAN>),
         (<SPAN class="trapblockbody"><IMG src="images/bullet.gif" alt=""></IMG> Thievery DC 5: Sneaky.<BR></BR><IMG src="images/bullet.gif" alt=""></IMG> Thievery DC 20: Almost.<BR></BR></SPAN>),
@@ -250,7 +250,6 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       result._1 must beRight
       result._2 must_== Nil
-//      result._1.right.get must_== null
     }
 
     "all together without initiative - iter" in {
@@ -270,6 +269,25 @@ class TrapReaderTest extends SpecificationWithJUnit {
       result._1 must beRight
       result._2 must_== Nil
     }
+  }
+  private val newHeader = (<H1 class="thHead">Boomer<BR/><SPAN class="thSubHead">Object</SPAN><BR/><SPAN class="thLevel">Level 4 Elite Trap<SPAN class="thXP">XP 350</SPAN></SPAN></H1>)
+  private val newComment = (<P class="publishedIn">Published in <A target="_new" href="http://www.wizards.com/">book</A>.</P>)
+
+  "TrapSectionReader with new format" should {
+    "handle header and comment" in {
+      val trap = readChunks(newHeader, newComment)
+      trap("base:name") must_== Some("Boomer")
+      trap("base:level") must_== Some("4")
+      trap("base:xp") must_== Some("350")
+      trap("base:role") must_== Some("Elite")
+      trap("base:type") must_== Some("Trap")
+      trap("text:comment") must_== Some("Published in book .")
+    }
+  }
+
+  private def readChunks(nodes: Node*) = {
+    val reader = new TrapReader(0)
+    reader.process(parseChunks(nodes: _*))
   }
 
   private def extractSectionNames(sections: List[TrapSection]): List[String] = {
