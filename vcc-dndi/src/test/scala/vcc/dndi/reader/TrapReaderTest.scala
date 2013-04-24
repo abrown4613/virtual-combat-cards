@@ -278,6 +278,51 @@ class TrapReaderTest extends SpecificationWithJUnit {
   }
   private val newHeader = (<H1 class="thHead">Boomer<BR/><SPAN class="thSubHead">Object</SPAN><BR/><SPAN class="thLevel">Level 4 Elite Trap<SPAN class="thXP">XP 350</SPAN></SPAN></H1>)
   private val newComment = (<P class="publishedIn">Published in <A target="_new" href="http://www.wizards.com/">book</A>.</P>)
+  private val newTrapAttack = Seq(
+    (<H2 class="thHead">Triggered Actions</H2>),
+    (<P class="th2"><IMG src="http://www.wizards.com/dnd/images/symbol/Z1a.gif"/><B>Attack</B> (fire) </P>),
+    (<P class="tbod"><I>Trigger</I>: you enter area.</P>),
+    (<P class="tbod"><I>Attack</I> (<I>No Action</I>): Close burst 2 (creatures in burst); +7 vs. Reflex</P>),
+    (<P class="tbod"><I>Miss</I>: Half damage.</P>),
+    (<P class="tbod"><I>Effect</I>: Lots of fire.</P>),
+    (<P class="tbod"><I>Special</I>: More fire.</P>))
+  private val sectionAttackNew = TrapSection("Triggered Actions",
+    m("[th2]{z1a.gif}*Attack* (fire) \n" +
+      "[tbod]_Trigger_: you enter area.\n" +
+      "[tbod]_Attack_ (_No Action_): Close burst 2 (creatures in burst); +7 vs. Reflex\n" +
+      "[tbod]_Miss_: Half damage.\n" +
+      "[tbod]_Effect_: Lots of fire.\n" +
+      "[tbod]_Special_: More fire."))
+
+  private val newTraits = Seq(
+    (<H2 class="thHead">Traits</H2>),
+    (<P class="th2"><B>Green</B> </P>),
+    (<P class="thStat">Tree like.</P>),
+    (<P class="th2"><B>Round</B> </P>),
+    (<P class="thStat">Ball like.</P>))
+
+  private val sectionNewTraits = TrapSection("Traits",
+    m("[th2]*Green* \n[thStat]Tree like.\n" +
+      "[th2]*Round* \n[thStat]Ball like."))
+
+  private val newStatNoInit = Seq(
+    (<P class="thStat"><B>Detect</B> Perception DC 14</P>),
+    (<SPAN class="thInit"><B>Initiative</B> —</SPAN>))
+
+  private val sectionHeadNoInit = TrapSection(null, m("[thStat]*Detect* Perception DC 14\n[thInit]*Initiative* —"))
+
+  private val newStatWithInit = Seq(
+    (<P class="thStat"><B>Detect</B> automatic</P>),
+    (<SPAN class="thInit"><B>Initiative</B> +19</SPAN>),
+    (<P class="thStat"><B>Immune</B> attacks </P>))
+
+  private val newCountermeasures = Seq(
+    (<H2 class="thHead">Countermeasures</H2>),
+    (<P class="thBody"><IMG src="symbol/X.gif"/> <B>Disable</B>: Thievery DC 21 (standard action). <I>Success:</I> The trap is disabled.<I> Failure (16 or lower):</I> The trap triggers.</P>))
+
+  private val sectionCounterMeasures = TrapSection("Countermeasures",
+    m("[thBody]{x.gif} *Disable*: Thievery DC 21 (standard action). _Success:_ The trap is disabled." +
+      "_ Failure (16 or lower):_ The trap triggers."))
 
   "TrapSectionReader with new format" should {
     "handle header and comment" in {
@@ -289,6 +334,59 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap("base:type") must_== Some("Trap")
       trap("text:comment") must_== Some("Published in book .")
     }
+
+    "handle header without role" in {
+      val header = (<H1 class="thHead">Nice Trap<BR/><SPAN class="thSubHead">Object</SPAN><BR/><SPAN class="thLevel">Level 15 Hazard<SPAN class="thXP">XP 1200</SPAN></SPAN></H1>)
+      val trap = readChunks(header, newComment)
+      trap("base:name") must_== Some("Nice Trap")
+      trap("base:level") must_== Some("15")
+      trap("base:xp") must_== Some("1200")
+      trap("base:role") must_== Some("Standard")
+      trap("base:type") must_== Some("Hazard")
+      trap("text:comment") must_== Some("Published in book .")
+    }
+
+    "trap without level or xp" in {
+      val head = (<H1 class="thHead">Blob<BR/><SPAN class="thSubHead">Object</SPAN><BR/><SPAN class="thLevel">Level Varies Trap<SPAN class="thXP">XP Varies</SPAN></SPAN></H1>)
+      val trap = readChunks(Seq(head) ++ newStatNoInit ++ Seq(newComment):_*)
+      trap("base:name") must_== Some("Blob")
+      trap("base:level") must_== Some("1")
+      trap("base:xp") must_== Some("100")
+      trap("base:type") must_== Some("Trap")
+      trap("base:role") must_== Some("Standard")
+      trap("text:comment") must_== Some("Published in book .")
+     }
+
+    "trap with initiative" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatWithInit ++ Seq(newComment):_*)
+      trap.sections(0) must_== TrapSection(null,
+        m("[thStat]*Detect* automatic\n[thInit]*Initiative* +19\n[thStat]*Immune* attacks "))
+      trap("stat:initiative") must_== Some("19")
+    }
+
+    "trap without initiative" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatNoInit ++ Seq(newComment):_*)
+      trap.sections(0) must_== sectionHeadNoInit
+      trap("stat:initiative") must_== Some("-99")
+    }
+
+    "trap attack" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatNoInit ++ newTrapAttack ++ Seq(newComment):_*)
+      trap.sections(0) must_== sectionHeadNoInit
+      trap.sections(1) must_== sectionAttackNew
+     }
+
+    "trap with traits" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatNoInit ++ newTraits ++ Seq(newComment):_*)
+      trap.sections(0) must_== sectionHeadNoInit
+      trap.sections(1) must_== sectionNewTraits
+     }
+    "trap with countermeasure" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatNoInit ++ newTrapAttack ++ newCountermeasures ++ Seq(newComment):_*)
+      trap.sections(0) must_== sectionHeadNoInit
+      trap.sections(1) must_== sectionAttackNew
+      trap.sections(2) must_== sectionCounterMeasures
+     }
   }
 
   private def readChunks(nodes: Node*) = {
