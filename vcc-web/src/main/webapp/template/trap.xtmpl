@@ -1,12 +1,8 @@
 <?xml version='1.0' ?>
 <html xmlns:t="http://org.exnebula/xtemplate/1.0">
     <t:define macro="section">
-        <t:ifdefined id="header">
-            <span class="trapblocktitle">
-                <t:data id="header"/>
-            </span>
-            <t:inline id="text"/>
-        </t:ifdefined>
+        <t:ifdefined id="header"><span class="trapblocktitle"> <t:data id="header"/></span></t:ifdefined>
+        <t:inline id="text"/>
     </t:define>
     <head>
         <link rel="stylesheet" type="text/css" href="dndi.css"/>
@@ -25,9 +21,7 @@
                 <t:include macro="section"/>
             </t:foreach>
             <t:ifdefined id="text:comment">
-                <p>
-                    <t:data id="text:comment"/>
-                </p>
+                <p><t:data id="text:comment"/></p>
             </t:ifdefined>
         </div>
     </body>
