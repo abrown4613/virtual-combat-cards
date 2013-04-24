@@ -23,6 +23,8 @@ import xml.NodeSeq
 import vcc.infra.xtemplate.TemplateDataSource
 import org.exnebula.iteratee._
 import CompendiumCombatantEntityMapper._
+import ParserTextTranslator._
+
 /**
  * Represents the capture DNDI Trap
  */
@@ -82,19 +84,27 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   final val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final val reLevel = """^\s*Level\s+(\d+)\s+(.*)$""".r
-  final val reLevelNew = """^\s*Level\s+(\d+)\s+(.*)\s+(\w+)$""".r
+  final val reLevelNew = """^\s*Level\s+(\d+)\s*(.*)\s+(\w+)$""".r
+  final val reLevelNewVaries = """^\s*Level\s+\w+\s*(.*)\s+(\w+)$""".r
 
   /**
    * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
    * initial values.
    */
   private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
+    def normalizeRole(role: String): String = {
+      if (role.trim == "") "Standard" else role.trim
+    }
+
     l match {
       case ("xp", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("thXP", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
       case ("xp", ignore) :: rest => normalizeTitle(rest)
       case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
-      case ("thLevel", reLevelNew(lvl, role, aType)) :: rest => ("level", lvl) ::("role", role) :: ("type", aType) :: normalizeTitle(rest)
+      case ("thLevel", reLevelNew(lvl, role, aType)) :: rest =>
+        ("level", lvl) ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
+      case ("thLevel", reLevelNewVaries(role, aType)) :: rest =>
+        ("level", "1") ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
       case ("level", _) :: rest => normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
@@ -186,15 +196,43 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
   }
 
+  private val readBaseStatNew = matchConsumer[(Option[String], TextBlock)]("stat block") {
+    case Block("P#thStat", parts) => (None, TextBlock("P", "thStat", partsToStyledText(parts): _ *))
+    case Block("SPAN#thInit", Key("Initiative") :: Text(value) :: Nil) =>
+      (Some(Parser.TrimProcess(value.trim)),
+        TextBlock("P", "thInit", List(TextSegment.makeBold("Initiative"), TextSegment(" " + value.trim))))
+  }
+
+  private val readNewSectionHead = matchConsumer[String]("thHead") {
+    case Block("H2#thHead", Text(name) :: Nil) => name
+  }
+
+  private val readNewSectionContent = matchConsumer("section content th2 and tbod") {
+    case Block("P#th2", parts) => TextBlock("P", "th2", partsToStyledText(parts): _*)
+    case Block("P#thStat", parts) => TextBlock("P", "thStat", partsToStyledText(parts): _*)
+    case Block("P#tbod", parts) => TextBlock("P", "tbod", partsToStyledText(parts): _*)
+    case Block("P#thBody", parts) => TextBlock("P", "thBody", partsToStyledText(parts): _*)
+  }
+
+  private val readNewSection = for {
+    name <- readNewSectionHead
+    blocks <- repeat(readNewSectionContent)
+  } yield TrapSection(name, StyledText(blocks))
+
   private[dndi] val readTrapNew = for {
     headMap <- readHeaderNew
-    _ <- dropWhile[BlockElement](_ match {
-      case Block("P#publishedIn", _) => false
-      case _ => true
-    })
+    x <- repeat(readBaseStatNew)
+    secs <- repeat(readNewSection)
     comment <- readComment
   } yield {
-    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment)), Nil)
+    val lines = x.map(_._2)
+    val init = x.collectFirst {
+      case (Some(s), _) if (s.matches("\\d+")) => ("initiative" -> s)
+    }
+    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++
+      init.toMap), List(
+      TrapSection(null, StyledText(lines))) ++ secs
+    )
   }
 
   def process(blocks: List[BlockElement]): Trap = {
@@ -208,5 +246,4 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private def updateAttributes(attribute: Map[String,String], newValue: Map[String,String]): Map[String,String] =
     List("xp", "name", "level", "role", "type").
       foldLeft(attribute)((as,key)=> if(newValue.isDefinedAt(key)) as.updated(key, newValue(key)) else as)
-
 }
