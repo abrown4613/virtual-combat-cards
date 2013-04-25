@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,14 @@
  */
 package vcc.infra.fields
 
-class IntField(val fset:FieldSet, override val id:String, override val validator:FieldValidator[Int]) extends Field[Int](fset,id,validator) {
+class IntField(val fset: FieldSet, override val id: String, override val validator: FieldValidator[Int]) extends Field[Int](fset, id, validator) {
 
-  override def toString = "IntField("+id+":= "+ value +")"
+  override def toString = "IntField(" + id + ":= " + value + ")"
 }
 
-class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidator[Int](rules: _*) {
-  def fromString(str:String):FieldValue[Int] = {
-    if(str!=null && str!="") {
+class DefaultIntFieldValidator(rules: ValidationRule[Int]*) extends FieldValidator[Int](rules: _*) {
+  def fromString(str: String): FieldValue[Int] = {
+    if (str != null && str != "") {
       try {
         Defined(str.toInt)
       } catch {
@@ -34,23 +34,35 @@ class DefaultIntFieldValidator(rules:ValidationRule[Int]*) extends FieldValidato
   }
 }
 
-case class BoundedInteger(range:Range) extends ValidationRule[Int] {
-  def isValid(v:FieldValue[Int]):Option[String] = {
+class IntFieldWithDefaultValidator(defaultValue: Int, rules: ValidationRule[Int]*) extends FieldValidator[Int](rules: _*) {
+  def fromString(str: String): FieldValue[Int] = {
+    if (str != null && str != "") {
+      try {
+        Defined(str.toInt)
+      } catch {
+        case e: NumberFormatException => Defined(defaultValue)
+        case s: Exception => Invalid(str, s.getMessage)
+      }
+    } else Defined(defaultValue)
+  }
+}
+
+case class BoundedInteger(range: Range) extends ValidationRule[Int] {
+  def isValid(v: FieldValue[Int]): Option[String] = {
     v match {
-      case Defined(iv) => if(range.contains(iv)) None else Some(iv + " not between "+ range.start + " and "+range.end ) 
+      case Defined(iv) => if (range.contains(iv)) None else Some(iv + " not between " + range.start + " and " + range.end)
       case Undefined => None
-      case Invalid(raw,reason) => Some(reason)
+      case Invalid(raw, reason) => Some(reason)
     }
   }
 }
 
-case class IntegerGreaterThan(min:Int) extends ValidationRule[Int] {
-  def isValid(v:FieldValue[Int]):Option[String] = {
+case class IntegerGreaterThan(min: Int) extends ValidationRule[Int] {
+  def isValid(v: FieldValue[Int]): Option[String] = {
     v match {
-      case Invalid(raw,reason) => Some(reason)
-      case Defined(iv) if(iv <= min)=> Some(iv + " must be greater than "+min) 
+      case Invalid(raw, reason) => Some(reason)
+      case Defined(iv) if (iv <= min) => Some(iv + " must be greater than " + min)
       case _ => None
     }
   }
 }
-
