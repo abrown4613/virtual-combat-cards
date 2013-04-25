@@ -120,12 +120,12 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   private[dndi] val readTrapBlockBody = matchConsumer("SPAN trapblockbody") {
     case Block("SPAN#trapblockbody", parts) =>
-      TextBlock("P", "trapblockbody", ParserTextTranslator.partsToStyledText(parts): _*)
+      TextBlock("P", "thStat", ParserTextTranslator.partsToStyledText(parts): _*)
   }
 
-  private[dndi] val readFlavor = readOneBlockSection("P", "flavor")
+  private[dndi] val readFlavor = readOneBlockSection("P", "flavor", "flavor")
 
-  private[dndi] val readDescription = readOneBlockSection("SPAN", "traplead")
+  private[dndi] val readDescription = readOneBlockSection("SPAN", "traplead", "thStat")
 
   private[dndi] val readComment = matchConsumer("SPAN trapblocktitle") {
     case Block(tagClass, Text(comment) :: Nil) if (tagClass.startsWith("P#")) => comment
@@ -135,7 +135,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private[dndi] val readInitiative = matchConsumer("SPAN traplead with initiative") {
     case block@Block("SPAN#traplead", Key("Initiative") :: Text(value) :: rest) =>
       val textBuilder = new TextBuilder
-      textBuilder.append(TextBlock("P", "traplead", ParserTextTranslator.partsToStyledText(block.parts): _*))
+      textBuilder.append(TextBlock("P", "thStat", ParserTextTranslator.partsToStyledText(block.parts): _*))
       (Parser.TrimProcess(value.trim), TrapSection(null, textBuilder.getDocument()))
   }
 
@@ -148,10 +148,10 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     }
   }
 
-  private def readOneBlockSection(tag: String, clazz: String) = matchConsumer(tag + " " + clazz) {
+  private def readOneBlockSection(tag: String, clazz: String, outClass: String) = matchConsumer(tag + " " + clazz) {
     case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
       val textBuilder = new TextBuilder
-      textBuilder.append(TextBlock("P", clazz, ParserTextTranslator.partsToStyledText(parts): _*))
+      textBuilder.append(TextBlock("P", outClass, ParserTextTranslator.partsToStyledText(parts): _*))
       TrapSection(null, textBuilder.getDocument())
   }
 

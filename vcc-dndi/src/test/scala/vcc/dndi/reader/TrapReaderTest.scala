@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,9 @@ class TrapReaderTest extends SpecificationWithJUnit {
   private val xmlFlavor = (<P class="flavor"><I>Glowing niceness.</I></P>)
   private val xmlTrapLead = (<SPAN class="traplead"><B>Hazard:</B> Something pops.</SPAN>)
   private val sectionAttack = TrapSection("Attack", m(
-    "[trapblockbody]*Immediate Reaction* *Melee* \n \n" +
-      "[trapblockbody]*Target: *The poor creature.\n" +
-      "[trapblockbody]*Attack: *+8 vs. Reflex"))
+    "[thStat]*Immediate Reaction* *Melee* \n \n" +
+      "[thStat]*Target: *The poor creature.\n" +
+      "[thStat]*Attack: *+8 vs. Reflex"))
 
   "TrapSectionReader with old format" should {
 
@@ -47,8 +47,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       name must_== Done("Attack", Empty)
 
       val segment = tr.readTrapBlockBody.consume(Chunk(xmlChunks(1)))
-      segment must_== Done(m("[trapblockbody]*Immediate Reaction* *Melee* \n ").blocks(0)
-        , Empty)
+      segment must_== Done(m("[thStat]*Immediate Reaction* *Melee* \n ").blocks(0), Empty)
 
       tr.readSection.consumeAll(xmlChunks) must_== (Right(sectionAttack),xmlChunks.drop(4))
     }
@@ -61,7 +60,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       val tr = new TrapReader(0)
       val expected = TrapSection("Countermeasures", m(
-        "[trapblockbody]{bullet.gif} Thievery DC 5: Sneaky.\n{bullet.gif} Thievery DC 20: Almost.\n"))
+        "[thStat]{bullet.gif} Thievery DC 5: Sneaky.\n{bullet.gif} Thievery DC 20: Almost.\n"))
 
       val result = tr.readSection.consumeAll(xmlChunks)
       result must_== (Right(expected), xmlChunks.drop(2))
@@ -136,7 +135,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       trap.sections must_== List(
         TrapSection(null, m("[flavor]_Glowing niceness._")),
-        TrapSection(null, m("[traplead]*Hazard:* Something pops."))
+        TrapSection(null, m("[thStat]*Hazard:* Something pops."))
       )
     }
 
@@ -155,7 +154,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
       val tr = new TrapReader(0)
       val trap = tr.process(xmlChunks)
 
-      trap.sections.last must_== TrapSection(null, m("[traplead]*Initiative* +5"))
+      trap.sections.last must_== TrapSection(null, m("[thStat]*Initiative* +5"))
       trap("stat:initiative") must_== Some("5")
     }
 
@@ -165,7 +164,7 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       val tr = new TrapReader(0)
 
-      val expected = ("11", TrapSection(null, m("[traplead]*Initiative* +11")))
+      val expected = ("11", TrapSection(null, m("[thStat]*Initiative* +11")))
       tr.readInitiative.consumeAll(xmlChunks) must_== (Right(expected), xmlChunks.drop(1))
     }
 
@@ -175,14 +174,14 @@ class TrapReaderTest extends SpecificationWithJUnit {
       val tr = new TrapReader(0)
       val trap = tr.process(xmlChunks)
 
-      trap.sections.last must_== TrapSection(null, m("[traplead]*Hazard:* Something pops."))
+      trap.sections.last must_== TrapSection(null, m("[thStat]*Hazard:* Something pops."))
     }
 
     "handle description line single" in {
       val xmlChunks = parseChunks(xmlTrapLead, xmlComment)
       val tr = new TrapReader(0)
 
-      val expected = TrapSection(null, m("[traplead]*Hazard:* Something pops."))
+      val expected = TrapSection(null, m("[thStat]*Hazard:* Something pops."))
       tr.readDescription.consumeAll(xmlChunks) must_== (Right(expected), xmlChunks.drop(1))
     }
 
@@ -248,12 +247,12 @@ class TrapReaderTest extends SpecificationWithJUnit {
 
       result._1.right.get("stat:initiative") must_== Some("5")
       sections(0) must_== TrapSection(null, m("[flavor]_Glowing niceness._"))
-      sections(1) must_== TrapSection(null, m("[traplead]*Hazard:* Something pops."))
+      sections(1) must_== TrapSection(null, m("[thStat]*Hazard:* Something pops."))
       sections(2) must_== TrapSection("Detection",
-        m("[trapblockbody]{bullet.gif} Thievery DC 5: Sneaky.\n{bullet.gif} Thievery DC 20: Almost.\n"))
-      sections(3) must_== TrapSection(null, m("[traplead]*Initiative* +5"))
+        m("[thStat]{bullet.gif} Thievery DC 5: Sneaky.\n{bullet.gif} Thievery DC 20: Almost.\n"))
+      sections(3) must_== TrapSection(null, m("[thStat]*Initiative* +5"))
       sections(4) must_== sectionAttack
-      sections(5) must_== TrapSection("Countermeasures", m("[trapblockbody]{bullet.gif}Pray.\n"))
+      sections(5) must_== TrapSection("Countermeasures", m("[thStat]{bullet.gif}Pray.\n"))
     }
 
     "all together without initiative no intiative" in {
