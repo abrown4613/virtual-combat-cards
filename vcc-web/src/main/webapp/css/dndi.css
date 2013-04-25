@@ -282,3 +282,73 @@ body, div, p, th, td, li, dd, input, select, textarea {
     padding-left: 5px;
     padding-top: 3px;
 }
+
+#detail p.publishedIn {
+    font-size: 8pt;
+    margin-top: 10px;
+}
+
+/* New Trap format */
+#detail h1.thHead {
+    background: #45133C;
+    height:38px;
+}
+
+#detail h1.thHead .thDetail {
+    display: block;
+   	position: relative;
+   	z-index: 99;
+   	top: -0.75em;
+   	height: 1em;
+   	font-weight: normal;
+   	font-size: 0.917em;
+}
+
+#detail h2.thHead {
+	display: block;
+    background: #65345D;
+    color: #FFFFFF;
+    /*font-variant: small-caps;*/
+    font-size: 11pt;
+    line-height: 18px;
+    padding-top: 0px;
+    vertical-align: bottom;
+    height: 18px;
+}
+
+#detail p.tbod {
+	padding: 0px 0px 0px 45px;
+	text-indent: -15px;
+	display: block;
+	margin: 0;
+	background: #E8F2D6;
+	font-size:8.75pt;
+	color: #000000;
+}
+#detail p.thInit, #detail p.thStat {
+	padding: 0px 0px 0px 15px;
+	display: block;
+	margin: 0;
+	background: #E8F2D6;
+	font-size:8.75pt;
+	color: #000000;
+}
+
+#detail p.th2 {
+	padding: 0px 0px 0px 15px;
+	display: block;
+	margin: 0;
+	background: #CADBB7;
+	font-size:8.75pt;
+	color: #000000;
+}
+
+#detail p.thBody {
+	padding: 0px 0px 0px 30px;
+	text-indent: -15px;
+	display: block;
+	margin: 0;
+	background: #E8F2D6;
+	font-size:8.75pt;
+	color: #000000;
+}
