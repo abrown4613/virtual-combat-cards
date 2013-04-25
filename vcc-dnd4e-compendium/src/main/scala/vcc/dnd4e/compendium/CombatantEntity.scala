@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ *   Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@ object CombatantEntityFields {
 
   object RequiredIntGreaterZero extends DefaultIntFieldValidator(Mandatory(), IntegerGreaterThan(0))
 
+  object RequiredIntWithDefault extends IntFieldWithDefaultValidator(0, Mandatory())
+
   object RequiredInt extends DefaultIntFieldValidator(Mandatory())
 
   object AnyInt extends DefaultIntFieldValidator()
@@ -51,7 +53,7 @@ abstract class CombatantEntity(val eid: EntityID) extends FieldSet(eid) {
 
   val name = new StringField(this, "base:name", RequiredString)
 
-  val initiative = new IntField(this, "stat:initiative", RequiredInt)
+  val initiative = new IntField(this, "stat:initiative", RequiredIntWithDefault)
   val hp = new IntField(this, "stat:hp", RequiredIntGreaterZero)
 
   val ac = new IntField(this, "stat:ac", AnyInt)

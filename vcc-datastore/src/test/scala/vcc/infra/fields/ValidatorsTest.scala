@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +41,11 @@ class ValidatorsTest extends SpecificationWithJUnit {
     val stringValidator = new DefaultStringFieldValidator(Mandatory())
   }
 
+  trait defaultIntContext extends Scope {
+    val DefaultValue = 123
+    val intValidator = new IntFieldWithDefaultValidator(DefaultValue, Mandatory())
+  }
+
   "baseInt validator" should {
     "provide invalid on invalid numbers" in new baseIntContext {
       intValidator.validate("a").isValid must beFalse
@@ -52,7 +57,7 @@ class ValidatorsTest extends SpecificationWithJUnit {
       intValidator.validate("").isDefined must beFalse
       intValidator.validate("").isValid must beTrue
     }
-    "provide valids for numbers" in new baseIntContext {
+    "provide valid for numbers" in new baseIntContext {
       for (v <- (-10 to 10)) {
         intValidator.validate(v.toString) must_== Defined(v)
       }
@@ -96,6 +101,15 @@ class ValidatorsTest extends SpecificationWithJUnit {
     "only accept defined values" in new notNullStringContext {
       stringValidator.validate(null).isValid must beFalse
       stringValidator.validate("a string").isValid must beTrue
+    }
+  }
+
+  "int validator with default" should {
+    "accept valid int or provide default" in new defaultIntContext {
+      intValidator.validate(null) must_== Defined(DefaultValue)
+      intValidator.validate("some") must_== Defined(DefaultValue)
+      intValidator.validate("1") must_== Defined(1)
+      intValidator.validate("12") must_== Defined(12)
     }
   }
 }
