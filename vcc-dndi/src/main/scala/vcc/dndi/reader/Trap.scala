@@ -87,30 +87,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   final val reLevelNew = """^\s*Level\s+(\d+)\s*(.*)\s+(\w+)$""".r
   final val reLevelNewVaries = """^\s*Level\s+\w+\s*(.*)\s+(\w+)$""".r
 
-  /**
-   * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
-   * initial values.
-   */
-  private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
-    def normalizeRole(role: String): String = {
-      if (role.trim == "") "Standard" else role.trim
-    }
-
-    l match {
-      case ("xp", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
-      case ("thXP", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
-      case ("xp", ignore) :: rest => normalizeTitle(rest)
-      case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
-      case ("thLevel", reLevelNew(lvl, role, aType)) :: rest =>
-        ("level", lvl) ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
-      case ("thLevel", reLevelNewVaries(role, aType)) :: rest =>
-        ("level", "1") ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
-      case ("level", _) :: rest => normalizeTitle(rest)
-      case p :: rest => p :: normalizeTitle(rest)
-      case Nil => Nil
-    }
-  }
-
+  /* Old Trap Format */
   private[dndi] val readTrapBlockTitle = matchConsumer("SPAN trapblocktitle") {
     case Block("SPAN#trapblocktitle", Text(name) :: Nil) => name
     case Block("SPAN#trapblocktitle", Nil) => null
@@ -137,31 +114,6 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
       val textBuilder = new TextBuilder
       textBuilder.append(TextBlock("P", "thStat", ParserTextTranslator.partsToStyledText(block.parts): _*))
       (Parser.TrimProcess(value.trim), TrapSection(null, textBuilder.getDocument()))
-  }
-
-  private def dropWhile[I](p: I => Boolean) = new Consumer[I, Unit] {
-    def consume(input: Input[I]): ConsumerState[I, Unit] = input match {
-      case EOF => Done((), EOF)
-      case Empty => Continue(this)
-      case Chunk(c) if(p(c)) => Continue(this)
-      case Chunk(c) => Done((),input)
-    }
-  }
-
-  private def readOneBlockSection(tag: String, clazz: String, outClass: String) = matchConsumer(tag + " " + clazz) {
-    case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
-      val textBuilder = new TextBuilder
-      textBuilder.append(TextBlock("P", outClass, ParserTextTranslator.partsToStyledText(parts): _*))
-      TrapSection(null, textBuilder.getDocument())
-  }
-
-  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement, T]) = new Consumer[BlockElement, T] {
-    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
-      case Chunk(c) if (matcher.isDefinedAt(c)) => Done(matcher(c), Empty)
-      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
-      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
-      case Empty => Continue(this)
-    }
   }
 
   private[dndi] val readSection = for {
@@ -192,6 +144,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     new Trap(id, normalizeCompendiumNames(nAttributes), List(flavor, desc) ++ sec1 ++ initSec ++ sec2)
   }
 
+  /* New trap format */
   private val readHeaderNew = matchConsumer("new head block ") {
     case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
   }
@@ -229,10 +182,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     val init = x.collectFirst {
       case (Some(s), _) if (s.matches("\\d+")) => ("initiative" -> s)
     }
-    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++
-      init.toMap), List(
-      TrapSection(null, StyledText(lines))) ++ secs
-    )
+    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++ init.toMap),
+      List(TrapSection(null, StyledText(lines))) ++ secs)
   }
 
   def process(blocks: List[BlockElement]): Trap = {
@@ -246,4 +197,53 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
   private def updateAttributes(attribute: Map[String,String], newValue: Map[String,String]): Map[String,String] =
     List("xp", "name", "level", "role", "type").
       foldLeft(attribute)((as,key)=> if(newValue.isDefinedAt(key)) as.updated(key, newValue(key)) else as)
+
+  /**
+   * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
+   * initial values.
+   */
+  private def normalizeTitle(l: List[(String, String)]): List[(String, String)] = {
+    def normalizeRole(role: String): String = {
+      if (role.trim == "") "Standard" else role.trim
+    }
+
+    l match {
+      case ("xp", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
+      case ("thXP", reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
+      case ("xp", ignore) :: rest => normalizeTitle(rest)
+      case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
+      case ("thLevel", reLevelNew(lvl, role, aType)) :: rest =>
+        ("level", lvl) ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
+      case ("thLevel", reLevelNewVaries(role, aType)) :: rest =>
+        ("level", "1") ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
+      case ("level", _) :: rest => normalizeTitle(rest)
+      case p :: rest => p :: normalizeTitle(rest)
+      case Nil => Nil
+    }
+  }
+
+  private def dropWhile[I](p: I => Boolean) = new Consumer[I, Unit] {
+    def consume(input: Input[I]): ConsumerState[I, Unit] = input match {
+      case EOF => Done((), EOF)
+      case Empty => Continue(this)
+      case Chunk(c) if(p(c)) => Continue(this)
+      case Chunk(c) => Done((),input)
+    }
+  }
+
+  private def readOneBlockSection(tag: String, clazz: String, outClass: String) = matchConsumer(tag + " " + clazz) {
+    case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
+      val textBuilder = new TextBuilder
+      textBuilder.append(TextBlock("P", outClass, ParserTextTranslator.partsToStyledText(parts): _*))
+      TrapSection(null, textBuilder.getDocument())
+  }
+
+  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement, T]) = new Consumer[BlockElement, T] {
+    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
+      case Chunk(c) if (matcher.isDefinedAt(c)) => Done(matcher(c), Empty)
+      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
+      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
+      case Empty => Continue(this)
+    }
+  }
 }
