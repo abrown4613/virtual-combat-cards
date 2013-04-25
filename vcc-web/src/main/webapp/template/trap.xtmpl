@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <html xmlns:t="http://org.exnebula/xtemplate/1.0">
     <t:define macro="section">
-        <t:ifdefined id="header"><span class="trapblocktitle"> <t:data id="header"/></span></t:ifdefined>
+        <t:ifdefined id="header"><h2 class="thHead"> <t:data id="header"/></h2></t:ifdefined>
         <t:inline id="text"/>
     </t:define>
     <head>
@@ -9,19 +9,19 @@
     </head>
     <body>
         <div id="detail">
-            <h1 class="trap">
+            <h1 class="thHead">
                 <t:data id="base:name"/>
-                <span class="type">
-                    <t:data id="base:type"/>
+                <span class="thDetail">
                     <t:data id="base:class"/>
                     <t:data id="base:role"/>
+                    <t:data id="base:type"/>
                 </span>
             </h1>
             <t:foreach ingroup="sections">
                 <t:include macro="section"/>
             </t:foreach>
             <t:ifdefined id="text:comment">
-                <p><t:data id="text:comment"/></p>
+                <p class="publishedIn"><t:data id="text:comment"/></p>
             </t:ifdefined>
         </div>
     </body>
