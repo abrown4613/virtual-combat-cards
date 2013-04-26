@@ -16,8 +16,13 @@
  */
 package vcc.advtools
 
-import vcc.infra.text.{TextSegment, TextBlock, TextBuilder, StyledText}
+import vcc.infra.text._
 import vcc.dndi.common.FormattedText._
+import vcc.dndi.common.FormattedText.Bold
+import vcc.dndi.common.FormattedText.Italic
+import vcc.dndi.common.FormattedText.Image
+import vcc.dndi.common.FormattedText.Block
+import vcc.dndi.common.FormattedText.Normal
 
 object PowerDescriptionFormatter {
   private var debug = false
@@ -33,6 +38,8 @@ object PowerDescriptionFormatter {
         line.parts.map(_ match {
           case Italic(t) => TextSegment.makeItalic(t)
           case Normal(t) => TextSegment(t)
+          case Bold(t) => TextSegment.makeBold(t)
+          case Image(src) => InlineImage(src)
         }): _*))
     }
     if (debug)
