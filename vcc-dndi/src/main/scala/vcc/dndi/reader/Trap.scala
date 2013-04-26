@@ -131,8 +131,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   private[dndi] val readTrapOld = for {
     headMap <- readHeader
-    flavor <- readFlavor
-    desc <- readDescription
+    flavor <- repeat(readFlavor)
+    desc <- repeat(readDescription)
     sec1 <- repeat(readSection)
     inits <- repeat(readInitiative)
     sec2 <- repeat(readSection)
@@ -141,7 +141,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     val init = inits.headOption
     val initSec = init.map(_._2).toList
     val nAttributes = updateAttributes(attributes, headMap) + ("comment" -> comment) ++ init.map("initiative" -> _._1)
-    new Trap(id, normalizeCompendiumNames(nAttributes), List(flavor, desc) ++ sec1 ++ initSec ++ sec2)
+    new Trap(id, normalizeCompendiumNames(nAttributes), flavor ++ desc ++ sec1 ++ initSec ++ sec2)
   }
 
   /* New trap format */
@@ -172,13 +172,14 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   private[dndi] val readTrapNew = for {
     headMap <- readHeaderNew
-    x <- repeat(readBaseStatNew)
+    baseStats <- repeat(readBaseStatNew)
     secs <- repeat(readNewSection)
     comment <- readComment
   } yield {
-    val lines = x.map(_._2)
-    val attrComplement = x.flatMap(_._1)
-    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++ attrComplement),
+    val lines = baseStats.map(_._2)
+    val attrComplement = baseStats.flatMap(_._1)
+    new Trap(id,
+      normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++ attrComplement),
       List(TrapSection(null, StyledText(lines))) ++ secs)
   }
 

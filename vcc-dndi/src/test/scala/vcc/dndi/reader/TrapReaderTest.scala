@@ -27,8 +27,8 @@ class TrapReaderTest extends SpecificationWithJUnit {
   private val xmlComment = (<P>Footer</P>)
   private val xmlFlavor = (<P class="flavor"><I>Glowing niceness.</I></P>)
   private val xmlTrapLead = (<SPAN class="traplead"><B>Hazard:</B> Something pops.</SPAN>)
-  private val sectionAttack = TrapSection("Attack", m(
-    "[thStat]*Immediate Reaction* *Melee* \n \n" +
+  private val sectionAttack = TrapSection("Attack",
+    m("[thStat]*Immediate Reaction* *Melee* \n \n" +
       "[thStat]*Target: *The poor creature.\n" +
       "[thStat]*Attack: *+8 vs. Reflex"))
 
@@ -98,12 +98,9 @@ class TrapReaderTest extends SpecificationWithJUnit {
     }
 
     "handle partial head 1" in {
-      val xmlChunks = parseChunks(
+      val trap = readChunks(
         (<H1 class="trap" xmlns="http://www.w3.org/1999/xhtml">Angry Crowd<BR></BR><SPAN class="type">Hazard</SPAN><BR></BR><SPAN class="level">Level Party's level <BR></BR><SPAN class="xp">XP varies</SPAN></SPAN></H1>),
         xmlFlavor, xmlTrapLead, xmlComment)
-
-      val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks)
 
       trap("base:name") must_== Some("Angry Crowd")
       trap("base:level") must_== Some("1")
@@ -113,12 +110,9 @@ class TrapReaderTest extends SpecificationWithJUnit {
     }
 
     "handle partial head 2" in {
-      val xmlChunks = parseChunks(
+      val trap = readChunks(
         (<H1 class="trap">Spiked Swinging Gate<BR></BR><SPAN class="type">Trap</SPAN><BR></BR><SPAN class="level">Level <BR></BR><SPAN class="xp">XP </SPAN></SPAN></H1>),
         xmlFlavor, xmlTrapLead, xmlComment)
-
-      val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks)
 
       trap("base:name") must_== Some("Spiked Swinging Gate")
       trap("base:level") must_== Some("1")
@@ -128,14 +122,27 @@ class TrapReaderTest extends SpecificationWithJUnit {
     }
 
     "handle flavor line" in {
-      val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead, xmlComment)
-
-      val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks)
+      val trap = readChunks(xmlHead, xmlFlavor, xmlTrapLead, xmlComment)
 
       trap.sections must_== List(
         TrapSection(null, m("[flavor]_Glowing niceness._")),
         TrapSection(null, m("[thStat]*Hazard:* Something pops."))
+      )
+    }
+
+    "handle trap without flavor line" in {
+      val trap = readChunks(xmlHead, xmlTrapLead, xmlComment)
+
+      trap.sections must_== List(
+        TrapSection(null, m("[thStat]*Hazard:* Something pops."))
+      )
+    }
+
+    "handle trap without first traplead line" in {
+      val trap = readChunks(xmlHead, xmlFlavor, xmlComment)
+
+      trap.sections must_== List(
+        TrapSection(null, m("[flavor]_Glowing niceness._"))
       )
     }
 
@@ -148,11 +155,10 @@ class TrapReaderTest extends SpecificationWithJUnit {
     }
 
     "handle initiative line" in {
-      val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead,
+      val trap = readChunks(xmlHead, xmlFlavor, xmlTrapLead,
+        (<SPAN class="trapblocktitle">Detection</SPAN>),
+        (<SPAN class="trapblockbody">Thievery DC 5: Sneaky.</SPAN>),
         (<SPAN class="traplead"><B>Initiative</B> +5</SPAN>), xmlComment)
-
-      val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks)
 
       trap.sections.last must_== TrapSection(null, m("[thStat]*Initiative* +5"))
       trap("stat:initiative") must_== Some("5")
@@ -186,11 +192,8 @@ class TrapReaderTest extends SpecificationWithJUnit {
     }
 
     "handle comment line" in {
-      val xmlChunks = parseChunks(xmlHead, xmlFlavor, xmlTrapLead,
+      val trap = readChunks(xmlHead, xmlFlavor, xmlTrapLead,
         (<P>Published in <A target="_new" href="http://www.wizards.com/default.asp?x=products/dndacc/9780786950171">Seekers of the Ashen Crown</A>.</P>))
-
-      val tr = new TrapReader(0)
-      val trap = tr.process(xmlChunks)
 
       trap("text:comment") must_== Some("Published in Seekers of the Ashen Crown .")
     }
@@ -275,6 +278,8 @@ class TrapReaderTest extends SpecificationWithJUnit {
       result._2 must_== Nil
     }
   }
+
+  /* Test for new trap format */
   private val newHeader = (<H1 class="thHead">Boomer<BR/><SPAN class="thSubHead">Object</SPAN><BR/><SPAN class="thLevel">Level 4 Elite Trap<SPAN class="thXP">XP 350</SPAN></SPAN></H1>)
   private val newComment = (<P class="publishedIn">Published in <A target="_new" href="http://www.wizards.com/">book</A>.</P>)
   private val newTrapAttack = Seq(
