@@ -83,14 +83,17 @@ object EffectEditor {
     val logger = LoggerFactory.getLogger("startup")
     val resource = this.getClass.getResource("/vcc/dnd4e/view/autocomplete.dict")
     if (resource != null) {
+      val is = resource.openStream()
       try {
-        AutoCompleteDictionary.fromStream(resource.openStream(), (term, msg) => {
+        AutoCompleteDictionary.fromStream(is, (term, msg) => {
           logger.warn("AutoComplete[{}]: {}", Array(term, msg))
         })
       } catch {
         case e: Exception =>
           logger.warn("Failed to open resource: /vcc/dnd4e/view/autocomplete.dict", e)
           new AutoCompleteDictionary(Nil)
+      } finally {
+        is.close()
       }
     } else {
       new AutoCompleteDictionary(Nil)
@@ -156,7 +159,6 @@ object EffectEditor {
       }
     }
   }
-
 }
 
 class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, ins 0, hidemode 3", "", "[][][22!]") {
@@ -211,7 +213,6 @@ class EffectEditor(parent: EffectEditorPanel) extends MigPanel("fillx, gap 2 2, 
     condition.description, {
       case tgt if (durationBuilder.isDefinedAt(src, tgt)) =>
         parent.createEffect(tgt, condition, durationBuilder.generate(src, tgt), beneficial)
-        false
     }).toTransferable
   }))
 

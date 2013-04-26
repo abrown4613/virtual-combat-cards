@@ -46,9 +46,11 @@ class CompendiumMenu(director:PanelDirector) extends Menu("Compendium") {
         val ent = CombatantEntityBuilder.buildEntity(dse)
         Compendium.activeRepository.store(ent)
       } catch {
-        case e =>
-          logger.warn("Failed to load file "+file.get.getAbsolutePath+": reason",e)
-          Dialog.showMessage(this, "Failed to load "+ file.get.getAbsoluteFile +".\nThe file may be corrupt or invalid.", "Failed to import file",Dialog.Message.Error,null)
+        case e: Exception =>
+          logger.warn("Failed to load file " + file.get.getAbsolutePath + ": reason", e)
+          Dialog.showMessage(this,
+            "Failed to load " + file.get.getAbsoluteFile + ".\nThe file may be corrupt or invalid.",
+            "Failed to import file", Dialog.Message.Error, null)
       }
     }
   })

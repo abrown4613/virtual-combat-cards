@@ -65,7 +65,7 @@ class NewCombatantDialog(owner: Frame) extends ModalPromptDialog[CombatantEntity
       try {
         this.idField.text.toInt; true
       } catch {
-        case _ => false
+        case _: Exception => false
       }
     else
       true
