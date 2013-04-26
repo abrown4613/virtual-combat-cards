@@ -315,6 +315,13 @@ class TrapReaderTest extends SpecificationWithJUnit {
     (<SPAN class="thInit"><B>Initiative</B> +19</SPAN>),
     (<P class="thStat"><B>Immune</B> attacks </P>))
 
+  private val newStatWithAllStats = Seq(
+    (<P class="thStat"><B>Detect</B> —</P>),
+    (<SPAN class="thInit"><B>Initiative</B> -2</SPAN>),
+    (<P class="thStat"><B>HP</B> 435</P>),
+    (<P class="thStat"><B>AC</B> 31, <B>Fortitude</B> —, <B>Reflex</B> 29, <B>Will</B> 30</P>),
+    (<P class="thStat"><B>Immune</B> attacks </P>))
+
   private val newCountermeasures = Seq(
     (<H2 class="thHead">Countermeasures</H2>),
     (<P class="thBody"><IMG src="symbol/X.gif"/> <B>Disable</B>: Thievery DC 21 (standard action). <I>Success:</I> The trap is disabled.<I> Failure (16 or lower):</I> The trap triggers.</P>))
@@ -361,12 +368,30 @@ class TrapReaderTest extends SpecificationWithJUnit {
       trap.sections(0) must_== TrapSection(null,
         m("[thStat]*Detect* automatic\n[thInit]*Initiative* +19\n[thStat]*Immune* attacks "))
       trap("stat:initiative") must_== Some("19")
+      trap("stat:hp") must_== Some("9999")
+      trap("stat:ac") must_== Some("99")
     }
 
     "trap without initiative" in {
       val trap = readChunks(Seq(newHeader) ++ newStatNoInit ++ Seq(newComment):_*)
       trap.sections(0) must_== sectionHeadNoInit
       trap("stat:initiative") must_== Some("-99")
+    }
+
+    "trap with initiative more stats" in {
+      val trap = readChunks(Seq(newHeader) ++ newStatWithAllStats ++ Seq(newComment):_*)
+      trap.sections(0) must_== TrapSection(null,
+          m("[thStat]*Detect* —\n" +
+            "[thInit]*Initiative* -2\n" +
+            "[thStat]*HP* 435\n" +
+            "[thStat]*AC* 31, *Fortitude* —, *Reflex* 29, *Will* 30\n" +
+            "[thStat]*Immune* attacks "))
+      trap("stat:initiative") must_== Some("-2")
+      trap("stat:hp") must_== Some("435")
+      trap("stat:ac") must_== Some("31")
+      trap("stat:fortitude") must_== Some("99")
+      trap("stat:reflex") must_== Some("29")
+      trap("stat:will") must_== Some("30")
     }
 
     "trap attack" in {

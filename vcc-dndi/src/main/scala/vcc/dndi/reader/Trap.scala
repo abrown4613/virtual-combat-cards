@@ -149,11 +149,9 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     case HeaderBlock("H1#thHead", values) => normalizeTitle(values).toMap[String, String]
   }
 
-  private val readBaseStatNew = matchConsumer[(Option[String], TextBlock)]("stat block") {
-    case Block("P#thStat", parts) => (None, TextBlock("P", "thStat", partsToStyledText(parts): _ *))
-    case Block("SPAN#thInit", Key("Initiative") :: Text(value) :: Nil) =>
-      (Some(Parser.TrimProcess(value.trim)),
-        TextBlock("P", "thInit", List(TextSegment.makeBold("Initiative"), TextSegment(" " + value.trim))))
+  private val readBaseStatNew = matchConsumer[(Map[String, String], TextBlock)]("stat block") {
+    case Block("P#thStat", parts) => extractStatsAndFormatBlock("thStat", parts)
+    case Block("SPAN#thInit", parts) => extractStatsAndFormatBlock("thInit", parts)
   }
 
   private val readNewSectionHead = matchConsumer[String]("thHead") {
@@ -179,10 +177,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     comment <- readComment
   } yield {
     val lines = x.map(_._2)
-    val init = x.collectFirst {
-      case (Some(s), _) if (s.matches("\\d+")) => ("initiative" -> s)
-    }
-    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++ init.toMap),
+    val attrComplement = x.flatMap(_._1)
+    new Trap(id, normalizeCompendiumNames(updateAttributes(attributes, headMap) + ("comment" -> comment) ++ attrComplement),
       List(TrapSection(null, StyledText(lines))) ++ secs)
   }
 
@@ -233,9 +229,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   private def readOneBlockSection(tag: String, clazz: String, outClass: String) = matchConsumer(tag + " " + clazz) {
     case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
-      val textBuilder = new TextBuilder
-      textBuilder.append(TextBlock("P", outClass, ParserTextTranslator.partsToStyledText(parts): _*))
-      TrapSection(null, textBuilder.getDocument())
+      TrapSection(null, StyledText(List(TextBlock("P", outClass, partsToStyledText(parts): _*))))
   }
 
   private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement, T]) = new Consumer[BlockElement, T] {
@@ -245,5 +239,19 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
       case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
       case Empty => Continue(this)
     }
+  }
+
+  private def extractStatsAndFormatBlock(clazz: String, parts: List[Part]): (Map[String, String], TextBlock) =
+    (extractStats(normalizeParts(parts)), TextBlock("P", clazz, partsToStyledText(parts): _ *))
+
+  private def normalizeParts(parts: List[Parser.Part]): List[(String, String)] = {
+    Parser.partsToPairs(parts.map(p => p.transform(Parser.TrimProcess)))
+  }
+
+  private def extractStats(fields: List[(String, String)]): Map[String, String] = {
+    val toExtract = Seq("hp", "ac", "fortitude", "reflex", "will", "initiative")
+
+    (for ((key, value) <- fields if (toExtract.contains(key.toLowerCase) && value.matches("\\-?\\d+")))
+    yield (key.toLowerCase -> value)).toMap
   }
 }
