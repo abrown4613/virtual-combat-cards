@@ -27,7 +27,8 @@ class IterateeTest extends SpecificationWithJUnit {
       "  map" ! mapWorks ^
       composingCases ^ endp ^
       "alternate" ^ alternateCases ^ endp ^
-      "repeat groups" ^ repeatCases ^
+      "repeat groups" ^ repeatCases ^ endp ^
+      "optional case" ^ optionalCases ^ endp ^
       end
   }
 
@@ -90,6 +91,17 @@ class IterateeTest extends SpecificationWithJUnit {
     f <- matchConsumer("B")
   } yield (blocks, f)
 
+  private val matchBarThenOptionalNumberThenFoo = for {
+    _ <- matchBar
+    opt <- optional(matchNumber)
+    _ <- matchFoo
+  } yield opt
+
+  private val matchOptionalBarNotConsumeThenBar = for {
+    bar1 <- optional(matchButDoNotConsume("Bar"))
+    bar2 <- matchBar
+  } yield bar1.isDefined
+
   private val composingCases = Seq(
     accept("consume all", matchFooNumber).consuming("Foo", "10").yielding(("Foo", 10)).noRest,
     accept("consume and leave rest", matchFooNumber).consuming("Foo", "1", "rest").yielding(("Foo", 1)).remaining("rest"),
@@ -123,6 +135,23 @@ class IterateeTest extends SpecificationWithJUnit {
       yielding(List(("Foo", List(3, 4)), ("Bar", Nil), ("Foo", List(7, 8)))).remaining("B")
   )
 
+  private val optionalCases = Seq(
+    accept("optional does not match", optional(matchNumber)).consuming("a", "1").yielding(None).remaining("a", "1"),
+    accept("optional does not match empty", optional(matchNumber)).consuming().yielding(None).remaining(),
+    accept("optional matches", optional(matchNumber)).consuming("1", "a").yielding(Some(1)).remaining("a"),
+    accept("match in flow ", matchBarThenOptionalNumberThenFoo).
+      consuming("Bar", "123", "Foo").yielding(Some(123)).remaining(),
+    accept("match in flow ", matchBarThenOptionalNumberThenFoo).
+      consuming("Bar", "Foo").yielding(None).remaining(),
+    accept("match optional repeat", optional(repeat(matchNumber))).
+      consuming("1", "2", "Foo").yielding(Some(List(1,2))).remaining("Foo"),
+    accept("match optional empty repeat", optional(repeat(matchNumber))).
+      consuming("Foo").yielding(Some(Nil)).remaining("Foo"),
+    accept("match optional but not consume", matchOptionalBarNotConsumeThenBar).
+      consuming("Bar", "Foo").yielding(true).remaining("Foo"),
+    reject("fail to match optional with complex matcher", matchOptionalBarNotConsumeThenBar).
+      consuming("Foo").reporting("not matched Foo").remaining("Foo")
+  )
   private class RejectedInput[I, T](name: String, consumer: Consumer[I, T]) {
     var input: List[I] = Nil
     var errorMessage: String = null

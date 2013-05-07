@@ -34,12 +34,12 @@ case object EOF extends Input[Nothing]
 
 
 trait Consumer[I, T] {
+  self =>
   def consume(input: Input[I]): ConsumerState[I, T]
 
   def flatMap[S](f: T => Consumer[I, S])(implicit m: Manifest[S]): Consumer[I, S] = {
-    val outer = this
     new Consumer[I, S] {
-      def consume(i: Input[I]): ConsumerState[I, S] = outer.consume(i) match {
+      def consume(i: Input[I]): ConsumerState[I, S] = self.consume(i) match {
         case e@Error(error, input) => e
         case Continue(next) => Continue(next flatMap (f))
         case Done(result, remainder) => f(result).consume(remainder)
@@ -48,10 +48,9 @@ trait Consumer[I, T] {
   }
 
   def map[S](f: T => S)(implicit m: Manifest[S]): Consumer[I, S] = {
-    val outer = this
     new Consumer[I, S] {
       def consume(i: Input[I]): ConsumerState[I, S] = {
-        outer.consume(i) match {
+        self.consume(i) match {
           case e@Error(error, input) => e
           case Continue(next) => Continue(next map f)
           case Done(value, remainder) => Done(f(value), remainder)
@@ -107,5 +106,17 @@ class Repeat[I, T] private(groupStart: Consumer[I, T], next: Consumer[I, T], acc
         case Done(value, rest) => again(groupStart, acc ::: List(value)).consume(rest)
         case Continue(nextStep) => Continue(new Repeat(groupStart, nextStep, acc))
       }
+  }
+}
+
+class Optional[I,T] private[iteratee](optional: Consumer[I,T]) extends Consumer[I, Option[T]] {
+  def consume(input: Input[I]): ConsumerState[I, Option[T]] = input match {
+    case EOF => Done(None, EOF)
+    case Empty => Continue(this)
+    case Chunk(c) => optional.consume(input) match {
+      case Error(_, remainder) => Done(None, remainder)
+      case Done(value, remainder) => Done(Some(value), remainder)
+      case Continue(next) => Continue(new Optional(next))
+    }
   }
 }
