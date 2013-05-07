@@ -18,4 +18,6 @@ package org.exnebula
 
 package object iteratee {
   def repeat[I, T](group: Consumer[I, T]) = Repeat(group)
+
+  def optional[I, T](optional:Consumer[I,T]) = new Optional(optional)
 }
