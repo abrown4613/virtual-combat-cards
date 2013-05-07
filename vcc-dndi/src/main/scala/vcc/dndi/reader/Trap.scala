@@ -134,13 +134,13 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     flavor <- repeat(readFlavor)
     desc <- repeat(readDescription)
     sec1 <- repeat(readSection)
-    inits <- repeat(readInitiative)
+    optionalInitiative <- optional(readInitiative)
     sec2 <- repeat(readSection)
     comment <- readComment
   } yield {
-    val init = inits.headOption
-    val initSec = init.map(_._2).toList
-    val nAttributes = updateAttributes(attributes, headMap) + ("comment" -> comment) ++ init.map("initiative" -> _._1)
+    val initSec = optionalInitiative.map(_._2).toList
+    val nAttributes = updateAttributes(attributes, headMap) + ("comment" -> comment) ++
+      optionalInitiative.map("initiative" -> _._1)
     new Trap(id, normalizeCompendiumNames(nAttributes), flavor ++ desc ++ sec1 ++ initSec ++ sec2)
   }
 
@@ -170,7 +170,7 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     blocks <- repeat(readNewSectionContent)
   } yield TrapSection(name, StyledText(blocks))
 
-  private[dndi] val readTrapNew = for {
+  private val readTrapNew = for {
     headMap <- readHeaderNew
     baseStats <- repeat(readBaseStatNew)
     secs <- repeat(readNewSection)
@@ -185,15 +185,15 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
 
   def process(blocks: List[BlockElement]): Trap = {
     (readTrapNew orElse readTrapOld).consumeAll(blocks.filterNot(_.isInstanceOf[NonBlock])) match {
-      case (Right(trap),Nil) => trap
-      case (Right(trap),rest) => throw new UnexpectedBlockElementException("Unconsumed block: ", rest.head)
-      case (Left(error),rest) => throw error
+      case (Right(trap), Nil) => trap
+      case (Right(trap), rest) => throw new UnexpectedBlockElementException("Unconsumed block: ", rest.head)
+      case (Left(error), rest) => throw error
     }
   }
 
-  private def updateAttributes(attribute: Map[String,String], newValue: Map[String,String]): Map[String,String] =
+  private def updateAttributes(attribute: Map[String, String], newValue: Map[String, String]): Map[String, String] =
     List("xp", "name", "level", "role", "type").
-      foldLeft(attribute)((as,key)=> if(newValue.isDefinedAt(key)) as.updated(key, newValue(key)) else as)
+      foldLeft(attribute)((as, key) => if (newValue.isDefinedAt(key)) as.updated(key, newValue(key)) else as)
 
   /**
    * Normalizes header information, will remove mis-formatted level and xp information. In these cases will default to
@@ -210,9 +210,9 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
       case ("xp", ignore) :: rest => normalizeTitle(rest)
       case ("level", reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
       case ("thLevel", reLevelNew(lvl, role, aType)) :: rest =>
-        ("level", lvl) ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
+        ("level", lvl) ::("role", normalizeRole(role)) ::("type", aType) :: normalizeTitle(rest)
       case ("thLevel", reLevelNewVaries(role, aType)) :: rest =>
-        ("level", "1") ::("role", normalizeRole(role)) :: ("type", aType) :: normalizeTitle(rest)
+        ("level", "1") ::("role", normalizeRole(role)) ::("type", aType) :: normalizeTitle(rest)
       case ("level", _) :: rest => normalizeTitle(rest)
       case p :: rest => p :: normalizeTitle(rest)
       case Nil => Nil
@@ -223,8 +223,8 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     def consume(input: Input[I]): ConsumerState[I, Unit] = input match {
       case EOF => Done((), EOF)
       case Empty => Continue(this)
-      case Chunk(c) if(p(c)) => Continue(this)
-      case Chunk(c) => Done((),input)
+      case Chunk(c) if (p(c)) => Continue(this)
+      case Chunk(c) => Done((), input)
     }
   }
 
