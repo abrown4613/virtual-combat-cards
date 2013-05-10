@@ -258,9 +258,9 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
         }
         val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
         val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-        val (stats, whatever) = processPrimaryBlock(partsToPairs(parts))
+        val (stats, _) = processPrimaryBlock(partsToPairs(parts))
         stream.advance()
-        (true, stats, whatever)
+        (true, stats, Nil)
       case Block("P#flavor", parts) =>
         val (stats, auras) = processPrimaryBlock(partsToPairs(trimParts(parts)))
         stream.advance()
