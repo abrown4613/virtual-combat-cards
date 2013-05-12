@@ -68,7 +68,7 @@ case class TrapSection(header: String, text: StyledText) extends TemplateDataSou
 /**
  * TrapReader is a TokenStream processor that will load a Trap from the Token Stream.
  */
-class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
+class TrapReader(val id: Int) extends DNDIObjectReader[Trap] with BlockElementConsumer {
   private val attributes = Map[String, String](
     "name" -> "Unknown",
     "hp" -> "9999",
@@ -219,27 +219,9 @@ class TrapReader(val id: Int) extends DNDIObjectReader[Trap] {
     }
   }
 
-  private def dropWhile[I](p: I => Boolean) = new Consumer[I, Unit] {
-    def consume(input: Input[I]): ConsumerState[I, Unit] = input match {
-      case EOF => Done((), EOF)
-      case Empty => Continue(this)
-      case Chunk(c) if (p(c)) => Continue(this)
-      case Chunk(c) => Done((), input)
-    }
-  }
-
   private def readOneBlockSection(tag: String, clazz: String, outClass: String) = matchConsumer(tag + " " + clazz) {
     case Block(tagClass, parts) if (tagClass == tag + "#" + clazz) =>
       TrapSection(null, StyledText(List(TextBlock("P", outClass, partsToStyledText(parts): _*))))
-  }
-
-  private def matchConsumer[T](expected: String)(matcher: PartialFunction[BlockElement, T]) = new Consumer[BlockElement, T] {
-    def consume(input: Input[BlockElement]): ConsumerState[BlockElement, T] = input match {
-      case Chunk(c) if (matcher.isDefinedAt(c)) => Done(matcher(c), Empty)
-      case Chunk(c) => Error(new UnexpectedBlockElementException(expected + " expected", c), input)
-      case EOF => Error(new UnexpectedBlockElementException(expected + " expected got EOF", null), EOF)
-      case Empty => Continue(this)
-    }
   }
 
   private def extractStatsAndFormatBlock(clazz: String, parts: List[Part]): (Map[String, String], TextBlock) =

@@ -18,29 +18,9 @@ package vcc.dndi.reader
 
 import collection.immutable.List
 import vcc.dndi.reader.Parser._
-import vcc.infra.text.{TextBlock, TextBuilder, StyledText}
+import vcc.infra.text.{TextBlock, StyledText}
 import util.matching.Regex
-import collection.mutable.ListBuffer
-
-object MonsterBlockStreamRewrite {
-  val EndOfPower = Block("ENDPOWER", Nil)
-}
-
-class MonsterBlockStreamRewrite extends TokenStreamRewrite[BlockElement] {
-  private var inPowerBlock = true
-
-  private def isPowerEndBoundary(parts: List[Part]): Boolean = inPowerBlock && (parts contains Key("Str"))
-
-  def rewriteToken(token: BlockElement): List[BlockElement] = {
-    token match {
-      case Block("P#flavor alt", parts) if (isPowerEndBoundary(parts)) =>
-        inPowerBlock = false
-        List(MonsterBlockStreamRewrite.EndOfPower, token)
-      case NonBlock(_) => Nil // To capture some empty BR around the file
-      case _ => List(token)
-    }
-  }
-}
+import org.exnebula.iteratee._
 
 /**
  * Extract form the parts the usage of MM3 style usages
@@ -168,7 +148,7 @@ object PowerHeaderParts {
 /**
  * Reads DNDI monster entries in both MM3 and previous format
  */
-class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
+class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElementConsumer {
   final private val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final private val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
   final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
@@ -191,47 +171,16 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     }
   }
 
-  private[dndi] def processPower(action: ActionType.Value, stream: TokenStream[BlockElement]): Power = {
-    val definition: PowerDefinition = stream.head match {
-      case Block("P#flavor alt", SomePowerDefinition(pdef)) => pdef
-      case _ => throw new UnexpectedBlockElementException("Expected P with class 'flavor alt'", stream.head)
-    }
-    stream.advance()
-
-    //From now on we expect P#flavor and P#flavorIndent
-    val textBuilder = new TextBuilder()
-
-    while (stream.head match {
-      case Block("P#flavor", parts) =>
-        textBuilder.append(TextBlock("P", "flavor", ParserTextTranslator.partsToStyledText(parts): _*))
-        true
-      case Block("P#flavorIndent", parts) =>
-        textBuilder.append(TextBlock("P", "flavorIndent", ParserTextTranslator.partsToStyledText(parts): _*))
-        true
-      case _ =>
-        false
-    }) {
-      stream.advance()
-    }
-    Power(definition, action, textBuilder.getDocument())
-  }
-
-  /**
-   * Process the header H1 entry and return a map of values.
-   */
-  private[dndi] def processHeader(stream: TokenStream[BlockElement]): Map[String, String] = {
-    val headMap: Map[String, String] = stream.head match {
-      case HeaderBlock("H1#monster", values) => normalizeTitle(values).toMap[String, String]
-      case s => throw new UnexpectedBlockElementException("Expected H1 block", s)
-    }
-    stream.advance()
-    var role = headMap.getOrElse("role","No Role")
-    if (role == "Minion") role = "No Role"
-    if (role.startsWith("Minion ")) role = role.substring(7)
-    var adjustments:List[(String,String)] = List("role" -> role)
-    if(!headMap.isDefinedAt("xp")) adjustments = ("xp" -> "0") :: adjustments
-    if(!headMap.isDefinedAt("level")) adjustments = ("level" -> "1") :: adjustments
-    headMap ++ adjustments.toMap
+  private def readHeader = matchConsumer("Expected H2 header") {
+    case HeaderBlock("H1#monster", values) =>
+      val headMap = normalizeTitle(values).toMap[String, String]
+      var role = headMap.getOrElse("role","No Role")
+      if (role == "Minion") role = "No Role"
+      if (role.startsWith("Minion ")) role = role.substring(7)
+      var adjustments:List[(String,String)] = List("role" -> role)
+      if(!headMap.isDefinedAt("xp")) adjustments = ("xp" -> "0") :: adjustments
+      if(!headMap.isDefinedAt("level")) adjustments = ("level" -> "1") :: adjustments
+      headMap ++ adjustments.toMap
   }
 
   /**
@@ -248,7 +197,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     (attr.toMap, auras.reverse)
   }
 
-  private[dndi] def processMainStatBlock(stream: TokenStream[BlockElement]): (Boolean, Map[String, String], Seq[(String, String)]) = {
+  private def processMainStatBlock(stream: TokenStream[BlockElement]): (Boolean, Map[String, String], Seq[(String, String)]) = {
     stream.head match {
       case Table("bodytable", cellsRaw) =>
         val cells = cellsRaw.map(cell => Cell(cell.clazz, cell.content.map(p => p.transform(Parser.TrimProcess))))
@@ -270,108 +219,89 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
     }
   }
 
-  /**
-   * Extract power in sections limited by H2
-   */
-  private[dndi] def processActionGroups(stream: TokenStream[BlockElement]): List[(ActionType.Value, List[Power])] = {
-    var result = new ListBuffer[(ActionType.Value, List[Power])]
-    while (stream.head match {
-      case Block("H2#", SectionActionType(at)) =>
-        stream.advance()
-        val powers = processPowerGroup(at, stream)
-        result += Pair(at, powers)
-        true
-      case MonsterBlockStreamRewrite.EndOfPower =>
-        stream.advance()
-        false
-      case block =>
-        throw new UnexpectedBlockElementException("Expected power H2 or ENDPOWER; found:", block)
-    }) {
-    }
-    result.toList
+  private def readActionGroupedPowers:Consumer[BlockElement, Map[ActionType.Value, List[Power]]] = for {
+    action <- readActionType
+    powers <- repeat(readPower(action))
+  } yield Map(action -> powers)
+
+  private def readActionType = matchConsumer("Match action type H2") {
+    case Block("H2#", SectionActionType(actionType)) => actionType
   }
 
-  private[dndi] def processLegacyPowers(stream: TokenStream[BlockElement]): List[Power] = {
-    val powers = processPowerGroup(null, stream)
-    stream.head match {
-      case MonsterBlockStreamRewrite.EndOfPower =>
-        stream.advance()
-      case blk =>
-        throw new UnexpectedBlockElementException("Expected ENDPOWER; found:", blk)
-    }
-    powers
+  private def readPower(action: ActionType.Value) = for {
+    head <- readPowerHeader
+    desc <- repeat(readPowerDescription)
+  } yield Power(head, action, StyledText(desc))
+
+  private def readPowerHeader = matchConsumer("Power header") {
+    case b@Block("P#flavor alt", SomePowerDefinition(pdef)) =>  //if(!b.parts.contains(Key("Str")))=>
+      pdef
   }
 
-  /**
-   * Extract powers until we hit ENDPOWER or an H2...
-   */
-  private[dndi] def processPowerGroup(action: ActionType.Value, stream: TokenStream[BlockElement]): List[Power] = {
-    val result = new ListBuffer[Power]()
-    while (stream.head match {
-      case Block("P#flavor alt", _) =>
-        val power = processPower(action, stream)
-        result += power
-        true
-      case _ =>
-        // This is not a new power, so let the caller figure out what to do.
-        false
-    }) {}
-    result.toList
+  private def readPowerDescription = matchConsumer("P with power description") {
+    case Block("P#flavor", parts) =>
+      TextBlock("P", "flavor", ParserTextTranslator.partsToStyledText(parts): _*)
+    case Block("P#flavorIndent", parts) =>
+      TextBlock("P", "flavorIndent", ParserTextTranslator.partsToStyledText(parts): _*)
   }
+
+  private def readMM2Powers = repeat(readPower(null))
+
+  private def hack[T](consumer: Consumer[BlockElement, T], blocks:List[BlockElement]):(T,List[BlockElement]) = consumer.consumeAll(blocks) match {
+        case (Left(error),_) => throw error
+        case (Right(value), rest) => (value, rest)
+      }
 
   def process(blocks: List[BlockElement]): Monster = {
-    val stream = new TokenStream[BlockElement](blocks, new MonsterBlockStreamRewrite())
+//    blocks.foreach(x => println(" ---> " + x))
+    val (headMap, leftOverBlocks) = hack(readHeader, blocks)
 
-    stream.advance()
+    val stream = new TokenStream[BlockElement](leftOverBlocks)
+     stream.advance()
 
-    val headMap = processHeader(stream)
     val (isMM3Format, statMap, auras) = processMainStatBlock(stream)
-    val powersByAction: List[(ActionType.Value, List[Power])] = if (isMM3Format) processActionGroups(stream) else Nil
-    val legacyPowers: List[Power] = if (!isMM3Format) processLegacyPowers(stream) else Nil
 
-    // Process tail.
-    val tailStats = processTailBlock(stream)
+    if(isMM3Format) {
+      val (pa, tailBlocks) = hack(repeat(readActionGroupedPowers), blocks.drop(2))
+      val powersByAction = pa.flatMap(identity)
+      val (tailStats2, _) = hack(repeat(matchTailBlocks), tailBlocks)
+      val tailStats = tailStats2.flatMap(identity)
+      val powersActionMap = powersByAction.toMap
+      new Monster(id,
+        CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+        Nil, powersActionMap)
+    } else {
+      val powersAndTail = blocks.drop(2)
+      val (legacyPowers, tailBlocks) = hack(readMM2Powers, powersAndTail)
+      val (tailStats2, _) = hack(repeat(matchTailBlocks), tailBlocks)
+      val tailStats = tailStats2.flatMap(identity)
 
-    val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
-    var powersActionMap = powersByAction.toMap
-    //Should need this, but just to be safe
-    if (!aurasAsTraits.isEmpty) {
-      powersActionMap = powersActionMap +
-        (ActionType.Trait -> (powersActionMap.getOrElse(ActionType.Trait, Nil) ::: aurasAsTraits))
+      val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
+      new Monster(id,
+        CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+        legacyPowers, Map(ActionType.Trait -> aurasAsTraits))
     }
-    new Monster(id,
-      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
-      legacyPowers, powersActionMap.toMap)
   }
 
-  private[dndi] def processTailBlock(stream: TokenStream[BlockElement]): Map[String, String] = {
-    val result = scala.collection.mutable.Map.empty[String, String]
-    while (stream.head match {
-      case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
-        var ret = text.trim
-        if (ret.startsWith(":")) ret = ret.tail
-        result.update("description", ret.trim)
-        stream.advance()
-      case Block(tag, parts) if (tag.startsWith("P#flavor")) =>
-        val trimmedList = trimParts(parts)
-        val normalizedParts = partsToPairs(trimmedList).map(p => p._1.toLowerCase -> p._2)
-        result ++= normalizedParts
-        stream.advance()
-      case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
-        val comment: String = commentPart match {
-          case Text(text) => text
-          case Emphasis(text) => text
-          case _ => null // Dont care much for this
-        }
-        if (comment != null) result.update("comment", comment)
-        stream.advance()
-      case blk =>
-
-        stream.advance()
-    }) {
-      //Nothing to do
-    }
-    result.toMap
+  //TODO Split into specific readers
+  private def matchTailBlocks = matchConsumer[Map[String,String]]("TODO bunch of tail things") {
+    case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
+      var ret = text.trim
+      if (ret.startsWith(":")) ret = ret.tail
+      Map("description" -> ret.trim)
+    case b@Block(tag, parts) if (tag.startsWith("P#flavor")) =>
+//     println("!!!!!! ---> " + b)
+      val trimmedList = trimParts(parts)
+      val normalizedParts = partsToPairs(trimmedList).map(p => p._1.toLowerCase -> p._2)
+      normalizedParts.toMap
+    case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
+      val comment: String = commentPart match {
+        case Text(text) => text
+        case Emphasis(text) => text
+        case _ => null // Dont care much for this
+      }
+      if (comment != null) Map("comment" -> comment)
+      else Map()
   }
 
   private final val auraMatcher = """(\(.+\)\s+)?aura\s+(\d+)\s*;(.*)""".r
@@ -383,7 +313,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] {
    * @param desc Description of aura or generation
    * @return A new power.
    */
-  private[dndi] def promoteAuraLike(name: String, desc: String): Power = {
+  private def promoteAuraLike(name: String, desc: String): Power = {
     desc match {
       case `auraMatcher`(keyword, range, auraDesc) =>
         Power(
