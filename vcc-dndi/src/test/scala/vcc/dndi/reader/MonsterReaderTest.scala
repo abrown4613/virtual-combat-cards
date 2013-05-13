@@ -28,7 +28,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     TextBlock("P", "flavorIndent", TextSegment.makeItalic("Secondary"))))
 
 
-  def is =  args(sequential=true)^
+  def is =
     headers ^
       primaryBlock ^
       comments ^
@@ -213,6 +213,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     "read mm3 aura with keyword" ! pb1 ^
     "read power without keyword" ! pb2 ^
     "failed broken power" ! pb3.pendingUntilFixed("Being consumed as tail block. Maybe stricter order will solve this") ^
+    "process handle spaces" ! handleNonBlocks ^
     endp
 
   private def pb1 = {
@@ -247,6 +248,13 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         sampleDesc)))
     val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, brokenPower, secondaryStats, alignmentLine).flatMap(_.blocks).toList
     new MonsterReader(0).process(blocks) must throwAn[UnexpectedBlockElementException]
+  }
+
+  private def handleNonBlocks = {
+    val empty = NonBlock(List(Text(" ")))
+    val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, secondaryStats, alignmentLine).flatMap(_.blocks).toList
+    val blocksWithSpace = blocks.flatMap(b => List(b, empty))
+    (new MonsterReader(0).process(blocksWithSpace) must not beNull)
   }
 
   private def powerGroup = "MonsterReader.processPowerGroup" ^

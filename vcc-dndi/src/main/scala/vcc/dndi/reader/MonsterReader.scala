@@ -153,23 +153,25 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
   final private val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
   final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
   final private val senseMatcher = """^.*;\s+(.+)$""".r
-
+  private final val auraMatcher = """(\(.+\)\s+)?aura\s+(\d+)\s*;(.*)""".r
 
   private final val primaryStats = Set("Initiative", "Senses", "HP", "Bloodied",
     "AC", "Fortitude", "Reflex", "Will",
     "Immune", "Resist", "Vulnerable",
     "Saving Throws", "Speed", "Action Points", "Perception")
 
-
-  private def normalizeTitle(spanList: List[(String, String)]): List[(String, String)] = {
-    spanList match {
-      case ("xp", "-") :: rest => ("xp", "0") :: normalizeTitle(rest)
-      case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
-      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
-      case p :: rest => p :: normalizeTitle(rest)
-      case Nil => Nil
+  def process(blocks: List[BlockElement]): Monster = {
+    readMonster.consumeAll(blocks.filterNot(_.isInstanceOf[NonBlock])) match {
+      case (Right(trap), Nil) => trap
+      case (Right(trap), rest) => throw new UnexpectedBlockElementException("Unconsumed block: ", rest.head)
+      case (Left(error), rest) => throw error
     }
   }
+
+  private def readMonster = for {
+    headMap <- readHeader
+    monster <- (readMM3Entry(headMap) orElse readMM2Entry(headMap))
+  } yield monster
 
   private def readHeader = matchConsumer("Expected H2 header") {
     case HeaderBlock("H1#monster", values) =>
@@ -183,18 +185,29 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
       headMap ++ adjustments.toMap
   }
 
-  /**
-   * Extract primary stats form the a list of String pairs:
-   */
-  private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[(String, String)]) = {
-    var auras: List[(String, String)] = Nil
-    val attr = scala.collection.mutable.Map.empty[String, String]
+  private def readMM2Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
+    statAndAuras <- readMM2PrimaryBlock
+    legacyPowers <- readMM2Powers
+    tailStats2 <- repeat(matchTailBlocks)
+  } yield {
+    val (statMap, auras) = statAndAuras
+    val tailStats = tailStats2.flatMap(identity)
+    val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
+    new Monster(id,
+      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+      legacyPowers, Map(ActionType.Trait -> aurasAsTraits))
+  }
 
-    for ((k, v) <- pairs) {
-      if (primaryStats(k)) attr.update(k.toLowerCase, v)
-      else auras = (k, v) :: auras
-    }
-    (attr.toMap, auras.reverse)
+  private def readMM3Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
+    statMap <- readMM3PrimaryBlock
+    pa <- repeat(readActionGroupedPowers)
+    tailStats2 <- repeat(matchTailBlocks)
+  } yield {
+    val tailStats = tailStats2.flatMap(identity)
+    val powersActionMap = pa.flatMap(identity).toMap
+    new Monster(id,
+      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+      Nil, powersActionMap)
   }
 
   private def readMM2PrimaryBlock = matchConsumer("MM2 header") {
@@ -231,8 +244,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
   } yield Power(head, action, StyledText(desc))
 
   private def readPowerHeader = matchConsumer("Power header") {
-    case b@Block("P#flavor alt", SomePowerDefinition(pdef)) =>  //if(!b.parts.contains(Key("Str")))=>
-      pdef
+    case b@Block("P#flavor alt", SomePowerDefinition(pdef)) => pdef
   }
 
   private def readPowerDescription = matchConsumer("P with power description") {
@@ -244,55 +256,12 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
 
   private def readMM2Powers = repeat(readPower(null))
 
-  private def hack[T](consumer: Consumer[BlockElement, T], blocks: List[BlockElement]): (T, List[BlockElement]) = consumer.consumeAll(blocks) match {
-    case (Left(error), _) => throw error
-    case (Right(value), rest) => (value, rest)
-  }
-
-  def process(blocks: List[BlockElement]): Monster = {
-    //    blocks.foreach(x => println(" ---> " + x))
-    val (headMap, leftOverBlocks) = hack(readHeader, blocks)
-    val readMonsterButHeader = readMM3Entry(headMap) orElse readMM2Entry(headMap)
-
-    val (monster, remainder) = hack(readMonsterButHeader, leftOverBlocks)
-    println(" ----> " + remainder)
-    monster
-  }
-
-  private def readMM2Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
-    statAndAuras <- readMM2PrimaryBlock
-    legacyPowers <- readMM2Powers
-    tailStats2 <- repeat(matchTailBlocks)
-  } yield {
-    val (statMap, auras) = statAndAuras
-    val tailStats = tailStats2.flatMap(identity)
-    val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
-    new Monster(id,
-      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
-      legacyPowers, Map(ActionType.Trait -> aurasAsTraits))
-  }
-
-  private def readMM3Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
-    statMap <- readMM3PrimaryBlock
-    pa <- repeat(readActionGroupedPowers)
-    tailStats2 <- repeat(matchTailBlocks)
-  } yield {
-    val tailStats = tailStats2.flatMap(identity)
-    val powersActionMap = pa.flatMap(identity).toMap
-    new Monster(id,
-      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
-      Nil, powersActionMap)
-  }
-
-
-  //TODO Split into specific readers
   private def matchTailBlocks = matchConsumer[Map[String,String]]("TODO bunch of tail things") {
     case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
       var ret = text.trim
       if (ret.startsWith(":")) ret = ret.tail
       Map("description" -> ret.trim)
     case b@Block(tag, parts) if (tag.startsWith("P#flavor")) =>
-//     println("!!!!!! ---> " + b)
       val trimmedList = trimParts(parts)
       val normalizedParts = partsToPairs(trimmedList).map(p => p._1.toLowerCase -> p._2)
       normalizedParts.toMap
@@ -306,7 +275,29 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
       else Map()
   }
 
-  private final val auraMatcher = """(\(.+\)\s+)?aura\s+(\d+)\s*;(.*)""".r
+  private def normalizeTitle(spanList: List[(String, String)]): List[(String, String)] = {
+    spanList match {
+      case ("xp", "-") :: rest => ("xp", "0") :: normalizeTitle(rest)
+      case ("xp", this.reXP(xp)) :: rest => ("xp", xp) :: normalizeTitle(rest)
+      case ("level", this.reLevel(lvl, role)) :: rest => ("level", lvl) ::("role", role) :: normalizeTitle(rest)
+      case p :: rest => p :: normalizeTitle(rest)
+      case Nil => Nil
+    }
+  }
+
+  /**
+   * Extract primary stats form the a list of String pairs:
+   */
+  private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[(String, String)]) = {
+    var auras: List[(String, String)] = Nil
+    val attr = scala.collection.mutable.Map.empty[String, String]
+
+    for ((k, v) <- pairs) {
+      if (primaryStats(k)) attr.update(k.toLowerCase, v)
+      else auras = (k, v) :: auras
+    }
+    (attr.toMap, auras.reverse)
+  }
 
   /**
    * Takes stats from primary block, that may be aura or regeneration and promotes them to the MM3
