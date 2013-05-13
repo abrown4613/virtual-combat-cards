@@ -32,22 +32,24 @@ case object Empty extends Input[Nothing]
 
 case object EOF extends Input[Nothing]
 
-
 trait Consumer[I, T] {
   self =>
   def consume(input: Input[I]): ConsumerState[I, T]
 
-  def flatMap[S](f: T => Consumer[I, S])(implicit m: Manifest[S]): Consumer[I, S] = {
+  def flatMap[S](f: T => Consumer[I, S])(implicit m: Manifest[S]): Consumer[I, S] =
     new Consumer[I, S] {
-      def consume(i: Input[I]): ConsumerState[I, S] = self.consume(i) match {
-        case e@Error(error, input) => e
-        case Continue(next) => Continue(next flatMap (f))
-        case Done(result, remainder) => f(result).consume(remainder)
+      def consume(i: Input[I]): ConsumerState[I, S] = {
+        self.consume(i) match {
+          case e@Error(error, input) => e
+          case Continue(next) => Continue(next flatMap (f))
+          case Done(result, remainder) => f(result).consume(remainder)
+        }
       }
-    }
-  }
 
-  def map[S](f: T => S)(implicit m: Manifest[S]): Consumer[I, S] = {
+      override def toString: String = Seq(self, f).mkString("flatMap(", ", ", ")")
+    }
+
+  def map[S](f: T => S)(implicit m: Manifest[S]): Consumer[I, S] =
     new Consumer[I, S] {
       def consume(i: Input[I]): ConsumerState[I, S] = {
         self.consume(i) match {
@@ -56,37 +58,40 @@ trait Consumer[I, T] {
           case Done(value, remainder) => Done(f(value), remainder)
         }
       }
-    }
-  }
 
-  def consumeAll(input: List[I]): (Either[Throwable, T], List[I]) = {
+      override def toString: String = Seq(self, f).mkString("map(", ", ", ")")
+    }
+
+  def consumeAll(input: List[I]): (Either[Throwable, T], List[I]) =
     consume(if (input.isEmpty) EOF else Chunk(input.head)) match {
       case Error(error, remainder) => (Left(error), input)
       case Done(returnValue, remainder) => remainder match {
         case Chunk(c) => (Right(returnValue), c :: input.tail)
-        case _ => (Right(returnValue), if(input.isEmpty) Nil else input.tail)
+        case _ => (Right(returnValue), if (input.isEmpty) Nil else input.tail)
       }
-
       case Continue(nextConsumer) => nextConsumer.consumeAll(input.tail)
     }
-  }
 
   def orElse(other: Consumer[I, T]) = {
-    val first = this
     new Consumer[I, T] {
-      def consume(input: Input[I]): ConsumerState[I, T] = first.consume(input) match {
-        case e@Error(_, remainder) => other.consume(remainder)
-        case state => state
+      def consume(input: Input[I]): ConsumerState[I, T] = input match {
+        case Empty => Continue(this)
+        case nonEmpty => self.consume(nonEmpty) match {
+          case e@Error(_, remainder) => other.consume(input)
+          case state => state
+        }
       }
+
+      override def toString = "alternative(" + self + " or " + other + ")"
     }
   }
 }
 
 object Repeat {
-  def apply[I,T](group: Consumer[I, T]) = {
-    val wrappedGroup = group orElse(new Consumer[I, T] {
-                def consume(input: Input[I]): ConsumerState[I, T] = Error(null, input)
-              })
+  def apply[I, T](group: Consumer[I, T]) = {
+    val wrappedGroup = group orElse (new Consumer[I, T] {
+      def consume(input: Input[I]): ConsumerState[I, T] = Error(null, input)
+    })
     new Repeat(wrappedGroup, wrappedGroup, Nil)
   }
 }
@@ -109,7 +114,7 @@ class Repeat[I, T] private(groupStart: Consumer[I, T], next: Consumer[I, T], acc
   }
 }
 
-class Optional[I,T] private[iteratee](optional: Consumer[I,T]) extends Consumer[I, Option[T]] {
+class Optional[I, T] private[iteratee](optional: Consumer[I, T]) extends Consumer[I, Option[T]] {
   def consume(input: Input[I]): ConsumerState[I, Option[T]] = input match {
     case EOF => Done(None, EOF)
     case Empty => Continue(this)
