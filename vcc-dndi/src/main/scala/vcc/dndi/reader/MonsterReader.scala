@@ -18,6 +18,7 @@ package vcc.dndi.reader
 
 import collection.immutable.List
 import vcc.dndi.reader.Parser._
+import vcc.dndi.reader.CompendiumCombatantEntityMapper._
 import vcc.infra.text.{TextBlock, StyledText}
 import util.matching.Regex
 import org.exnebula.iteratee._
@@ -67,31 +68,31 @@ object WithoutParenthesis {
 }
 
 object SomePowerDefinition {
-  def unapply(parts: List[Part]): Option[PowerDefinition] = {
-    val pdef: PowerDefinition = parts match {
-      case PowerHeaderParts(icons, names, SomeUsage(usage)) =>
-        names match {
-          case Key(name) :: Nil => CompletePowerDefinition(icons, name.trim, null, usage)
-          case Key(name) :: Text(keyword) :: Nil => CompletePowerDefinition(icons, name.trim, keyword.trim, usage)
-          case _ => null // Must failover
-        }
-      case PowerHeaderParts(icons, names, afterDot) =>
-        val keywords: Option[String] = afterDot match {
-          case Nil => Some(null)
-          case Key(text) :: Nil => Some(text)
-          case _ => None
-        }
-        if (keywords.isDefined) {
-          names match {
-            case Key(name) :: Nil => LegacyPowerDefinition(icons, name.trim, null, keywords.get, null)
-            case Key(name) :: Text(actionUsage) :: Nil =>
-              LegacyPowerDefinition(icons, name.trim, actionUsage.trim, keywords.get, null)
-            case _ => null
-          }
-        } else null // Something failed on the keywords parse
-      case _ => null
+
+  private object Keyword {
+    def unapply(parts: List[Part]): Option[String] = parts match {
+      case Nil => Some(null)
+      case Key(text) :: Nil => Some(text)
+      case _ => None
     }
-    Option(pdef)
+  }
+
+  private object NameKeyword {
+    def unapply(parts: List[Part]): Option[(String, Option[String])] = parts match {
+      case Key(name) :: Nil => Some(name.trim, None)
+      case Key(name) :: Text(keyword) :: Nil => Some(name.trim, Some(keyword.trim))
+      case _ => None
+    }
+  }
+
+  def unapply(parts: List[Part]): Option[PowerDefinition] = {
+    Option(parts match {
+      case PowerHeaderParts(icons, NameKeyword(name, keyword), SomeUsage(usage)) =>
+        CompletePowerDefinition(icons, name, keyword.getOrElse(null), usage)
+      case PowerHeaderParts(icons, NameKeyword(name, actionUsage), Keyword(keywords)) =>
+        LegacyPowerDefinition(icons, name, actionUsage.getOrElse(null), keywords, null)
+      case _ => null
+    })
   }
 }
 
@@ -103,8 +104,7 @@ object SectionActionType {
 
   def unapply(parts: List[Part]): Option[ActionType.Value] = {
     parts match {
-      case Text(text) :: Nil =>
-        normalizedActionMap.get(text.trim.toLowerCase)
+      case Text(text) :: Nil => normalizedActionMap.get(text.trim.toLowerCase)
       case _ => None
     }
   }
@@ -123,25 +123,25 @@ object PowerHeaderParts {
   private val mm3BlankKey = Key("")
 
   def unapply(parts: List[Part]): Option[(Seq[IconType.Value], List[Part], List[Part])] = {
-
-    val cleanPart = breakToSpace(parts).filter(part => part match {
-      case Text(this.whitespace()) => false
-      case _ => true
-    })
-    // Normalize MM3 entries, they always have a empty key at the end, add separator
-    val normalized: List[Part] = if (cleanPart.last == mm3BlankKey) {
-      cleanPart.take(cleanPart.length - 1) ::: List(separator, mm3BlankKey)
-    } else cleanPart
-
-    val (icons, rest) = normalized.partition(p => p.isInstanceOf[Icon] && p != separator)
+    val normalized = normalizeMM3EntryWithBlankKeyAtEnd(breakToSpace(parts).filter(isNotWhiteSpaceText))
+    val (icons, nonIcons) = normalized.partition(p => p.isInstanceOf[Icon] && p != separator)
     val iconSeq = icons.map(p => p.asInstanceOf[Icon].iconType).toSeq
-    val sep = rest.indexOf(separator)
-    if (sep > 0) {
-      val split = rest.splitAt(sep)
-      Some((iconSeq.toSeq, split._1, split._2.tail))
-    } else {
-      Some((iconSeq.toSeq, rest, Nil))
-    }
+    val (names, usage) = splitPartListAt(nonIcons, nonIcons.indexOf(separator))
+    Some((iconSeq, names, usage))
+  }
+
+  private def splitPartListAt(list: List[Part], position: Int) = {
+    val sizeOfFirstList = if (position < 0) list.length else position
+    (list.take(sizeOfFirstList), list.drop(sizeOfFirstList + 1))
+  }
+
+  private def normalizeMM3EntryWithBlankKeyAtEnd(cleanPart: List[Part]): List[Part] =
+    if (cleanPart.last == mm3BlankKey) cleanPart.init ::: List(separator, mm3BlankKey)
+    else cleanPart
+
+  private def isNotWhiteSpaceText(part: Part) = part match {
+    case Text(`whitespace`()) => false
+    case _ => true
   }
 }
 
@@ -151,7 +151,7 @@ object PowerHeaderParts {
 class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElementConsumer {
   final private val reXP = new Regex("\\s*XP\\s*(\\d+)\\s*")
   final private val reLevel = new Regex("^\\s*Level\\s+(\\d+)\\s+(.*)$")
-  final private val perceptionMatcher = """^\s*perception\s+([\+\-]?\d+).*$""".r
+  final private val perceptionMatcher = """^\s*[Pp]erception\s+([\+\-]?\d+).*$""".r
   final private val senseMatcher = """^.*;\s+(.+)$""".r
   private final val auraMatcher = """(\(.+\)\s+)?aura\s+(\d+)\s*;(.*)""".r
 
@@ -175,39 +175,32 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
 
   private def readHeader = matchConsumer("Expected H2 header") {
     case HeaderBlock("H1#monster", values) =>
-      val headMap = normalizeTitle(values).toMap[String, String]
-      var role = headMap.getOrElse("role","No Role")
-      if (role == "Minion") role = "No Role"
-      if (role.startsWith("Minion ")) role = role.substring(7)
-      var adjustments:List[(String,String)] = List("role" -> role)
-      if(!headMap.isDefinedAt("xp")) adjustments = ("xp" -> "0") :: adjustments
-      if(!headMap.isDefinedAt("level")) adjustments = ("level" -> "1") :: adjustments
-      headMap ++ adjustments.toMap
+      val headMap = normalizeTitle(values).toMap
+      headMap.addDefaultFor("xp", "0").addDefaultFor("level", "1").map.
+        updated("role", headMap.get("role").map(normalizeRole).getOrElse("No Role"))
   }
 
-  private def readMM2Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
+  private def readMM2Entry(headMap: Map[String, String]): Consumer[BlockElement, Monster] = for {
     statAndAuras <- readMM2PrimaryBlock
     legacyPowers <- readMM2Powers
-    tailStats2 <- repeat(matchTailBlocks)
+    secondary <- readSecondaryStats
+    tailStats <- repeat(matchTailBlocks)
   } yield {
-    val (statMap, auras) = statAndAuras
-    val tailStats = tailStats2.flatMap(identity)
-    val aurasAsTraits = auras.map(x => promoteAuraLike(x._1, x._2)).toList
+    val (statMap, aurasAsTraits) = statAndAuras
     new Monster(id,
-      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
+      normalizeCompendiumNames(headMap ++ statMap ++ secondary ++ flattenMaps(tailStats)),
       legacyPowers, Map(ActionType.Trait -> aurasAsTraits))
   }
 
-  private def readMM3Entry(headMap: Map[String,String]): Consumer[BlockElement, Monster] = for {
+  private def readMM3Entry(headMap: Map[String, String]): Consumer[BlockElement, Monster] = for {
     statMap <- readMM3PrimaryBlock
-    pa <- repeat(readActionGroupedPowers)
-    tailStats2 <- repeat(matchTailBlocks)
+    powerByAction <- repeat(readActionGroupedPowers)
+    secondary <- readSecondaryStats
+    tailStats <- repeat(matchTailBlocks)
   } yield {
-    val tailStats = tailStats2.flatMap(identity)
-    val powersActionMap = pa.flatMap(identity).toMap
     new Monster(id,
-      CompendiumCombatantEntityMapper.normalizeCompendiumNames(headMap ++ statMap ++ tailStats),
-      Nil, powersActionMap)
+      normalizeCompendiumNames(headMap ++ statMap ++ secondary ++ flattenMaps(tailStats)),
+      Nil, flattenMaps(powerByAction))
   }
 
   private def readMM2PrimaryBlock = matchConsumer("MM2 header") {
@@ -218,18 +211,20 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
 
   private def readMM3PrimaryBlock = matchConsumer("MM3 primary table") {
     case Table("bodytable", cellsRaw) =>
-      val cells = cellsRaw.map(cell => Cell(cell.clazz, cell.content.map(p => p.transform(Parser.TrimProcess))))
-      val senses: Cell = cells(5) match {
-        case b: Cell => b
-        case s => throw new Exception("Should not have reached this point")
-      }
-      val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
-      val parts = cells.updated(5, taggedSenses).flatMap(e => e.content)
-      val (stats, _) = processPrimaryBlock(partsToPairs(parts))
-      stats
+      processPrimaryBlock(partsToPairs(cellsToKeyTextParts(cellsRaw)))._1
   }
 
-  private def readActionGroupedPowers:Consumer[BlockElement, Map[ActionType.Value, List[Power]]] = for {
+  private def readSecondaryStats = matchConsumer("MM3 Secondary Stat Block") {
+    case b@Block(tag, parts) if (matchSecondaryStatBlock(tag, parts)) => trimAndConvertToPairs(parts)
+  }
+
+  private def matchSecondaryStatBlock(tag: String, parts: List[Part]): Boolean =
+    tag.startsWith("P#flavor alt") && parts.contains(Key("Str"))
+
+  private def trimAndConvertToPairs(parts: List[Parser.Part]): Map[String, String] =
+    partsToPairs(trimParts(parts)).map(p => p._1.toLowerCase -> p._2).toMap
+
+  private def readActionGroupedPowers: Consumer[BlockElement, Map[ActionType.Value, List[Power]]] = for {
     action <- readActionType
     powers <- repeat(readPower(action))
   } yield Map(action -> powers)
@@ -256,23 +251,24 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
 
   private def readMM2Powers = repeat(readPower(null))
 
-  private def matchTailBlocks = matchConsumer[Map[String,String]]("TODO bunch of tail things") {
-    case Block("P#flavor", parts@Key("Description") :: SingleTextBreakToNewLine(text)) =>
+  private def matchTailBlocks = matchConsumer[Map[String, String]]("TODO bunch of tail things") {
+    case Block("P#flavor", Key("Description") :: SingleTextBreakToNewLine(text)) =>
       var ret = text.trim
       if (ret.startsWith(":")) ret = ret.tail
       Map("description" -> ret.trim)
     case b@Block(tag, parts) if (tag.startsWith("P#flavor")) =>
-      val trimmedList = trimParts(parts)
-      val normalizedParts = partsToPairs(trimmedList).map(p => p._1.toLowerCase -> p._2)
-      normalizedParts.toMap
+      trimAndConvertToPairs(parts)
     case Block(tag, commentPart :: Nil) if (tag.startsWith("P#")) =>
-      val comment: String = commentPart match {
-        case Text(text) => text
-        case Emphasis(text) => text
-        case _ => null // Dont care much for this
-      }
-      if (comment != null) Map("comment" -> comment)
-      else Map()
+      simplifyComment(commentPart)
+  }
+
+  private def simplifyComment(commentPart: Part): Map[String, String] = {
+    val comment: String = commentPart match {
+      case Text(text) => text
+      case Emphasis(text) => text
+      case _ => null // Dont care much for this
+    }
+    optionalValueAsMap("comment", comment)
   }
 
   private def normalizeTitle(spanList: List[(String, String)]): List[(String, String)] = {
@@ -288,15 +284,9 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
   /**
    * Extract primary stats form the a list of String pairs:
    */
-  private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[(String, String)]) = {
-    var auras: List[(String, String)] = Nil
-    val attr = scala.collection.mutable.Map.empty[String, String]
-
-    for ((k, v) <- pairs) {
-      if (primaryStats(k)) attr.update(k.toLowerCase, v)
-      else auras = (k, v) :: auras
-    }
-    (attr.toMap, auras.reverse)
+  private def processPrimaryBlock(pairs: List[(String, String)]): (Map[String, String], List[Power]) = {
+    val (attr, auras) = pairs.partition(pair => primaryStats(pair._1))
+    (attr.map(p => (p._1.toLowerCase, p._2)).toMap, auras.map(p => promoteTraitLike(p._1, p._2)))
   }
 
   /**
@@ -306,7 +296,7 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
    * @param desc Description of aura or generation
    * @return A new power.
    */
-  private def promoteAuraLike(name: String, desc: String): Power = {
+  private def promoteTraitLike(name: String, desc: String): Power = {
     desc match {
       case `auraMatcher`(keyword, range, auraDesc) =>
         Power(
@@ -329,21 +319,41 @@ class MonsterReader(id: Int) extends DNDIObjectReader[Monster] with BlockElement
    */
   def normalizeLegacySenses(inMap: Map[String, String]): Map[String, String] = {
     if (inMap.isDefinedAt("senses")) {
-      val senses = inMap("senses").toLowerCase
-      val per: String = senses match {
-        case `perceptionMatcher`(value) => Parser.TrimProcess(value)
-        case _ => "0"
-      }
-      val sense: String = senses match {
-        case `senseMatcher`(value) => value
-        case _ => null
-      }
-      val addMap = if (sense != null) Map("perception" -> per, "senses" -> sense) else Map("perception" -> per)
+      val senses = inMap("senses")
+      val addMap = Map(
+        "perception" -> Parser.TrimProcess(matchRegexOrDefault(senses, perceptionMatcher, "0"))) ++
+        optionalValueAsMap("senses", matchRegexOrDefault(senses, senseMatcher, null))
       inMap - ("senses") ++ addMap
     } else
       inMap
   }
 
+  private def optionalValueAsMap(key: String, value: String): Map[String, String] =
+    if (value != null) Map(key -> value) else Map()
+
+  private def matchRegexOrDefault(input: String, regex: Regex, default: String): String = input match {
+    case `regex`(value) => value
+    case _ => default
+  }
+
   private def trimParts(parts: List[Part]): List[Part] = parts.map(p => p.transform(Parser.TrimProcess))
 
+  private def cellsToKeyTextParts(cellsRaw: List[Cell]): List[Part] = {
+    val cells = cellsRaw.map(cell => Cell(cell.clazz, cell.content.map(p => p.transform(Parser.TrimProcess))))
+    val senses: Cell = cells(5)
+    val taggedSenses = if (senses.content.isEmpty) senses else Cell(senses.clazz, Key("Senses") :: senses.content)
+    cells.updated(5, taggedSenses).flatMap(e => e.content)
+  }
+
+  private def normalizeRole(role: String) = role match {
+    case "Minion" => "No Role"
+    case s if (s.startsWith("Minion ")) => s.substring(7)
+    case other => other
+  }
+
+  implicit class MagicMap[K, V](val map: Map[K, V]) {
+    def addDefaultFor(key: K, default: V): MagicMap[K, V] = if (map.isDefinedAt(key)) map else map.updated(key, default)
+  }
+
+  private def flattenMaps[K, V](maps: List[Map[K, V]]): Map[K, V] = maps.flatMap(identity).toMap
 }
