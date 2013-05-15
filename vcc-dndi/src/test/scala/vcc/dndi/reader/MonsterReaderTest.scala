@@ -30,60 +30,14 @@ class MonsterReaderTest extends SpecificationWithJUnit {
 
   def is =
     headers ^
-      primaryBlock ^
+      mm3Monster ^
+      handleMalformed ^
+      mm2Monster ^
+      handleLegacySensesAndTrait ^
       comments ^
-      powerBlock ^
-      powerGroup ^
-      liftRegeneration ^
-      "normalizeLegacySenses" ^ normalizeLegacySenses ^ endp ^
       endp
 
-  private def comments = "MonsterReader.processTailBlock" ^
-    "read monster with description with breaks" ! e1 ^
-    "read monster with styled comment" ! e2 ^
-    "read monster with comment" ! e3 ^
-    "read monster with comment in italic" ! e4 ^
-    "standalone MM2 Equipment line" ! e5 ^
-    "read equipment and alignment in MM3 format" ! e6 ^
-    endp
-
-  private def e1 = {
-    def descriptionLine = MonsterChunk(Seq(
-      Block("P#flavor", List(Key("Description"), Text(": black and mean."), Break(), Text("Razor sharp")))),
-      haveAttribute("text:description", "black and mean.\nRazor sharp"))
-    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, descriptionLine, commentLine)
-  }
-
-  private def e2 =
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, secondaryStats, alignmentLine,
-      makeComment("P#publishedIn", "Published in Monster Manual 3 , page(s) 72.", Text(_)))
-
-  private def e3 =
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, secondaryStats, alignmentLine,
-      makeComment("P#", "Some book somewhere", Text(_)))
-
-  private def e4 =
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, secondaryStats, alignmentLine,
-      makeComment("P#", "Some book somewhere else", Emphasis(_)))
-
-  private def e5 = {
-    //<P class="flavor alt"><B>Equipment</B>: <A href="bla" target="_new">chainmail</A> , <A href="bla" target="_new">crossbow bolt</A>  x10, <A href="bla" target="_new">hand crossbow</A> , <A href="bla" target="_new">light shield</A> , <A href="bla" target="_new">spear</A> .</P>
-    val equipLine = MonsterChunk(Seq(Block("P#flavor alt", List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))),
-      haveAttribute("stat:equipment", "chainmail , crossbow bolt  x10, hand crossbow , light shield , spear ."))
-    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, equipLine)
-  }
-
-  private def e6 = {
-    //<P class="flavor"><B>Alignment</B> chaotic evil      <B> Languages</B> Common<BR/><B>Equipment</B>: <A href="bla" target="_new">club</A> , <A href="bla" target="_new">javelin</A>  x3, <A href="bla" target="_new">light shield</A> .</P>
-    val aligmentLine = MonsterChunk(Seq(Block("P#flavor", List(Key("Alignment"), Text(" chaotic evil      "), Key(" Languages"), Text(" Common"), Break(), Key("Equipment"), Text(": club , javelin  x3, light shield .")))),
-      mustHaveAllAttributes(Map(
-        "stat:alignment" -> "chaotic evil",
-        "stat:languages" -> "Common",
-        "stat:equipment" -> "club , javelin  x3, light shield .")))
-    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, secondaryStats, aligmentLine)
-  }
-
-  private def headers = "MonsterReader.processHeader" ^
+  private def headers = "handle header variations" ^
     "simplify minion role" ! h1 ^
     "provide No Role for old minion format" ! h2 ^
     "parse header block with no level or XP" ! h3 ^
@@ -97,7 +51,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       mustHaveAllAttributes(Map(
         "base:name" -> "Pest", "base:type" -> "dude", "base:level" -> "1",
         "base:xp" -> "25", "base:role" -> "Controller")))
-    parseMonster(head, mm3PrimaryStatSimple, secondaryStats, alignmentLine)
+    parseMonster(head, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine)
   }
 
   private def h2 = {
@@ -106,7 +60,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       mustHaveAllAttributes(Map(
         "base:name" -> "Pest", "base:type" -> "dude", "base:level" -> "12",
         "base:xp" -> "1800", "base:role" -> "No Role")))
-    parseMonster(head, mm3PrimaryStatSimple, secondaryStats, alignmentLine)
+    parseMonster(head, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine)
   }
 
   private def h3 = {
@@ -116,7 +70,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       mustHaveAllAttributes(Map(
         "base:name" -> "Pest", "base:type" -> "animate", "base:level" -> "1",
         "base:xp" -> "0", "base:role" -> "No Role")))
-    parseMonster(head, mm3PrimaryStatSimple, secondaryStats, alignmentLine)
+    parseMonster(head, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine)
   }
 
   private def h4 = {
@@ -125,7 +79,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       mustHaveAllAttributes(Map(
         "base:name" -> "Bob", "base:type" -> "Orc", "base:level" -> "3",
         "base:xp" -> "250", "base:role" -> "Elite Brute (Leader)")))
-    parseMonster(head, mm3PrimaryStatSimple, secondaryStats, alignmentLine)
+    parseMonster(head, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine)
   }
 
   private def h5 = {
@@ -134,41 +88,18 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       mustHaveAllAttributes(Map(
         "base:name" -> "Pest", "base:type" -> "dude", "base:level" -> "1",
         "base:xp" -> "0", "base:role" -> "Soldier")))
-    parseMonster(head, mm3PrimaryStatSimple, secondaryStats, alignmentLine)
+    parseMonster(head, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine)
   }
 
-  private def primaryBlock = "MonsterReader.processPrimaryBlock" ^
-    "handle monster in format prior to MM3" ! ph1 ^
-    "handle MM2 entries and split auras out" ! ph2 ^
-    "handle mm3 tabular block" ! ph3 ^
-    "process tabular block with no Senses, saving, or resist" ! ph4 ^
+  private def mm3Monster = "handle mm3 type entries" ^
+    "handle mm3 tabular block" ! mm3e1 ^
+    "process tabular block with no Senses, saving, or resist" ! mm3e2 ^
+    "read mm3 aura with keyword" ! mm3e3 ^
+    "read mm3 power without keyword" ! mm3e4 ^
+    "mm3 read sequence of H2 separated powers" ! mm3e5 ^
     endp
 
-  private def ph1 = {
-    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, secondaryStats, alignmentLine, commentLine)
-  }
-
-  private def ph2 = {
-    val mm2WithAuras = MonsterChunk(Seq(
-      Block("P#flavor", List(Key("Initiative"), Text("7"), Key("Senses"), Text("Perception +12; low-light vision"), Break(),
-        Key("Aura name 1"), Text("(Fire) aura 1; Some long description about the aura."), Break(),
-        Key("Aura name 2"), Text("aura 2; Some long description about the aura."), Break(),
-        Key("HP"), Text("460"), Key("Bloodied"), Text("230"), Break(),
-        Key("AC"), Text("25; "), Key("Fortitude"), Text("24, "), Key("Reflex"), Text("23,"), Key("Will"), Text("22"), Break(),
-        Key("Resist"), Text("10 variable (1/encounter)"), Break(),
-        Key("Saving Throws"), Text("+4"), Break(),
-        Key("Speed"), Text("  8, climb 8  "), Break()))),
-      mustHaveAllAttributes(Map(
-        "stat:senses" -> "low-light vision", "stat:perception" -> "12", "stat:hp" -> "460",
-        "stat:ac" -> "25", "stat:fortitude" -> "24", "stat:reflex" -> "23", "stat:will" -> "22",
-        "stat:saving throws" -> "4", "stat:speed" -> "8, climb 8", "stat:resist" -> "10 variable (1/encounter)")) and
-        havePower(ActionType.Trait, 0, auraLike("Aura name 1", "(Fire)", "1", "Some long description about the aura.")) and
-        havePower(ActionType.Trait, 1, auraLike("Aura name 2", null, "2", "Some long description about the aura.")))
-
-    parseMonster(pestMinionHead, mm2WithAuras, mm2SecondaryStats, commentLine)
-  }
-
-  private def ph3 = {
+  private def mm3e1 = {
     val mm3Primary = MonsterChunk(Seq(
       Table("bodytable", List(
         Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
@@ -184,10 +115,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         "stat:ac" -> "24", "stat:fortitude" -> "22", "stat:reflex" -> "20", "stat:will" -> "21",
         "stat:saving throws" -> "2", "stat:speed" -> "6", "stat:perception" -> "15", "stat:senses" -> "Blindsight 5",
         "stat:resist" -> "5 necrotic", "stat:saving throws" -> "2", "stat:action points" -> "1")))
-    parseMonster(pestMinionHead, mm3Primary, secondaryStats, alignmentLine)
+    parseMonster(pestMinionHead, mm3Primary, mm3SecondaryStats, alignmentLine)
   }
 
-  private def ph4 = {
+  private def mm3e2 = {
     val mm3NoSenseSaveResist = MonsterChunk(Seq(
       Table("bodytable", List(
         Cell(null, List(Key("HP"), Text(" 220; "), Key("Bloodied"), Text(" 110"))),
@@ -206,17 +137,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         notHaveAttribute("stat:saving throws"),
         notHaveAttribute("stat:resist")
       ))
-    parseMonster(pestMinionHead, mm3NoSenseSaveResist, secondaryStats, alignmentLine)
+    parseMonster(pestMinionHead, mm3NoSenseSaveResist, mm3SecondaryStats, alignmentLine)
   }
 
-  private def powerBlock = "MonsterReader.processPower" ^
-    "read mm3 aura with keyword" ! pb1 ^
-    "read power without keyword" ! pb2 ^
-    "failed broken power" ! pb3.pendingUntilFixed("Being consumed as tail block. Maybe stricter order will solve this") ^
-    "process handle spaces" ! handleNonBlocks ^
-    endp
-
-  private def pb1 = {
+  private def mm3e3 = {
     val ts = getBlocks(<P class="flavor alt"> <IMG src="http://www.wizards.com/dnd/images/symbol/aura.png" align="top"></IMG> <B>Spider Host</B> (Poison) <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Aura</B> 1</P>)
     val auraPower = MonsterChunk(
       Block("H2#", List(Text("Traits"))) :: ts,
@@ -224,10 +148,10 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         CompletePowerDefinition(Seq(IconType.Aura), "Spider Host", "(Poison)", AuraUsage("1")),
         ActionType.Trait,
         sampleDesc)))
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, auraPower, secondaryStats, alignmentLine)
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, auraPower, mm3SecondaryStats, alignmentLine)
   }
 
-  private def pb2 = {
+  private def mm3e4 = {
     val ts = getBlocks(<P class="flavor alt"> <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Darkfire</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B> </P>)
     val minorPower = MonsterChunk(
       Block("H2#", List(Text("Minor Actions"))) :: ts,
@@ -235,10 +159,26 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage()),
         ActionType.Minor,
         sampleDesc)))
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, minorPower, secondaryStats, alignmentLine)
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, minorPower, mm3SecondaryStats, alignmentLine)
   }
 
-  private def pb3 = {
+  private def mm3e5 = {
+    val traitsPower = makePowerGroup(ActionType.Trait, "Traits",
+      generateMeleePowerAndTest("Hack", ActionType.Trait))
+    val standardPowers = makePowerGroup(ActionType.Standard, "Standard Actions",
+      generateMeleePowerAndTest("Stab", ActionType.Standard),
+      generateMeleePowerAndTest("Sling", ActionType.Standard))
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, traitsPower, standardPowers, mm3SecondaryStats, alignmentLine)
+  }
+
+  private def handleMalformed = "handle malformed entries an trailing data" ^
+    "failed broken power" ! mm3BrokenPower ^
+    "failed broken power in mm2 entry" ! mm2BrokenPower ^
+    "process handle spaces" ! mm3HandleNonBlocks ^
+    "process handle spaces" ! mm2HandleNonBlocks ^
+    end
+
+  private def mm3BrokenPower = {
     val ts = getBlocks(<P class="flavor alt"> <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Bad</B> <B>Power</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B> </P>)
     val brokenPower = MonsterChunk(
       Block("H2#", List(Text("Minor Actions"))) :: ts,
@@ -246,23 +186,44 @@ class MonsterReaderTest extends SpecificationWithJUnit {
         CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage()),
         ActionType.Minor,
         sampleDesc)))
-    val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, brokenPower, secondaryStats, alignmentLine).flatMap(_.blocks).toList
+    val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, brokenPower, mm3SecondaryStats, alignmentLine).flatMap(_.blocks).toList
     new MonsterReader(0).process(blocks) must throwAn[UnexpectedBlockElementException]
   }
 
-  private def handleNonBlocks = {
+  private def mm2BrokenPower = {
+    val powerBlocks = getBlocks(<P class="flavor alt"> <IMG src="http://www.wizards.com/dnd/images/symbol/Z3a.gif"></IMG> <B>Bad</B> <B>Power</B> <IMG src="http://www.wizards.com/dnd/images/symbol/x.gif"></IMG> <B>Encounter</B> </P>)
+    val brokenPower = MonsterChunk(
+      powerBlocks,
+      havePower(ActionType.Minor, 0, likePower(
+        CompletePowerDefinition(Seq(IconType.Range), "Darkfire", null, EncounterUsage()),
+        ActionType.Minor,
+        sampleDesc)))
+    val blocks = Seq(pestMinionHead, mm2StatBlock1WithoutAura, brokenPower, mm2SecondaryStats, commentLine).flatMap(_.blocks).toList
+    new MonsterReader(0).process(blocks) must throwAn[UnexpectedBlockElementException]
+  }
+
+  private def mm3HandleNonBlocks = {
     val empty = NonBlock(List(Text(" ")))
-    val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, secondaryStats, alignmentLine).flatMap(_.blocks).toList
+    val blocks = Seq(pestMinionHead, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine).flatMap(_.blocks).toList
     val blocksWithSpace = blocks.flatMap(b => List(b, empty))
     (new MonsterReader(0).process(blocksWithSpace) must not beNull)
   }
 
-  private def powerGroup = "MonsterReader.processPowerGroup" ^
-    "Process legacy powers in a MM2 format" ! pg1 ^
-    "mm3 read sequence of H2 separated powers" ! pg2 ^
+  private def mm2HandleNonBlocks = {
+    val empty = NonBlock(List(Text(" ")))
+    val blocks = Seq(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, commentLine).flatMap(_.blocks).toList
+    val blocksWithSpace = blocks.flatMap(b => List(b, empty))
+    (new MonsterReader(0).process(blocksWithSpace) must not beNull)
+  }
+
+  private def mm2Monster = "handle monsters in format prior to MM3" ^
+    "Process legacy powers in a MM2 format" ! mm2e1 ^
+    "handle monster in format prior to MM3" ! mm2e2 ^
+    "read monster with description with breaks" ! mm2e3 ^
+    "standalone MM2 Equipment line" ! mm2e4 ^
     endp
 
-  private def pg1 = {
+  private def mm2e1 = {
     val parts = Seq(
       generateLegacyMeleePowerAndTest("Hack"),
       generateLegacyMeleePowerAndTest("Stab"),
@@ -274,16 +235,29 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, allPowers, mm2SecondaryStats, commentLine)
   }
 
-  private def pg2 = {
-    val traitsPower = makePowerGroup(ActionType.Trait, "Traits",
-      generateMeleePowerAndTest("Hack", ActionType.Trait))
-    val standardPowers = makePowerGroup(ActionType.Standard, "Standard Actions",
-      generateMeleePowerAndTest("Stab", ActionType.Standard),
-      generateMeleePowerAndTest("Sling", ActionType.Standard))
-    parseMonster(pestMinionHead, mm3PrimaryStatSimple, traitsPower, standardPowers, secondaryStats, alignmentLine)
+  private def mm2e2 = {
+    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, commentLine)
   }
 
-  private def liftRegeneration = "lift regeneration" ! regen1 ^ endp
+  private def mm2e3 = {
+    def descriptionLine = MonsterChunk(Seq(
+      Block("P#flavor", List(Key("Description"), Text(": black and mean."), Break(), Text("Razor sharp")))),
+      haveAttribute("text:description", "black and mean.\nRazor sharp"))
+    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, descriptionLine, commentLine)
+  }
+
+  private def mm2e4 = {
+    //<P class="flavor alt"><B>Equipment</B>: <A href="bla" target="_new">chainmail</A> , <A href="bla" target="_new">crossbow bolt</A>  x10, <A href="bla" target="_new">hand crossbow</A> , <A href="bla" target="_new">light shield</A> , <A href="bla" target="_new">spear</A> .</P>
+    val equipLine = MonsterChunk(Seq(Block("P#flavor alt", List(Key("Equipment"), Text(": chainmail , crossbow bolt  x10, hand crossbow , light shield , spear .")))),
+      haveAttribute("stat:equipment", "chainmail , crossbow bolt  x10, hand crossbow , light shield , spear ."))
+    parseMonster(pestMinionHead, mm2StatBlock1WithoutAura, mm2SecondaryStats, equipLine)
+  }
+
+  private def handleLegacySensesAndTrait = "handle mm2 traits and sense " ^
+    "lift regeneration as trais " ! regen1 ^
+    "handle MM2 entries and split auras out" ! liftAuraAsTraits ^
+    normalizeLegacySenses ^
+    endp
 
   private def regen1 = {
     val mm2WithAuras = MonsterChunk(Seq(
@@ -305,22 +279,71 @@ class MonsterReaderTest extends SpecificationWithJUnit {
     parseMonster(pestMinionHead, mm2WithAuras, mm2SecondaryStats, commentLine)
   }
 
+  private def liftAuraAsTraits = {
+    val mm2WithAuras = MonsterChunk(Seq(
+      Block("P#flavor", List(Key("Initiative"), Text("7"), Key("Senses"), Text("Perception +12; low-light vision"), Break(),
+        Key("Aura name 1"), Text("(Fire) aura 1; Some long description about the aura."), Break(),
+        Key("Aura name 2"), Text("aura 2; Some long description about the aura."), Break(),
+        Key("HP"), Text("460"), Key("Bloodied"), Text("230"), Break(),
+        Key("AC"), Text("25; "), Key("Fortitude"), Text("24, "), Key("Reflex"), Text("23,"), Key("Will"), Text("22"), Break(),
+        Key("Resist"), Text("10 variable (1/encounter)"), Break(),
+        Key("Saving Throws"), Text("+4"), Break(),
+        Key("Speed"), Text("  8, climb 8  "), Break()))),
+      mustHaveAllAttributes(Map(
+        "stat:senses" -> "low-light vision", "stat:perception" -> "12", "stat:hp" -> "460",
+        "stat:ac" -> "25", "stat:fortitude" -> "24", "stat:reflex" -> "23", "stat:will" -> "22",
+        "stat:saving throws" -> "4", "stat:speed" -> "8, climb 8", "stat:resist" -> "10 variable (1/encounter)")) and
+        havePower(ActionType.Trait, 0, auraLike("Aura name 1", "(Fire)", "1", "Some long description about the aura.")) and
+        havePower(ActionType.Trait, 1, auraLike("Aura name 2", null, "2", "Some long description about the aura.")))
+
+    parseMonster(pestMinionHead, mm2WithAuras, mm2SecondaryStats, commentLine)
+  }
+
   private val normalizeLegacySenses = Seq(
     testCase("normalize broken Senses",
-      pestMinionHead, makeSenseVariant("; low-light vision", 0, "low-light vision"), secondaryStats, alignmentLine),
+      pestMinionHead, makeSenseVariant("; low-light vision", 0, "low-light vision"), mm3SecondaryStats, alignmentLine),
     testCase("normalize Senses with two modes",
       pestMinionHead,
       makeSenseVariant("Perception +10; blindsight 10, tremorsense 20", 10, "blindsight 10, tremorsense 20"),
-      secondaryStats, alignmentLine),
+      mm3SecondaryStats, alignmentLine),
     testCase("normalize Senses with one modes",
-      pestMinionHead, makeSenseVariant("Perception +11; darkvision", 11, "darkvision"), secondaryStats, alignmentLine),
+      pestMinionHead, makeSenseVariant("Perception +11; darkvision", 11, "darkvision"), mm3SecondaryStats, alignmentLine),
     testCase("normalize Senses with one modes, negative perception",
-      pestMinionHead, makeSenseVariant("Perception -11; darkvision", -11, "darkvision"), secondaryStats, alignmentLine),
+      pestMinionHead, makeSenseVariant("Perception -11; darkvision", -11, "darkvision"), mm3SecondaryStats, alignmentLine),
     testCase("normalize Senses with no modes",
-      pestMinionHead, makeSenseVariant("Perception +13", 13, null), secondaryStats, alignmentLine)
+      pestMinionHead, makeSenseVariant("Perception +13", 13, null), mm3SecondaryStats, alignmentLine)
   )
 
-  def testCase(description: String, chunks: MonsterChunk*) = description ! parseMonster(chunks: _*)
+  private def comments = "handle comments" ^
+    "read monster with styled comment" ! comment1 ^
+    "read monster with comment" ! comment2 ^
+    "read monster with comment in italic" ! comment3 ^
+    "read equipment and alignment in MM3 format" ! comment4 ^
+    endp
+
+  private def comment1 =
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine,
+      makeComment("P#publishedIn", "Published in Monster Manual 3 , page(s) 72.", Text(_)))
+
+  private def comment2 =
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine,
+      makeComment("P#", "Some book somewhere", Text(_)))
+
+  private def comment3 =
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, mm3SecondaryStats, alignmentLine,
+      makeComment("P#", "Some book somewhere else", Emphasis(_)))
+
+  private def comment4 = {
+    //<P class="flavor"><B>Alignment</B> chaotic evil      <B> Languages</B> Common<BR/><B>Equipment</B>: <A href="bla" target="_new">club</A> , <A href="bla" target="_new">javelin</A>  x3, <A href="bla" target="_new">light shield</A> .</P>
+    val aligmentLine = MonsterChunk(Seq(Block("P#flavor", List(Key("Alignment"), Text(" chaotic evil      "), Key(" Languages"), Text(" Common"), Break(), Key("Equipment"), Text(": club , javelin  x3, light shield .")))),
+      mustHaveAllAttributes(Map(
+        "stat:alignment" -> "chaotic evil",
+        "stat:languages" -> "Common",
+        "stat:equipment" -> "club , javelin  x3, light shield .")))
+    parseMonster(pestMinionHead, mm3PrimaryStatSimple, mm3SecondaryStats, aligmentLine)
+  }
+
+  private def testCase(description: String, chunks: MonsterChunk*) = description ! parseMonster(chunks: _*)
 
   private case class MonsterChunk(blocks:Seq[BlockElement], matcher: Matcher[Monster])
 
@@ -347,7 +370,7 @@ class MonsterReaderTest extends SpecificationWithJUnit {
       notHaveAttribute("stat:saving throws"),
       notHaveAttribute("stat:resist")))
 
-  private def secondaryStats = MonsterChunk(Seq(
+  private def mm3SecondaryStats = MonsterChunk(Seq(
     Block("P#flavor alt", List(Key("Skills"), Text(" Bluff +8, Stealth +9, Thievery +19"), Break(),
       Text(" "), Key("Str"), Text(" 19 (+10)    "), Key("Dex"), Text(" 19 (+10)     "), Key("Wis"), Text(" 15 (+8)"), Break(),
       Key("Con"), Text(" 20 (+11)        "), Key("Int"), Text(" 8 (+5)    "), Key("Cha"), Text(" 17 (+9)")))),
