@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import vcc.dnd4e.tracker.common.Effect.Condition
 import vcc.dnd4e.tracker.common.{EffectID, Duration, CombatState}
 import vcc.dnd4e.tracker.event.{ApplyDamageEvent, AddEffectEvent, EventSourceSampleEvents}
 import vcc.dnd4e.tracker.command.{NextUpCommand, StartRoundCommand, EndRoundCommand}
+import vcc.tracker.Ruling
 
 class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSourceSampleEvents {
 
@@ -58,8 +59,7 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
     }
     "detect all sustains on end of round" in {
       (EndRoundCommand(ioA0).requiredRulings(state)
-        must contain(SustainEffectRuling(eidA3, None),
-        SustainEffectRuling(eid1_1, None)))
+        must contain(allOf[Ruling[CombatState, _, _]](SustainEffectRuling(eidA3, None), SustainEffectRuling(eid1_1, None))))
     }
     "detect save versus death when appropriate" in {
       val nState = state.transitionWith(List(ApplyDamageEvent(combA, 41)))
@@ -84,7 +84,7 @@ class CombatStateRulingLocatorTest extends SpecificationWithJUnit with EventSour
       val detected = StartRoundCommand(ioA0).requiredRulings(state)
       detected must contain(regen(0))
       detected must contain(regen(1))
-      (detected.indexOf(regen(0)) must beLessThan(detected.indexOf(regen(1))))
+      detected.indexOf(regen(0)) must beLessThan(detected.indexOf(regen(1)))
     }
   }
 

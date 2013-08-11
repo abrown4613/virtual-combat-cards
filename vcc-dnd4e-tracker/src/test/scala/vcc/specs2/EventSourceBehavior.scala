@@ -40,7 +40,7 @@ trait EventSourceBehavior[S, E, C] {
    * Build a state from initial state a sequence of event and some more domain event.
    */
   def given(s: S, events: Seq[E], moreEvents: E*)(implicit buildState: (S, Seq[E]) => S): Given = {
-    given(s, (events ++ moreEvents): _*)(buildState)
+    given(s, events ++ moreEvents: _*)(buildState)
   }
 
   class Given(errorOrState: Either[Result, S]) {
@@ -106,7 +106,7 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
 
   implicit val builder: (Int, Seq[Int]) => Int = {
     (is, evt) =>
-      evt.foldLeft(is)((s, e) => if (e > 0) (s + e) else throw new Exception(e + " not positive"))
+      evt.foldLeft(is)((s, e) => if (e > 0) s + e else throw new Exception(e + " not positive"))
   }
 
   implicit val runTest: (Int, String) => Seq[Int] = {
@@ -117,8 +117,8 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
   def is =
     "EventSourceBehavior".title ^
       "given 0 and 1,2,3 when '4,5' then 4,5" ! given(0, 1, 2, 3).when("4,5").andThen(10, 11) ^
-      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").andThen(contain(11, 12).inOrder) ^
-      "given 0 and 1,2,3 when '4,a' failWith()" ! (given(0, 1, 2, 3) when ("4,a") must throwA[NumberFormatException]) ^
+      "given 0 and 1,2,3 when '4,5' then 4,5 (matcher)" ! given(0, 1, 2, 3).when("4,5,6").andThen(contain(exactly(10, 11, 12))) ^
+      "given 0 and 1,2,3 when '4,a' failWith()" ! (given(0, 1, 2, 3) when "4,a" must throwA[NumberFormatException]) ^
       "given 0 and Seq(1,2),3 when '4' then 4" ! given(0, Seq(1, 2), 3).when("4").andThen(10) ^
       "given 0 and Seq(1,2)+Seq(3,4),5 when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4), 5).when("4").andThen(19) ^
       "given 0 and Seq(1,2)+Seq(3,4) when '4' then 4" ! given(0, Seq(1, 2) ++ Seq(3, 4)).when("4").andThen(14) ^
@@ -129,7 +129,7 @@ class EventSourceBehaviorTest extends SpecificationWithJUnit with EventSourceBeh
       end
 
   def error1 = {
-    val result = (given(0, 1, -2).when("4").andThen(4))
+    val result = given(0, 1, -2).when("4").andThen(4)
     (result.isError must beTrue) and (result.message must_== "Failed to build given state")
   }
 

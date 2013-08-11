@@ -23,23 +23,22 @@ import vcc.dnd4e.tracker.common._
 class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSampleEvents with Mockito {
 
   def is =
-    "AddCombatantEvent" ^
-      "add a combatant with a defined combatant ID" ! e1 ^
-      "add a combatant without a defined combatnat ID" ! e2 ^
-      "chained addition" ! e3 ^
-      endp ^
-      "Start combat execution" ! execStartCombatEvent ^
-      "End combat execution" ! execEndCombatEvent ^
-      "RemoveCombatantFromOrderEvent" ! execRemoveCombatantFromOrderEvent ^
-      "AddCombatantToOrderEvent" ! execAddCombatantToOrderEvent ^
-      "RemoveCombatantFromOrderEvent" ! execRemoveCombatantFromRosterEvent ^
-      "RemoveCombatantFromOrderEvent when some have initiative" ! execRemoveCombatantFromRosterEventWithInitiative ^
-      "SetCombatComment " ! execCombatComment ^
-      "SetCombatCommentClear " ! execCombatCommentClear ^
-      "SetCombatantComment" ! execSetCombatantComment ^
-      "Short Rest Combatant" ! execRestCombatant(RestDuration.ShortRest) ^
-      "Extended Rest Combatant" ! execRestCombatant(RestDuration.ExtendedRest) ^
-      end
+    s2"""AddCombatantEvent
+      add a combatant with a defined combatant ID ${ e1 }
+      add a combatant without a defined combatant ID ${ e2 }
+      chained addition ${ e3 }
+      Start combat execution ${ execStartCombatEvent }
+      End combat execution ${ execEndCombatEvent }
+      RemoveCombatantFromOrderEvent ${ execRemoveCombatantFromOrderEvent }
+      AddCombatantToOrderEvent ${ execAddCombatantToOrderEvent }
+      RemoveCombatantFromOrderEvent ${ execRemoveCombatantFromRosterEvent }
+      RemoveCombatantFromOrderEvent when some have initiative ${ execRemoveCombatantFromRosterEventWithInitiative }
+      SetCombatComment  ${ execCombatComment }
+      SetCombatCommentClear  ${ execCombatCommentClear }
+      SetCombatantComment ${ execSetCombatantComment }
+      Short Rest Combatant ${ execRestCombatant(RestDuration.ShortRest) }
+      Extended Rest Combatant ${ execRestCombatant(RestDuration.ExtendedRest) }
+      """
 
   private def e1 = {
     val cs = evtAddCombA.transition(CombatState.empty)
@@ -104,17 +103,17 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
     (newState.roster.isDefinedAt(combA) must beFalse) and
       (newState.order.isInSequence(combA) must beFalse) and
       (state.order.isInSequence(combA) must beTrue) and
-      (state.roster.entries.keys must contain(comb1, comb2))
+      (state.roster.entries.keys must contain(atLeast(comb1, comb2)))
   }
 
   private def execCombatComment = {
     val state = SetCombatCommentEvent(Some("new comment")).transition(emptyState)
-    (state.comment must_== Some("new comment"))
+    state.comment must_== Some("new comment")
   }
 
   private def execCombatCommentClear = {
     val state = SetCombatCommentEvent(None).transition(emptyState)
-    (state.comment must_== None)
+    state.comment must_== None
   }
 
   private def execSetCombatantComment = {
@@ -138,7 +137,6 @@ class RosterAndOrderEventTest extends SpecificationWithJUnit with EventSourceSam
     evt.transition(state)
 
     val comb = state.roster.combatant(combA)
-    (there was one(comb).applyRest(restDuration))
+    there was one(comb).applyRest(restDuration)
   }
 }
-
