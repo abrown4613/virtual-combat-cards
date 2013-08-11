@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ import org.specs2.mutable.{After, SpecificationWithJUnit}
 
 abstract class DataStoreSpec extends SpecificationWithJUnit {
 
-  args(sequential = true)
   val eid1 = EntityID.fromName("eid:1")
   val eid2 = EntityID.fromName("eid:2")
   val eid3 = EntityID.fromName("eid:3")
@@ -45,7 +44,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
 
     "provide a builder" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
-      (dsb must not beNull)
+      dsb must not beNull
     }
     "must be always the same" in {
       val dsb = DataStoreFactory.getDataStoreBuilder(aStoreID)
@@ -68,13 +67,13 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       adsb.open(storeID) must beNull
     }
     "create a store" in new dsbContext {
-      (adsb.create(storeID) must not beNull)
+      adsb.create(storeID) must not beNull
     }
     "prove it exists after creation" in new dsbContext {
       adsb.exists(storeID) must beTrue
     }
     "open a store that that exists" in new dsbContext {
-      (adsb.open(storeID) must not beNull)
+      adsb.open(storeID) must not beNull
     }
     "destroy the store" in new dsbContext {
       adsb.destroy(storeID) must beTrue
@@ -92,7 +91,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
     }
     dsb.exists(storeID) must beTrue
     val aDataStore: DataStore = dsb.open(storeID)
-    (aDataStore must not beNull)
+    aDataStore must not beNull
 
     def after {
       aDataStore.close()
@@ -116,7 +115,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       rc must beTrue
       val newSet = aDataStore.enumerateEntities()
       newSet must contain(eid1)
-      (newSet must not contain (eid3))
+      newSet must not contain (eid3)
     }
 
     "store another entity" in new dataStoreContext {
@@ -125,7 +124,7 @@ abstract class DataStoreSpec extends SpecificationWithJUnit {
       rc must beTrue
       val newSet = aDataStore.enumerateEntities()
       newSet must contain(eid2)
-      (newSet must not contain (eid3))
+      newSet must not contain (eid3)
     }
 
     "must restore a saved entity" in new dataStoreContext {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2011 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,26 +59,27 @@ class RosterTest extends SpecificationWithJUnit {
   val mRoster = mocked(fullRoster)
 
   def is: Fragments =
-    "when handling addComabatant should" ^
-      "  provide an ID if not supplied" ! using(emptyRoster).updatedAllOnAdd(None, comb1, null, combMonster) ^
-      "  accept provided ID" ! using(emptyRoster).updatedAllOnAdd(Some(combA), combA, null, combEnt) ^
-      "  update an entry calling proper create method when new ID" ! mRoster.calledCreateDefinition(comb2, "the bad", combMonster) ^
-      "  update an entry calling proper replace method when ID exists" ! mRoster.calledReplaceDefinition(combA, "the bad", combMonster) ^
-      "  update an all fields on replace method when ID exists" ! using(fullRoster).updatedAllOnAdd(Some(combA), combA, null, combMonster) ^
-      "  provide first free id in range" ! using(fullRoster).updatedAllOnAdd(None, comb2, "abc", combMonster) ^
-      endp ^
-      "a fully loaded Roster should" ^
-      "  call predicate test on all elements" ! mRoster.callPredicateNTimeOnClear(x => x.key.asNumber.isDefined) ^
-      "  remove elements that do not match test " ! using(fullRoster).filterElements(x => x.key.asNumber.isDefined, List(combA, combB)) ^
-      "  provide a list of combatantID" ! using(fullRoster).provideListOfElement(List(combA, combB, comb1, comb3)) ^
-      endp ^
-      "as a view should" ^
-      "  indicated that ID is present" ! bePresent(fullRoster, combA) ^
-      "  indicated that ID is present" ! bePresent(fullRoster, comb1) ^
-      "  indicated that ID is not present" ! notBePresent(fullRoster, comb2) ^
-      "  return present entry with ID" ! (fullRoster.combatant(combA) must_== SampleEntry(combA, null, combEnt)) ^
-      "  throw exception on getting a not present ID" ! (fullRoster.combatant(comb2) must throwA[NoSuchElementException]) ^
-      end
+    s2"""
+      when handling addCombatant should
+        provide an ID if not supplied ${ using(emptyRoster).updatedAllOnAdd(None, comb1, null, combMonster) }
+        accept provided ID ${ using(emptyRoster).updatedAllOnAdd(Some(combA), combA, null, combEnt) }
+        update an entry calling proper create method when new ID ${ mRoster.calledCreateDefinition(comb2, "the bad", combMonster) }
+        update an entry calling proper replace method when ID exists ${ mRoster.calledReplaceDefinition(combA, "the bad", combMonster) }
+        update an all fields on replace method when ID exists ${ using(fullRoster).updatedAllOnAdd(Some(combA), combA, null, combMonster) }
+        provide first free id in range ${ using(fullRoster).updatedAllOnAdd(None, comb2, "abc", combMonster) }
+
+      a fully loaded Roster should
+        call predicate test on all elements ${ mRoster.callPredicateNTimeOnClear(x => x.key.asNumber.isDefined) }
+        remove elements that do not match test  ${ using(fullRoster).filterElements(x => x.key.asNumber.isDefined, List(combA, combB)) }
+        provide a list of combatantID ${ using(fullRoster).provideListOfElement(List(combA, combB, comb1, comb3)) }
+
+      as a view should
+        indicated that ID is present ${ bePresent(fullRoster, combA) }
+        indicated that ID is present ${ bePresent(fullRoster, comb1) }
+        indicated that ID is not present ${ notBePresent(fullRoster, comb2) }
+        return present entry with ID ${ fullRoster.combatant(combA) must_== SampleEntry(combA, null, combEnt) }
+        throw exception on getting a not present ID ${ fullRoster.combatant(comb2) must throwA[NoSuchElementException] }
+     """
 
   def bePresent(roster: Roster[SampleEntry], comb: CombatantID) = roster.isDefinedAt(comb) must beTrue
 
@@ -120,7 +121,7 @@ class RosterTest extends SpecificationWithJUnit {
     }
 
     def provideListOfElement(expectedList: List[CombatantID]) = {
-      roster.allCombatantIDs must contain(expectedList.map(lazyfy(_)): _*)
+      roster.allCombatantIDs must contain(exactly(expectedList: _*))
     }
   }
 }

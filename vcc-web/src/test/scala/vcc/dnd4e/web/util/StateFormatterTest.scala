@@ -25,6 +25,7 @@ import scala.Some
 import vcc.dnd4e.tracker.command.AddCombatantCommand
 import org.specs2.SpecificationWithJUnit
 import vcc.dnd4e.tracker.common.Effect.Condition
+import org.specs2.matcher.JsonMatchers
 
 trait SampleStateData {
   val combA = CombatantID("A")
@@ -47,7 +48,7 @@ trait SampleStateData {
   val entityMonster = CombatantEntity(null, "Monster", MonsterHealthDefinition(30), 1, null)
 }
 
-class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
+class StateFormatterTest extends SpecificationWithJUnit with SampleStateData with JsonMatchers {
   val bigStateCommands = Seq(
     AddCombatantCommand(Some(combA), null, entityPc1),
     AddCombatantCommand(Some(combB), null, entityPc2),
@@ -80,16 +81,17 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
 
   val finalState = buildState(bigStateCommands)
 
-  def is =
-    "StateFormatter".title ^
-      "format single pc correctly" ! withCommands(singleCharacterInOrder).hasCompleteFighterAt(0) ^
-      "format monster correctly" ! withCommands(bigStateCommands).hasCompleteMonsterAt(1) ^
-      "format second pc correctly" ! withCommands(bigStateCommands).hasCompleteMageAt(2) ^
-      "format empty state as an empty array" ! emptyFormat() ^
-      "don't show creatures that are not in the order" ! withCommands(bigStateCommands).doesNotShowCombatantOutOfOrder() ^
-      "show dead combatants" ! withCommands(bigStateWithDead).hideDead() ^
-      "show all effects for character" ! withCommands(stateWithEffect).showAllOnCharacter() ^
-      "show only character generated for monster" ! withCommands(stateWithEffect).showMonsterEffects()
+  def is = s2"""
+    StateFormatter
+      format single pc correctly ${ withCommands(singleCharacterInOrder).hasCompleteFighterAt(0) }
+      format monster correctly ${ withCommands(bigStateCommands).hasCompleteMonsterAt(1) }
+      format second pc correctly ${ withCommands(bigStateCommands).hasCompleteMageAt(2) }
+      format empty state as an empty array ${ emptyFormat() }
+      don't show creatures that are not in the order ${ withCommands(bigStateCommands).doesNotShowCombatantOutOfOrder() }
+      show dead combatants ${ withCommands(bigStateWithDead).hideDead() }
+      show all effects for character ${ withCommands(stateWithEffect).showAllOnCharacter() }
+      show only character generated for monster ${ withCommands(stateWithEffect).showMonsterEffects() }
+      """
 
   case class withCommands(commands: Seq[CombatStateCommand]) {
     val format = new StateFormatter().format(buildState(commands))
@@ -112,7 +114,7 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
     }
 
     def doesNotShowCombatantOutOfOrder() = {
-      (format must not */ ("id" -> "2"))
+      format must not */ ("id" -> "2")
     }
 
     def hideDead() = {
@@ -131,8 +133,8 @@ class StateFormatterTest extends SpecificationWithJUnit with SampleStateData {
     }
 
     def matchEffect(pos: Int, effectIndex: Int, description: String, duration: String) = {
-      (format must /#(pos) / ("effects") /# (effectIndex) / ("description" -> description)) and
-        (format must /#(pos) / ("effects") /# (effectIndex) / ("duration" -> duration))
+      (format must /#(pos) / "effects" /# effectIndex / ("description" -> description)) and
+        (format must /#(pos) / "effects" /# effectIndex / ("duration" -> duration))
     }
   }
 

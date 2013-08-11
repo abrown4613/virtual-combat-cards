@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 - Thomas Santana <tms@exnebula.org>
+ * Copyright (C) 2008-2013 - Thomas Santana <tms@exnebula.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,10 @@ import org.specs2.specification.Scope
 
 class DirectoryDataStoreTest extends DataStoreSpec {
 
+  args(sequential = true)
+
   def generateStoreID() = {
-    val file = new java.io.File(System.getProperty("java.io.tmpdir"), "test" + (new scala.util.Random().nextInt()) + ".dsd")
+    val file = new java.io.File(System.getProperty("java.io.tmpdir"), "test" + new scala.util.Random().nextInt() + ".dsd")
     DataStoreURI.fromStorageString("vcc-store:directory:" + file.toURI.toString)
   }
 
@@ -41,7 +43,7 @@ class DirectoryDataStoreTest extends DataStoreSpec {
     val dsb = DataStoreFactory.getDataStoreBuilder(storeID)
     dsb.exists(storeID) must beTrue
     aDataStore = dsb.open(storeID)
-    (aDataStore must not beNull)
+    (aDataStore must not).beNull
   }
 
   "DirectoryDataStore on a test directory" should {
@@ -49,7 +51,7 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       aDataStore.enumerateEntities() must haveTheSameElementsAs(badTestEntity)
     }
     for (eid <- badTestEntity) {
-      ("process " + (eid.asStorageString)) in new storeContext {
+      ("process " + eid.asStorageString) in new storeContext {
         aDataStore.loadEntity(eid) must throwAn[DataStoreIOException]
       }
     }
@@ -75,7 +77,7 @@ class DirectoryDataStoreTest extends DataStoreSpec {
     }
     "replace a variable to become absolute" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path")
-      val repl = (new java.io.File(".")).toURI
+      val repl = new java.io.File(".").toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
       val resolved = dsb.resolveDataStoreURI(baseURI, Map("VAL" -> repl))
@@ -85,7 +87,7 @@ class DirectoryDataStoreTest extends DataStoreSpec {
 
     "replace a variable to become absolute" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path/to/some")
-      val repl = (new File(System.getProperty("java.io.tmpdir"))).toURI
+      val repl = new File(System.getProperty("java.io.tmpdir")).toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
       val resolved = dsb.resolveDataStoreURI(baseURI, Map("VAL" -> repl))
@@ -102,11 +104,11 @@ class DirectoryDataStoreTest extends DataStoreSpec {
       val resolved = dsb.resolveDataStoreURI(baseURI, Map())
       resolved must not beNull;
       dsb.isResolvedDataStoreURI(resolved) must beTrue
-      resolved.uri.toString must_== "vcc-store:directory:" + (new File(pwd, "path/to/some.sa").toURI.toString)
+      resolved.uri.toString must_== "vcc-store:directory:" + new File(pwd, "path/to/some.sa").toURI.toString
     }
     "must return null if it cant be resolved" in {
       val baseURI = DataStoreURI.fromStorageString("vcc-store:directory:file:$VAL/path/to/some")
-      val repl = (new File(".")).toURI
+      val repl = new File(".").toURI
       val dsb = DataStoreFactory.getDataStoreBuilder(testStoreURI)
       dsb.isResolvedDataStoreURI(baseURI) must beFalse
       dsb.resolveDataStoreURI(baseURI, Map("OTHER" -> repl)) must beNull
